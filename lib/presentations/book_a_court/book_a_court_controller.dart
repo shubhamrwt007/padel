@@ -195,7 +195,7 @@ class BookACourtController extends GetxController {
         "courtId": courtId,
         "courtName": courtName,
         "bookingDate": bookingDate,
-        "userId": "",
+        // "userId": "",
         "time": time,
         "bookingTime": bookingTime,
         "duration": duration,
@@ -236,6 +236,7 @@ class BookACourtController extends GetxController {
     required String bookingDate,
     required String time,
     required String bookingTime,
+    required int duration,
   }) async {
     try {
       final body = {
@@ -244,8 +245,10 @@ class BookACourtController extends GetxController {
         "bookingDate": bookingDate,
         "time": time,
         "bookingTime": bookingTime,
+        "duration": duration,
       };
-      
+      log('deleteSlotHistory called with body: $body');
+
       await _homeRepository.deleteSlotHistory(data:body);
       log('deleteSlotHistory called with body: $body');
     } catch (e) {
@@ -276,6 +279,7 @@ class BookACourtController extends GetxController {
           bookingDate: dateString,
           time: bookingTime,
           bookingTime: bookingTime,
+          duration: 30,
         );
       } else {
         // Call create API first
@@ -324,6 +328,7 @@ class BookACourtController extends GetxController {
           bookingDate: dateString,
           time: slot.time ?? '',
           bookingTime: slot.time ?? '',
+          duration: 60,
         );
       } else {
         // Call create API first
@@ -856,7 +861,7 @@ class BookACourtController extends GetxController {
             final newHour = hour;
             final newMinute = 30;
             
-            return '$newHour:${newMinute.toString().padLeft(2, '0')} ${period.toUpperCase()}';
+            return '$newHour:${newMinute.toString().padLeft(2, '0')} ${period.toLowerCase()}';
           }
         }
       } catch (e) {

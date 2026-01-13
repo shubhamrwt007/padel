@@ -1,28 +1,18 @@
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:padel_mobile/configs/app_colors.dart';
-import 'package:padel_mobile/configs/app_strings.dart';
-import 'package:padel_mobile/configs/components/app_bar.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
-import 'package:padel_mobile/configs/routes/routes_name.dart';
-import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
+import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 import 'package:padel_mobile/presentations/open_match_for_all_court/widgets/semi_circle_progress_bar.dart';
+import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import 'dart:developer';
 class MainHomeScreen extends StatelessWidget {
@@ -176,7 +166,7 @@ class MainHomeScreen extends StatelessWidget {
         );
       }
 
-      final name = profile?.response?.name?.capitalizeFirst??"";
+      final name = profile?.response?.name?.capitalizeFirst?.split(' ').first??"";
       final displayName =
       (name.trim().isEmpty) ? 'Guest' : name;
       final location = profile?.response?.city??"";
@@ -563,7 +553,7 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcBookACourtNew,
         "title": "Find a Court",
         "action": "book",
-        "boxSize": 60.0,
+        "boxSize": 65.0,
         "iconSize": 34.0,
         "offset":Offset(0,3)
       },
@@ -571,25 +561,25 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcOpenMatchNew,
         "title": "Find a Game",
         "action": "match",
-        "boxSize": 60.0,
-        "iconSize": 34.0,
-        "offset":Offset(0,3)
-      },
-      {
-        "icon": Assets.imagesIcAmericanoNew,
-        "title": "Americano",
-        "action": "americano",
-        "boxSize": 60.0,
+        "boxSize": 65.0,
         "iconSize": 34.0,
         "offset":Offset(0,3)
       },
       {
         "icon": Assets.imagesIcChallengesNew,
-        "title": "Challenge",
-        "action": "challenge",
-        "boxSize": 60.0,
+        "title": "Find a Player",
+        "action": "player",
+        "boxSize": 65.0,
         "iconSize": 34.0,
         "offset":Offset(0,1)
+      },
+      {
+        "icon": Assets.imagesIcAmericanoNew,
+        "title": "Americano",
+        "action": "americano",
+        "boxSize": 65.0,
+        "iconSize": 34.0,
+        "offset":Offset(0,3)
       },
     ];
 
@@ -620,7 +610,9 @@ class MainHomeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
+                      // Background circle glow
                       Positioned(
                         top: -boxSize * 0.35,
                         left: -boxSize * 0.35,
@@ -633,20 +625,65 @@ class MainHomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                      // Icon
                       Center(
                         child: Transform.translate(
-                          offset:offset,
+                          offset: offset,
                           child: SvgPicture.asset(
                             e["icon"] as String,
                             width: iconSize,
                             height: iconSize,
-                            // color: Colors.red,
                           ),
                         ),
                       ),
+
+                      // 🎀 Perfect corner ribbon
+                      if (e["action"] == "americano")
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: SizedBox(
+                            width: boxSize,
+                            height: boxSize,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Stack(
+                                children: [
+                                  // Diagonal strip
+                                  Positioned(
+                                    top: 6,
+                                    left: -28,
+                                    child: Transform.rotate(
+                                      angle: -0.685398, // -45°
+                                      child: Container(
+                                        width: 90,
+                                        height: 14,
+                                        alignment: Alignment.center,
+                                        color: Colors.orange,
+                                        child: const Text(
+                                          "COMING SOON",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 5,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.6,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+
                     ],
                   ),
-                ),
+
+              ),
               const SizedBox(height: 6),
               Text(
                 e["title"] as String,
@@ -674,8 +711,8 @@ class MainHomeScreen extends StatelessWidget {
       case 'americano':
         SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
         break;
-      case 'challenge':
-        SnackBarUtils.showInfoSnackBar("Challenge feature coming soon!");
+      case 'player':
+        SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
         break;
     }
   }
@@ -1092,76 +1129,79 @@ class MainHomeScreen extends StatelessWidget {
       final winRatio = totalMatches > 0 ? (totalWins / totalMatches) : 0.0;
       final winPercentage = (winRatio * 100).round();
       
-      return Container(
-        height: 180,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.1)),
-          gradient: LinearGradient(
-            colors: [Color(0xffE9EFFF), Color(0xffE6EBFF)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+      return GestureDetector(
+        onTap: ()=>Get.to(EditProfileUi(buttonType: "drawer",)),
+        child: Container(
+          height: 180,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.1)),
+            gradient: LinearGradient(
+              colors: [Color(0xffE9EFFF), Color(0xffE6EBFF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            Transform.translate(
-                offset: Offset(-15, -16),
-                child: SvgPicture.asset(Assets.imagesImgBackgroundPlayedMatch)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Match\nPlayed',
-                      style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600,fontSize: 17),
-                    ),
-                    Spacer(),
-                    Text(
-                      '$totalMatches',
-                      style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55),fontSize: 30),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Center(
-                  child: Stack(
-                    alignment: Alignment.center,
+          child: Stack(
+            children: [
+              Transform.translate(
+                  offset: Offset(-15, -16),
+                  child: SvgPicture.asset(Assets.imagesImgBackgroundPlayedMatch)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      SizedBox(
-                        width: 170,
-                        height: 100,
-                        child: CustomPaint(
-                          painter: BlockSemiCirclePainter(
-                            progress: winRatio,
-                          ),
-                        ),
+                      Text(
+                        'Match\nPlayed',
+                        style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600,fontSize: 17),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Transform.translate(
-                                offset: Offset(0, 4),
-                                child: Text('$winPercentage%', style: Get.textTheme.titleLarge)),
-                            Text(
-                              'Win Ratio',
-                              style: Get.textTheme.headlineSmall!.copyWith(color: Colors.grey),
-                            ),
-                          ],
-                        ),
+                      Spacer(),
+                      Text(
+                        '$totalMatches',
+                        style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55),fontSize: 30),
                       ),
                     ],
                   ),
-                ),
-            
-            
-              ],
-            ),
-          ],
+                  const Spacer(),
+                  Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 170,
+                          height: 100,
+                          child: CustomPaint(
+                            painter: BlockSemiCirclePainter(
+                              progress: winRatio,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Transform.translate(
+                                  offset: Offset(0, 4),
+                                  child: Text('$winPercentage%', style: Get.textTheme.titleLarge)),
+                              Text(
+                                'Win Ratio',
+                                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+
+                ],
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -1171,36 +1211,39 @@ class MainHomeScreen extends StatelessWidget {
       final profile = controller.profileController.profileModel.value;
       final rank = profile?.response?.rank ?? 0;
       
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.secondaryColor.withValues(alpha: 0.1)),
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            colors: [Color(0xffE7F8EA), Color(0xffF1FFF4)],
+      return GestureDetector(
+        onTap: ()=>Get.to(LeaderboardScreen(buttonType: "drawer",)),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.secondaryColor.withValues(alpha: 0.1)),
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xffE7F8EA), Color(0xffF1FFF4)],
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.bar_chart, color: Color(0xff2947C7),size: 30,),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                      '$rank',
-                      style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(Icons.bar_chart, color: Color(0xff2947C7),size: 30,),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                        '$rank',
+                        style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
+                    ),
                   ),
-                ),
-              ],
-            ),
-            Text(
-              'Leaderboard\nPosition',
-              style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)
-            ),
-          ],
+                ],
+              ),
+              Text(
+                'Leaderboard\nPosition',
+                style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)
+              ),
+            ],
+          ),
         ),
       );
     });
@@ -1210,47 +1253,50 @@ class MainHomeScreen extends StatelessWidget {
       final profile = controller.profileController.profileModel.value;
       final xpPoints = profile?.response?.xpPoints?.toInt() ?? 0;
       
-      return Container(
-        // height: 90,
-        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            colors: [Color(0xffEDF1FF), Color(0xffE6EBFF)],
+      return GestureDetector(
+        onTap: ()=>Get.to(LeaderboardScreen(buttonType: "drawer",)),
+        child: Container(
+          // height: 90,
+          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xffEDF1FF), Color(0xffE6EBFF)],
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'XP',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Color(0xffDDE3FF),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'XP',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xffDDE3FF),
+                ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  children: [
-                    Transform.translate(
-                        offset: Offset(0, 2),
-                        child: Icon(Icons.star, color: Colors.green, size: 22)),
-                    Text(
-                      '$xpPoints',
-                        style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
-                    ),
-                  ],
-                ),
-                Text(
-                  'XP Points',
-                  style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),
-                ),
-              ],
-            ),
-          ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    children: [
+                      Transform.translate(
+                          offset: Offset(0, 2),
+                          child: Icon(Icons.star, color: Colors.green, size: 22)),
+                      Text(
+                        '$xpPoints',
+                          style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'XP Points',
+                    style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     });

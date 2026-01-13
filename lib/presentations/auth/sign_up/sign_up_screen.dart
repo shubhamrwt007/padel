@@ -313,7 +313,7 @@ class SignUpScreen extends GetView<SignUpController> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 5),
               Expanded(
                 child: Obx(() => ListView.builder(
                   itemCount: filteredLocations.length,

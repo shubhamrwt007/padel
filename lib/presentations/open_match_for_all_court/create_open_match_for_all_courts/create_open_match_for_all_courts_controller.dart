@@ -220,6 +220,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     required String bookingDate,
     required String time,
     required String bookingTime,
+    required int duration,
   }) async {
     try {
       final body = {
@@ -228,6 +229,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         "bookingDate": bookingDate,
         "time": time,
         "bookingTime": bookingTime,
+        "duration": duration,
       };
       
       await _homeRepository.deleteSlotHistory(data:body);
@@ -259,6 +261,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           bookingDate: dateString,
           time: bookingTime,
           bookingTime: bookingTime,
+          duration: 30,
         );
       } else {
         // Check if adding this slot would exceed 3 slots or break consecutiveness
@@ -317,6 +320,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           bookingDate: dateString,
           time: slot.time ?? '',
           bookingTime: slot.time ?? '',
+          duration: 60,
         );
       } else {
         // Check if adding this slot would exceed 3 slots or break consecutiveness

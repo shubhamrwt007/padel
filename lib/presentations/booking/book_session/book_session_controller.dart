@@ -371,6 +371,7 @@ class BookSessionController extends GetxController {
     required String bookingDate,
     required String time,
     required String bookingTime,
+    required int duration,
   }) async {
     try {
       final body = {
@@ -379,6 +380,7 @@ class BookSessionController extends GetxController {
         "bookingDate": bookingDate,
         "time": time,
         "bookingTime": bookingTime,
+        "duration": duration,
       };
       
       await repository.deleteSlotHistory(data: body);
@@ -432,6 +434,7 @@ class BookSessionController extends GetxController {
         bookingDate: dateString,
         time: slot.time ?? '',
         bookingTime: slot.time ?? '',
+        duration: supports30Min && isLeftHalf != null ? 30 : 60,
       );
     } else {
       // Call create API first

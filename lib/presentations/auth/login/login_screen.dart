@@ -58,7 +58,7 @@ class LoginScreen extends GetView<LoginController> {
       child: Column(
         children: [
           SizedBox(
-            height: 30,
+            height: 20,
           ),
           PrimaryTextField(
             controller: controller.phoneController,

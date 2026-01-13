@@ -8,7 +8,11 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/cart/cart_screen.dart';
+import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,7 +50,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.only(left: 16),
               child: GestureDetector(
-                onTap: () => Get.toNamed(RoutesName.editProfile),
+                onTap: () => Get.to(()=>EditProfileUi(buttonType: "drawer",)),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -113,7 +117,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 Obx(() {
                   final profile = controller.profileModel.value?.response;
                   return Text(
-                    "${profile?.name?.capitalizeFirst ?? 'Guest'} ${profile?.lastName?.capitalizeFirst ?? ""}",
+                    profile?.name?.capitalizeFirstChar() ?? 'Guest',
                     style: Get.textTheme.titleSmall!.copyWith(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -170,27 +174,39 @@ class CustomDrawerUi extends GetView<ProfileController> {
 
             ),
           ),
-          // Obx(
-          //       () => ProfileRow(
-          //     icon: SvgPicture.asset(
-          //         Assets.imagesIconLeaderBoard,
-          //         height: 22,
-          //         width: 22,
-          //         colorFilter: ColorFilter.mode(
-          //           controller.selectedIndex.value == 6
-          //               ? AppColors.primaryColor
-          //               : AppColors.labelBlackColor,
-          //           BlendMode.srcIn,
-          //         ),
-          //       ),
-          //     title: "LeaderBoard",
-          //     isSelected: controller.selectedIndex.value == 6,
-          //     onTap: () {
-          //       controller.selectedIndex.value = 6;
-          //       Get.toNamed(RoutesName.leaderBoard);
-          //     },
-          //   ),
-          // ),
+          Obx(
+                () => ProfileRow(
+              icon: Icon(Icons.bar_chart, size: 20, color: controller.selectedIndex.value == 6 ? AppColors.primaryColor : AppColors.labelBlackColor),
+              title: "LeaderBoard",
+              isSelected: controller.selectedIndex.value == 6,
+              onTap: () {
+                controller.selectedIndex.value = 6;
+                Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+              },
+
+            ),
+          ),
+          Obx(
+                () => ProfileRow(
+              icon: SvgPicture.asset(
+                  Assets.imagesIcBookings,
+                  height: 22,
+                  width: 22,
+                  colorFilter: ColorFilter.mode(
+                    controller.selectedIndex.value == 7
+                        ? AppColors.primaryColor
+                        : AppColors.labelBlackColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              title: "Bookings",
+              isSelected: controller.selectedIndex.value == 7,
+              onTap: () {
+                controller.selectedIndex.value = 7;
+                Get.to(()=>BookingHistoryUi(buttonType: "drawer",));
+              },
+            ),
+          ),
           Obx(
             () => ProfileRow(
               icon: SvgPicture.asset(
@@ -198,16 +214,16 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 height: 17,
                 width: 17,
                 colorFilter: ColorFilter.mode(
-                  controller.selectedIndex.value == 7
+                  controller.selectedIndex.value == 8
                       ? AppColors.primaryColor
                       : AppColors.labelBlackColor,
                   BlendMode.srcIn,
                 ),
               ),
               title: "Packages",
-              isSelected: controller.selectedIndex.value == 7,
+              isSelected: controller.selectedIndex.value == 8,
               onTap: () {
-                controller.selectedIndex.value = 7;
+                controller.selectedIndex.value = 8;
                 Get.toNamed(RoutesName.packages);
               },
             ),
@@ -216,13 +232,13 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 () => ProfileRow(
               icon: Icon(Icons.group_outlined,
                   size: 20,
-                  color: controller.selectedIndex.value == 8
+                  color: controller.selectedIndex.value == 9
                       ? AppColors.primaryColor
                       : AppColors.labelBlackColor),
               title: "Community",
-              isSelected: controller.selectedIndex.value == 8,
+              isSelected: controller.selectedIndex.value == 9,
               onTap: () {
-                controller.selectedIndex.value = 8;
+                controller.selectedIndex.value = 9;
                 // Get.toNamed(RoutesName.community);
                 if(Get.isSnackbarOpen)return;
                SnackBarUtils.showInfoSnackBar("Community coming soon!");
@@ -231,22 +247,22 @@ class CustomDrawerUi extends GetView<ProfileController> {
           ),
           Obx(
                 () => ProfileRow(
-              icon: Icon(Icons.headset_mic_outlined, size: 20, color: controller.selectedIndex.value == 9 ? AppColors.primaryColor : AppColors.labelBlackColor),
+              icon: Icon(Icons.headset_mic_outlined, size: 20, color: controller.selectedIndex.value == 10 ? AppColors.primaryColor : AppColors.labelBlackColor),
               title: AppStrings.helpSupport,
-              isSelected: controller.selectedIndex.value == 9,
+              isSelected: controller.selectedIndex.value == 10,
               onTap: () {
-                controller.selectedIndex.value = 9;
+                controller.selectedIndex.value = 10;
                 Get.toNamed(RoutesName.support);
               },
             ),
           ),
           Obx(
                 () => ProfileRow(
-                  icon: Icon(Icons.copyright, size: 20, color: controller.selectedIndex.value == 9 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  icon: Icon(Icons.copyright, size: 20, color: controller.selectedIndex.value == 11 ? AppColors.primaryColor : AppColors.labelBlackColor),
                   title: "Terms and Conditions",
-              isSelected: controller.selectedIndex.value == 10,
+              isSelected: controller.selectedIndex.value == 11,
               onTap: () async {
-                controller.selectedIndex.value = 10;
+                controller.selectedIndex.value = 11;
 
                 final url = Uri.parse("https://swootapp.com/term-&-conditions");
 
@@ -264,14 +280,14 @@ class CustomDrawerUi extends GetView<ProfileController> {
               icon: Image.asset(
                 Assets.imagesIcPrivacy,
                 scale: 5,
-                color: controller.selectedIndex.value == 11
+                color: controller.selectedIndex.value == 12
                     ? AppColors.primaryColor
                     : AppColors.labelBlackColor,
               ),
               title: AppStrings.privacy,
-              isSelected: controller.selectedIndex.value == 11,
+              isSelected: controller.selectedIndex.value == 12,
               onTap: () async {
-                controller.selectedIndex.value = 11;
+                controller.selectedIndex.value = 12;
 
                 final url = Uri.parse("https://swootapp.com/privacy-policy");
 
@@ -289,14 +305,14 @@ class CustomDrawerUi extends GetView<ProfileController> {
               icon: Icon(
                 Icons.delete_forever_outlined,
                 size: 20,
-                color: controller.selectedIndex.value == 12
+                color: controller.selectedIndex.value == 13
                     ? AppColors.primaryColor
                     : AppColors.labelBlackColor,
               ),
               title: "Delete Account",
-              isSelected: controller.selectedIndex.value == 12,
+              isSelected: controller.selectedIndex.value == 13,
               onTap: () {
-                controller.selectedIndex.value = 12;
+                controller.selectedIndex.value = 13;
                 controller.showDeleteAccountDialog(Get.context!);
               },
             ),
