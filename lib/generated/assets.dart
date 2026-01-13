@@ -19,6 +19,7 @@ class Assets {
   static const String imagesIcCelebration = 'assets/images/ic_celebration.svg';
   static const String imagesIcChallenges = 'assets/images/ic_challenges.svg';
   static const String imagesIcChallengesNew = 'assets/images/ic_challenges_new.svg';
+  static const String imagesIcChallengesPng = 'assets/images/ic_challenges_png.png';
   static const String imagesIcCheckCircle = 'assets/images/ic_check_circle.svg';
   static const String imagesIcEye = 'assets/images/ic_eye.png';
   static const String imagesIcEyeOff = 'assets/images/ic_eye_off.png';

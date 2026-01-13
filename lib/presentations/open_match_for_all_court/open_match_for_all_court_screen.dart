@@ -703,14 +703,14 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return GestureDetector(
       onTap: () {
         if (isMatchCreator) {
-          Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team,bookingId: match?.bookingId??"",), isScrollControlled: true);
+          Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId??"",), isScrollControlled: true);
         } else {
           AddPlayerBottomSheet.show(
             context,
             arguments: {
               "bookingId":match?.bookingId??'',
               "team": team,
-              "matchId": match?.bookingId??'',
+              "matchId": match?.sId??'',
               "needOpenMatchesForAllCourts": true,
               "matchLevel": skillLevel,
               "isLoginUser": !isLoginUserInMatch,

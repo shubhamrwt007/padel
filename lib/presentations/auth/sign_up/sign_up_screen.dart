@@ -239,44 +239,103 @@ class SignUpScreen extends GetView<SignUpController> {
               );
             }
 
-            return Container(
-              height: 52,
-              width: Get.width,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.textFieldColor,
-                border: Border.all(color: Colors.grey,width: 1),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: Obx(
-                      () => DropdownButton<String>(
-                    value: controller.selectedLocation.value.isEmpty
-                        ? null
-                        : controller.selectedLocation.value,
-                    hint: Text("Pefered Location", style: style),
-                    dropdownColor: Colors.white,
-                    isExpanded: true,
-                    items: controller.locations
-                        .map((state) => DropdownMenuItem<String>(
-                      value: state.name ?? '',
-                      child: Text(
-                        state.name ?? '',
-                        style: style,
+            return GestureDetector(
+              onTap: () => _showLocationDialog(),
+              child: Container(
+                height: 52,
+                width: Get.width,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.textFieldColor,
+                  border: Border.all(color: Colors.grey,width: 1),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      controller.selectedLocation.value.isEmpty
+                          ? "Preferred Location"
+                          : controller.selectedLocation.value,
+                      style: style.copyWith(
+                        color: controller.selectedLocation.value.isEmpty
+                            ? Colors.grey.shade600
+                            : AppColors.textColor,
                       ),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      controller.selectedLocation.value = value ?? "";
-                      CustomLogger.logMessage(msg: "Selected Location -> ${controller.selectedLocation.value}",level: LogLevel.info);
-                    },
-                  ),
+                    ),
+                    Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                  ],
                 ),
               ),
             );
 
           }).paddingOnly(bottom: Get.height * 0.12);
   }
+
+  void _showLocationDialog() {
+    final searchController = TextEditingController();
+    final filteredLocations = <dynamic>[].obs;
+    filteredLocations.addAll(controller.locations);
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Container(
+          height: Get.height * 0.6,
+          width: Get.width * 0.9,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                "Select Location",
+                style: Get.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: "Search cities...",
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (value) {
+                  filteredLocations.clear();
+                  if (value.isEmpty) {
+                    filteredLocations.addAll(controller.locations);
+                  } else {
+                    filteredLocations.addAll(
+                      controller.locations.where((location) =>
+                          location.name?.toLowerCase().contains(value.toLowerCase()) ?? false),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Obx(() => ListView.builder(
+                  itemCount: filteredLocations.length,
+                  itemBuilder: (context, index) {
+                    final location = filteredLocations[index];
+                    return ListTile(
+                      title: Text(location.name ?? ''),
+                      onTap: () {
+                        controller.selectedLocation.value = location.name ?? '';
+                        Get.back();
+                      },
+                    );
+                  },
+                )),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
 
   Widget genderField() {
     final style = Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500);

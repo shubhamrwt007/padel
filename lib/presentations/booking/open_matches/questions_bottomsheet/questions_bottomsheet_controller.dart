@@ -601,7 +601,99 @@ class QuestionsBottomsheetController extends GetxController {
     super.onClose();
   }
   
-  // Helper method to add minutes to time string
+  // Group consecutive slots
+  List<Map<String, dynamic>> getGroupedSlots() {
+    final slots = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
+    if (slots.isEmpty) return [];
+
+    // Sort slots by time
+    final sortedSlots = slots.toList()
+      ..sort((a, b) => _getSlotHour(a.time).compareTo(_getSlotHour(b.time)));
+
+    final List<Map<String, dynamic>> groups = [];
+    var i = 0;
+
+    while (i < sortedSlots.length) {
+      final consecutiveSlots = [sortedSlots[i]];
+      var totalAmount = sortedSlots[i].amount ?? 0;
+
+      // Find consecutive slots
+      for (var j = i + 1; j < sortedSlots.length; j++) {
+        final currentHour = _getSlotHour(sortedSlots[j - 1].time);
+        final nextHour = _getSlotHour(sortedSlots[j].time);
+
+        if (nextHour - currentHour == 1) {
+          consecutiveSlots.add(sortedSlots[j]);
+          totalAmount += sortedSlots[j].amount ?? 0;
+        } else {
+          break;
+        }
+      }
+
+      // Create time range
+      String timeRange;
+      if (consecutiveSlots.length == 1) {
+        timeRange = _formatTimeSlot(consecutiveSlots.first.time ?? '');
+      } else {
+        final startTime = _formatTimeSlot(consecutiveSlots.first.time ?? '');
+        final endTime = _formatTimeSlot(consecutiveSlots.last.time ?? '');
+        final startPeriod = startTime.contains('AM') ? 'AM' : 'PM';
+        final endPeriod = endTime.contains('AM') ? 'AM' : 'PM';
+        final startHour = startTime.replaceAll(RegExp(r'\s*(AM|PM)', caseSensitive: false), '');
+        final endHour = endTime.replaceAll(RegExp(r'\s*(AM|PM)', caseSensitive: false), '');
+        
+        if (startPeriod == endPeriod) {
+          timeRange = '$startHour-$endHour$endPeriod';
+        } else {
+          timeRange = '$startTime-$endTime';
+        }
+      }
+
+      groups.add({
+        'timeRange': timeRange,
+        'totalAmount': totalAmount,
+        'slots': consecutiveSlots,
+      });
+
+      i += consecutiveSlots.length;
+    }
+
+    return groups;
+  }
+
+  // Get hour from time string
+  int _getSlotHour(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 0;
+    
+    try {
+      final time = timeStr.trim().toLowerCase();
+      final dt = DateFormat('h:mm a').parseStrict(time);
+      return dt.hour;
+    } catch (_) {
+      try {
+        final time = timeStr.trim().toLowerCase();
+        final dt = DateFormat('h a').parseStrict(time);
+        return dt.hour;
+      } catch (_) {
+        final parts = timeStr.split(' ');
+        if (parts.length == 2) {
+          final isPm = parts[1].toLowerCase() == 'pm';
+          final hm = parts[0].split(':');
+          final h = int.tryParse(hm[0]) ?? 0;
+          var hour = h % 12;
+          if (isPm) hour += 12;
+          return hour;
+        }
+        return 0;
+      }
+    }
+  }
+
+  // Format time slot
+  String _formatTimeSlot(String time) {
+    if (time.isEmpty) return time;
+    return time.contains(':') ? time : time;
+  }
   String _addMinutesToTime(String timeStr, int minutes) {
     try {
       final time = timeStr.trim().toLowerCase();

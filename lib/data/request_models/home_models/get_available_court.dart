@@ -173,6 +173,7 @@ class Slots {
   String? availabilityStatus;
   int? duration;
   String? bookingTime;
+  bool? has30MinPrice;
   List<BusinessHours>? businessHours;
 
   Slots({
@@ -183,6 +184,7 @@ class Slots {
     this.availabilityStatus,
     this.duration,
     this.bookingTime,
+    this.has30MinPrice,
     this.businessHours,
   });
 
@@ -194,6 +196,7 @@ class Slots {
     availabilityStatus = json['availabilityStatus'];
     duration = json['duration'];
     bookingTime = json['bookingTime'];
+    has30MinPrice = json['has30MinPrice'];
     businessHours = (json['businessHours'] as List?)
         ?.map((e) => BusinessHours.fromJson(e))
         .toList();
@@ -207,6 +210,7 @@ class Slots {
         'availabilityStatus': availabilityStatus,
         'duration': duration,
         'bookingTime': bookingTime,
+        'has30MinPrice': has30MinPrice,
         'businessHours': businessHours?.map((e) => e.toJson()).toList(),
       };
 }

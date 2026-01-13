@@ -120,7 +120,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         controller.toggleSlotsCollapse();
                         // Clear selected slots when clicking arrow up
                         if (controller.showMainGrid.value) {
-                          controller.clearAllSelections();
+                          controller.clearAllSelectionsAndClubs();
                         }
                       },
                       child: AnimatedRotation(
@@ -716,6 +716,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         );
                       },
                       onDateChange: (date) {
+                        final wasShowingClubs = controller.courtsByDuration.value != null && !controller.showMainGrid.value;
+                        
                         controller.selectedDate.value = date;
                         controller.focusedMonth.value = DateTime(
                           date.year,
@@ -729,8 +731,15 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                           controller.showUnavailableSlots.value,
                         );
                         controller.slots.refresh();
-                        // Refresh courts by duration if time slot is selected
-                        controller.fetchCourtsIfReady();
+                        
+                        // If clubs were showing before date change, refetch them after slots are refreshed
+                        if (wasShowingClubs) {
+                          Future.delayed(Duration(milliseconds: 600), () {
+                            if (controller.multiDateSelections.isNotEmpty) {
+                              controller.fetchCourtsByDuration();
+                            }
+                          });
+                        }
                       },
                     ),
                   ),

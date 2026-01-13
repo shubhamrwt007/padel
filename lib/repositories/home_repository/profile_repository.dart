@@ -45,7 +45,7 @@ class ProfileRepository {
 
   Future<UpdateProfileModel> updateUserProfile({
     required String name,
-    // required String lastName,
+    String? email,
     required String gender,
     required String dob,
     required String city,
@@ -55,7 +55,7 @@ class ProfileRepository {
     try {
       FormData formData = FormData.fromMap({
         'name': name,
-        // 'lastName':lastName,
+        'email':email,
         'gender': gender,
         'dob': dob,
         'city': city,

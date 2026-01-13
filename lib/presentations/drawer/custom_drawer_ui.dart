@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/app_strings.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
+import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/cart/cart_screen.dart';
@@ -223,6 +224,8 @@ class CustomDrawerUi extends GetView<ProfileController> {
               onTap: () {
                 controller.selectedIndex.value = 8;
                 // Get.toNamed(RoutesName.community);
+                if(Get.isSnackbarOpen)return;
+               SnackBarUtils.showInfoSnackBar("Community coming soon!");
               },
             ),
           ),

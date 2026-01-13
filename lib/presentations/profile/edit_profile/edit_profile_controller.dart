@@ -195,6 +195,7 @@ class EditProfileController extends GetxController{
 
       final updatedProfile = await profileRepository.updateUserProfile(
         name: nameController.text.trim(),
+        email: emailController.text.trim(),
         // lastName: lastNameController.text.trim(),
         gender: selectedGender.value,
         dob: formattedDate,

@@ -1,5 +1,8 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:padel_mobile/data/request_models/createAndGetSlotHistoryModel.dart';
+import 'package:padel_mobile/data/request_models/deleteSlotHistoryModel.dart';
+import 'package:padel_mobile/data/request_models/slot_history_models/delete_bulk_slot_history_model.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_location_maps_model.dart';
@@ -43,9 +46,9 @@ class HomeRepository {
     required String registerClubId,       // club id
     required String day,
      String? date,
-    String? duration
+    // String? duration
   }) async {
-    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&duration=$duration";
+    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date";
 
     try {
       final response = await dioClient.get(url);
@@ -158,6 +161,83 @@ class HomeRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Get Courts By Duration Data failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Create and Get Slot History------------------------------------------------
+  Future<CreateAndGetSlotHistoryModel> createAndGetSlotHistory({
+    required dynamic data,
+  }) async {
+    try {
+      final response = await dioClient.post(
+        AppEndpoints.createAndGetSlotHistory,
+        data: data,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Create and Get Slot History Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return CreateAndGetSlotHistoryModel.fromJson(response.data);
+      } else {
+        throw Exception("Create and Get Slot History failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Create and Get Slot History failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+  ///Delete Slot History------------------------------------------------
+  Future<DeleteSlotHistoryModel> deleteSlotHistory({
+    required dynamic data,
+  }) async {
+    try {
+      final response = await dioClient.delete(AppEndpoints.deleteSlotHistory, data: data,);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Delete Slot History Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return DeleteSlotHistoryModel.fromJson(response.data);
+      } else {
+        throw Exception("Delete Slot History failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Delete Slot History failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+  ///Delete Bulk Slot History---------------------------------------------------
+  Future<DeleteBulkSlotHistoryModel> deleteBulkSlotHistory({
+    required dynamic data,
+  }) async {
+    try {
+      final response = await dioClient.delete(AppEndpoints.deleteBulkSlotHistory, data: data,);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Delete Bulk Slot History Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return DeleteBulkSlotHistoryModel.fromJson(response.data);
+      } else {
+        throw Exception("Delete Bulk Slot History failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Delete Bulk Slot History failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

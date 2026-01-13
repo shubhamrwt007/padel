@@ -472,7 +472,8 @@ class YourMatchRequestsScreen extends StatelessWidget {
             "matchLevel": "",
             "isLoginUser": true,
             "isMatchCreator": false,
-            "requestId":request?.id??""
+            "requestId":request?.id??"",
+            "bookingId":request?.bookingId??""
           },
         );
         // Get.toNamed(

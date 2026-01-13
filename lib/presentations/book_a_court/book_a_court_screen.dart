@@ -28,6 +28,7 @@ class BookACourtScreen extends StatelessWidget {
 
   BookACourtScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,10 +241,10 @@ class BookACourtScreen extends StatelessWidget {
       }
 
       final courtsByDuration = controller.courtsByDuration.value;
-      
+
       // Show empty state if no data
-      if (courtsByDuration == null || 
-          courtsByDuration.data == null || 
+      if (courtsByDuration == null ||
+          courtsByDuration.data == null ||
           courtsByDuration.data!.isEmpty) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +273,7 @@ class BookACourtScreen extends StatelessWidget {
           ...List.generate(clubsData.length, (clubIndex) {
             final clubData = clubsData[clubIndex];
             final isLastItem = clubIndex == clubsData.length - 1;
-            
+
             return Column(
               children: [
                 /// CLUB HEADER
@@ -344,7 +345,7 @@ class BookACourtScreen extends StatelessWidget {
                 if (clubData.courts != null && clubData.courts!.isNotEmpty)
                   ...List.generate(clubData.courts!.length, (courtIndex) {
                     final court = clubData.courts![courtIndex];
-                    
+
                     return Obx(() {
                       final isExpanded = controller.expandedIndex.value == (clubIndex * 100);
 
@@ -600,7 +601,7 @@ class BookACourtScreen extends StatelessWidget {
                         return GestureDetector(
                           onTap: onTap,
                           child: Obx(() {
-                            final realCourtSelections = 
+                            final realCourtSelections =
                                 controller.realCourtSelections.entries
                                     .where((entry) => entry.value['date'] == dateString)
                                     .map((entry) => entry.value)
@@ -756,19 +757,19 @@ class BookACourtScreen extends StatelessWidget {
 
       final court = slotsData.data!.first;
       var slotTimes = court.slots ?? [];
-      
+
       // Filter to show only the row containing selected slot when collapsed
       if (controller.isSlotsCollapsed.value && controller.selectedSearchSlotId.value != null) {
         final selectedSlotId = controller.selectedSearchSlotId.value!;
         final selectedIndex = slotTimes.indexWhere((slot) => slot.sId == selectedSlotId);
-        
+
         if (selectedIndex != -1) {
           // Grid has 4 columns per row
           const columnsPerRow = 4;
           final rowIndex = selectedIndex ~/ columnsPerRow;
           final startIndex = rowIndex * columnsPerRow;
           final endIndex = (startIndex + columnsPerRow).clamp(0, slotTimes.length);
-          
+
           // Get all slots in the same row
           slotTimes = slotTimes.sublist(startIndex, endIndex);
         }
@@ -896,7 +897,7 @@ class BookACourtScreen extends StatelessWidget {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
-    
+
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
 
@@ -909,7 +910,7 @@ class BookACourtScreen extends StatelessWidget {
             if (box != null) {
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
-              
+
               controller.toggleCourtRowSlotSelection(
                 slot,
                 courtId: resolvedCourtId,
@@ -1043,7 +1044,7 @@ class BookACourtScreen extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   ),
-                  
+
                   // Left half white text overlay
                   if (supports30Min && controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                     ClipRect(
@@ -1057,7 +1058,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  
+
                   // Right half white text overlay
                   if (supports30Min && controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                     ClipRect(
@@ -1071,7 +1072,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  
+
                   // Full white text for non-30min selections or both halves selected
                   if ((!supports30Min && isSelected) || (supports30Min && controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
                     Text(
@@ -1259,7 +1260,7 @@ class BookACourtScreen extends StatelessWidget {
                           ],
                         ),
                         Text(
-                          '₹ ${controller.totalAmount.value}',
+                          '₹ ${_getSelectedSlotAmount()}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -1283,9 +1284,9 @@ class BookACourtScreen extends StatelessWidget {
                             if (!Get.isRegistered<CartController>()) {
                               Get.put(CartController());
                             }
-                            // Sync total amount to CartController for payment screen
+                            // Sync selected slot amount to CartController for payment screen
                             final cartController = Get.find<CartController>();
-                            cartController.totalPrice.value = controller.totalAmount.value;
+                            cartController.totalPrice.value = _getSelectedSlotAmount();
                             Get.toNamed(RoutesName.paymentMethod);
                           },
                     child: isProcessing.value
@@ -1552,6 +1553,18 @@ class BookACourtScreen extends StatelessWidget {
         const SizedBox(height: 8),
       ],
     );
+  }
+  
+  int _getSelectedSlotAmount() {
+    if (controller.realCourtSelections.isEmpty) return 0;
+    
+    // Sum all selected slot amounts from API
+    int totalAmount = 0;
+    for (var selection in controller.realCourtSelections.values) {
+      final slot = selection['slot'] as Slots;
+      totalAmount += slot.amount ?? 0;
+    }
+    return totalAmount;
   }
   
   int _getGroupedSlotsCount() {
