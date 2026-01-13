@@ -32,7 +32,6 @@ class AppStrings{
   static const String letHelpYouBackIn = "Let’ help you get back in. enter the email linked to your account.";
   static const String sendOtp = "Send OTP";
   static const String enterOtp = "Enter OTP";
-  static const String aSecurityCodeHasBeenSent = "A security code has been sent to your phone number. Please enter it below";
   static const String doNotReceiveCode = "Don’t receive code ? ";
   static const String resend = "Re-send";
   static const String verify = "Verify";

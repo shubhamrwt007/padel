@@ -40,14 +40,16 @@ class OtpScreen extends GetView<OtpController> {
             ).paddingOnly(bottom: Get.height * 0.03, top: Get.height * 0.15),
           ),
           Text(
-            AppStrings.aSecurityCodeHasBeenSent,
+            'A security code has been sent to ${controller.getMaskedPhoneNumber()}. Please enter it below',
             style: Theme.of(
               context,
             ).textTheme.headlineMedium!.copyWith(fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
           ).paddingOnly(bottom: Get.height * 0.057),
           PinCodeTextField(
+            scrollPadding: EdgeInsets.only(bottom: Get.height*0.3),
             controller: controller.valueController,
+            focusNode: controller.pinFocusNode,
             appContext: context,
             length: 4,
             cursorColor: AppColors.primaryColor,
@@ -83,7 +85,9 @@ class OtpScreen extends GetView<OtpController> {
             blinkWhenObscuring: true,
             autoDisposeControllers: true,
             beforeTextPaste: (text) => true,
-            onChanged: (value) {},
+            onChanged: (value) {
+              controller.onOtpChanged(value);
+            },
           ).paddingOnly(
             left: Get.width * 0.06,
             right: Get.width * 0.06,
@@ -98,7 +102,9 @@ class OtpScreen extends GetView<OtpController> {
               style: Theme.of(context).textTheme.headlineMedium!.copyWith(fontWeight: FontWeight.w500),
               textAlign: TextAlign.center,
             ).paddingOnly(
-              bottom: Get.height * 0.25,
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? Get.height * 0.01
+                  : Get.height * 0.25,
             );
           }),
 

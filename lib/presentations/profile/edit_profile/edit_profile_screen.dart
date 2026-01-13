@@ -3,8 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 
 class EditProfileUi extends StatelessWidget {
+  final String? buttonType;
   final EditProfileController controller = Get.put(EditProfileController());
-  EditProfileUi({super.key});
+  EditProfileUi({super.key,this.buttonType});
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +15,9 @@ class EditProfileUi extends StatelessWidget {
         backgroundColor: AppColors.whiteColor,
         bottomNavigationBar: _bottomBar(context),
         appBar: primaryAppBar(
-          showLeading: true,
+          showLeading:buttonType=="drawer"? true:false,
           centerTitle: true,
-          title: Text(" Edit Profile").paddingOnly(left: Get.width * 0.02),
+          title: Text("Profile").paddingOnly(left: Get.width * 0.02),
           context: context,
         ),
         body: RefreshIndicator(

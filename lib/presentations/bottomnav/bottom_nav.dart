@@ -32,7 +32,7 @@ class BottomNavUi extends StatelessWidget {
           ],
         ),
         child: Container(
-          height: 60,
+          height: 65,
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(Assets.imagesImgBackgroundBottomBar),

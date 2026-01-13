@@ -49,25 +49,8 @@ class LeaderboardController extends GetxController {
   final leftScore = 16.obs;
   final rightScore = 22.obs;
 
-  final categories = ['Player', 'Team', 'Tournaments', 'State Level'];
+  final categories = ['Player'];
   var selectedCategory = 'Player'.obs;
-  
-  // Method to handle tab selection with coming soon logic
-  void selectCategory(String category) {
-    if (category == 'Player') {
-      selectedCategory.value = category;
-      showStateFilters.value = false;
-    } else {
-      Get.snackbar(
-        'Coming Soon',
-        'This feature will be available soon!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Get.theme.primaryColor,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-    }
-  }
   RxDouble borderRadius = 24.0.obs;
 
   var expandedIndex = (-1).obs;

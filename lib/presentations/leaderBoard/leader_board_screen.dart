@@ -11,12 +11,19 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import 'leader_board_controller.dart';
 class LeaderboardScreen extends StatelessWidget {
+  final String? buttonType;
   final LeaderboardController controller = Get.put(LeaderboardController());
 
-  LeaderboardScreen({super.key});
+  LeaderboardScreen({super.key,this.buttonType});
 
   String _getInitials(String name) {
     return name.split(' ').map((word) => word.isNotEmpty ? word[0] : '').take(2).join().toUpperCase();
+  }
+
+  String _formatName(String name) {
+    final words = name.split(' ');
+    if (words.length <= 1) return name;
+    return '${words[0]} ${words[1][0]}.';
   }
 
   @override
@@ -30,6 +37,7 @@ class LeaderboardScreen extends StatelessWidget {
           leadingButtonColor: AppColors.whiteColor,
           titleTextColor: AppColors.whiteColor,
           centerTitle: true,
+          showLeading: buttonType=="drawer"?true:false,
           title: const Text("Leaderboard"),
           context: context,
         ),
@@ -83,7 +91,7 @@ class LeaderboardScreen extends StatelessWidget {
               }
               
               final data = controller.leaderboardData;
-              return _buildLeaderboardSheet(context, data);
+              return _buildLeaderboardSheet(context, data,buttonType??"");
             }),
           ],
         ),
@@ -346,9 +354,9 @@ class LeaderboardScreen extends StatelessWidget {
 
   Widget _podiumItem(Player player, int position) {
     final heightOffsets = {
-      1: Get.height * 0.018,
-      2: Get.height * 0.068,
-      3: Get.height * 0.098
+      1: Get.height * 0.010,
+      2: Get.height * 0.060,
+      3: Get.height * 0.090
     }; // 1st highest, 2nd middle, 3rd lowest
 
     return Padding(
@@ -425,7 +433,7 @@ class LeaderboardScreen extends StatelessWidget {
                 width: 100,
                 color: Colors.transparent,
                 child: Text(
-                  player.name, // ✅ dynamically show player or club name
+                  _formatName(player.name), // ✅ formatted name for overflow
                   textAlign: TextAlign.center,
                   style: Get.textTheme.headlineSmall!.copyWith(
                     color: Colors.white,
@@ -444,10 +452,10 @@ class LeaderboardScreen extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.secondaryColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                "${player.points}", // ✅ dynamic score
+                "${player.points} XP", // ✅ dynamic score
                 style: Get.textTheme.bodyMedium!.copyWith(
                   color: Colors.white,
                   fontSize: 11,
@@ -463,7 +471,7 @@ class LeaderboardScreen extends StatelessWidget {
                 color: AppColors.whiteColor,
                 fontSize: 40,
               ),
-            ),
+            ).paddingOnly(top: 10),
           ],
         ),
       ),
@@ -471,8 +479,8 @@ class LeaderboardScreen extends StatelessWidget {
   }
 
 
-  Widget _buildLeaderboardSheet(BuildContext context, List<Map<String, dynamic>> data) {
-    const double minSize = 0.48;
+  Widget _buildLeaderboardSheet(BuildContext context, List<Map<String, dynamic>> data,String buttonType) {
+    final double minSize = buttonType=="drawer"? 0.56:0.50;
     const double maxSize = 1.0;
     const double maxRadius = 24.0;
 

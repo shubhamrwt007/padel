@@ -20,8 +20,24 @@ class OtpController extends GetxController {
   LoginController loginController = Get.put(LoginController());
 
   final TextEditingController valueController = TextEditingController();
+  final FocusNode pinFocusNode = FocusNode();
   final arguments = Get.arguments;
   RxBool isLoading = false.obs;
+
+  String getMaskedPhoneNumber() {
+    final phoneNumber = arguments['phoneNumber'] ?? '';
+    if (phoneNumber.length >= 4) {
+      final lastFour = phoneNumber.substring(phoneNumber.length - 4);
+      return '+91******$lastFour';
+    }
+    return phoneNumber;
+  }
+
+  void onOtpChanged(String value) {
+    if (value.length == 4) {
+      verifyOTP();
+    }
+  }
 
   Future<void> verifyOTP() async {
     FocusManager.instance.primaryFocus!.unfocus();
@@ -88,11 +104,15 @@ class OtpController extends GetxController {
   void onInit() {
     super.onInit();
     startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      pinFocusNode.requestFocus();
+    });
   }
 
   @override
   void onClose() {
     _timer?.cancel();
+    // pinFocusNode.dispose();
     super.onClose();
   }
 }

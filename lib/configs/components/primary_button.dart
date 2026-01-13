@@ -24,7 +24,7 @@ class PrimaryButton extends StatelessWidget {
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(5),
       onTap: onTap,
       child: Container(
         height: height ?? 50,
@@ -41,7 +41,7 @@ class PrimaryButton extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(5),
         ),
         child: child ??
             Text(

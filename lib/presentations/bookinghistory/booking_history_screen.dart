@@ -17,7 +17,8 @@ import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import 'booking_history_controller.dart';
 
 class BookingHistoryUi extends StatefulWidget {
-  const BookingHistoryUi({super.key});
+  final String? buttonType;
+  const BookingHistoryUi({super.key,this.buttonType});
 
   @override
   State<BookingHistoryUi> createState() => _BookingHistoryUiState();
@@ -35,19 +36,10 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
+      appBar: primaryAppBar(
         centerTitle: true,
-        title: const Text(
-          "My Booking",
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+          showLeading:widget.buttonType=="drawer"? true:false,
+          title: Text("My Bookings"), context: context),
       body: Column(
         children: [
           tabBar(controller),
