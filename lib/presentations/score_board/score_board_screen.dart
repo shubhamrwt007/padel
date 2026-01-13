@@ -63,8 +63,10 @@ class ScoreBoardScreen extends StatelessWidget {
                         : _buildMatchCard(context).paddingOnly(left: 15, right: 15, top: 10)),
                   ],
                 ),
+                // const SizedBox(height: 12),
+                // _buildAddScoreButton(),
                 const SizedBox(height: 12),
-                _buildAddScoreButton(),
+                _buildAddSetButton(),
                 const SizedBox(height: 12),
                 Obx(() => controller.isLoading.value
                     ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
@@ -182,10 +184,16 @@ class ScoreBoardScreen extends StatelessWidget {
               ()=> Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                controller.clubName.value,
-                style: Get.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Container(
+                width: Get.width*0.3,
+                alignment: AlignmentGeometry.centerRight,
+                color: Colors.transparent,
+                child: Text(
+                  overflow: TextOverflow.ellipsis,
+                  controller.clubName.value,
+                  style: Get.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Text(
@@ -826,6 +834,47 @@ class ScoreBoardScreen extends StatelessWidget {
     });
   }
 
+  Widget _buildAddSetButton() {
+    return Obx(() {
+      final teamAPlayers = controller.teams.isNotEmpty
+          ? controller.teams[0]["players"] as List
+          : [];
+      final teamBPlayers = controller.teams.length > 1
+          ? controller.teams[1]["players"] as List
+          : [];
+      bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
+      
+      bool isDisabled = controller.isCompleted.value || controller.sets.length >= 10 || !allPlayersAdded;
+      
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isDisabled ? Colors.grey : AppColors.primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          onPressed: isDisabled ? null : () {
+            controller.addSet();
+          },
+          child: controller.isAddingSet.value
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: LoadingWidget(color: Colors.white),
+                )
+              : const Text(
+                  "+ Add Set",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+        ),
+      );
+    });
+  }
+
   void _showShuffleDialog() {
     Get.dialog(
       Dialog(
@@ -933,6 +982,54 @@ class ScoreBoardScreen extends StatelessWidget {
       ),
       barrierDismissible: false,
     );
+  }
+
+  Widget _buildTeamAddScoreButton(String team, int setNumber) {
+    // Check if all players are added first
+    final teamAPlayers = controller.teams.isNotEmpty
+        ? controller.teams[0]["players"] as List
+        : [];
+    final teamBPlayers = controller.teams.length > 1
+        ? controller.teams[1]["players"] as List
+        : [];
+    bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
+    
+    if (!allPlayersAdded) {
+      return const Icon(Icons.remove, color: Colors.black54, size: 16);
+    }
+    
+    // Check if user can score for this team
+    bool canScore = controller.canScoreForTeam(team);
+    
+    if (!canScore) {
+      return const Icon(Icons.remove, color: Colors.black54, size: 16);
+    }
+    
+    return GestureDetector(
+      onTap: () {
+        _showQuickScoreDialog(team, setNumber);
+      },
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.primaryColor,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Text(
+          " Add Score",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showQuickScoreDialog(String team, int setNumber) {
+    Get.dialog(SetScoreDialog(preselectedSet: setNumber));
   }
 
 
@@ -1103,7 +1200,7 @@ class ScoreBoardScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               SizedBox(
-                                width: 40,
+                                width: 60,
                                 child: () {
                                   final teamAScore = set["teamAScore"] ?? 0;
                                   
@@ -1117,7 +1214,7 @@ class ScoreBoardScreen extends StatelessWidget {
                                             fontSize: 16,
                                           ),
                                         )
-                                      : const Icon(Icons.remove, color: Colors.black54, size: 16);
+                                      : _buildTeamAddScoreButton('Team A', setNumber);
                                 }(),
                               ),
                               Text(
@@ -1129,7 +1226,7 @@ class ScoreBoardScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(
-                                width: 40,
+                                width: 60,
                                 child: () {
                                   final teamBScore = set["teamBScore"] ?? 0;
                                   
@@ -1143,7 +1240,7 @@ class ScoreBoardScreen extends StatelessWidget {
                                             fontSize: 16,
                                           ),
                                         )
-                                      : const Icon(Icons.remove, color: Colors.black54, size: 16);
+                                      : _buildTeamAddScoreButton('Team B', setNumber);
                                 }(),
                               ),
                             ],
@@ -1156,43 +1253,43 @@ class ScoreBoardScreen extends StatelessWidget {
               ),
               Column(
                 children: [
-                  const SizedBox(height: 10),
-                  // Show only if less than 8 sets
-                if (controller.sets.length < 10 && !controller.isCompleted.value)
-                  Obx(() => GestureDetector(
-                    onTap: controller.isAddingSet.value ? null : () {
-                      controller.addSet();
-                    },
-                    child: Container(
-                      alignment: AlignmentGeometry.center,
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: controller.isAddingSet.value 
-                            ? AppColors.greyColor.withValues(alpha:0.5)
-                            : AppColors.whiteColor,
-                        border: Border.all(color: AppColors.textColor),
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: controller.isAddingSet.value ? [] : [
-                          BoxShadow(
-                            color: AppColors.greyColor,
-                            blurRadius: 0.5,
-                            spreadRadius: 0.6,
-                            offset: Offset(0, 2)
-                          )
-                        ]
-                      ),
-                      child: controller.isAddingSet.value
-                          ? SizedBox(
-                              height: 25,
-                              width: 15,
-                              child: LoadingWidget(color: AppColors.primaryColor,)
-                            )
-                          : const Text(
-                              "+ Add Set",
-                              style: TextStyle(color: Colors.black87),
-                            ),
-                    ).paddingOnly(left: 10, right: 10),
-                  )),
+                //   const SizedBox(height: 10),
+                //   // Show only if less than 8 sets
+                // if (controller.sets.length < 10 && !controller.isCompleted.value)
+                //   Obx(() => GestureDetector(
+                //     onTap: controller.isAddingSet.value ? null : () {
+                //       controller.addSet();
+                //     },
+                //     child: Container(
+                //       alignment: AlignmentGeometry.center,
+                //       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                //       decoration: BoxDecoration(
+                //         color: controller.isAddingSet.value
+                //             ? AppColors.greyColor.withValues(alpha:0.5)
+                //             : AppColors.whiteColor,
+                //         border: Border.all(color: AppColors.textColor),
+                //         borderRadius: BorderRadius.circular(5),
+                //         boxShadow: controller.isAddingSet.value ? [] : [
+                //           BoxShadow(
+                //             color: AppColors.greyColor,
+                //             blurRadius: 0.5,
+                //             spreadRadius: 0.6,
+                //             offset: Offset(0, 2)
+                //           )
+                //         ]
+                //       ),
+                //       child: controller.isAddingSet.value
+                //           ? SizedBox(
+                //               height: 25,
+                //               width: 15,
+                //               child: LoadingWidget(color: AppColors.primaryColor,)
+                //             )
+                //           : const Text(
+                //               "+ Add Set",
+                //               style: TextStyle(color: Colors.black87),
+                //             ),
+                //     ).paddingOnly(left: 10, right: 10),
+                //   )),
                   // End Game button - show only if more than 2 sets and 3rd set has both scores
                   if (controller.sets.length > 2 && !controller.isCompleted.value && _shouldShowEndGameButton())
                     const SizedBox(height: 10),
@@ -1321,7 +1418,8 @@ class ScoreBoardScreen extends StatelessWidget {
 }
 
 class SetScoreDialog extends StatefulWidget {
-  const SetScoreDialog({super.key});
+  final int? preselectedSet;
+  const SetScoreDialog({super.key, this.preselectedSet});
 
   @override
   State<SetScoreDialog> createState() => _SetScoreDialogState();
@@ -1337,9 +1435,31 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
   void initState() {
     super.initState();
     _determineCurrentSet();
+    _loadExistingScores();
+  }
+
+  void _loadExistingScores() {
+    if (widget.preselectedSet != null) {
+      final set = controller.sets.firstWhere(
+        (s) => s["setNumber"] == widget.preselectedSet,
+        orElse: () => {},
+      );
+      if (set.isNotEmpty) {
+        final teamAScore = set["teamAScore"] ?? 0;
+        final teamBScore = set["teamBScore"] ?? 0;
+        teamAController.text = teamAScore > 0 ? teamAScore.toString() : '';
+        teamBController.text = teamBScore > 0 ? teamBScore.toString() : '';
+      }
+    }
   }
 
   void _determineCurrentSet() {
+    // Use preselected set if provided, otherwise find first empty set
+    if (widget.preselectedSet != null) {
+      currentSetNumber = widget.preselectedSet!;
+      return;
+    }
+    
     // Find the first set without scores
     for (var set in controller.sets) {
       final teamAScore = set["teamAScore"] ?? 0;
@@ -1549,12 +1669,20 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
           final teamAScore = int.tryParse(teamAController.text) ?? 0;
           final teamBScore = int.tryParse(teamBController.text) ?? 0;
           
-          // Validate that user can only score for their team
-          if (controller.isUserInTeamA && teamBScore > 0) {
+          // Get existing scores for this set
+          final existingSet = controller.sets.firstWhere(
+            (s) => s["setNumber"] == currentSetNumber,
+            orElse: () => {},
+          );
+          final existingTeamAScore = existingSet.isNotEmpty ? (existingSet["teamAScore"] ?? 0) : 0;
+          final existingTeamBScore = existingSet.isNotEmpty ? (existingSet["teamBScore"] ?? 0) : 0;
+          
+          // Only validate new scores, not existing ones
+          if (controller.isUserInTeamA && teamBScore > 0 && existingTeamBScore == 0) {
             SnackBarUtils.showErrorSnackBar("You can only add scores for Team A");
             return;
           }
-          if (controller.isUserInTeamB && teamAScore > 0) {
+          if (controller.isUserInTeamB && teamAScore > 0 && existingTeamAScore == 0) {
             SnackBarUtils.showErrorSnackBar("You can only add scores for Team B");
             return;
           }

@@ -25,6 +25,7 @@ class Requests {
   final String? type; // request | invitation
   final String? status;
   final String? preferredTeam;
+  final String? bookingId;
   final String? level;
 
   final String? matchIdString;
@@ -43,6 +44,7 @@ class Requests {
     this.type,
     this.status,
     this.preferredTeam,
+    this.bookingId,
     this.level,
     this.matchIdString,
     this.match,
@@ -60,6 +62,7 @@ class Requests {
       type: json['type']?.toString(),
       status: json['status']?.toString(),
       preferredTeam: json['preferredTeam']?.toString(),
+      bookingId: json['bookingId']?.toString(),
       level: json['level']?.toString(),
 
       matchIdString: json['matchId'] is String ? json['matchId'] : null,

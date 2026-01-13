@@ -312,7 +312,9 @@ class MainHomeScreen extends StatelessWidget {
               width: 235,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.tabColor),
+                border: Border.all(color:
+                b.bookingType == "normal"?Color(0xffC6F6D5):
+                Color(0xff9EBAFF)),
                 gradient: LinearGradient(
                   colors: b.bookingType == "normal" 
                     ? [Color(0xffF0FFF4), Color(0xffC6F6D5).withValues(alpha: 0.3)]
@@ -325,7 +327,6 @@ class MainHomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  const SizedBox(height: 1),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -394,7 +395,7 @@ class MainHomeScreen extends StatelessWidget {
           width: Get.width * 0.27,
           child: Text(
             club?.clubName ?? "N/A",
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.blackColor),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.blackColor,fontSize: 12),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -423,7 +424,7 @@ class MainHomeScreen extends StatelessWidget {
         Row(
           children: [
             const Icon(Icons.star, color: AppColors.secondaryColor, size: 13),
-            Text("4.0", style: Theme.of(context).textTheme.bodySmall),
+            Text("0", style: Theme.of(context).textTheme.bodySmall),
           ],
         ).paddingOnly(bottom: 20),
       ],
@@ -564,6 +565,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "book",
         "boxSize": 60.0,
         "iconSize": 34.0,
+        "offset":Offset(0,3)
       },
       {
         "icon": Assets.imagesIcOpenMatchNew,
@@ -571,6 +573,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "match",
         "boxSize": 60.0,
         "iconSize": 34.0,
+        "offset":Offset(0,3)
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
@@ -578,13 +581,15 @@ class MainHomeScreen extends StatelessWidget {
         "action": "americano",
         "boxSize": 60.0,
         "iconSize": 34.0,
+        "offset":Offset(0,3)
       },
       {
         "icon": Assets.imagesIcChallengesNew,
         "title": "Challenge",
         "action": "challenge",
-        "boxSize": 65.0,
-        "iconSize": 54.0,
+        "boxSize": 60.0,
+        "iconSize": 34.0,
+        "offset":Offset(0,1)
       },
     ];
 
@@ -593,50 +598,55 @@ class MainHomeScreen extends StatelessWidget {
       children: items.map((e) {
         final double boxSize = e["boxSize"] as double;
         final double iconSize = e["iconSize"] as double;
+        final Offset offset = e["offset"] as Offset;
+
 
         return GestureDetector(
           onTap: () => _handleQuickAction(e["action"] as String),
           child: Column(
             children: [
               Container(
-                height: boxSize,
-                width: boxSize,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF3F56D6),
-                      Color(0xFF2B44C4),
+                  height: boxSize,
+                  width: boxSize,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF3F56D6),
+                        Color(0xFF2B44C4),
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: -boxSize * 0.35,
+                        left: -boxSize * 0.35,
+                        child: Container(
+                          height: boxSize * 1.3,
+                          width: boxSize * 1.3,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Transform.translate(
+                          offset:offset,
+                          child: SvgPicture.asset(
+                            e["icon"] as String,
+                            width: iconSize,
+                            height: iconSize,
+                            // color: Colors.red,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -boxSize * 0.35,
-                      left: -boxSize * 0.35,
-                      child: Container(
-                        height: boxSize * 1.3,
-                        width: boxSize * 1.3,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.04),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: SvgPicture.asset(
-                        e["icon"] as String,
-                        width: iconSize,
-                        height: iconSize,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 6),
               Text(
                 e["title"] as String,
@@ -697,7 +707,7 @@ class MainHomeScreen extends StatelessWidget {
   Widget _courtCard() {
     return Obx(() {
       final homeController = controller.homeController;
-      
+
       if (homeController.isLoadingClub.value) {
         return Padding(
           padding: const EdgeInsets.only(top: 12),
@@ -727,13 +737,13 @@ class MainHomeScreen extends StatelessWidget {
           ),
         );
       }
-      
+
       final courts = homeController.courtsList;
-      
+
       if (courts.isEmpty) {
         return const SizedBox(height: 260);
       }
-      
+
       return Padding(
         padding: const EdgeInsets.only(top: 12),
         child: CarouselSlider.builder(
@@ -755,7 +765,7 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
-  
+
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
     return GestureDetector(
       onTap: () {
@@ -850,12 +860,16 @@ class MainHomeScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            court.clubName ?? "N/A",
-                            style: Get.textTheme.titleMedium!
-                                .copyWith(color: Colors.white,fontSize: 16),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Container(
+                            color: Colors.transparent,
+                            width: Get.width*0.5,
+                            child: Text(
+                              court.clubName ?? "N/A",
+                              style: Get.textTheme.titleMedium!
+                                  .copyWith(color: Colors.white,fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           Row(
                             children: [
@@ -863,7 +877,7 @@ class MainHomeScreen extends StatelessWidget {
                                   color: Colors.green, size: 16),
                               const SizedBox(width: 4),
                               const Text(
-                                "4.9",
+                                "0",
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600),
@@ -883,7 +897,7 @@ class MainHomeScreen extends StatelessWidget {
                             child: Text(
                               "${court.city},${court.zipCode}",
                               style: Get.textTheme.bodySmall!
-                                  .copyWith(color: Colors.white70,fontSize: 10),
+                                  .copyWith(color: Colors.white70,fontSize: 9),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -891,12 +905,12 @@ class MainHomeScreen extends StatelessWidget {
                         ],
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 2),
 
                       Text(
                         "${court.courtCount ?? 0} Courts | ${court.features?.join(' | ') ?? 'Available'}",
                         style: Get.textTheme.bodySmall!
-                            .copyWith(color: Colors.white70,fontSize: 10),
+                            .copyWith(color: Colors.white70,fontSize: 9),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -905,12 +919,12 @@ class MainHomeScreen extends StatelessWidget {
 
                       Row(
                         children: [
-                          Text("Booking Price",style: Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor),),
+                          Text("Booking Price",style: Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor,fontSize: 12),),
                           const Spacer(),
                           Text(
                             "₹ ${formatAmount(court.totalAmount ?? 0)}",
                             style: Get.textTheme.titleMedium!
-                                .copyWith(color: Colors.white),
+                                .copyWith(color: Colors.white,fontSize: 14),
                           ),
                         ],
                       ),
@@ -1290,7 +1304,7 @@ class MainHomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: e == 'W' ? Colors.green : Colors.red,
+                            color: e == 'W' ? Colors.green : e =='L'? Colors.red:Colors.grey,
                           ),
                         ),
                       ),

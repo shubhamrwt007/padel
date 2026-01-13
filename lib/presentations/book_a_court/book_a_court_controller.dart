@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
@@ -177,7 +178,82 @@ class BookACourtController extends GetxController {
       isLoadingCourts.value = false;
     });
   }
-  void toggleCourtRowSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
+  // API method for creating slot history
+  Future<bool> createAndGetSlotHistory({
+    required String slotId,
+    required String courtId,
+    required String courtName,
+    required String bookingDate,
+    required String time,
+    required String bookingTime,
+    required int duration,
+    required int totalTime,
+  }) async {
+    try {
+      final body = {
+        "slotId": slotId,
+        "courtId": courtId,
+        "courtName": courtName,
+        "bookingDate": bookingDate,
+        "userId": "",
+        "time": time,
+        "bookingTime": bookingTime,
+        "duration": duration,
+        "totalTime": totalTime,
+      };
+      
+      final response = await _homeRepository.createAndGetSlotHistory(data:body);
+      log('createAndGetSlotHistory called with body: $body');
+      
+      if (response.created) {
+        return true;
+      } else {
+        SnackBarUtils.showInfoSnackBar(response.message??"");
+        // Get.snackbar(
+        //   "Selection Failed",
+        //   "Unable to select this slot. Please try again.",
+        //   backgroundColor: Colors.red,
+        //   colorText: Colors.white,
+        // );
+        return false;
+      }
+    } catch (e) {
+      log('Error in createAndGetSlotHistory: $e');
+      Get.snackbar(
+        "Error",
+        "Failed to select slot. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+  }
+
+  // API method for deleting slot history
+  Future<void> deleteSlotHistory({
+    required String slotId,
+    required String courtId,
+    required String bookingDate,
+    required String time,
+    required String bookingTime,
+  }) async {
+    try {
+      final body = {
+        "slotId": slotId,
+        "courtId": courtId,
+        "bookingDate": bookingDate,
+        "time": time,
+        "bookingTime": bookingTime,
+      };
+      
+      await _homeRepository.deleteSlotHistory(data:body);
+      log('deleteSlotHistory called with body: $body');
+    } catch (e) {
+      log('Error in deleteSlotHistory: $e');
+    }
+  }
+
+  void toggleCourtRowSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) async {
     final slotId = slot.sId ?? '';
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
@@ -188,46 +264,94 @@ class BookACourtController extends GetxController {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
       
+      // Calculate booking time based on which half is selected
+      final bookingTime = _getHalfSlotTime(slot.time ?? '', isFirstHalf == true);
+      
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
+        // Call delete API
+        deleteSlotHistory(
+          slotId: slotId,
+          courtId: resolvedCourtId,
+          bookingDate: dateString,
+          time: bookingTime,
+          bookingTime: bookingTime,
+        );
       } else {
-        // Create a modified slot for half duration but keep original ID
-        final halfSlot = Slots(
-          sId: slotId, // Keep original slot ID
-          time: slot.time,
-          amount: (slot.amount ?? 0) ~/ 2, // Half the price
+        // Call create API first
+        final success = await createAndGetSlotHistory(
+          slotId: slotId,
+          courtId: resolvedCourtId,
+          courtName: courtName ?? '',
+          bookingDate: dateString,
+          time: bookingTime,
+          bookingTime: bookingTime,
+          duration: 30,
+          totalTime: 30,
         );
         
-        realCourtSelections[realCourtKey] = {
-          'slot': halfSlot,
-          'courtId': resolvedCourtId,
-          'courtName': courtName ?? '',
-          'date': dateString,
-          'dateTime': currentDate,
-          'amount': halfSlot.amount ?? 0,
-          'isHalfSlot': true,
-          'isFirstHalf': isFirstHalf,
-        };
+        // Only add to selection if API call was successful
+        if (success) {
+          final halfSlot = Slots(
+            sId: slotId,
+            time: slot.time,
+            amount: (slot.amount ?? 0) ~/ 2,
+          );
+          
+          realCourtSelections[realCourtKey] = {
+            'slot': halfSlot,
+            'courtId': resolvedCourtId,
+            'courtName': courtName ?? '',
+            'date': dateString,
+            'dateTime': currentDate,
+            'amount': halfSlot.amount ?? 0,
+            'isHalfSlot': true,
+            'isFirstHalf': isFirstHalf,
+          };
+        }
       }
     } else {
-      // Handle full slot selection (original behavior)
+      // Handle full slot selection
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId';
 
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
         selectedSlots.removeWhere((s) => s.sId == slotId);
+        // Call delete API
+        deleteSlotHistory(
+          slotId: slotId,
+          courtId: resolvedCourtId,
+          bookingDate: dateString,
+          time: slot.time ?? '',
+          bookingTime: slot.time ?? '',
+        );
       } else {
-        realCourtSelections[realCourtKey] = {
-          'slot': slot,
-          'courtId': resolvedCourtId,
-          'courtName': courtName ?? '',
-          'date': dateString,
-          'dateTime': currentDate,
-          'amount': slot.amount ?? 0,
-        };
+        // Call create API first
+        final success = await createAndGetSlotHistory(
+          slotId: slotId,
+          courtId: resolvedCourtId,
+          courtName: courtName ?? '',
+          bookingDate: dateString,
+          time: slot.time ?? '',
+          bookingTime: slot.time ?? '',
+          duration: 60,
+          totalTime: 60,
+        );
+        
+        // Only add to selection if API call was successful
+        if (success) {
+          realCourtSelections[realCourtKey] = {
+            'slot': slot,
+            'courtId': resolvedCourtId,
+            'courtName': courtName ?? '',
+            'date': dateString,
+            'dateTime': currentDate,
+            'amount': slot.amount ?? 0,
+          };
 
-        if (!selectedSlots.any((s) => s.sId == slotId)) {
-          selectedSlots.add(slot);
+          if (!selectedSlots.any((s) => s.sId == slotId)) {
+            selectedSlots.add(slot);
+          }
         }
       }
     }
@@ -696,6 +820,54 @@ class BookACourtController extends GetxController {
     return currentTime;
   }
   
+  // Get half slot time - for left half return original time, for right half add 30 minutes
+  String _getHalfSlotTime(String originalTime, bool isFirstHalf) {
+    if (isFirstHalf) {
+      return originalTime; // Left half uses original time (e.g., "8:00 PM")
+    } else {
+      // Right half adds 30 minutes (e.g., "8:30 PM")
+      try {
+        final timeString = originalTime.trim();
+        DateTime? parsedTime;
+        
+        // Try to parse with common formats
+        for (final pattern in ['h:mm a', 'h a', 'HH:mm', 'H:mm']) {
+          try {
+            parsedTime = DateFormat(pattern).parse(timeString);
+            break;
+          } catch (_) {}
+        }
+        
+        if (parsedTime != null) {
+          // Add 30 minutes
+          final newTime = parsedTime.add(Duration(minutes: 30));
+          return DateFormat('h:mm a').format(newTime);
+        }
+        
+        // Fallback: manual parsing for formats like "8 PM"
+        final parts = timeString.split(' ');
+        if (parts.length == 2) {
+          final timePart = parts[0];
+          final period = parts[1].toLowerCase();
+          
+          int? hour = int.tryParse(timePart);
+          if (hour != null) {
+            // Add 30 minutes (0.5 hour)
+            final newHour = hour;
+            final newMinute = 30;
+            
+            return '$newHour:${newMinute.toString().padLeft(2, '0')} ${period.toUpperCase()}';
+          }
+        }
+      } catch (e) {
+        log('Error calculating half slot time: $e');
+      }
+      
+      // Fallback: return original time with :30 added
+      return originalTime.replaceFirst(':', ':30').replaceFirst(' ', ':30 ');
+    }
+  }
+
   // Convert time format from "7:00 PM" to "7 pm"
   String _formatTimeForAPI(String time) {
     if (time.isEmpty) return time;
@@ -933,23 +1105,26 @@ class BookACourtController extends GetxController {
               })
           .toList() ?? [];
       
-      // Group selections by slot ID to consolidate both halves
+      // Group selections by courtId + slotId to handle same time slots in different courts
       final Map<String, List<Map<String, dynamic>>> slotGroups = {};
       for (var selection in clubSelections) {
         final slot = selection['slot'] as Slots;
+        final courtId = selection['courtId'] as String;
         final slotId = slot.sId ?? '';
-        if (!slotGroups.containsKey(slotId)) {
-          slotGroups[slotId] = [];
+        final groupKey = '${courtId}_$slotId'; // Unique key per court-slot combination
+        if (!slotGroups.containsKey(groupKey)) {
+          slotGroups[groupKey] = [];
         }
-        slotGroups[slotId]!.add(selection);
+        slotGroups[groupKey]!.add(selection);
       }
       
       // Build slot data
       final List<Map<String, dynamic>> slotData = [];
       
       for (var slotGroup in slotGroups.entries) {
-        final slotId = slotGroup.key;
+        final groupKey = slotGroup.key; // This is now 'courtId_slotId'
         final selections = slotGroup.value;
+        final slotId = groupKey.split('_').last; // Extract slotId from groupKey
         
         if (selections.length == 2) {
           // Both halves selected - treat as one full slot

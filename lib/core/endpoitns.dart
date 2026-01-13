@@ -13,8 +13,8 @@ class AppEndpoints {
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://192.168.0.118:5070/api/customer/";
-  // static const String socketUrl = "http://192.168.0.118:118:5070";
+  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.129:5070";
 
 
   // static const String login = "${baseUrl}customerLogin";
@@ -43,6 +43,9 @@ class AppEndpoints {
   static const String carteBooking = "${baseUrl}court/booking/createBooking";
   static const String bookingHistory = "${baseUrl}court/booking/getUserBookings";
   static const String bookingConfirmation = "${baseUrl}court/booking/findById";
+  static const String createAndGetSlotHistory = "${baseUrl}court/booking/createOrGetSlotHistory";
+  static const String deleteSlotHistory = "${baseUrl}court/booking/deleteSlotHistory";
+  static const String deleteBulkSlotHistory = "${baseUrl}court/booking/deleteBluckSlotHistory";
   ///Review---------------------------------------------------------------------
   static const String getReview = "${baseUrl}court/review/getReviews";
   static const String createReview = "${baseUrl}court/review/saveCustomerReview";

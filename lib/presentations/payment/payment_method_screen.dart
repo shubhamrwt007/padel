@@ -24,7 +24,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
       backgroundColor: AppColors.whiteColor,
       appBar: primaryAppBar(
         centerTitle: true,
-        title: Text("Book Now"),
+        title: Text(Platform.isIOS?"Direct Payment":"Book Now"),
         // action: [
         //   Container(
         //     alignment: Alignment.center,
@@ -372,7 +372,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                               ),
                             ),
                             child: Text(
-                              "Book using ${title}",
+                              // "Book using ${title}",
+                              Platform.isIOS?"Pay using ${title}":"Book using ${title}",
                               style: TextStyle(
                                 color: AppColors.whiteColor,
                                 fontSize: 16,

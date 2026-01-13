@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -164,7 +166,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         child:controller.isProcessing.value== true?LoadingAnimationWidget.waveDots(
                           color: AppColors.blackColor,
                           size: 45,
-                        ).paddingOnly(right: 40) : Text("Create Match",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor,fontSize: 16)).paddingOnly(right: 40),
+                        ).paddingOnly(right: 40) : Text(Platform.isIOS?"Direct Payment":"Create Match",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor,fontSize: 16)).paddingOnly(right: 40),
                     )
                   ],
                 ),
@@ -229,7 +231,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
       items = ['Beginner', 'Intermediate', 'Advanced', 'Professional'];
       selectedValue = controller.selectedGameLevel;
     } else if (label == 'Select game type') {
-      items = ['Male Ony', 'Female Only', 'Mixed Doubles'];
+      items = ['Male Only', 'Female Only', 'Mixed Doubles'];
       selectedValue = controller.selectedGameType;
     } else if (label == 'Select match type') {
       items = ['Friendly', 'Competitive'];
@@ -343,15 +345,8 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
 
   // ---------- SLOT DETAILS ----------
   Widget _buildSlotDetails() {
-    final slots = (controller.localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
     final matchDate = controller.localMatchData["matchDate"];
     
-    // Debug: Print the slots to see what's being passed
-    print("Debug - Slots in bottomsheet: ${slots.length}");
-    for (var slot in slots) {
-      print("Slot: ${slot.sId} - ${slot.time} - ${slot.amount}");
-    }
-
     String formattedDate = '';
     if (matchDate != null) {
       final date = matchDate is DateTime
@@ -362,10 +357,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
       }
     }
 
+    // Get grouped consecutive slots from controller
+    final consecutiveGroups = controller.getGroupedSlots();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
         Text(
           'Order Summary:',
           style: Get.textTheme.headlineSmall!.copyWith(
@@ -375,8 +372,8 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Slot list - Remove duplicates by sId
-        ...slots.toSet().map((slot) {
+        // Display grouped slots
+        ...consecutiveGroups.map((group) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
@@ -387,19 +384,27 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                       style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
                       children: [
                         TextSpan(
-                          text: '$formattedDate ${formatTimeSlot(slot.time ?? '')} ',
-                          style: Get.textTheme.labelSmall!.copyWith(color: Colors.white,fontWeight: FontWeight.w600,fontSize: 13),
+                          text: '$formattedDate ${group['timeRange']} ',
+                          style: Get.textTheme.labelSmall!.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                         TextSpan(
                           text: controller.localMatchData["courtName"]?.toString() ?? 'Court',
-                          style:Get.textTheme.labelSmall!.copyWith(color: Colors.white.withValues(alpha: 0.8),fontWeight: FontWeight.w600,fontSize: 13)
+                          style: Get.textTheme.labelSmall!.copyWith(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
                 Text(
-                  '₹ ${slot.amount ?? 0}',
+                  '₹ ${group['totalAmount']}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,

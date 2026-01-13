@@ -37,9 +37,6 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                   offset: Offset(0, -Get.height * 0.03),
                   child: _buildTimeOfDayTabs(),
                 ),
-                Transform.translate(
-                    offset: Offset(0, -Get.height * 0.02),
-                    child: _durationSection()),
                 /// Slots Section Header
                 Transform.translate(
                   offset: Offset(0, -Get.height * .01),
@@ -58,9 +55,14 @@ class CreateOpenMatchesScreen extends StatelessWidget {
   }
 
   Widget _durationSection() {
-    final durations = ['30 min', '60 min', '90 min', '120 min'];
+    return Obx(() {
+      // Check if any slot has 30-minute pricing available
+      final hasAny30MinSlots = controller.hasAny30MinSlots();
+      final durations = hasAny30MinSlots 
+          ? ['30 min', '60 min'] 
+          : ['60 min'];
 
-    return Container(
+      return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -115,6 +117,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
         ),
       ),
     );
+    });
   }
 
   /// 📅 Date Picker - Fixed spacing and toggle functionality
@@ -660,8 +663,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
     final isSelected = controller.isSlotSelected(slot, courtId);
     final isPartOfGroup = controller.isPartOfSelectedGroup(slot, courtId);
     final selectedDuration = controller.selectedDuration.value;
-    final isHalfSlot = selectedDuration == '30 min';
-    final is90MinSlot = selectedDuration == '90 min';
+    final supports30Min = controller.slotSupports30Min(slot);
+    final isHalfSlot = supports30Min;
 
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
         (slot.status?.toLowerCase() == 'booked') ||
@@ -675,32 +678,29 @@ class CreateOpenMatchesScreen extends StatelessWidget {
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
 
-    // For non-30min durations, if any half is booked, the whole slot is unavailable
-    final isSlotBookedForNon30Min = !isHalfSlot && isAnyHalfBooked;
+    // For slots that don't support 30min, if any half is booked, the whole slot is unavailable
+    final isSlotBookedForFullSlot = !supports30Min && isAnyHalfBooked;
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
     final price = slot.amount ?? 0;
 
-    // For 90 min, check if this is the second slot (should show left half selection)
-    final isSecondSlotIn90Min = controller.isSecondSlotIn90MinSelection(slot, courtId);
+
 
     return Builder(
       builder: (BuildContext slotContext) {
         return GestureDetector(
-          onTapDown: (isUnavailable || isBothHalvesBooked || isSlotBookedForNon30Min)
+          onTapDown: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
               ? null
               : (details) {
-            print('Tapping slot: ${slot.sId}, isSelected: $isSelected');
-            if (selectedDuration == '30 min') {
-              // For 30 min slots, detect left/right half tap
+            if (supports30Min) {
+              // For slots that support 30-min pricing, detect left/right half tap
               final RenderBox box = slotContext.findRenderObject() as RenderBox;
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
 
               // Check if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                // Show message that this half is already booked
                 Get.snackbar(
                   "Slot Unavailable",
                   "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
@@ -712,7 +712,6 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                 return;
               }
 
-              print('Tap position: ${localPosition.dx}, Box width: ${box.size.width}, IsLeftHalf: $isLeftHalf');
               controller.toggleSlotSelection(
                 slot,
                 courtId: courtId,
@@ -720,7 +719,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                 isLeftHalf: isLeftHalf,
               );
             } else {
-              // For non-30min durations, check if slot is booked
+              // For slots that don't support 30-min pricing or when selecting full slots
               if (isAnyHalfBooked) {
                 Get.snackbar(
                   "Slot Unavailable",
@@ -733,7 +732,6 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                 return;
               }
 
-              print('Toggling slot selection for: ${slot.sId}');
               controller.toggleSlotSelection(
                 slot,
                 courtId: courtId,
@@ -747,9 +745,9 @@ class CreateOpenMatchesScreen extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
-                color: (isUnavailable || isBothHalvesBooked || isSlotBookedForNon30Min) ? Colors.grey.shade100 : Colors.white,
+                color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) ? Colors.grey.shade100 : Colors.white,
                 border: Border.all(
-                  color: (isUnavailable || isBothHalvesBooked || isSlotBookedForNon30Min)
+                  color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
                       ? Colors.grey.shade300
                       : (isSelected || isPartOfGroup)
                       ? Colors.transparent
@@ -759,8 +757,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN)
-                  if (isHalfSlot && controller.isBothHalvesSelected(slot, courtId))
+                  /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN with 30min support)
+                  if (supports30Min && controller.isBothHalvesSelected(slot, courtId))
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -774,8 +772,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// FULL GRADIENT FOR NON-30MIN AND NON-90MIN-SECOND-SLOT SELECTIONS
-                  if ((isSelected || isPartOfGroup) && !isHalfSlot && !isSecondSlotIn90Min)
+                  /// FULL GRADIENT FOR FULL SLOT SELECTIONS
+                  if ((isSelected || isPartOfGroup) && !supports30Min)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -789,30 +787,10 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT HALF GRADIENT FOR 90MIN SECOND SLOT
-                  if (isSecondSlotIn90Min)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 40, // Half width of the slot tile
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(radius),
-                            bottomLeft: Radius.circular(radius),
-                          ),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                      ),
-                    ),
+
 
                   /// LEFT HALF GRADIENT FOR 30MIN LEFT SELECTION (ONLY WHEN RIGHT NOT SELECTED)
-                  if (isHalfSlot && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
@@ -834,7 +812,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION (ONLY WHEN LEFT NOT SELECTED)
-                  if (isHalfSlot && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
@@ -856,7 +834,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// FULL BOOKED OVERLAY FOR 30MIN WHEN BOTH HALVES ARE BOOKED
-                  if (isHalfSlot && isBothHalvesBooked && !isSelected && !isPartOfGroup)
+                  if (supports30Min && isHalfSlot && isBothHalvesBooked && !isSelected && !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -873,8 +851,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// FULL BOOKED OVERLAY FOR NON-30MIN DURATIONS
-                  if (!isHalfSlot && isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                  /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS
+                  if ((!supports30Min || !isHalfSlot) && isAnyHalfBooked && !isSelected && !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -892,7 +870,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
-                  if (isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
+                  if (supports30Min && isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
@@ -917,7 +895,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// RIGHT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY RIGHT IS BOOKED)
-                  if (isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
+                  if (supports30Min && isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
@@ -941,8 +919,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// VERTICAL DIVIDER FOR 30MIN SLOTS
-                  if (isHalfSlot && !isUnavailable && !isBothHalvesBooked && !isSlotBookedForNon30Min)
+                  /// VERTICAL DIVIDER FOR 30MIN SLOTS THAT SUPPORT IT
+                  if (supports30Min && !isUnavailable && !isBothHalvesBooked && !isSlotBookedForFullSlot)
                     Positioned(
                       left: 40, // Center of the 80px wide slot tile
                       top: 0,
@@ -974,8 +952,35 @@ class CreateOpenMatchesScreen extends StatelessWidget {
 
                   /// SLOT CONTENT
                   
+                  /// TIME AND PRICE - WHITE TEXT FOR FULL SLOT SELECTIONS (NON-30MIN SLOTS)
+                  if (!supports30Min && (isSelected || isPartOfGroup))
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            slot.time ?? '',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (price > 0)
+                            Text(
+                              "₹$price",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
                   /// TIME AND PRICE - WHITE TEXT FOR BOTH HALVES SELECTED
-                  if (isHalfSlot && controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min && controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1002,7 +1007,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// TIME AND PRICE - GRADIENT TEXT FOR LEFT HALF SELECTION
-                  if (isHalfSlot && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1049,7 +1054,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// TIME AND PRICE - GRADIENT TEXT FOR RIGHT HALF SELECTION
-                  if (isHalfSlot && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1095,56 +1100,11 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// TIME AND PRICE - GRADIENT TEXT FOR 90MIN SECOND SLOT
-                  if (isSecondSlotIn90Min)
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (bounds) {
-                              return LinearGradient(
-                                colors: [Colors.white, Colors.white, Colors.black87, Colors.black87],
-                                stops: [0.0, 0.5, 0.5, 1.0],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ).createShader(bounds);
-                            },
-                            child: Text(
-                              slot.time ?? '',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          if (price > 0)
-                            ShaderMask(
-                              shaderCallback: (bounds) {
-                                return LinearGradient(
-                                  colors: [Colors.white70, Colors.white70, Colors.black54, Colors.black54],
-                                  stops: [0.0, 0.5, 0.5, 1.0],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ).createShader(bounds);
-                              },
-                              child: Text(
-                                "₹${(price / 2).round()}", // Half price for 90min second slot
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
 
-                  /// TIME AND PRICE - NORMAL FOR NON-HALF SLOTS AND UNSELECTED 30MIN SLOTS
-                  if ((!isHalfSlot && !isSecondSlotIn90Min && (!_isLeftHalfSelected(slot, courtId) && !_isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))) ||
-                      (isHalfSlot && !_isLeftHalfSelected(slot, courtId) && !_isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId)))
+
+                  /// TIME AND PRICE - NORMAL FOR UNSELECTED SLOTS
+                  if ((!supports30Min && !isSelected && !isPartOfGroup) ||
+                      (supports30Min && !_isLeftHalfSelected(slot, courtId) && !_isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId)))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1229,27 +1189,33 @@ class CreateOpenMatchesScreen extends StatelessWidget {
   bool _isPartOfSelectedGroup(dynamic slot, String courtId) {
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
-    final selectedDuration = controller.selectedDuration.value;
+    final supports30Min = controller.slotSupports30Min(slot);
     
-    if (selectedDuration == '30 min') {
-      // For 30min slots, check both left and right half selections
+    if (supports30Min) {
+      // For slots that support 30min pricing, only return true if BOTH halves are selected
       final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
       final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
-      return controller.multiDateSelections.containsKey(leftKey) || controller.multiDateSelections.containsKey(rightKey);
+      return controller.multiDateSelections.containsKey(leftKey) && controller.multiDateSelections.containsKey(rightKey);
     } else {
       final multiDateKey = '${dateString}_${courtId}_${slot.sId}';
       return controller.multiDateSelections.containsKey(multiDateKey);
     }
   }
   
+  /// Check if left half of a slot is selected (only for slots that support 30-minute pricing)
   bool _isLeftHalfSelected(dynamic slot, String courtId) {
+    if (!controller.slotSupports30Min(slot)) return false;
+    
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
     return controller.multiDateSelections.containsKey(leftKey);
   }
   
+  /// Check if right half of a slot is selected (only for slots that support 30-minute pricing)
   bool _isRightHalfSelected(dynamic slot, String courtId) {
+    if (!controller.slotSupports30Min(slot)) return false;
+    
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
