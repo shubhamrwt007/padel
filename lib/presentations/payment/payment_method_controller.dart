@@ -160,6 +160,7 @@ class PaymentMethodController extends GetxController {
         for (var payload in bookingPayload) {
           payload['razorpay_payment_id'] = razorpayPaymentId;
           payload['razorpay_order_id'] = razorpayOrderId;
+          payload['initiatePayment'] = true;
         }
       }
 
@@ -344,6 +345,11 @@ class PaymentMethodController extends GetxController {
       if (bookingPayload == null) {
         print("No booking payload available");
         return;
+      }
+
+      // Add paymentStatus: true for initial booking
+      for (var payload in bookingPayload) {
+        payload['initiatePayment'] = false;
       }
 
       print("Initial booking payload: $bookingPayload");

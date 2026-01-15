@@ -29,12 +29,14 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   RxnString selectedSearchSlotId = RxnString();
   RxBool showMainGrid = true.obs; // New variable to control main grid visibility
 
-  void toggleSlotsCollapse() {
+  void toggleSlotsCollapse() async {
     isSlotsCollapsed.value = !isSlotsCollapsed.value;
     showMainGrid.value = !showMainGrid.value; // Toggle main grid visibility
     
-    // Don't reset available courts - keep them visible
-    // User can modify selections and re-fetch if needed
+    // If reopening the main grid, delete slot history
+    if (showMainGrid.value && realCourtSelections.isNotEmpty) {
+      await _cleanupOnBack();
+    }
   }
 
   // Method to fetch clubs and hide main grid
@@ -168,7 +170,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         });
       }
       
-      await _homeRepository.deleteBulkSlotHistory(data: {"slots": slots});
+      await _homeRepository.deleteSlotHistory(data: {"slots": slots});
       log('Bulk delete slot history on back: $slots');
     } catch (e) {
       log('Error in bulk delete on back: $e');
@@ -1313,6 +1315,10 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-    );
+    ).then((_) {
+      // Cleanup when bottomsheet is closed
+      _cleanupOnBack();
+      Get.delete<QuestionsBottomsheetController>(tag: 'questions');
+    });
   }
 }
