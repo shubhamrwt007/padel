@@ -103,6 +103,7 @@ class CreateOpenMatchesController extends GetxController {
 
   @override
   void onClose() {
+    _cleanupOnBack();
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -111,13 +112,98 @@ class CreateOpenMatchesController extends GetxController {
     super.onClose();
   }
 
+  Future<void> _cleanupOnBack() async {
+    if (multiDateSelections.isEmpty) return;
+    
+    try {
+      final slots = [];
+      
+      for (var entry in multiDateSelections.entries) {
+        final selection = entry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        
+        slots.add({
+          "slotId": slotId,
+          "courtId": courtId,
+          "bookingDate": dateString,
+          "time": bookingTime,
+          "bookingTime": bookingTime,
+          "duration": duration,
+        });
+      }
+      
+      await repository.deleteBulkSlotHistory(data: {"slots": slots});
+      log('Bulk delete slot history on back: $slots');
+    } catch (e) {
+      log('Error in bulk delete on back: $e');
+    }
+  }
 
 
-  void onNext() {
+
+  Future<void> processSlotHistoryForNext() async {
+    if (multiDateSelections.isEmpty) return;
+
+    try {
+      final slots = [];
+      
+      for (var entry in multiDateSelections.entries) {
+        final selection = entry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
+        final courtName = selection['courtName'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        
+        slots.add({
+          "slotId": slotId,
+          "courtId": courtId,
+          "courtName": courtName,
+          "bookingDate": dateString,
+          "userId": "",
+          "time": slot.time ?? '',
+          "bookingTime": bookingTime,
+          "duration": duration,
+          "totalTime": duration,
+        });
+      }
+      
+      await repository.createAndGetSlotHistory(data: {"slots": slots});
+      log('Batch create slot history: $slots');
+    } catch (e) {
+      log('Error in batch create: $e');
+      rethrow;
+    }
+  }
+
+  void onNext() async {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
       SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+      return;
+    }
+
+    try {
+      await processSlotHistoryForNext();
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to process slots. Please try again.",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -364,79 +450,27 @@ class CreateOpenMatchesController extends GetxController {
       }
     }
   }
-  // API method for creating slot history
-  Future<bool> createAndGetSlotHistory({
-    required String slotId,
-    required String courtId,
-    required String courtName,
-    required String bookingDate,
-    required String time,
-    required String bookingTime,
-    required int duration,
-    required int totalTime,
-  }) async {
+  Future<bool> createAndGetSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
-      final body = {
-        "slotId": slotId,
-        "courtId": courtId,
-        "courtName": courtName,
-        "bookingDate": bookingDate,
-        "userId": "",
-        "time": time,
-        "bookingTime": bookingTime,
-        "duration": duration,
-        "totalTime": totalTime,
-      };
-      
-      final response = await repository.createAndGetSlotHistory(data: body);
-      log('createAndGetSlotHistory called with body: $body');
-      
-      if (response.created) {
-        return true;
-      } else {
-        SnackBarUtils.showInfoSnackBar(response.message ?? "");
-        return false;
-      }
+      log('createAndGetSlotHistory called with slots: $slots');
+      final response = await repository.createAndGetSlotHistory(data: {"slots": slots});
+      return true;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      Get.snackbar(
-        "Error",
-        "Failed to select slot. Please try again.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       return false;
     }
   }
 
-  // API method for deleting slot history
-  Future<void> deleteSlotHistory({
-    required String slotId,
-    required String courtId,
-    required String bookingDate,
-    required String time,
-    required String bookingTime,
-    required int duration,
-  }) async {
+  Future<void> deleteSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
-      final body = {
-        "slotId": slotId,
-        "courtId": courtId,
-        "bookingDate": bookingDate,
-        "time": time,
-        "bookingTime": bookingTime,
-        "duration": duration,
-      };
-      
-      await repository.deleteSlotHistory(data: body);
-      log('deleteSlotHistory called with body: $body');
+      await repository.deleteSlotHistory(data: {"slots": slots});
+      log('deleteSlotHistory called with slots: $slots');
     } catch (e) {
       log('Error in deleteSlotHistory: $e');
     }
   }
 
-  void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isLeftHalf}) async {
-    // Resolve court info
+  void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isLeftHalf}) {
     Map<String, String>? resolvedCourtInfo;
     if (courtId != null && courtId.isNotEmpty) {
       final resolvedName = (courtName != null && courtName.isNotEmpty)
@@ -458,47 +492,18 @@ class CreateOpenMatchesController extends GetxController {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = _dateFormatter.format(currentDate);
     
-    // Check if this slot supports 30-minute pricing
     final supports30Min = slotSupports30Min(slot);
     
-    // Multi-date key format: "date_courtId_slotId_half" for 30min slots when supported
     final multiDateKey = supports30Min && isLeftHalf != null 
         ? '${dateString}_${resolvedCourtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}'
         : '${dateString}_${resolvedCourtId}_${slotId}';
 
     if (multiDateSelections.containsKey(multiDateKey)) {
-      // Remove this specific slot selection
       multiDateSelections.remove(multiDateKey);
       selectedSlots.removeWhere((s) => s.sId == slotId);
       selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
-      
-      // Call delete API
-      deleteSlotHistory(
-        slotId: slotId,
-        courtId: resolvedCourtId,
-        bookingDate: dateString,
-        time: slot.time ?? '',
-        bookingTime: slot.time ?? '',
-        duration: supports30Min && isLeftHalf != null ? 30 : 60,
-      );
     } else {
-      // Call create API first
-      final duration = supports30Min && isLeftHalf != null ? 30 : 60;
-      final success = await createAndGetSlotHistory(
-        slotId: slotId,
-        courtId: resolvedCourtId,
-        courtName: resolvedCourtName,
-        bookingDate: dateString,
-        time: slot.time ?? '',
-        bookingTime: slot.time ?? '',
-        duration: duration,
-        totalTime: duration,
-      );
-      
-      // Only add to selection if API call was successful
-      if (success) {
-        _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, isLeftHalf);
-      }
+      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, isLeftHalf);
     }
 
     _recalculateTotalAmount();

@@ -86,7 +86,7 @@ class MatchId {
   List<dynamic>? skillDetails; // changed null type to dynamic
   String? matchDate;
   List<String>? matchTime;
-  String? matchStatus;
+  bool? matchStatus;
   List<TeamA>? teamA;
   List<TeamB>? teamB;
   String? createdBy;

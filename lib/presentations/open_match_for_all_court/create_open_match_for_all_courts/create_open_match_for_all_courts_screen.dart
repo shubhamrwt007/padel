@@ -1262,7 +1262,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
                   return;
                 }
-                SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
+                // SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
                 controller.onNext();
               },
             )
@@ -1455,9 +1455,30 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
-                  onTap: () {
-                    // Remove all selections in this group
+                  onTap: () async {
                     final selections = entry['selections'] as List<Map<String, dynamic>>;
+                    final slotsToDelete = <Map<String, dynamic>>[];
+                    
+                    for (var selection in selections) {
+                      final slot = selection['slot'] as Slots;
+                      final slotId = slot.sId ?? '';
+                      final courtId = selection['courtId'] as String;
+                      final dateString = selection['date'] as String;
+                      final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+                      final duration = isHalfSlot ? 30 : 60;
+                      
+                      slotsToDelete.add({
+                        "slotId": slotId,
+                        "courtId": courtId,
+                        "bookingDate": dateString,
+                        "time": slot.time ?? '',
+                        "bookingTime": slot.time ?? '',
+                        "duration": duration,
+                      });
+                    }
+                    
+                    await controller.deleteSlotHistory(slots: slotsToDelete);
+                    
                     for (var selection in selections) {
                       final slot = selection['slot'] as Slots;
                       controller.realCourtSelections.removeWhere((key, value) =>

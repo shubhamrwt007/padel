@@ -34,13 +34,11 @@ class PaymentMethodController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Only initialize Razorpay for iOS
-    if (Platform.isIOS) {
-      _paymentService = RazorpayPaymentService();
-      _paymentService!.onPaymentSuccess = _handlePaymentSuccess;
-      _paymentService!.onPaymentFailure = _handlePaymentFailure;
-      // _paymentService!.onExternalWallet = _handleExternalWallet;
-    }
+    // Initialize Razorpay for both iOS and Android
+    _paymentService = RazorpayPaymentService();
+    _paymentService!.onPaymentSuccess = _handlePaymentSuccess;
+    _paymentService!.onPaymentFailure = _handlePaymentFailure;
+    // _paymentService!.onExternalWallet = _handleExternalWallet;
   }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     isProcessing.value = false;
@@ -311,37 +309,31 @@ class PaymentMethodController extends GetxController {
       return;
     }
 
-    // Check platform and use appropriate method
-    if (Platform.isIOS) {
-      // Use Razorpay for iOS
-      isProcessing.value = true;
+    // Use Razorpay for both iOS and Android
+    isProcessing.value = true;
 
-      try {
-        double amountToPay;
-        if (isFromBookACourt && bookACourtController != null) {
-          amountToPay = bookACourtController!.totalAmount.value.toDouble();
-        } else {
-          amountToPay = cartController.totalPrice.value.toDouble();
-        }
-        
-        await _paymentService!.initiatePayment(
-          keyId: 'rzp_test_1DP5mmOlF5G5ag',
-          amount: amountToPay,
-          currency: 'INR',
-          name: 'Swoot',
-          description: 'Paying for court booking',
-          userEmail: 'test@example.com',
-          userContact: '9999999999',
-        );
-        
-      } catch (e) {
-        isProcessing.value = false;
-        CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
-        SnackBarUtils.showErrorSnackBar("Payment failed: $e");
+    try {
+      double amountToPay;
+      if (isFromBookACourt && bookACourtController != null) {
+        amountToPay = bookACourtController!.totalAmount.value.toDouble();
+      } else {
+        amountToPay = cartController.totalPrice.value.toDouble();
       }
-    } else {
-      // Direct booking for Android
-      await processDirectBooking();
+      
+      await _paymentService!.initiatePayment(
+        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        amount: amountToPay,
+        currency: 'INR',
+        name: 'Swoot',
+        description: 'Paying for court booking',
+        userEmail: 'test@example.com',
+        userContact: '9999999999',
+      );
+      
+    } catch (e) {
+      isProcessing.value = false;
+      CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
+      SnackBarUtils.showErrorSnackBar("Payment failed: $e");
     }
   }
 
