@@ -189,28 +189,12 @@ class CartController extends GetxController {
       CarteBookingModel bookingResult =
       await cartRepository.booking(data: data);
 
-      log("Booking successful: ${bookingResult.toJson()}");
-
-      // Get.snackbar(
-      //   "Success",
-      //   "Booking completed successfully",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.green,
-      //   colorText: Colors.white,
-      // );
 
       await getCartItems();
 
       return true;   // ⬅️ SUCCESS
     } catch (e) {
       log("Booking error: $e");
-      // Get.snackbar(
-      //   "Error",
-      //   "Booking failed: ${e.toString()}",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
 
       return false;  // ⬅️ FAILURE
     } finally {

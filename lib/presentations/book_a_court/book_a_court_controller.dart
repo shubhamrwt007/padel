@@ -32,10 +32,8 @@ class BookACourtController extends GetxController {
     isSlotsCollapsed.value = !isSlotsCollapsed.value;
     showMainGrid.value = !showMainGrid.value; // Toggle main grid visibility
     
-    // Reset available courts when going back to main grid
-    if (showMainGrid.value) {
-      courtsByDuration.value = null;
-    }
+    // Don't reset available courts - keep them visible
+    // User can modify selections and re-fetch if needed
   }
   
   // Method to fetch clubs and hide main grid
@@ -84,6 +82,10 @@ class BookACourtController extends GetxController {
   var isSlotPricesLoading = false.obs;
   final Map<String, Map<String, int>> slotPricesData = {}; // day -> {duration -> price}
   final Map<String, Map<String, int>> originalSlotPricesData = {}; // Track original prices
+  
+  // Track if slot history API was called
+  RxBool hasCalledSlotHistoryAPI = false.obs;
+  
   @override
   void onInit() {
     super.onInit();
@@ -131,7 +133,7 @@ class BookACourtController extends GetxController {
 
   @override
   void onClose() {
-    _cleanupOnBack();
+    cleanupOnBack();
     selectedSlots.clear();
     multiDateSelections.clear();
     realCourtSelections.clear();
@@ -139,7 +141,7 @@ class BookACourtController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _cleanupOnBack() async {
+  Future<void> cleanupOnBack() async {
     if (realCourtSelections.isEmpty) return;
     
     try {
@@ -562,10 +564,8 @@ class BookACourtController extends GetxController {
     realCourtSelections.clear();
     selectedSlots.clear();
     totalAmount.value = 0;
-    // Clear courts by duration when selections are cleared
     courtsByDuration.value = null;
-    selectedTimeSlot.value = ''; // Clear selected time slot
-    // Clear search slot selection and expand
+    selectedTimeSlot.value = '';
     selectedSearchSlotId.value = null;
     isSlotsCollapsed.value = false;
   }
@@ -998,7 +998,11 @@ class BookACourtController extends GetxController {
         });
       }
       
-      return await createAndGetSlotHistory(slots: slots);
+      final success = await createAndGetSlotHistory(slots: slots);
+      if (success) {
+        hasCalledSlotHistoryAPI.value = true;
+      }
+      return success;
     } catch (e) {
       log('Error processing slot history: $e');
       return false;

@@ -32,11 +32,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   void toggleSlotsCollapse() {
     isSlotsCollapsed.value = !isSlotsCollapsed.value;
     showMainGrid.value = !showMainGrid.value; // Toggle main grid visibility
-
-    // Reset available courts when going back to main grid
-    if (showMainGrid.value) {
-      clearAllSelectionsAndClubs();
-    }
+    
+    // Don't reset available courts - keep them visible
+    // User can modify selections and re-fetch if needed
   }
 
   // Method to fetch clubs and hide main grid

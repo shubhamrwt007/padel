@@ -116,10 +116,6 @@ class BookACourtScreen extends StatelessWidget {
                       GestureDetector(
                         onTap: () {
                           controller.toggleSlotsCollapse();
-                          // Clear selected slots when clicking arrow up
-                          if (controller.showMainGrid.value) {
-                            controller.clearAllSelections();
-                          }
                         },
                         child: AnimatedRotation(
                           turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
@@ -210,7 +206,7 @@ class BookACourtScreen extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? AppColors.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(5),
         ),
         child: Text(
           title,
@@ -241,7 +237,7 @@ class BookACourtScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: Row(
                   children: [
@@ -1340,7 +1336,15 @@ class BookACourtScreen extends StatelessWidget {
                               // Sync selected slot amount to CartController for payment screen
                               final cartController = Get.find<CartController>();
                               cartController.totalPrice.value = _getSelectedSlotAmount();
-                              Get.toNamed(RoutesName.paymentMethod);
+                              
+                              // Navigate and wait for result
+                              await Get.toNamed(RoutesName.paymentMethod);
+                              
+                              // When back, cleanup if API was called
+                              if (controller.hasCalledSlotHistoryAPI.value) {
+                                await controller.cleanupOnBack();
+                                controller.hasCalledSlotHistoryAPI.value = false;
+                              }
                             }
                           },
                     child: isProcessing.value

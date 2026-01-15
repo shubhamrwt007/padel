@@ -83,7 +83,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     const Text(
-                      "₹ 0",
+                      "Cr 0",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -118,10 +118,6 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     GestureDetector(
                       onTap: () {
                         controller.toggleSlotsCollapse();
-                        // Clear selected slots when clicking arrow up
-                        if (controller.showMainGrid.value) {
-                          controller.clearAllSelectionsAndClubs();
-                        }
                       },
                       child: AnimatedRotation(
                         turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
