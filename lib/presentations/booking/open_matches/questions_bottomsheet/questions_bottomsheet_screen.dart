@@ -22,6 +22,13 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize match after data is set
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.razorpayAmountUsed.value == 0) {
+        controller.initializeMatch();
+      }
+    });
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
@@ -92,13 +99,13 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                               style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white)
                             ),
                             Text(
-                              'Total Slots: ${controller.totalSlots}',
+                              'Wallet: ₹${controller.walletAmountUsed.value}',
                               style: Get.textTheme.bodySmall!.copyWith(color: Colors.white.withValues(alpha: 0.8))
                             ),
                           ],
                         ),
                         Text(
-                          '₹ ${controller.totalAmount}',
+                          '₹ ${controller.razorpayAmountUsed.value}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,

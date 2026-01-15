@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/presentations/openmatchbooking/openmatch_booking_controller.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
@@ -26,6 +27,11 @@ class QuestionsBottomsheetController extends GetxController {
   RxString selectedGameType = ''.obs;
   RxString selectedMatchType = ''.obs;
   RazorpayPaymentService? _paymentService;
+  String? _razorpayOrderId;
+  
+  RxInt walletAmountUsed = 0.obs;
+  RxInt razorpayAmountUsed = 0.obs;
+  
   CartController get cartController => Get.find<CartController>();
   final storage = GetStorage();
   
@@ -72,14 +78,13 @@ class QuestionsBottomsheetController extends GetxController {
 
   RxList<Map<String, dynamic>> teamB = <Map<String, dynamic>>[].obs;
 
-  // Payment success handler for iOS
+  // Payment success handler
   Future<void> onPaymentSuccess({
     required String paymentId,
     required String orderId,
     required String signature,
   }) async {
-    log("🎉 Payment successful - ID: $paymentId, Order: $orderId, Signature: $signature");
-    log("🚀 About to call createMatchAfterPayment");
+    log("🎉 Payment successful - ID: $paymentId");
 
     try {
       isProcessing.value = true;
@@ -114,7 +119,10 @@ class QuestionsBottomsheetController extends GetxController {
         },
       );
       
-      await createMatchAfterPayment();
+      await _createMatchAfterPayment(
+        razorpayPaymentId: paymentId,
+        razorpayOrderId: _razorpayOrderId,
+      );
     } catch (e) {
       log("Error after payment success: $e");
       SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
@@ -123,230 +131,41 @@ class QuestionsBottomsheetController extends GetxController {
     }
   }
 
-  // Handle payment failure for iOS
-  // Direct match creation without payment (for Android)
-  Future<void> createDirectMatch() async {
-    log("🚀 Starting direct match creation process");
-    if (!validateSelections()) {
-      return;
-    }
-    
-    if (!validateTeams()) {
-      SnackBarUtils.showWarningSnackBar("Please add required players to both teams");
-      return;
-    }
-
-    isProcessing.value = true;
-
-    Get.generalDialog(
-      barrierDismissible: false,
-      barrierColor: Colors.white,
-      pageBuilder: (_, __, ___) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LoadingWidget(color: AppColors.primaryColor, size: 30),
-                const SizedBox(height: 20),
-                const Text(
-                  "Creating your open match...",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Please wait while we set up your match.",
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    
-    await createMatchAfterPayment();
-  }
-
-  // Create match after payment success
-  var openMatchId = ''.obs;
-  Future<void> createMatchAfterPayment() async {
-    log("🚀 Starting createMatchAfterPayment method");
+  Future<void> _createMatchAfterPayment({
+    String? razorpayPaymentId,
+    String? razorpayOrderId,
+  }) async {
     try {
-      final matchDateValue = localMatchData["matchDate"];
-      DateTime? parsedMatchDate;
-
-      if (matchDateValue is DateTime) {
-        parsedMatchDate = matchDateValue;
-      } else if (matchDateValue != null) {
-        parsedMatchDate = DateTime.tryParse(matchDateValue.toString());
+      final matchBody = _buildMatchBody();
+      if (matchBody == null) {
+        Get.back();
+        Get.snackbar("Error", "Invalid match data");
+        return;
       }
 
-      if (parsedMatchDate == null) {
-        log("⚠️ No valid matchDate found in localMatchData, using today");
-        parsedMatchDate = DateTime.now();
+      if (razorpayPaymentId != null && razorpayOrderId != null) {
+        matchBody['razorpay_payment_id'] = razorpayPaymentId;
+        matchBody['razorpay_order_id'] = razorpayOrderId;
       }
 
-      final formattedMatchDate = DateFormat('yyyy-MM-dd').format(parsedMatchDate);
-      final formattedBookingDate = DateTime.utc(parsedMatchDate.year, parsedMatchDate.month, parsedMatchDate.day).toIso8601String();
-      
-      final slotData = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
-      final courtId = localMatchData["courtId"]?.toString() ?? "";
-      final courtIds = (localMatchData["courtIds"] as List?)?.map((e) => e.toString()).toList() ?? [];
-      final courtName = localMatchData["courtName"]?.toString() ?? "";
+      log("Match payload after payment: $matchBody");
 
-      final slotsJson = slotData.asMap().entries.map((entry) {
-        final index = entry.key;
-        final slot = entry.value;
+      final response = await repository.dioClient.post(
+        AppEndpoints.createMatches,
+        data: matchBody,
+      );
 
-        String slotCourtId = courtId;
-        if (courtIds.isNotEmpty && index < courtIds.length) {
-          slotCourtId = courtIds[index];
-        }
-
-        // Get businessHours from localMatchData and filter for selected day only
-        final businessHours = (localMatchData["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
-        final selectedDayName = DateFormat('EEEE').format(parsedMatchDate!);
-        
-        // Filter businessHours to only include the selected day
-        final cleanBusinessHours = businessHours
-            .where((bh) => bh["day"] == selectedDayName)
-            .map((bh) => {
-              "time": bh["time"] ?? "",
-              "day": bh["day"] ?? "",
-            }).toList();
-
-        // Handle half slots and other suffixes - don't send suffixes in slotId
-        String cleanSlotId = slot.sId ?? "";
-        if (cleanSlotId.contains('_')) {
-          cleanSlotId = cleanSlotId.split('_')[0]; // Remove everything after first underscore
-        }
-        
-        // Calculate proper duration, totalTime, and bookingTime
-        int duration = slot.duration ?? 60;
-        int totalTime = slot.duration ?? 60;
-        String bookingTime = slot.bookingTime ?? slot.time ?? "";
-        
-        // Get the selected duration from localMatchData
-        final selectedDurationStr = localMatchData["selectedDuration"] as String?;
-        int selectedDurationMinutes = 60;
-        if (selectedDurationStr != null) {
-          selectedDurationMinutes = int.tryParse(selectedDurationStr.replaceAll(' min', '')) ?? 60;
-          log("Debug - Found selectedDuration in localMatchData: $selectedDurationStr -> $selectedDurationMinutes");
-        } else {
-          // Fallback: determine from slot count
-          if (slotData.length >= 2) {
-            selectedDurationMinutes = 120; // Assume 120min for 2+ slots
-          }
-          log("Debug - No selectedDuration found, using fallback based on slot count ${slotData.length}: $selectedDurationMinutes");
-        }
-        
-        // Check if this is a half slot selection (30min duration with left/right indicators)
-        bool isHalfSlot = selectedDurationMinutes == 30 && 
-            (slot.sId?.contains('_left') == true || slot.sId?.contains('_right') == true);
-        
-        // Check if this is a 90min half slot (second slot in 90min selection)
-        bool is90MinHalfSlot = selectedDurationMinutes == 90 && 
-            (slot.sId?.contains('_half') == true || slot.sId?.contains('_second') == true);
-        
-        // Set duration and totalTime based on selected duration and slot type
-        if (isHalfSlot || selectedDurationMinutes == 30) {
-          duration = 30;
-          totalTime = 30;
-        } else if (is90MinHalfSlot) {
-          duration = 30; // Half slot duration
-          totalTime = 90; // Total time for 90min selection
-        } else if (selectedDurationMinutes == 90) {
-          duration = 60; // Full slot duration
-          totalTime = 90; // Total time for 90min selection
-        } else if (selectedDurationMinutes == 120) {
-          totalTime = 60; // 60min per slot for 120min (2 slots of 60min each)
-        } else {
-          totalTime = selectedDurationMinutes; // 60min
-        }
-        
-        log("Debug - Slot ${index}: selectedDuration=$selectedDurationMinutes, isHalfSlot=$isHalfSlot, is90MinHalfSlot=$is90MinHalfSlot, duration=$duration, totalTime=$totalTime");
-        
-        // For 30min slots, adjust bookingTime based on half selection
-        if (slot.sId?.contains('_half') == true || slot.sId?.contains('_R') == true) {
-          // For right half, add 30 minutes to the original time
-          if (slot.sId?.endsWith('_R') == true) {
-            bookingTime = _addMinutesToTime(slot.time ?? "", 30);
-          }
-        }
-
-        return {
-          "slotId": cleanSlotId,
-          "businessHours": cleanBusinessHours,
-          "slotTimes": [
-            {
-              "time": slot.time ?? "",
-              "amount": slot.amount ?? 0,
-            }
-          ],
-          "matchType": selectedMatchType.value,
-          "courtName": courtName,
-          "courtId": slotCourtId,
-          "bookingDate": formattedBookingDate,
-          "duration": duration,
-          "totalTime": totalTime,
-          "bookingTime": bookingTime
-        };
-      }).toList();
-
-      final body = {
-        "slot": slotsJson,
-        "clubId": localMatchData["clubId"] ?? "",
-        "matchDate": formattedMatchDate,
-        // "skillLevel": localMatchData["skillLevel"] ?? "",
-        "skillLevel": selectedGameLevel.value,
-        // "skillDetails": localMatchData["skillDetails"] ?? [],
-        // "customerScale": localMatchData["customerScale"] ?? "",
-        // "customerRacketSport": localMatchData["customerRacketSport"] ?? "",
-        // "receivingTP": localMatchData["receivingTP"] ?? "",
-        // "customerAge": localMatchData["customerAge"] ?? "",
-        // "volleyNetPositioning": localMatchData["volleyNetPositioning"] ?? "",
-        // "playerLevel": localMatchData["playerLevel"] ?? "",
-        // "reboundSkills": localMatchData["reboundSkills"] ?? "",
-        // "matchStatus": "open",
-        "matchTime": localMatchData["matchTime"] ?? "",
-        "gender":selectedGameType.value,
-        // "matchType":selectedMatchType.value,
-        "teamA": teamA
-            .where((p) =>
-        (p["userId"] ?? p["_id"]) != null &&
-            (p["userId"] ?? p["_id"]).toString().isNotEmpty)
-            .map((p) => p["userId"] ?? p["_id"])
-            .toList(),
-        "teamB": teamB
-            .where((p) =>
-        (p["userId"] ?? p["_id"]) != null &&
-            (p["userId"] ?? p["_id"]).toString().isNotEmpty)
-            .map((p) => p["userId"] ?? p["_id"])
-            .toList(),
-      };
-
-      log("✅ Final Match Request Body:");
-      log(body.toString());
-      final cleanedBody = removeEmpty(body);
-      log("📦 Final Cleaned Body:");
-      log(cleanedBody.toString());
-
-      final response = await repository.createMatch(data: cleanedBody);
-      log("🎯 Match Created -> ${response.toJson()}");
-      openMatchId.value = response.matches?[0].id??"";
-      SnackBarUtils.showSuccessSnackBar("Match created successfully!");
-      CustomLogger.logMessage(msg: "MEWW-> ${response.message??""}", level: LogLevel.debug);
-      // await createBooking();
-
-      Get.offAllNamed(RoutesName.bottomNav);
-      openMatchBookingController.fetchOpenMatchesBooking(type: 'upcoming');
-    } catch (e, st) {
-      log("❌ Match creation error: $e\n$st");
+      if (response.statusCode == 200) {
+        log("Match confirmed: ${response.data}");
+        SnackBarUtils.showSuccessSnackBar("Match created successfully!");
+        Get.offAllNamed(RoutesName.bottomNav);
+        openMatchBookingController.fetchOpenMatchesBooking(type: 'upcoming');
+      } else {
+        Get.close(2);
+        showBookingErrorDialog();
+      }
+    } catch (e) {
+      log("Error creating match after payment: $e");
       Get.close(2);
       showBookingErrorDialog();
     }
@@ -468,56 +287,153 @@ class QuestionsBottomsheetController extends GetxController {
   // Match creation with payment
   Future<void> initiateMatchCreation() async {
     log("🚀 Starting match creation process with payment");
-    await initiatePaymentAndCreateMatch();
-  }
-
-  // Payment method
-  Future<void> initiatePaymentAndCreateMatch() async {
-    log("💳 Starting payment initiation process");
-    if (!validateSelections()) {
-      return;
-    }
-    
+    if (!validateSelections()) return;
     if (!validateTeams()) {
       SnackBarUtils.showWarningSnackBar("Please add required players to both teams");
+      return;
+    }
+    if (_razorpayOrderId == null) {
+      SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
       return;
     }
 
     isProcessing.value = true;
 
     try {
-      final priceString = totalAmount.toString();
-      final price = double.tryParse(priceString.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-
-      if (price <= 0) {
-        SnackBarUtils.showErrorSnackBar("Invalid price amount");
-        isProcessing.value = false;
-        return;
-      }
-
       await _paymentService!.initiatePayment(
+        // keyId: 'rzp_live_RtOIWe2johK6H7',
         keyId: 'rzp_test_1DP5mmOlF5G5ag',
-        amount: price,
+        amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
         description: 'Payment for court booking and match creation',
-        orderId: '',
         userEmail: profileController.profileModel.value?.response?.email ?? 'test@example.com',
         userContact: '9999999999',
-        notes: {
-          'user_id': profileController.profileModel.value?.response?.sId ?? '123',
-          'club_id': localMatchData['clubId'],
-          'match_date': localMatchData['matchDate'].toString(),
-          'match_time': localMatchData['matchTime'].toString(),
-        },
-        theme: '#F37254',
-        paymentMethods: ['card', 'netbanking', 'upi', 'wallet'],
       );
     } catch (e) {
       isProcessing.value = false;
       log("Payment initiation error: $e");
       SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
+  }
+
+  Future<void> _createInitialMatch() async {
+    try {
+      final matchBody = _buildMatchBody();
+      if (matchBody == null) return;
+
+      log("Initial match payload: $matchBody");
+
+      final response = await repository.dioClient.post(
+        AppEndpoints.createMatches,
+        data: matchBody,
+      );
+      
+      if (response.statusCode == 200 && response.data != null) {
+        final responseData = response.data;
+        log("Match API response: $responseData");
+        
+        if (responseData['orderId'] != null) {
+          _razorpayOrderId = responseData['orderId'];
+          walletAmountUsed.value = responseData['walletAmountUsed'] ?? 0;
+          razorpayAmountUsed.value = responseData['razorpayAmountUsed'] ?? 0;
+          log("Match created with order ID: $_razorpayOrderId");
+        }
+      }
+    } catch (e) {
+      log("Error creating initial match: $e");
+    }
+  }
+
+  Map<String, dynamic>? _buildMatchBody() {
+    final matchDateValue = localMatchData["matchDate"];
+    DateTime? parsedMatchDate;
+
+    if (matchDateValue is DateTime) {
+      parsedMatchDate = matchDateValue;
+    } else if (matchDateValue != null) {
+      parsedMatchDate = DateTime.tryParse(matchDateValue.toString());
+    }
+
+    if (parsedMatchDate == null) return null;
+
+    final formattedMatchDate = DateFormat('yyyy-MM-dd').format(parsedMatchDate);
+    final formattedBookingDate = DateTime.utc(parsedMatchDate.year, parsedMatchDate.month, parsedMatchDate.day).toIso8601String();
+    
+    final slotData = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
+    final courtId = localMatchData["courtId"]?.toString() ?? "";
+    final courtIds = (localMatchData["courtIds"] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final courtName = localMatchData["courtName"]?.toString() ?? "";
+
+    final slotsJson = slotData.asMap().entries.map((entry) {
+      final index = entry.key;
+      final slot = entry.value;
+
+      String slotCourtId = courtId;
+      if (courtIds.isNotEmpty && index < courtIds.length) {
+        slotCourtId = courtIds[index];
+      }
+
+      final businessHours = (localMatchData["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final selectedDayName = DateFormat('EEEE').format(parsedMatchDate!);
+      
+      final cleanBusinessHours = businessHours
+          .where((bh) => bh["day"] == selectedDayName)
+          .map((bh) => {
+            "time": bh["time"] ?? "",
+            "day": bh["day"] ?? "",
+          }).toList();
+
+      String cleanSlotId = slot.sId ?? "";
+      if (cleanSlotId.contains('_')) {
+        cleanSlotId = cleanSlotId.split('_')[0];
+      }
+      
+      int duration = slot.duration ?? 60;
+      int totalTime = slot.duration ?? 60;
+      String bookingTime = slot.bookingTime ?? slot.time ?? "";
+
+      return {
+        "slotId": cleanSlotId,
+        "businessHours": cleanBusinessHours,
+        "slotTimes": [
+          {
+            "time": slot.time ?? "",
+            "amount": slot.amount ?? 0,
+          }
+        ],
+        "matchType": selectedMatchType.value,
+        "courtName": courtName,
+        "courtId": slotCourtId,
+        "bookingDate": formattedBookingDate,
+        "duration": duration,
+        "totalTime": totalTime,
+        "bookingTime": bookingTime
+      };
+    }).toList();
+
+    final body = {
+      "slot": slotsJson,
+      "clubId": localMatchData["clubId"] ?? "",
+      "matchDate": formattedMatchDate,
+      "skillLevel": selectedGameLevel.value,
+      "matchTime": localMatchData["matchTime"] ?? "",
+      "gender":selectedGameType.value,
+      "teamA": teamA
+          .where((p) =>
+      (p["userId"] ?? p["_id"]) != null &&
+          (p["userId"] ?? p["_id"]).toString().isNotEmpty)
+          .map((p) => p["userId"] ?? p["_id"])
+          .toList(),
+      "teamB": teamB
+          .where((p) =>
+      (p["userId"] ?? p["_id"]) != null &&
+          (p["userId"] ?? p["_id"]).toString().isNotEmpty)
+          .map((p) => p["userId"] ?? p["_id"])
+          .toList(),
+    };
+
+    return removeEmpty(body);
   }
 
   bool validateTeams() {
@@ -550,7 +466,6 @@ class QuestionsBottomsheetController extends GetxController {
       } else if (response.message != null) {
         errorMessage = response.message!;
       }
-      // onPaymentError(errorMessage);
     };
 
     _paymentService!.onExternalWallet = (response) {
@@ -559,10 +474,6 @@ class QuestionsBottomsheetController extends GetxController {
 
     profileController.fetchUserProfile();
     
-    // localMatchData will be set directly by the calling controller
-    // No need to get from arguments since this is a bottomsheet
-    
-    // Add profile data to teamA
     String skillLevel = "";
     if ((localMatchData['playerLevel'] ?? '').toString().isNotEmpty) {
       skillLevel = localMatchData['playerLevel'].toString();
@@ -587,6 +498,10 @@ class QuestionsBottomsheetController extends GetxController {
     teamA.first.addAll(profileData);
     
     super.onInit();
+  }
+  
+  void initializeMatch() {
+    _createInitialMatch();
   }
 
   @override

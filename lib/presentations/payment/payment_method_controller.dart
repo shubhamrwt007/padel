@@ -20,6 +20,9 @@ class PaymentMethodController extends GetxController {
   RazorpayPaymentService? _paymentService;
   String? _razorpayOrderId;
   
+  RxInt walletAmountUsed = 0.obs;
+  RxInt razorpayAmountUsed = 0.obs;
+  
   final CartController cartController = Get.find<CartController>();
   
   BookACourtController? get bookACourtController {
@@ -43,6 +46,9 @@ class PaymentMethodController extends GetxController {
     _paymentService!.onPaymentSuccess = _handlePaymentSuccess;
     _paymentService!.onPaymentFailure = _handlePaymentFailure;
     // _paymentService!.onExternalWallet = _handleExternalWallet;
+    
+    // Create initial booking
+    _createInitialBooking();
   }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     isProcessing.value = false;
@@ -325,16 +331,8 @@ class PaymentMethodController extends GetxController {
     return 'pay_${List.generate(14, (index) => chars[random.nextInt(chars.length)]).join()}';
   }
 
-  Future<void> startPayment() async {
-    if (option.value.isEmpty) {
-      Get.snackbar("Payment Method", "Please select a payment method");
-      return;
-    }
-
-    isProcessing.value = true;
-
+  Future<void> _createInitialBooking() async {
     try {
-      // Step 1: Create initial booking
       List<Map<String, dynamic>>? bookingPayload;
       
       if (isFromBookACourt && bookACourtController != null) {
@@ -344,14 +342,12 @@ class PaymentMethodController extends GetxController {
       }
 
       if (bookingPayload == null) {
-        isProcessing.value = false;
-        Get.snackbar("Error", "No selected items available for booking");
+        print("No booking payload available");
         return;
       }
 
       print("Initial booking payload: $bookingPayload");
 
-      // Call createBooking API first time
       final response = await cartController.cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
         data: bookingPayload,
@@ -361,38 +357,43 @@ class PaymentMethodController extends GetxController {
         final responseData = response.data;
         print("Booking API response: $responseData");
         
-        // Extract orderId from response
         if (responseData['orderId'] != null) {
           _razorpayOrderId = responseData['orderId'];
+          walletAmountUsed.value = responseData['walletAmountUsed'] ?? 0;
+          razorpayAmountUsed.value = responseData['razorpayAmountUsed'] ?? 0;
           print("Booking created with order ID: $_razorpayOrderId");
-
-          // Step 2: Open Razorpay
-          double amountToPay;
-          if (isFromBookACourt && bookACourtController != null) {
-            amountToPay = bookACourtController!.totalAmount.value.toDouble();
-          } else {
-            amountToPay = cartController.totalPrice.value.toDouble();
-          }
-          
-          await _paymentService!.initiatePayment(
-            // keyId: responseData['key'] ?? 'rzp_test_RtRFaVPUzoUtkG',
-            keyId: 'rzp_live_RtOIWe2johK6H7',
-            amount: amountToPay,
-            currency: 'INR',
-            name: 'Swoot',
-            description: 'Paying for court booking',
-            userEmail: 'test@example.com',
-            userContact: '9999999999',
-          );
-        } else {
-          isProcessing.value = false;
-          SnackBarUtils.showErrorSnackBar("Failed to create booking");
+          print("Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}");
         }
-      } else {
-        isProcessing.value = false;
-        SnackBarUtils.showErrorSnackBar("Failed to create booking");
       }
-      
+    } catch (e) {
+      print("Error creating initial booking: $e");
+    }
+  }
+
+  Future<void> startPayment() async {
+    if (option.value.isEmpty) {
+      Get.snackbar("Payment Method", "Please select a payment method");
+      return;
+    }
+
+    if (_razorpayOrderId == null) {
+      SnackBarUtils.showErrorSnackBar("Booking not initialized. Please try again.");
+      return;
+    }
+
+    isProcessing.value = true;
+
+    try {
+      await _paymentService!.initiatePayment(
+        // keyId: 'rzp_live_RtOIWe2johK6H7',
+        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        amount: razorpayAmountUsed.value.toDouble(),
+        currency: 'INR',
+        name: 'Swoot',
+        description: 'Paying for court booking',
+        userEmail: 'test@example.com',
+        userContact: '9999999999',
+      );
     } catch (e) {
       isProcessing.value = false;
       CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
