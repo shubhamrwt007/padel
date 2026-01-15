@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:uuid/uuid.dart';
 import 'package:share_plus/share_plus.dart';
@@ -36,6 +37,7 @@ class ScoreBoardController extends GetxController {
   ///Get Score Board Api--------------------------------------------------------
   RxList<Map<String, dynamic>> teams = <Map<String, dynamic>>[].obs;
   var bookingId = ''.obs;
+  var bookingType = ''.obs;
   var scoreboardId = ''.obs;
   var openMatchId = ''.obs;
   ScoreBoardRepository repository = Get.put(ScoreBoardRepository());
@@ -58,6 +60,9 @@ class ScoreBoardController extends GetxController {
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
         matchBookingId.value = item.bookingId?.sId??"";
+        bookingType.value = item.bookingId?.bookingType ?? "";
+        matchType.value = (item?.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
+        matchStatus.value = item?.matchStatus ?? false;
         CustomLogger.logMessage(
             msg: "Using scoreboard ID: ${item.sId}", level: LogLevel.info);
         CustomLogger.logMessage(
@@ -211,57 +216,12 @@ class ScoreBoardController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to add set. Please try again.");
     } finally {
       isAddingSet.value = false;
     }
   }
 
-  ///Remove Sets Api------------------------------------------------------------
-  Future<void> removeSetsFromAPI(int setNumber) async {
-    CustomLogger.logMessage(msg: 'removeSetsFromAPI call - setNumber: $setNumber', level: LogLevel.info);
-    // 🔥 FIXED: Store the removed set data for potential rollback
-    final removedSet = sets.firstWhere(
-          (s) => s["setNumber"] == setNumber,
-      orElse: () => {},
-    );
-    final removedIndex = sets.indexWhere((s) => s["setNumber"] == setNumber);
 
-    try {
-      final body = {
-        "scoreboardId": scoreboardId.value,
-        'type': 'remove',
-        "setNumber": setNumber,
-      };
-
-      final response = await repository.updateScoreBoard(data: body, type: "remove");
-
-      if (response.success == true) {
-        CustomLogger.logMessage(
-          msg: "Set $setNumber removed successfully from backend",
-          level: LogLevel.info,
-        );
-
-        // ✅ Don't fetch - set is already removed from UI
-      } else {
-        // ❌ API failed - restore the set
-        SnackBarUtils.showErrorSnackBar("Failed to remove set from server");
-        if (removedSet.isNotEmpty && removedIndex != -1) {
-          sets.insert(removedIndex, removedSet);
-          sets.refresh();
-        }
-      }
-    } catch (e) {
-      CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to remove set from server");
-
-      // ❌ API error - restore the set
-      if (removedSet.isNotEmpty && removedIndex != -1) {
-        sets.insert(removedIndex, removedSet);
-        sets.refresh();
-      }
-    }
-  }
 
   ///Add Set--------------------------------------------------------------------
   Future<void> addSet() async {
@@ -399,7 +359,6 @@ class ScoreBoardController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to add score. Please try again.");
     } finally {
       isAddingScore.value = false;
     }
@@ -407,7 +366,30 @@ class ScoreBoardController extends GetxController {
 
   ///End Game------------------------------------------------------------------
   var isEndGame = false.obs;
+  var matchType = "Friendly".obs;
+  var matchStatus = false.obs;
   ProfileController profileController = Get.put(ProfileController());
+  
+  ///Update Match Type----------------------------------------------------------
+  Future<void> updateMatchType(String newMatchType) async {
+    try {
+      final body = {
+        "bookingId": matchBookingId.value,
+        "matchType": newMatchType.toLowerCase()
+      };
+      
+      final response = await repository.updateBooking(body: body);
+      
+      if (response?.success == true) {
+        matchType.value = newMatchType;
+        matchStatus.value = true;
+        SnackBarUtils.showInfoSnackBar("Match type updated to $newMatchType");
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "ERROR updating match type-> $e", level: LogLevel.error);
+    }
+  }
+  
   Future<void> endGame() async {
     CustomLogger.logMessage(msg: 'endGame API call', level: LogLevel.info);
     // Check if any set is empty (no scores)
@@ -440,7 +422,6 @@ class ScoreBoardController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to end game. Please try again.");
     } finally {
       isEndGame.value = false;
     }
@@ -610,17 +591,44 @@ class ScoreBoardController extends GetxController {
         hasPlayerSwaps.value = false; // Reset swap flag
         isShuffleMode.value = false;
         await fetchScoreBoard();
-        SnackBarUtils.showInfoSnackBar('Players updated successfully!');
         CustomLogger.logMessage(msg: 'API call successful - shuffle mode disabled', level: LogLevel.info);
       } else {
         // Revert changes on API failure
         await fetchScoreBoard(showLoader: false);
-        SnackBarUtils.showErrorSnackBar('Failed to update players');
       }
     } catch (e) {
       CustomLogger.logMessage(msg: 'Save error: $e', level: LogLevel.error);
       await fetchScoreBoard(showLoader: false);
-      SnackBarUtils.showErrorSnackBar('Failed to update players');
+    }
+  }
+
+  ///Convert Booking To Open Match---------------------------------------------
+  var isConvertingToOpenMatch = false.obs;
+  MainHomeController mainHomeController = Get.put(MainHomeController());
+  Future<void> convertToOpenMatch() async {
+    isConvertingToOpenMatch.value = true;
+    try {
+      final body = {
+        "bookingId": matchBookingId.value,
+        "matchType": matchType.value.toLowerCase(),
+        "bookingType": "openMatch"
+      };
+      
+      final response = await repository.convertBookingToOpenMatch(body: body);
+      
+      if (response?.success == true) {
+        bookingType.value = "openMatch";
+        SnackBarUtils.showInfoSnackBar(response?.message??"Booking converted to open match successfully!");
+        await fetchScoreBoard(showLoader: false);
+        await mainHomeController.homeController.fetchBookings();
+      } else {
+        SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to convert booking");
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "ERROR converting to open match-> $e", level: LogLevel.error);
+      SnackBarUtils.showErrorSnackBar("Failed to convert booking");
+    } finally {
+      isConvertingToOpenMatch.value = false;
     }
   }
 

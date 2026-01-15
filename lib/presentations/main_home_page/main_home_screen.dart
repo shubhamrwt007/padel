@@ -295,7 +295,8 @@ class MainHomeScreen extends StatelessWidget {
         }
       },
       child: Obx(() {
-        final isLoading = controller.homeController.loadingBookingId.value == b.sId;
+        final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
+        final isLoading = controller.homeController.loadingBookingId.value == id;
         return Stack(
           children: [
             Container(
@@ -445,7 +446,7 @@ class MainHomeScreen extends StatelessWidget {
                 ).paddingOnly(left: 5),
             ],
           ),
-              Text("(60m)",style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.blackColor,fontSize: 11))
+              Text("(${b.duration??0}m)",style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.blackColor,fontSize: 11))
               // Obx(() {
               //   final isLoading = controller.homeController.loadingBookingId.value == b.sId;
               //   return Container(
@@ -639,7 +640,7 @@ class MainHomeScreen extends StatelessWidget {
                       ),
 
                       // 🎀 Perfect corner ribbon
-                      if (e["action"] == "americano")
+                      if (e["action"] == "americano" || e["action"] == "player")
                         Positioned(
                           top: 0,
                           left: 0,
@@ -853,7 +854,7 @@ class MainHomeScreen extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.15),
+                        Colors.black.withValues(alpha: 0.15),
                         Colors.black.withOpacity(0.35),
                         Colors.black.withOpacity(0.75),
                       ],

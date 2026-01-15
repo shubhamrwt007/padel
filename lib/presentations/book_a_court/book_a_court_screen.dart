@@ -187,9 +187,11 @@ class BookACourtScreen extends StatelessWidget {
                     : SizedBox.shrink()),
                 ),
               ),
-              Transform.translate(
-                  offset: Offset(0, -5),
-                  child: availableCourts()),
+              Obx(() => !controller.showMainGrid.value
+                ? Transform.translate(
+                    offset: Offset(0, -5),
+                    child: availableCourts())
+                : SizedBox.shrink()),
               const SizedBox(height: 20),
             ],
           ),
@@ -199,44 +201,95 @@ class BookACourtScreen extends StatelessWidget {
   }
 
 
+  Widget _typeButton(String title, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : Colors.black54,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget availableCourts() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Always show header with match type buttons
+        Row(
+          children: [
+            Text('Available Courts', style: Get.textTheme.labelLarge),
+            const Spacer(),
+            Obx(() {
+              final isFriendly = controller.matchType.value == "friendly";
+
+              return Container(
+                height: 34,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    _typeButton("Friendly", isFriendly, () {
+                      controller.matchType.value = "friendly";
+                    }),
+                    _typeButton("Competitive", !isFriendly, () {
+                      controller.matchType.value = "competitive";
+                    }),
+                  ],
+                ),
+              );
+            })
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Conditional content based on selection state
+        _buildAvailableCourtsContent(),
+      ],
+    );
+  }
+
+  Widget _buildAvailableCourtsContent() {
     return Obx(() {
       // Check if no slots are selected from main grid
       if (controller.multiDateSelections.isEmpty) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Available Courts', style: Get.textTheme.labelLarge),
-            const SizedBox(height: 16),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Text(
-                  'Please select a time slot from above to see available courts.',
-                  style: TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text(
+              'Please select a time slot from above to see available courts.',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
-          ],
+          ),
         );
       }
 
       // Show loading state
       if (controller.isLoadingCourtsByDuration.value) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Available Courts', style: Get.textTheme.labelLarge),
-            const SizedBox(height: 100),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: LoadingWidget(color: AppColors.primaryColor,),
-              ),
+        return const SizedBox(
+          height: 100,
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: LoadingWidget(color: AppColors.primaryColor),
             ),
-          ],
+          ),
         );
       }
 
@@ -246,21 +299,14 @@ class BookACourtScreen extends StatelessWidget {
       if (courtsByDuration == null ||
           courtsByDuration.data == null ||
           courtsByDuration.data!.isEmpty) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Available Courts', style: Get.textTheme.labelLarge),
-            const SizedBox(height: 16),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Text(
-                  'No courts available for the selected time slot.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text(
+              'No courts available for the selected time slot.',
+              style: TextStyle(color: Colors.grey),
             ),
-          ],
+          ),
         );
       }
 
@@ -269,7 +315,6 @@ class BookACourtScreen extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Available Courts', style: Get.textTheme.labelLarge),
           ...List.generate(clubsData.length, (clubIndex) {
             final clubData = clubsData[clubIndex];
             final isLastItem = clubIndex == clubsData.length - 1;

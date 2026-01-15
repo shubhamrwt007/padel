@@ -72,10 +72,28 @@ class _WalletScreenState extends State<WalletScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children:  [
-              Obx(() => Text(
-                '₹ ${controller.walletBalance.value}',
-                style: Get.textTheme.titleLarge!.copyWith(color: Colors.white),
+              Obx(() => RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: controller.walletBalance.value.toString(),
+                      style: Get.textTheme.titleLarge!.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: " Credits",
+                      style: Get.textTheme.titleLarge!.copyWith(
+                          color: Colors.white.withOpacity(0.8),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18
+                      ),
+                    ),
+                  ],
+                ),
               )),
+
               SizedBox(width: 10),
               Padding(
                 padding: EdgeInsets.only(bottom: 6),
@@ -107,8 +125,8 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _actionButton(Icons.add, 'Add'),
-              const SizedBox(width: 16),
-              _actionButton(Icons.arrow_downward, 'Withdraw'),
+              // const SizedBox(width: 16),
+              // _actionButton(Icons.arrow_downward, 'Withdraw'),
             ],
           ),
         ],

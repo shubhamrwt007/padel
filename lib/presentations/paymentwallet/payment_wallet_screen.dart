@@ -137,12 +137,13 @@ class PaymentWalletScreen extends StatelessWidget {
                      fontFamily: "Roboto"
                  ),
                ).paddingOnly(top: 2),
-               Text(
-                 "0",
+               Obx(() => Text(
+                 controller.walletController.walletBalance.value.toString(),
                  style: Get.textTheme.titleMedium!.copyWith(
                    color: AppColors.primaryColor,
                  ),
-               ),
+               )).paddingOnly(right: 30),
+               Icon(Icons.arrow_forward_ios,size: 22,color: AppColors.textColor,)
              ],
            )
           ],

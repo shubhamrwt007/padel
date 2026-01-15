@@ -68,10 +68,14 @@ class WalletRepository {
   }
 
   /// Test Create Wallet Balance--------------------------------------------------------
-  Future<TestCreateWalletBalanceModel> testCreateWalletBalance({
+  Future<LiveWalletAddBalanceModel> testCreateWalletBalance({
     required dynamic data,
   }) async {
     try {
+      CustomLogger.logMessage(
+        msg: "Wallet body $data",
+        level: LogLevel.info,
+      );
       final response = await dioClient.post(
         AppEndpoints.testWalletCreate,
         data: data,
@@ -82,7 +86,7 @@ class WalletRepository {
           level: LogLevel.info,
         );
 
-        return TestCreateWalletBalanceModel.fromJson(response.data);
+        return LiveWalletAddBalanceModel.fromJson(response.data);
       } else {
         throw Exception("Test Create Wallet Balance failed. Status code: ${response.statusCode}");
       }

@@ -208,14 +208,17 @@ class QuestionsBottomsheetController extends GetxController {
           slotCourtId = courtIds[index];
         }
 
-        // Get businessHours from localMatchData
+        // Get businessHours from localMatchData and filter for selected day only
         final businessHours = (localMatchData["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final selectedDayName = DateFormat('EEEE').format(parsedMatchDate!);
         
-        // Clean businessHours to only include time and day
-        final cleanBusinessHours = businessHours.map((bh) => {
-          "time": bh["time"] ?? "",
-          "day": bh["day"] ?? "",
-        }).toList();
+        // Filter businessHours to only include the selected day
+        final cleanBusinessHours = businessHours
+            .where((bh) => bh["day"] == selectedDayName)
+            .map((bh) => {
+              "time": bh["time"] ?? "",
+              "day": bh["day"] ?? "",
+            }).toList();
 
         // Handle half slots and other suffixes - don't send suffixes in slotId
         String cleanSlotId = slot.sId ?? "";
@@ -309,7 +312,7 @@ class QuestionsBottomsheetController extends GetxController {
         // "volleyNetPositioning": localMatchData["volleyNetPositioning"] ?? "",
         // "playerLevel": localMatchData["playerLevel"] ?? "",
         // "reboundSkills": localMatchData["reboundSkills"] ?? "",
-        "matchStatus": "open",
+        // "matchStatus": "open",
         "matchTime": localMatchData["matchTime"] ?? "",
         "gender":selectedGameType.value,
         // "matchType":selectedMatchType.value,

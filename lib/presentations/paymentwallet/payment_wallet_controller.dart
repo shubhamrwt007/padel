@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:padel_mobile/data/request_models/booking/boking_history_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/bookinghisory/booking_history_repository.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 
 class PaymentWalletController extends GetxController{
+  WalletController walletController = Get.put(WalletController());
 
   ///Payment Details Api--------------------------------------------------------
   var isLoading = false.obs;
@@ -28,6 +30,7 @@ class PaymentWalletController extends GetxController{
   @override
   void onInit()async {
     await fetchPaymentDetails();
+    walletController.fetchWallet();
     super.onInit();
   }
   String formatDate(String bookingDate) {

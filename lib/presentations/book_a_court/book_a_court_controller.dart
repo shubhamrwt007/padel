@@ -15,6 +15,7 @@ class BookACourtController extends GetxController {
   ///Available Slots------------------------------------------------------------
   // Remove duration selection - always use 60 min
   final selectedDuration = '60 min'.obs;
+  final matchType = "competitive".obs;
 
   ///Available Clubs------------------------------------------------------------
   final expandedIndex = (-1).obs;
@@ -1197,6 +1198,7 @@ class BookACourtController extends GetxController {
           "slot": slotData,
           "register_club_id": clubId,
           "ownerId": specificCourtData.registerClub?.ownerId ?? "",
+          "matchType":matchType.value
         };
         
         log('Booking payload ownerId: ${specificCourtData.registerClub?.ownerId}');

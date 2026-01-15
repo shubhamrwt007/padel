@@ -60,7 +60,7 @@ class OpenMatchBookingData {
   String? reboundSkills;
   String? matchDate;
   List<String>? matchTime;
-  String? matchStatus;
+  bool? matchStatus;
   List<TeamA>? teamA;
   List<TeamB>? teamB;
   UserId? createdBy;

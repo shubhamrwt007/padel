@@ -189,9 +189,11 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       : SizedBox.shrink()),
                 ),
               ),
-              Transform.translate(
+              Obx(() => !controller.showMainGrid.value
+                  ? Transform.translate(
                   offset: Offset(0, -5),
-                  child: availableCourts()),
+                  child: availableCourts())
+                  : SizedBox.shrink()),
               const SizedBox(height: 20),
             ],
           ),

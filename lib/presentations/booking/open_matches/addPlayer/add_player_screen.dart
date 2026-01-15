@@ -89,6 +89,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
                         action: TextInputAction.next,
                         keyboardType: TextInputType.text,
                         readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
+                        color:  controller.isLoginUserAdding.value || controller.isNameFromApi.value?Colors.grey.shade200:AppColors.textFieldColor
                       ),
                       textFieldWithLabel(
                         "Email (Optional)",
@@ -149,7 +150,9 @@ class AddPlayerBottomSheet extends StatelessWidget {
         TextInputAction? action,
         int? maxLength,
         TextCapitalization? textCapitalization,
-        dynamic Function(String)? onChanged
+        dynamic Function(String)? onChanged,
+        Color? color
+
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,6 +173,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
           textCapitalization: textCapitalization,
           maxLength: maxLength,
           onChanged: onChanged,
+          color: color,
         ).paddingOnly(top: 10),
       ],
     );

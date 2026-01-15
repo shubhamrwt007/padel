@@ -58,8 +58,10 @@ class BookingHistoryData {
   List<Slot>? slot;
   String? createdAt;
   String? ownerId;
+  String? matchType;
   String? updatedAt;
   int? iV;
+  int? duration;
   dynamic customerReview;
   OpenMatchId? openMatchId;
   Scoreboard? scoreboard;
@@ -76,8 +78,10 @@ class BookingHistoryData {
     this.slot,
     this.createdAt,
     this.ownerId,
+    this.matchType,
     this.updatedAt,
     this.iV,
+    this.duration,
     this.customerReview,
     this.openMatchId,
     this.scoreboard,
@@ -104,8 +108,10 @@ class BookingHistoryData {
 
     createdAt = json['createdAt']?.toString();
     ownerId = json['ownerId']?.toString();
+    matchType = json['matchType']?.toString();
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
+    duration = json['duration'];
     customerReview = json['customerReview'];
 
     openMatchId = json['openMatchId'] != null
@@ -142,8 +148,10 @@ class BookingHistoryData {
     }
     data['createdAt'] = createdAt;
     data['ownerId'] = ownerId;
+    data['matchType'] = matchType;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
+    data['duration'] = duration;
     data['customerReview'] = customerReview;
 
     if (openMatchId != null) {

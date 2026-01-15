@@ -38,6 +38,8 @@ class Data {
   List<Sets>? sets;
   String? createdAt;
   String? updatedAt;
+  String? matchType;
+  bool? matchStatus;
   int? iV;
   bool? isCompleted;
 
@@ -57,7 +59,9 @@ class Data {
     this.createdAt,
     this.updatedAt,
     this.iV,
-    this.isCompleted
+    this.isCompleted,
+    this.matchType,
+    this.matchStatus,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -80,6 +84,8 @@ class Data {
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     isCompleted = json['isCompleted'];
+    matchType = json['matchType'];
+    matchStatus = json['matchStatus'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -99,6 +105,8 @@ class Data {
         'updatedAt': updatedAt,
         '__v': iV,
         'isCompleted': isCompleted,
+        'matchType': matchType,
+        'matchStatus': matchStatus,
       };
 }
 

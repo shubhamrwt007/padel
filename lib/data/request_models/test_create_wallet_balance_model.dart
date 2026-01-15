@@ -1,57 +1,21 @@
-class TestCreateWalletBalanceModel {
-  final int? status;
-  final String? message;
-  final WalletResponse? response;
+class LiveWalletAddBalanceModel {
+  String? orderId;
+  int? amount;
+  String? currency;
 
-  TestCreateWalletBalanceModel({
-    this.status,
-    this.message,
-    this.response,
-  });
+  LiveWalletAddBalanceModel({this.orderId, this.amount, this.currency});
 
-  factory TestCreateWalletBalanceModel.fromJson(Map<String, dynamic> json) {
-    return TestCreateWalletBalanceModel(
-      status: json['status'],
-      message: json['message'],
-      response: json['response'] == null
-          ? null
-          : WalletResponse.fromJson(json['response']),
-    );
+  LiveWalletAddBalanceModel.fromJson(Map<String, dynamic> json) {
+    orderId = json['orderId'];
+    amount = json['amount'];
+    currency = json['currency'];
   }
 
-  Map<String, dynamic> toJson() => {
-    'status': status,
-    'message': message,
-    if (response != null) 'response': response!.toJson(),
-  };
-}
-
-class WalletResponse {
-  final String? id;
-  final String? userId;
-  final int? balance;
-  final bool? isActive;
-
-  WalletResponse({
-    this.id,
-    this.userId,
-    this.balance,
-    this.isActive,
-  });
-
-  factory WalletResponse.fromJson(Map<String, dynamic> json) {
-    return WalletResponse(
-      id: json['_id'],
-      userId: json['userId'],
-      balance: json['balance'],
-      isActive: json['isActive'],
-    );
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['orderId'] = this.orderId;
+    data['amount'] = this.amount;
+    data['currency'] = this.currency;
+    return data;
   }
-
-  Map<String, dynamic> toJson() => {
-    '_id': id,
-    'userId': userId,
-    'balance': balance,
-    'isActive': isActive,
-  };
 }
