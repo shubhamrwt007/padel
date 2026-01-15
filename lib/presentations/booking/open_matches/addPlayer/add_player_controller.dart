@@ -136,7 +136,7 @@ class AddPlayerController extends GetxController {
 
         // ---------- Add Player As Guest ----------
         else if (scoreBoardController != null) {
-          final added = await addGuestPlayer();
+          final added = await addPlayer();
           if (added) {
             CustomLogger.logMessage(
               msg: "Guest User Created & Added $body",
@@ -247,6 +247,8 @@ class AddPlayerController extends GetxController {
         await allOpenMatchController?.fetchOpenMatches();
         await openMatchBookingController?.fetchOpenMatchesBooking(type: "upcoming");
         await openMatchForAllCourtController?.fetchMatchesForSelection();
+        await scoreBoardController?.fetchScoreBoard();
+
         // Return success to caller so it can refresh immediately
         Get.back(result: true);
         SnackBarUtils.showSuccessSnackBar(

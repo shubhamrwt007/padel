@@ -86,4 +86,5 @@ class AppEndpoints {
 
   ///LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
+  static const String removePlayer = "${baseUrl}court/removePlayerFromMatch";
 }

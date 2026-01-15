@@ -34,10 +34,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       BookingHistoryController(),
       tag: 'booking_history',
     );
-
     return Scaffold(
       appBar: primaryAppBar(
-        centerTitle: true,
+          centerTitle: true,
           showLeading:widget.buttonType=="drawer"? true:false,
           title: Text("My Bookings"), context: context),
       body: Column(
@@ -48,6 +47,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               controller: controller.tabController,
               children: [
                 _tabContent(context, controller: controller, type: "upcoming"),
+                _tabContent(context, controller: controller, type: "ongoing"),
                 _tabContent(context, controller: controller, type: "completed"),
               ],
             ),
@@ -71,6 +71,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         tabs: const [
           Tab(text: "Upcoming"),
+          Tab(text: "Ongoing"),
           Tab(text: "Completed"),
         ],
       ),
@@ -84,6 +85,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     return Obx(() {
       final bookings = (type == "completed")
           ? (controller.completedBookings.value?.data ?? [])
+          : (type == "ongoing")
+          ? (controller.inProgressBookings.value?.data ?? [])
           : (type == "cancelled")
           ? (controller.cancelledBookings.value?.data ?? [])
           : (controller.upcomingBookings.value?.data ?? []);
@@ -741,22 +744,22 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       if (booking.openMatchId?.matchTime != null && booking.openMatchId?.matchTime is List) {
         final matchTimes = booking.openMatchId?.matchTime as List;
         if (matchTimes.isEmpty) return '';
-        
+
         if (matchTimes.length == 1) {
           return matchTimes[0].toString();
         }
-        
+
         final firstTime = matchTimes.first.toString();
         final lastTime = matchTimes.last.toString();
-        
+
         // Extract hour from first and last time (e.g., "8 pm" -> "8", "9 pm" -> "9")
         final firstHour = firstTime.replaceAll(RegExp(r'[^0-9]'), '');
         final lastHour = lastTime.replaceAll(RegExp(r'[^0-9]'), '');
         final period = lastTime.contains('pm') ? 'pm' : 'am';
-        
+
         return '$firstHour-$lastHour$period';
       }
-      
+
       // Fallback to original slot logic
       if (booking.slot == null) return '';
       final slotList = booking.slot;
@@ -1145,7 +1148,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _expandedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
     final isUpcoming = type == "upcoming";
     final timeStr = _getTimeString(booking);
-    
+
     // Count actual players from scoreboard
     int totalPlayers = 0;
     final scoreboard = booking.scoreboard;

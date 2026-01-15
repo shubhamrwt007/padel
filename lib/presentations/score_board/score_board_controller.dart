@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
@@ -18,15 +19,115 @@ class ScoreBoardController extends GetxController {
   RxString courtName = "".obs;
   RxBool isCompleted = false.obs;
 
+  // Timer-related variables
+  RxInt remainingSeconds = (00 * 60).obs; // 20 minutes in seconds
+  late Timer _gameTimer;
+  RxBool isGameStarted = false.obs;
+  RxBool isWithinMatchTime = false.obs;
+
+  ///Calculate remaining match time in seconds----------------------------------------------
+  int _calculateRemainingMatchTime() {
+    try {
+      if (matchTime.value.isEmpty) return 0;
+
+      // Parse match time (e.g., "7:00 PM - 8:00 PM")
+      String timeStr = matchTime.value.trim();
+      List<String> parts = timeStr.split('-');
+
+      if (parts.length < 2) return 0;
+
+      // Get end time (second part)
+      String endTimeStr = parts[1].trim();
+
+      // Parse end time
+      DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
+      DateTime now = DateTime.now();
+      DateTime endDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        endTime.hour,
+        endTime.minute,
+      );
+
+      // If end time is in the past, use tomorrow
+      if (endDateTime.isBefore(now)) {
+        endDateTime = endDateTime.add(const Duration(days: 1));
+      }
+
+      int remainingSeconds = endDateTime.difference(now).inSeconds;
+      return remainingSeconds > 0 ? remainingSeconds : 0;
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error calculating match time: $e", level: LogLevel.error);
+      return 0;
+    }
+  }
+
+  ///Check if current time is within match time window----------------------------------------------
+  bool _isWithinMatchTimeWindow() {
+    try {
+      if (matchTime.value.isEmpty) return false;
+
+      String timeStr = matchTime.value.trim();
+      List<String> parts = timeStr.split('-');
+
+      if (parts.length < 2) return false;
+
+      // Parse start and end times
+      String startTimeStr = parts[0].trim();
+      String endTimeStr = parts[1].trim();
+
+      DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+      DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
+
+      DateTime now = DateTime.now();
+
+      DateTime startDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        startTime.hour,
+        startTime.minute,
+      );
+
+      DateTime endDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        endTime.hour,
+        endTime.minute,
+      );
+
+      // If end time is before start time, it's next day
+      if (endDateTime.isBefore(startDateTime)) {
+        endDateTime = endDateTime.add(const Duration(days: 1));
+      }
+
+      // If we're before start time, check if match is today or tomorrow
+      if (now.isBefore(startDateTime)) {
+        // If start time is more than 12 hours away, it's probably tomorrow's match
+        if (startDateTime.difference(now).inHours > 12) {
+          return false;
+        }
+      }
+
+      return now.isAfter(startDateTime) && now.isBefore(endDateTime);
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error checking match time: $e", level: LogLevel.error);
+      return false;
+    }
+  }
+
   final _uuid = Uuid();
-  
+
   // Stream controller for periodic updates
   late StreamController<Map<String, dynamic>> _scoreboardStreamController;
   late Timer _periodicTimer;
-  
+
   Stream<Map<String, dynamic>> get scoreboardStream => _scoreboardStreamController.stream;
 
   ///Capitalize First Word------------------------------------------------------
+
   String capitalizeFirstWord(String text) {
     if (text.isEmpty) return text;
     List<String> words = text.split(" ");
@@ -34,7 +135,26 @@ class ScoreBoardController extends GetxController {
     return first[0].toUpperCase() + first.substring(1).toLowerCase();
   }
 
+  ///Format elapsed time as MM:SS----------------------------------------------
+  String get formattedTime {
+    final minutes = (remainingSeconds.value ~/ 60).toString().padLeft(2, '0');
+    final seconds = (remainingSeconds.value % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  ///Check if all 4 players are added----------------------------------------------
+  bool get allPlayersAdded {
+    final teamAPlayers = teams.isNotEmpty
+        ? teams[0]["players"] as List
+        : [];
+    final teamBPlayers = teams.length > 1
+        ? teams[1]["players"] as List
+        : [];
+    return teamAPlayers.length == 2 && teamBPlayers.length == 2;
+  }
+
   ///Get Score Board Api--------------------------------------------------------
+
   RxList<Map<String, dynamic>> teams = <Map<String, dynamic>>[].obs;
   var bookingId = ''.obs;
   var bookingType = ''.obs;
@@ -47,6 +167,7 @@ class ScoreBoardController extends GetxController {
   final isShuffleMode = false.obs;
   final hasPlayerSwaps = false.obs;
   var matchBookingId = ''.obs;
+
   Future<void> fetchScoreBoard({bool showLoader = true}) async {
     if (showLoader) {
       isLoading.value = true;
@@ -59,7 +180,7 @@ class ScoreBoardController extends GetxController {
         final item = response.data!.first;
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
-        matchBookingId.value = item.bookingId?.sId??"";
+        matchBookingId.value = item.bookingId?.sId ?? "";
         bookingType.value = item.bookingId?.bookingType ?? "";
         matchType.value = (item?.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
         matchStatus.value = item?.matchStatus ?? false;
@@ -189,6 +310,46 @@ class ScoreBoardController extends GetxController {
     }
   }
 
+  ///Start Game - Initializes first set and starts timer-----------------------------------
+  Future<void> startGame() async {
+    if (!allPlayersAdded) {
+      SnackBarUtils.showErrorSnackBar("Please add all 4 players first");
+      return;
+    }
+
+    if (!isWithinMatchTime.value) {
+      SnackBarUtils.showErrorSnackBar("Game can only start during match time");
+      return;
+    }
+
+    if (isGameStarted.value) {
+      // Game already started, just add a new set
+      await addSet();
+      return;
+    }
+
+    // Start the game for the first time
+    isGameStarted.value = true;
+    int matchDuration = _calculateRemainingMatchTime();
+    remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
+    _startGameTimer();
+
+    // Add the first set
+    await createSets(_nextAvailableSetNumber());
+  }
+
+  void _startGameTimer() {
+    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (remainingSeconds.value > 0) {
+        remainingSeconds.value--;
+      } else {
+        timer.cancel();
+        isGameStarted.value = false;
+        SnackBarUtils.showInfoSnackBar("Match time is up!");
+      }
+    });
+  }
+
   Future<void> createSets(int setNumber, {String? type}) async {
     CustomLogger.logMessage(msg: 'createSets API call - setNumber: $setNumber', level: LogLevel.info);
     isAddingSet.value = true;
@@ -221,8 +382,6 @@ class ScoreBoardController extends GetxController {
     }
   }
 
-
-
   ///Add Set--------------------------------------------------------------------
   Future<void> addSet() async {
     if (sets.length < 10) {
@@ -231,6 +390,7 @@ class ScoreBoardController extends GetxController {
       SnackBarUtils.showInfoSnackBar("Limit Reached\nYou can add up to 10 sets only");
     }
   }
+
   int _nextAvailableSetNumber() {
     final existingNumbers = sets
         .map((s) => s["setNumber"])
@@ -251,26 +411,83 @@ class ScoreBoardController extends GetxController {
     openMatchId.value = Get.arguments["openMatchId"] ?? "";
     CustomLogger.logMessage(msg: "BOOKING ID-> ${bookingId.value}", level: LogLevel.info);
     CustomLogger.logMessage(msg: "OPEN MATCH ID-> ${openMatchId.value}", level: LogLevel.info);
-    
+
     _scoreboardStreamController = StreamController<Map<String, dynamic>>.broadcast();
     await fetchScoreBoard();
     _startPeriodicUpdates();
+    _startMatchTimeCheck();
   }
-  
+
+  void _startMatchTimeCheck() {
+    Timer.periodic(const Duration(seconds: 10), (timer) {
+      isWithinMatchTime.value = _isWithinMatchTimeWindow();
+
+      // Update remaining time display based on match status
+      if (!isGameStarted.value) {
+        if (isWithinMatchTime.value) {
+          // Within match time, show remaining time until match ends
+          remainingSeconds.value = _calculateRemainingMatchTime();
+        } else {
+          // Not within match time, show remaining time until match starts
+          int timeUntilStart = _calculateTimeUntilMatchStart();
+          remainingSeconds.value = timeUntilStart;
+        }
+      }
+    });
+  }
+
+  ///Calculate time until match starts in seconds----------------------------------------------
+  int _calculateTimeUntilMatchStart() {
+    try {
+      if (matchTime.value.isEmpty) return 0;
+
+      // Parse match time (e.g., "7:00 PM - 8:00 PM")
+      String timeStr = matchTime.value.trim();
+      List<String> parts = timeStr.split('-');
+
+      if (parts.length < 1) return 0;
+
+      // Get start time (first part)
+      String startTimeStr = parts[0].trim();
+
+      // Parse start time
+      DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+      DateTime now = DateTime.now();
+      DateTime startDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        startTime.hour,
+        startTime.minute,
+      );
+
+      // If start time is in the past, use tomorrow
+      if (startDateTime.isBefore(now)) {
+        startDateTime = startDateTime.add(const Duration(days: 1));
+      }
+
+      int timeUntilSeconds = startDateTime.difference(now).inSeconds;
+      return timeUntilSeconds > 0 ? timeUntilSeconds : 0;
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error calculating time until match: $e", level: LogLevel.error);
+      return 0;
+    }
+  }
+
   void _startPeriodicUpdates() {
     _periodicTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       await _fetchScoreBoardForStream();
     });
   }
-  
+
   Future<void> _fetchScoreBoardForStream() async {
     try {
       if (_scoreboardStreamController.isClosed) return;
-      
+
       final response = await repository.getScoreBoard(bookingId: bookingId.value);
       if (response.status == 200 && response.data!.isNotEmpty) {
         final item = response.data!.first;
-        
+
         // Update sets
         sets.clear();
         if (item.sets != null && item.sets!.isNotEmpty) {
@@ -285,13 +502,13 @@ class ScoreBoardController extends GetxController {
           }
         }
         sets.refresh();
-        
+
         // Update scores
         teamAWins.value = item.totalScore?.teamA ?? 0;
         teamBWins.value = item.totalScore?.teamB ?? 0;
         winner.value = item.winner?.toString() ?? "None";
         isCompleted.value = item.isCompleted ?? false;
-        
+
         if (!_scoreboardStreamController.isClosed) {
           _scoreboardStreamController.add({'updated': true});
         }
@@ -300,9 +517,12 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "Stream fetch error: $e", level: LogLevel.error);
     }
   }
-  
+
   @override
   void onClose() {
+    if (isGameStarted.value) {
+      _gameTimer.cancel();
+    }
     _periodicTimer.cancel();
     if (!_scoreboardStreamController.isClosed) {
       _scoreboardStreamController.close();
@@ -323,22 +543,22 @@ class ScoreBoardController extends GetxController {
       final Map<String, dynamic> setData = {
         "setNumber": setNumber,
       };
-      
+
       if (teamAScore > 0) {
         setData["teamAScore"] = teamAScore;
       }
       if (teamBScore > 0) {
         setData["teamBScore"] = teamBScore;
       }
-      
+
       // Only determine winner if both teams have scores
       final currentSet = sets.firstWhere((s) => s["setNumber"] == setNumber, orElse: () => {});
       final currentTeamAScore = currentSet["teamAScore"] ?? 0;
       final currentTeamBScore = currentSet["teamBScore"] ?? 0;
-      
+
       final finalTeamAScore = teamAScore > 0 ? teamAScore : currentTeamAScore;
       final finalTeamBScore = teamBScore > 0 ? teamBScore : currentTeamBScore;
-      
+
       if (finalTeamAScore > 0 && finalTeamBScore > 0) {
         if (finalTeamAScore > finalTeamBScore) {
           setData["winner"] = "Team A";
@@ -351,7 +571,7 @@ class ScoreBoardController extends GetxController {
         "scoreboardId": scoreboardId.value,
         "sets": [setData]
       };
-      
+
       final response = await repository.updateScoreBoard(data: body);
       if (response.success == true) {
         CustomLogger.logMessage(msg: "Score Added Successfully", level: LogLevel.info);
@@ -369,7 +589,7 @@ class ScoreBoardController extends GetxController {
   var matchType = "Friendly".obs;
   var matchStatus = false.obs;
   ProfileController profileController = Get.put(ProfileController());
-  
+
   ///Update Match Type----------------------------------------------------------
   Future<void> updateMatchType(String newMatchType) async {
     try {
@@ -377,9 +597,9 @@ class ScoreBoardController extends GetxController {
         "bookingId": matchBookingId.value,
         "matchType": newMatchType.toLowerCase()
       };
-      
+
       final response = await repository.updateBooking(body: body);
-      
+
       if (response?.success == true) {
         matchType.value = newMatchType;
         matchStatus.value = true;
@@ -389,7 +609,7 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "ERROR updating match type-> $e", level: LogLevel.error);
     }
   }
-  
+
   Future<void> endGame() async {
     CustomLogger.logMessage(msg: 'endGame API call', level: LogLevel.info);
     // Check if any set is empty (no scores)
@@ -405,6 +625,10 @@ class ScoreBoardController extends GetxController {
     }
 
     isEndGame.value = true;
+    if (isGameStarted.value) {
+      _gameTimer.cancel();
+      isGameStarted.value = false;
+    }
     try {
       final body = {
         "scoreboardId": scoreboardId.value,
@@ -412,13 +636,13 @@ class ScoreBoardController extends GetxController {
       };
 
       final response = await repository.updateScoreBoard(data: body);
-      
+
       if (response.success == true) {
         SnackBarUtils.showInfoSnackBar("Game Ended Successfully!");
         await fetchScoreBoard(showLoader: false);
         await profileController.fetchUserProfile();
-      }else{
-        SnackBarUtils.showErrorSnackBar(response.message??"");
+      } else {
+        SnackBarUtils.showErrorSnackBar(response.message ?? "");
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
@@ -432,23 +656,42 @@ class ScoreBoardController extends GetxController {
 
   ///Check user's team and scoring permissions----------------------------------
   String get currentUserId => profileController.profileModel.value?.response?.sId ?? '';
-  
+
   bool get isUserInTeamA {
     if (teams.isEmpty) return false;
     final teamAPlayers = teams[0]['players'] as List;
     return teamAPlayers.any((player) => player['playerId'] == currentUserId);
   }
-  
+
   bool get isUserInTeamB {
     if (teams.length < 2) return false;
     final teamBPlayers = teams[1]['players'] as List;
     return teamBPlayers.any((player) => player['playerId'] == currentUserId);
   }
-  
+
   bool canScoreForTeam(String team) {
     if (team == 'Team A') return isUserInTeamA;
     if (team == 'Team B') return isUserInTeamB;
     return false;
+  }
+
+  ///Remove Player from Team-------------------------------------------------
+  void removePlayer(String playerId, String teamName) {
+    CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
+    try {
+      int teamIndex = teamName == 'Team A' ? 0 : 1;
+
+      if (teamIndex >= teams.length) return;
+
+      final teamPlayers = teams[teamIndex]['players'] as List;
+      teamPlayers.removeWhere((player) => player['playerId'] == playerId);
+
+      hasPlayerSwaps.value = true;
+      teams.refresh();
+      CustomLogger.logMessage(msg: 'Player removed successfully', level: LogLevel.info);
+    } catch (e) {
+      CustomLogger.logMessage(msg: 'Remove player error: $e', level: LogLevel.error);
+    }
   }
 
   ///Swap Players---------------------------------------------------------------
@@ -459,7 +702,7 @@ class ScoreBoardController extends GetxController {
       Map<String, dynamic>? draggedPlayer;
       int draggedTeamIndex = -1;
       int draggedPlayerIndex = -1;
-      
+
       for (int teamIndex = 0; teamIndex < teams.length; teamIndex++) {
         final teamPlayers = teams[teamIndex]['players'] as List;
         for (int playerIndex = 0; playerIndex < teamPlayers.length; playerIndex++) {
@@ -472,22 +715,22 @@ class ScoreBoardController extends GetxController {
         }
         if (draggedPlayer != null) break;
       }
-      
+
       if (draggedPlayer == null) return;
-      
+
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
-      
+
       // Get target player if exists
       Map<String, dynamic>? targetPlayer;
       final targetTeamPlayers = teams[targetTeamIndex]['players'] as List;
       if (targetIndex < targetTeamPlayers.length) {
         targetPlayer = Map<String, dynamic>.from(targetTeamPlayers[targetIndex]);
       }
-      
+
       // Perform the swap in local data only - NO API CALL
       final draggedTeamPlayers = teams[draggedTeamIndex]['players'] as List;
-      
+
       if (targetPlayer != null) {
         // Swap players
         draggedTeamPlayers[draggedPlayerIndex] = targetPlayer;
@@ -501,8 +744,8 @@ class ScoreBoardController extends GetxController {
           targetTeamPlayers.add(draggedPlayer);
         }
       }
-      
-      hasPlayerSwaps.value = true; // Mark that swaps occurred
+
+      hasPlayerSwaps.value = true;
       teams.refresh();
       CustomLogger.logMessage(msg: 'Local swap completed - NO API CALL MADE', level: LogLevel.info);
     } catch (e) {
@@ -518,7 +761,7 @@ class ScoreBoardController extends GetxController {
       Map<String, dynamic>? playerToMove;
       int sourceTeamIndex = -1;
       int sourcePlayerIndex = -1;
-      
+
       for (int teamIndex = 0; teamIndex < teams.length; teamIndex++) {
         final teamPlayers = teams[teamIndex]['players'] as List;
         for (int playerIndex = 0; playerIndex < teamPlayers.length; playerIndex++) {
@@ -531,16 +774,16 @@ class ScoreBoardController extends GetxController {
         }
         if (playerToMove != null) break;
       }
-      
+
       if (playerToMove == null) return;
-      
+
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
-      
+
       // Remove player from source team
       final sourceTeamPlayers = teams[sourceTeamIndex]['players'] as List;
       sourceTeamPlayers.removeAt(sourcePlayerIndex);
-      
+
       // Add player to target team at specific index
       final targetTeamPlayers = teams[targetTeamIndex]['players'] as List;
       if (targetIndex < targetTeamPlayers.length) {
@@ -548,7 +791,7 @@ class ScoreBoardController extends GetxController {
       } else {
         targetTeamPlayers.add(playerToMove);
       }
-      
+
       hasPlayerSwaps.value = true;
       teams.refresh();
       CustomLogger.logMessage(msg: 'Player moved to empty slot successfully', level: LogLevel.info);
@@ -564,7 +807,7 @@ class ScoreBoardController extends GetxController {
       isShuffleMode.value = false;
       return;
     }
-    
+
     CustomLogger.logMessage(msg: 'savePlayerSwaps called - API CALL STARTING', level: LogLevel.info);
     try {
       // Build API body
@@ -572,28 +815,27 @@ class ScoreBoardController extends GetxController {
       for (int i = 0; i < teams.length; i++) {
         final teamPlayers = teams[i]['players'] as List;
         final playerIds = teamPlayers.map((p) => {'playerId': p['playerId']}).toList();
-        
+
         updatedTeams.add({
           'name': teams[i]['name'],
           'players': playerIds,
         });
       }
-      
+
       final body = {
         'scoreboardId': scoreboardId.value,
         'teams': updatedTeams,
         'action': 'swap',
       };
-      
+
       CustomLogger.logMessage(msg: 'Making API call to save player swaps', level: LogLevel.info);
       final response = await repository.updateScoreBoard(data: body);
       if (response.success == true) {
-        hasPlayerSwaps.value = false; // Reset swap flag
+        hasPlayerSwaps.value = false;
         isShuffleMode.value = false;
         await fetchScoreBoard();
         CustomLogger.logMessage(msg: 'API call successful - shuffle mode disabled', level: LogLevel.info);
       } else {
-        // Revert changes on API failure
         await fetchScoreBoard(showLoader: false);
       }
     } catch (e) {
@@ -613,12 +855,12 @@ class ScoreBoardController extends GetxController {
         "matchType": matchType.value.toLowerCase(),
         "bookingType": "openMatch"
       };
-      
+
       final response = await repository.convertBookingToOpenMatch(body: body);
-      
+
       if (response?.success == true) {
         bookingType.value = "openMatch";
-        SnackBarUtils.showInfoSnackBar(response?.message??"Booking converted to open match successfully!");
+        SnackBarUtils.showInfoSnackBar(response?.message ?? "Booking converted to open match successfully!");
         await fetchScoreBoard(showLoader: false);
         await mainHomeController.homeController.fetchBookings();
       } else {

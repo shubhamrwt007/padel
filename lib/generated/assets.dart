@@ -21,6 +21,7 @@ class Assets {
   static const String imagesIcChallengesNew = 'assets/images/ic_challenges_new.svg';
   static const String imagesIcChallengesPng = 'assets/images/ic_challenges_png.png';
   static const String imagesIcCheckCircle = 'assets/images/ic_check_circle.svg';
+  static const String imagesIcCrown = 'assets/images/ic_crown.png';
   static const String imagesIcEye = 'assets/images/ic_eye.png';
   static const String imagesIcEyeOff = 'assets/images/ic_eye_off.png';
   static const String imagesIcFilter = 'assets/images/ic_filter.png';
@@ -29,6 +30,7 @@ class Assets {
   static const String imagesIcHomeBottomBar = 'assets/images/ic_home_bottomBar.svg';
   static const String imagesIcLocation = 'assets/images/ic_location.png';
   static const String imagesIcLogOut = 'assets/images/ic_log_out.svg';
+  static const String imagesIcLoser = 'assets/images/ic_loser.png';
   static const String imagesIcMasterCardPayment = 'assets/images/ic_master_card_payment.svg';
   static const String imagesIcMixedGender = 'assets/images/ic_mixed_gender.svg';
   static const String imagesIcMyClub = 'assets/images/ic_my_club.svg';

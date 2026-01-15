@@ -24,7 +24,7 @@ class Match {
   List<String>? skillDetails;
   String? matchDate;
   List<String>? matchTime;
-  String? matchStatus;
+  bool? matchStatus;
   List<TeamA>? teamA;
   List<TeamB>? teamB;
   String? createdBy;

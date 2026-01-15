@@ -1,4 +1,3 @@
-
 import 'package:flutter/services.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
@@ -14,10 +13,13 @@ import 'package:padel_mobile/presentations/open_match_for_all_court/widgets/semi
 import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
+import '../../data/request_models/booking/boking_history_model.dart';
 import 'dart:developer';
+import 'package:intl/intl.dart';
+
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
-   MainHomeScreen({super.key});
+  MainHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class MainHomeScreen extends StatelessWidget {
         showLeading: false,
         flexibleSpace: Container(
           decoration: BoxDecoration(
-          color: AppColors.primaryColor,
+            color: AppColors.primaryColor,
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(24),
               bottomRight: Radius.circular(24),
@@ -52,17 +54,14 @@ class MainHomeScreen extends StatelessWidget {
           children: [
             // Drawer menu icon
             IconButton(
-              icon: Icon(Icons.menu,color: Colors.white,size: 26,),
+              icon: Icon(Icons.menu, color: Colors.white, size: 26),
               onPressed: () {
                 final drawerController = Get.find<CustomZoomDrawerController>();
                 drawerController.toggleDrawer();
               },
             ),
-
-
             // Space between icon and title
             const SizedBox(width: 0),
-
             // Existing title widget
             Expanded(child: _buildAppBarTitle(context)),
           ],
@@ -92,7 +91,9 @@ class MainHomeScreen extends StatelessWidget {
                   top: -2,
                   right: -2,
                   child: Obx(() {
-                    final count = Get.find<NotificationController>().unreadNotificationCount.value;
+                    final count = Get.find<NotificationController>()
+                        .unreadNotificationCount
+                        .value;
                     if (count == 0) return const SizedBox.shrink();
 
                     return Container(
@@ -138,10 +139,12 @@ class MainHomeScreen extends StatelessWidget {
               const SizedBox(height: 15),
               statsDashboard(),
               const SizedBox(height: 15),
-              _sectionTitle("Courts Near you",(){Get.toNamed(RoutesName.home);}),
+              _sectionTitle("Courts Near you", () {
+                Get.toNamed(RoutesName.home);
+              }),
               _courtCard(),
               const SizedBox(height: 15),
-              _sectionTitle("Top players near you",(){}),
+              _sectionTitle("Top players near you", () {}),
               _players(),
               // const SizedBox(height: 24),
               // _sectionTitle("Upcoming Tournaments"),
@@ -152,6 +155,7 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildAppBarTitle(BuildContext context) {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
@@ -166,10 +170,10 @@ class MainHomeScreen extends StatelessWidget {
         );
       }
 
-      final name = profile?.response?.name?.capitalizeFirst?.split(' ').first??"";
-      final displayName =
-      (name.trim().isEmpty) ? 'Guest' : name;
-      final location = profile?.response?.city??"";
+      final name =
+          profile?.response?.name?.capitalizeFirst?.split(' ').first ?? "";
+      final displayName = (name.trim().isEmpty) ? 'Guest' : name;
+      final location = profile?.response?.city ?? "";
 
       return SizedBox(
         width: Get.width * 0.34,
@@ -181,17 +185,17 @@ class MainHomeScreen extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: AppStrings.hello,
-                    style: Get
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 15),
+                    style: Get.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                        fontSize: 15),
                   ),
                   TextSpan(
                     text: displayName,
-                    style: Get
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700,color: Colors.white,fontSize: 15),
+                    style: Get.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 15),
                   ),
                 ],
               ),
@@ -201,11 +205,10 @@ class MainHomeScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(Icons.location_on, color: Colors.green, size: 14),
-                  Text(location,
-                    style: Get
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontWeight: FontWeight.w500,color: Colors.white),
+                  Text(
+                    location,
+                    style: Get.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500, color: Colors.white),
                   ),
                 ],
               ),
@@ -216,21 +219,20 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
-
   /// BOOKING SECTION
   Widget _bookingSection() {
     return Obx(() {
       final homeController = controller.homeController;
-      
+
       if (homeController.isLoadingBookings.value) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: bookingShimmer(),
         );
       }
-      
+
       final bookings = homeController.bookings.value?.data ?? [];
-      
+
       if (bookings.isEmpty) {
         return _banner();
       } else {
@@ -247,15 +249,17 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                   const Spacer(),
                   GestureDetector(
-                    onTap: (){
-                      final bottomNavController = Get.find<BottomNavigationController>();
+                    onTap: () {
+                      final bottomNavController =
+                      Get.find<BottomNavigationController>();
                       bottomNavController.updateIndex(1);
                     },
                     child: Container(
                       color: Colors.transparent,
                       child: Text(
                         "See all",
-                        style: Get.textTheme.labelLarge!.copyWith(color: AppColors.primaryColor),
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: AppColors.primaryColor),
                       ),
                     ),
                   ),
@@ -278,13 +282,18 @@ class MainHomeScreen extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 16),
         itemCount: booking.length,
-        itemBuilder: (context, index) => _buildBookingCard(context, booking[index]),
+        itemBuilder: (context, index) =>
+            _buildBookingCard(context, booking[index]),
       ),
     );
   }
 
-  Widget _buildBookingCard(BuildContext context, dynamic b) {
+  Widget _buildBookingCard(BuildContext context, BookingHistoryData b) {
     final club = b.registerClubId;
+
+    // Use the controller's method to check if booking is ongoing
+    final isOngoing = controller.homeController.isBookingOngoing(b);
+
     return GestureDetector(
       onTap: () {
         if (!controller.homeController.isCheckingScoreboard.value) {
@@ -296,20 +305,37 @@ class MainHomeScreen extends StatelessWidget {
       },
       child: Obx(() {
         final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
-        final isLoading = controller.homeController.loadingBookingId.value == id;
+        final isLoading =
+            controller.homeController.loadingBookingId.value == id;
         return Stack(
           children: [
             Container(
               width: 235,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color:
-                b.bookingType == "normal"?Color(0xffC6F6D5):
-                Color(0xff9EBAFF)),
+                border: Border.all(
+                  color: isOngoing
+                      ? Colors.red.shade300
+                      : b.bookingType == "normal"
+                      ? Color(0xffC6F6D5)
+                      : Color(0xff9EBAFF),
+                  width: isOngoing ? 2 : 1,
+                ),
                 gradient: LinearGradient(
-                  colors: b.bookingType == "normal" 
-                    ? [Color(0xffF0FFF4), Color(0xffC6F6D5).withValues(alpha: 0.3)]
-                    : [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha: 0.3)],
+                  colors: isOngoing
+                      ? [
+                    Color(0xffFFEBEE),
+                    Color(0xffFFCDD2).withValues(alpha: 0.3)
+                  ]
+                      : b.bookingType == "normal"
+                      ? [
+                    Color(0xffF0FFF4),
+                    Color(0xffC6F6D5).withValues(alpha: 0.3)
+                  ]
+                      : [
+                    Color(0xffF3F7FF),
+                    Color(0xff9EBAFF).withValues(alpha: 0.3)
+                  ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -326,10 +352,55 @@ class MainHomeScreen extends StatelessWidget {
                       _bookingRatingArrow(context),
                     ],
                   ),
-                  _bookingTimeInfo(context, b),
+                  _bookingTimeInfo(context, b, isOngoing),
                 ],
               ),
             ),
+
+            // LIVE indicator badge
+            if (isOngoing)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'LIVE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             if (isLoading)
               Container(
                 width: 235,
@@ -366,8 +437,10 @@ class MainHomeScreen extends StatelessWidget {
             ? CachedNetworkImage(
           imageUrl: club.courtImage![0],
           fit: BoxFit.cover,
-          placeholder: (_, __) => LoadingWidget(color: AppColors.primaryColor),
-          errorWidget: (_, __, ___) => Image.asset(Assets.imagesImgHomeLogo),
+          placeholder: (_, __) =>
+              LoadingWidget(color: AppColors.primaryColor),
+          errorWidget: (_, __, ___) =>
+              Image.asset(Assets.imagesImgHomeLogo),
         )
             : Image.asset(
           Assets.imagesImgHomeLogo,
@@ -386,19 +459,22 @@ class MainHomeScreen extends StatelessWidget {
           width: Get.width * 0.27,
           child: Text(
             club?.clubName ?? "N/A",
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.blackColor,fontSize: 12),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: AppColors.blackColor, fontSize: 12),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         Row(
           children: [
-            Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+            Image.asset(Assets.imagesIcLocation,
+                scale: 3, color: AppColors.blackColor),
             const SizedBox(width: 2),
             SizedBox(
               width: Get.width * 0.3,
               child: Text(
                 club?.city ?? "N/A",
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.blackColor,fontSize: 10),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.blackColor, fontSize: 10),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -422,7 +498,7 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bookingTimeInfo(BuildContext context, dynamic b) {
+  Widget _bookingTimeInfo(BuildContext context, BookingHistoryData b, bool isOngoing) {
     return Container(
       color: Colors.transparent,
       child: Row(
@@ -433,42 +509,37 @@ class MainHomeScreen extends StatelessWidget {
               Text(
                 controller.homeController.formatDate(b.bookingDate),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,fontSize: 11,
-                  color: AppColors.blackColor
+                  fontWeight: FontWeight.w500,
+                  fontSize: 11,
+                  color: isOngoing
+                      ? Colors.red.shade700
+                      : AppColors.blackColor,
                 ),
               ),
-              if (b.slot!.first.slotTimes != null && b.slot!.first.slotTimes!.isNotEmpty)
+              if (b.slot != null && b.slot!.isNotEmpty && b.slot!.first.slotTimes != null &&
+                  b.slot!.first.slotTimes!.isNotEmpty)
                 Text(
-                  b.slot!.first.slotTimes!.length > 1 
-                    ? "${formatTimeSlot(b.slot!.first.slotTimes!.first.time ?? "")} - ${formatTimeSlot(b.slot!.first.slotTimes!.last.time ?? "")}"
-                    : formatTimeSlot(b.slot!.first.slotTimes!.first.time ?? ""),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.blackColor,fontSize: 11),
+                  b.slot!.first.slotTimes!.length > 1
+                      ? "${formatTimeSlot(b.slot!.first.slotTimes!.first.time ?? "")} - ${formatTimeSlot(b.slot!.first.slotTimes!.last.time ?? "")}"
+                      : formatTimeSlot(
+                      b.slot!.first.slotTimes!.first.time ?? ""),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: isOngoing
+                        ? Colors.red.shade700
+                        : AppColors.blackColor,
+                    fontSize: 11,
+                  ),
                 ).paddingOnly(left: 5),
             ],
           ),
-              Text("(${b.duration??0}m)",style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.blackColor,fontSize: 11))
-              // Obx(() {
-              //   final isLoading = controller.homeController.loadingBookingId.value == b.sId;
-              //   return Container(
-              //     height: 23,
-              //     width: 55,
-              //     alignment: Alignment.center,
-              //     decoration: BoxDecoration(
-              //       borderRadius: BorderRadius.circular(10),
-              //       color: AppColors.secondaryColor,
-              //     ),
-              //     child: isLoading
-              //         ? LoadingAnimationWidget.waveDots(
-              //       color: AppColors.whiteColor,
-              //       size: 20,
-              //     )
-              //         : Text(
-              //       "Play Now",
-              //       style: Get.textTheme.headlineSmall!
-              //           .copyWith(color: Colors.white, fontSize: 10),
-              //     ),
-              //   );
-              // }),
+          Text(
+            "(${b.duration ?? 0}m)",
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color:
+              isOngoing ? Colors.red.shade700 : AppColors.blackColor,
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     ).paddingOnly(bottom: 2);
@@ -508,17 +579,17 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               Text(
                 "Discover, Book\nand Play",
-                style: Get.textTheme.titleMedium!
-                    .copyWith(color: Colors.white),
+                style: Get.textTheme.titleMedium!.copyWith(color: Colors.white),
               ),
               const Spacer(),
               GestureDetector(
-                onTap: (){
+                onTap: () {
                   Get.toNamed(RoutesName.home);
                 },
                 child: Container(
                   width: Get.width * 0.35,
-                  padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(40),
                     color: Colors.white,
@@ -528,13 +599,13 @@ class MainHomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         "BOOK NOW!",
-                        style: Get.textTheme.titleSmall!
-                            .copyWith(fontSize: 13),
+                        style: Get.textTheme.titleSmall!.copyWith(fontSize: 13),
                       ).paddingOnly(left: 10),
                       CircleAvatar(
                         radius: 15,
                         backgroundColor: AppColors.primaryColor,
-                        child: const Icon(Icons.arrow_forward, color: Colors.white),
+                        child: const Icon(Icons.arrow_forward,
+                            color: Colors.white),
                       ),
                     ],
                   ),
@@ -556,7 +627,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "book",
         "boxSize": 65.0,
         "iconSize": 34.0,
-        "offset":Offset(0,3)
+        "offset": Offset(0, 3)
       },
       {
         "icon": Assets.imagesIcOpenMatchNew,
@@ -564,7 +635,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "match",
         "boxSize": 65.0,
         "iconSize": 34.0,
-        "offset":Offset(0,3)
+        "offset": Offset(0, 3)
       },
       {
         "icon": Assets.imagesIcChallengesNew,
@@ -572,7 +643,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "player",
         "boxSize": 65.0,
         "iconSize": 34.0,
-        "offset":Offset(0,1)
+        "offset": Offset(0, 1)
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
@@ -580,7 +651,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "americano",
         "boxSize": 65.0,
         "iconSize": 34.0,
-        "offset":Offset(0,3)
+        "offset": Offset(0, 3)
       },
     ];
 
@@ -591,99 +662,95 @@ class MainHomeScreen extends StatelessWidget {
         final double iconSize = e["iconSize"] as double;
         final Offset offset = e["offset"] as Offset;
 
-
         return GestureDetector(
           onTap: () => _handleQuickAction(e["action"] as String),
           child: Column(
             children: [
               Container(
-                  height: boxSize,
-                  width: boxSize,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF3F56D6),
-                        Color(0xFF2B44C4),
-                      ],
-                    ),
+                height: boxSize,
+                width: boxSize,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF3F56D6),
+                      Color(0xFF2B44C4),
+                    ],
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Background circle glow
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Background circle glow
+                    Positioned(
+                      top: -boxSize * 0.35,
+                      left: -boxSize * 0.35,
+                      child: Container(
+                        height: boxSize * 1.3,
+                        width: boxSize * 1.3,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.04),
+                        ),
+                      ),
+                    ),
+
+                    // Icon
+                    Center(
+                      child: Transform.translate(
+                        offset: offset,
+                        child: SvgPicture.asset(
+                          e["icon"] as String,
+                          width: iconSize,
+                          height: iconSize,
+                        ),
+                      ),
+                    ),
+
+                    // 🎀 Perfect corner ribbon
+                    if (e["action"] == "americano" || e["action"] == "player")
                       Positioned(
-                        top: -boxSize * 0.35,
-                        left: -boxSize * 0.35,
-                        child: Container(
-                          height: boxSize * 1.3,
-                          width: boxSize * 1.3,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.04),
-                          ),
-                        ),
-                      ),
-
-                      // Icon
-                      Center(
-                        child: Transform.translate(
-                          offset: offset,
-                          child: SvgPicture.asset(
-                            e["icon"] as String,
-                            width: iconSize,
-                            height: iconSize,
-                          ),
-                        ),
-                      ),
-
-                      // 🎀 Perfect corner ribbon
-                      if (e["action"] == "americano" || e["action"] == "player")
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          child: SizedBox(
-                            width: boxSize,
-                            height: boxSize,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Stack(
-                                children: [
-                                  // Diagonal strip
-                                  Positioned(
-                                    top: 6,
-                                    left: -28,
-                                    child: Transform.rotate(
-                                      angle: -0.685398, // -45°
-                                      child: Container(
-                                        width: 90,
-                                        height: 14,
-                                        alignment: Alignment.center,
-                                        color: Colors.orange,
-                                        child: const Text(
-                                          "COMING SOON",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 5,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.6,
-                                          ),
+                        top: 0,
+                        left: 0,
+                        child: SizedBox(
+                          width: boxSize,
+                          height: boxSize,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Stack(
+                              children: [
+                                // Diagonal strip
+                                Positioned(
+                                  top: 6,
+                                  left: -28,
+                                  child: Transform.rotate(
+                                    angle: -0.685398, // -45°
+                                    child: Container(
+                                      width: 90,
+                                      height: 14,
+                                      alignment: Alignment.center,
+                                      color: Colors.orange,
+                                      child: const Text(
+                                        "COMING SOON",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 5,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.6,
                                         ),
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-
-
-                    ],
-                  ),
-
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -697,16 +764,15 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-
   void _handleQuickAction(String action) {
-    if(Get.isSnackbarOpen) return;
-    
-    switch(action) {
+    if (Get.isSnackbarOpen) return;
+
+    switch (action) {
       case 'book':
         Get.toNamed(RoutesName.bookACourt);
         break;
       case 'match':
-        // SnackBarUtils.showInfoSnackBar("Open Match feature coming soon!");
+      // SnackBarUtils.showInfoSnackBar("Open Match feature coming soon!");
         Get.toNamed(RoutesName.openMatchForAllCourts);
         break;
       case 'americano':
@@ -719,21 +785,20 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   /// SECTION TITLE
-  Widget _sectionTitle(String title,VoidCallback? onTap) {
+  Widget _sectionTitle(String title, VoidCallback? onTap) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Text(title,
-              style:
-              Get.textTheme.headlineMedium),
+          Text(title, style: Get.textTheme.headlineMedium),
           const Spacer(),
           GestureDetector(
             onTap: onTap,
             child: Container(
               color: Colors.transparent,
               child: Text("See all",
-                  style: Get.textTheme.labelLarge!.copyWith(color: AppColors.primaryColor)),
+                  style: Get.textTheme.labelLarge!
+                      .copyWith(color: AppColors.primaryColor)),
             ),
           ),
         ],
@@ -810,7 +875,8 @@ class MainHomeScreen extends StatelessWidget {
         log("CLUB ID -> ${court.id}");
         if (court.id != null) {
           Get.delete<BookingController>();
-          Get.toNamed(RoutesName.booking, arguments: {"data": court, "clubId": court.id});
+          Get.toNamed(RoutesName.booking,
+              arguments: {"data": court, "clubId": court.id});
         }
       },
       child: Padding(
@@ -823,27 +889,28 @@ class MainHomeScreen extends StatelessWidget {
               Positioned.fill(
                 child: court.courtImage != null && court.courtImage!.isNotEmpty
                     ? CachedNetworkImage(
-                        imageUrl: court.courtImage![0],
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: LoadingWidget(color: AppColors.primaryColor),
-                          ),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                          ),
-                        ),
-                      )
+                  imageUrl: court.courtImage![0],
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: LoadingWidget(color: AppColors.primaryColor),
+                    ),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(Icons.broken_image,
+                          color: Colors.grey, size: 40),
+                    ),
+                  ),
+                )
                     : Container(
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Icon(Icons.photo, color: Colors.grey, size: 40),
-                        ),
-                      ),
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: Icon(Icons.photo, color: Colors.grey, size: 40),
+                  ),
+                ),
               ),
 
               /// BLACK GRADIENT
@@ -862,6 +929,7 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
               /// BLACK GRADIENT
               Positioned.fill(
                 child: Container(
@@ -887,11 +955,10 @@ class MainHomeScreen extends StatelessWidget {
                 right: 16,
                 bottom: 16,
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 4,horizontal: 10),
+                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
                   decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(10)
-                  ),
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(10)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -900,11 +967,11 @@ class MainHomeScreen extends StatelessWidget {
                         children: [
                           Container(
                             color: Colors.transparent,
-                            width: Get.width*0.5,
+                            width: Get.width * 0.5,
                             child: Text(
                               court.clubName ?? "N/A",
                               style: Get.textTheme.titleMedium!
-                                  .copyWith(color: Colors.white,fontSize: 14),
+                                  .copyWith(color: Colors.white, fontSize: 14),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -925,7 +992,6 @@ class MainHomeScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-
                       Row(
                         children: [
                           const Icon(Icons.location_on,
@@ -935,34 +1001,34 @@ class MainHomeScreen extends StatelessWidget {
                             child: Text(
                               "${court.city},${court.zipCode}",
                               style: Get.textTheme.bodySmall!
-                                  .copyWith(color: Colors.white70,fontSize: 9),
+                                  .copyWith(color: Colors.white70, fontSize: 9),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 2),
-
                       Text(
                         "${court.courtCount ?? 0} Courts | ${court.features?.join(' | ') ?? 'Available'}",
                         style: Get.textTheme.bodySmall!
-                            .copyWith(color: Colors.white70,fontSize: 9),
+                            .copyWith(color: Colors.white70, fontSize: 9),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-
                       const SizedBox(height: 10),
-
                       Row(
                         children: [
-                          Text("Booking Price",style: Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor,fontSize: 12),),
+                          Text(
+                            "Booking Price",
+                            style: Get.textTheme.headlineLarge!.copyWith(
+                                color: AppColors.secondaryColor, fontSize: 12),
+                          ),
                           const Spacer(),
                           Text(
                             "₹ ${formatAmount(court.totalAmount ?? 0)}",
                             style: Get.textTheme.titleMedium!
-                                .copyWith(color: Colors.white,fontSize: 14),
+                                .copyWith(color: Colors.white, fontSize: 14),
                           ),
                         ],
                       ),
@@ -977,7 +1043,6 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-
   /// PLAYERS
   Widget _players() {
     return SizedBox(
@@ -989,20 +1054,18 @@ class MainHomeScreen extends StatelessWidget {
           width: 120,
           padding: EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.4),
-                spreadRadius: 1.5,
-                blurRadius: 5.0
-              )
-            ]
-          ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    spreadRadius: 1.5,
+                    blurRadius: 5.0)
+              ]),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
-            children:  [
+            children: [
               CircleAvatar(
                 radius: 26,
                 backgroundColor: AppColors.secondaryColor,
@@ -1026,33 +1089,45 @@ class MainHomeScreen extends StatelessWidget {
               Transform.translate(
                 offset: Offset(0, -5),
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 3,horizontal: 8),
+                  padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: AppColors.secondaryColor
-                  ),
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.secondaryColor),
                   child: Text("1000 XP",
-                      style: Get.textTheme.labelMedium!.copyWith(color: Colors.white)),
+                      style: Get.textTheme.labelMedium!
+                          .copyWith(color: Colors.white)),
                 ),
               ),
-              Text("Vaibhav Kumar",
-                  style: Get.textTheme.labelLarge),
+              Text("Vaibhav Kumar", style: Get.textTheme.labelLarge),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("100 XP",style: Get.textTheme.labelMedium,),
-                  Text("100 XP",style: Get.textTheme.labelMedium,),
+                  Text(
+                    "100 XP",
+                    style: Get.textTheme.labelMedium,
+                  ),
+                  Text(
+                    "100 XP",
+                    style: Get.textTheme.labelMedium,
+                  ),
                 ],
-              ),Row(
+              ),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("100 XP",style: Get.textTheme.labelMedium,),
-                  Text("100 XP",style: Get.textTheme.labelMedium,),
+                  Text(
+                    "100 XP",
+                    style: Get.textTheme.labelMedium,
+                  ),
+                  Text(
+                    "100 XP",
+                    style: Get.textTheme.labelMedium,
+                  ),
                 ],
               )
             ],
           ),
-        ).paddingOnly(top: 10,bottom: 10),
+        ).paddingOnly(top: 10, bottom: 10),
         separatorBuilder: (_, __) => const SizedBox(width: 16),
         itemCount: 5,
       ),
@@ -1080,8 +1155,7 @@ class MainHomeScreen extends StatelessWidget {
             Text("The Good Club"),
             SizedBox(height: 8),
             Text("₹ 2000",
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -1093,7 +1167,7 @@ class MainHomeScreen extends StatelessWidget {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
       final recentMatches = profile?.response?.recentMatches ?? [];
-      
+
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -1106,7 +1180,9 @@ class MainHomeScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _leaderboardCard(),
-                      SizedBox(height: 10,),
+                      SizedBox(
+                        height: 10,
+                      ),
                       _xpCard(),
                     ],
                   ),
@@ -1122,6 +1198,7 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
+
   Widget _matchPlayedCard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
@@ -1129,15 +1206,18 @@ class MainHomeScreen extends StatelessWidget {
       final totalWins = profile?.response?.totalWins ?? 0;
       final winRatio = totalMatches > 0 ? (totalWins / totalMatches) : 0.0;
       final winPercentage = (winRatio * 100).round();
-      
+
       return GestureDetector(
-        onTap: ()=>Get.to(EditProfileUi(buttonType: "drawer",)),
+        onTap: () => Get.to(EditProfileUi(
+          buttonType: "drawer",
+        )),
         child: Container(
           height: 180,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.1)),
+            border: Border.all(
+                color: AppColors.primaryColor.withValues(alpha: 0.1)),
             gradient: LinearGradient(
               colors: [Color(0xffE9EFFF), Color(0xffE6EBFF)],
               begin: Alignment.centerLeft,
@@ -1148,7 +1228,8 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               Transform.translate(
                   offset: Offset(-15, -16),
-                  child: SvgPicture.asset(Assets.imagesImgBackgroundPlayedMatch)),
+                  child: SvgPicture.asset(
+                      Assets.imagesImgBackgroundPlayedMatch)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1156,12 +1237,16 @@ class MainHomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Match\nPlayed',
-                        style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600,fontSize: 17),
+                        style: Get.textTheme.titleSmall!.copyWith(
+                            color: AppColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 17),
                       ),
                       Spacer(),
                       Text(
                         '$totalMatches',
-                        style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55),fontSize: 30),
+                        style: Get.textTheme.titleLarge!
+                            .copyWith(color: Color(0xff0E1E55), fontSize: 30),
                       ),
                     ],
                   ),
@@ -1186,10 +1271,12 @@ class MainHomeScreen extends StatelessWidget {
                             children: [
                               Transform.translate(
                                   offset: Offset(0, 4),
-                                  child: Text('$winPercentage%', style: Get.textTheme.titleLarge)),
+                                  child: Text('$winPercentage%',
+                                      style: Get.textTheme.titleLarge)),
                               Text(
                                 'Win Ratio',
-                                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.grey),
+                                style: Get.textTheme.headlineSmall!
+                                    .copyWith(color: Colors.grey),
                               ),
                             ],
                           ),
@@ -1197,8 +1284,6 @@ class MainHomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
-
                 ],
               ),
             ],
@@ -1207,17 +1292,21 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
+
   Widget _leaderboardCard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
       final rank = profile?.response?.rank ?? 0;
-      
+
       return GestureDetector(
-        onTap: ()=>Get.to(LeaderboardScreen(buttonType: "drawer",)),
+        onTap: () => Get.to(LeaderboardScreen(
+          buttonType: "drawer",
+        )),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.secondaryColor.withValues(alpha: 0.1)),
+            border: Border.all(
+                color: AppColors.secondaryColor.withValues(alpha: 0.1)),
             borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
               colors: [Color(0xffE7F8EA), Color(0xffF1FFF4)],
@@ -1229,36 +1318,42 @@ class MainHomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.bar_chart, color: Color(0xff2947C7),size: 30,),
+                  Icon(
+                    Icons.bar_chart,
+                    color: Color(0xff2947C7),
+                    size: 30,
+                  ),
                   Align(
                     alignment: Alignment.bottomRight,
-                    child: Text(
-                        '$rank',
-                        style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
-                    ),
+                    child: Text('$rank',
+                        style: Get.textTheme.titleLarge!
+                            .copyWith(color: Color(0xff0E1E55))),
                   ),
                 ],
               ),
-              Text(
-                'Leaderboard\nPosition',
-                style: Get.textTheme.titleSmall!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)
-              ),
+              Text('Leaderboard\nPosition',
+                  style: Get.textTheme.titleSmall!.copyWith(
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.w600)),
             ],
           ),
         ),
       );
     });
   }
+
   Widget _xpCard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
       final xpPoints = profile?.response?.xpPoints?.toInt() ?? 0;
-      
+
       return GestureDetector(
-        onTap: ()=>Get.to(LeaderboardScreen(buttonType: "drawer",)),
+        onTap: () => Get.to(LeaderboardScreen(
+          buttonType: "drawer",
+        )),
         child: Container(
           // height: 90,
-          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
@@ -1283,16 +1378,17 @@ class MainHomeScreen extends StatelessWidget {
                     children: [
                       Transform.translate(
                           offset: Offset(0, 2),
-                          child: Icon(Icons.star, color: Colors.green, size: 22)),
-                      Text(
-                        '$xpPoints',
-                          style: Get.textTheme.titleLarge!.copyWith(color: Color(0xff0E1E55))
-                      ),
+                          child:
+                          Icon(Icons.star, color: Colors.green, size: 22)),
+                      Text('$xpPoints',
+                          style: Get.textTheme.titleLarge!
+                              .copyWith(color: Color(0xff0E1E55))),
                     ],
                   ),
                   Text(
                     'XP Points',
-                    style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),
+                    style: Get.textTheme.headlineLarge!
+                        .copyWith(color: Colors.grey),
                   ),
                 ],
               ),
@@ -1302,39 +1398,43 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
+
   Widget _recentMatches() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
       final recentMatches = profile?.response?.recentMatches ?? [];
-      
+
       // Use only API data, don't pad with extra results
-      List<String> results = recentMatches.isNotEmpty 
-          ? recentMatches 
-          : [];
+      List<String> results = recentMatches.isNotEmpty ? recentMatches : [];
 
       return Container(
         color: Colors.transparent,
         width: Get.width,
         child: Row(
           children: [
-            SvgPicture.asset(Assets.imagesIcPadelBall,).paddingOnly(right: 10),
+            SvgPicture.asset(
+              Assets.imagesIcPadelBall,
+            ).paddingOnly(right: 10),
             Flexible(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(40),
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF003AFF),Color(0xFF07289A),],
+                    colors: [
+                      Color(0xFF003AFF),
+                      Color(0xFF07289A),
+                    ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
                 ),
                 child: Row(
                   children: [
-                     Text(
-                      'Recent Matches',
-                      style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white)
-                    ),
+                    Text('Recent Matches',
+                        style: Get.textTheme.headlineSmall!
+                            .copyWith(color: Colors.white)),
                     const SizedBox(width: 8),
                     ...results.map(
                           (e) => Container(
@@ -1351,7 +1451,11 @@ class MainHomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: e == 'W' ? Colors.green : e =='L'? Colors.red:Colors.grey,
+                            color: e == 'W'
+                                ? Colors.green
+                                : e == 'L'
+                                ? Colors.red
+                                : Colors.grey,
                           ),
                         ),
                       ),
@@ -1360,13 +1464,12 @@ class MainHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SvgPicture.asset(Assets.imagesIcPadelBall,).paddingOnly(left: 10),
+            SvgPicture.asset(
+              Assets.imagesIcPadelBall,
+            ).paddingOnly(left: 10),
           ],
         ),
       );
     });
   }
-
 }
-
-
