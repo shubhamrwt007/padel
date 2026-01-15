@@ -86,7 +86,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       final bookings = (type == "completed")
           ? (controller.completedBookings.value?.data ?? [])
           : (type == "ongoing")
-          ? (controller.ongoingBookings.value?.data ?? [])
+          ? (controller.inProgressBookings.value?.data ?? [])
           : (type == "cancelled")
           ? (controller.cancelledBookings.value?.data ?? [])
           : (controller.upcomingBookings.value?.data ?? []);

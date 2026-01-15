@@ -10,18 +10,18 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   final BookingHistoryRepository bookingRepo = BookingHistoryRepository();
 
   Rx<BookingHistoryModel?> upcomingBookings = Rx<BookingHistoryModel?>(null);
-  Rx<BookingHistoryModel?> ongoingBookings = Rx<BookingHistoryModel?>(null);
+  Rx<BookingHistoryModel?> inProgressBookings = Rx<BookingHistoryModel?>(null);
   Rx<BookingHistoryModel?> completedBookings = Rx<BookingHistoryModel?>(null);
   Rx<BookingHistoryModel?> cancelledBookings = Rx<BookingHistoryModel?>(null);
 
   // Pagination variables
   RxInt upcomingPage = 1.obs;
-  RxInt ongoingPage = 1.obs;
+  RxInt inProgressPage = 1.obs;
   RxInt completedPage = 1.obs;
   RxInt cancelledPage = 1.obs;
 
   RxBool upcomingHasMore = true.obs;
-  RxBool ongoingHasMore = true.obs;
+  RxBool inProgressHasMore = true.obs;
   RxBool completedHasMore = true.obs;
   RxBool cancelledHasMore = true.obs;
 
@@ -39,13 +39,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
       final currentIndex = tabController.index;
       String type = "upcoming";
-      if (currentIndex == 1) type = "ongoing";
+      if (currentIndex == 1) type = "in-progress";
       if (currentIndex == 2) type = "completed";
 
       // Fetch data for the tab if not already loaded
       switch (type) {
-        case "ongoing":
-          if (ongoingBookings.value == null) fetchBookings("ongoing");
+        case "in-progress":
+          if (inProgressBookings.value == null) fetchBookings("in-progress");
           break;
         case "completed":
           if (completedBookings.value == null) fetchBookings("completed");
@@ -67,11 +67,11 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       } else {
         // Reset pagination for all types
         upcomingPage.value = 1;
-        ongoingPage.value = 1;
+        inProgressPage.value = 1;
         completedPage.value = 1;
         cancelledPage.value = 1;
         upcomingHasMore.value = true;
-        ongoingHasMore.value = true;
+        inProgressHasMore.value = true;
         completedHasMore.value = true;
         cancelledHasMore.value = true;
 
@@ -98,10 +98,10 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
         upcomingHasMore.value = (data.totalPages != null && data.page != null)
             ? data.page! < data.totalPages! : false;
         break;
-      case "ongoing":
-        ongoingPage.value = 1;
-        ongoingBookings.value = data;
-        ongoingHasMore.value = (data.totalPages != null && data.page != null)
+      case "in-progress":
+        inProgressPage.value = 1;
+        inProgressBookings.value = data;
+        inProgressHasMore.value = (data.totalPages != null && data.page != null)
             ? data.page! < data.totalPages! : false;
         break;
       case "completed":
@@ -176,37 +176,37 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
           }
           break;
 
-        case "ongoing":
-          nextPage = ongoingPage.value + 1;
+        case "in-progress":
+          nextPage = inProgressPage.value + 1;
           if (kDebugMode) {
-            print("Loading ongoing page: $nextPage");
+            print("Loading in-progress page: $nextPage");
           }
 
           newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
           if (kDebugMode) {
-            print("Ongoing page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
+            print("In-progress page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
 
           if (newData.data != null && newData.data!.isNotEmpty) {
-            ongoingBookings.value ??= BookingHistoryModel();
-            ongoingBookings.value!.data ??= [];
-            ongoingBookings.value!.data!.addAll(newData.data!);
-            ongoingPage.value = nextPage;
+            inProgressBookings.value ??= BookingHistoryModel();
+            inProgressBookings.value!.data ??= [];
+            inProgressBookings.value!.data!.addAll(newData.data!);
+            inProgressPage.value = nextPage;
 
             if (newData.totalPages != null && newData.page != null) {
-              ongoingHasMore.value = newData.page! < newData.totalPages!;
+              inProgressHasMore.value = newData.page! < newData.totalPages!;
             } else {
-              ongoingHasMore.value = false;
+              inProgressHasMore.value = false;
             }
 
             if (kDebugMode) {
-              print("Updated ongoing: page $nextPage, hasMore: ${ongoingHasMore.value}");
+              print("Updated in-progress: page $nextPage, hasMore: ${inProgressHasMore.value}");
             }
-            ongoingBookings.refresh();
+            inProgressBookings.refresh();
           } else {
-            ongoingHasMore.value = false;
+            inProgressHasMore.value = false;
             if (kDebugMode) {
-              print("No more ongoing data available");
+              print("No more in-progress data available");
             }
           }
           break;
@@ -304,10 +304,10 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
           print("hasMoreData upcoming: $result, page: ${upcomingPage.value}, totalPages: ${upcomingBookings.value?.totalPages}");
         }
         break;
-      case "ongoing":
-        result = ongoingHasMore.value;
+      case "in-progress":
+        result = inProgressHasMore.value;
         if (kDebugMode) {
-          print("hasMoreData ongoing: $result, page: ${ongoingPage.value}, totalPages: ${ongoingBookings.value?.totalPages}");
+          print("hasMoreData in-progress: $result, page: ${inProgressPage.value}, totalPages: ${inProgressBookings.value?.totalPages}");
         }
         break;
       case "completed":

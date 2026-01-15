@@ -222,7 +222,7 @@ class BookSessionController extends GetxController {
         });
       }
       
-      await repository.deleteBulkSlotHistory(data: {"slots": slots});
+      await repository.deleteSlotHistory(data: {"slots": slots});
       log('Bulk delete slot history on back: $slots');
     } catch (e) {
       log('Error in bulk delete on back: $e');

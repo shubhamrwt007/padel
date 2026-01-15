@@ -261,12 +261,45 @@ class HomeController extends GetxController {
   final openMatchId = "".obs;
   final RxMap<String, String> scoreboardIds = <String, String>{}.obs;
   final RxMap<String, String> openMatchToBookingMap = <String, String>{}.obs;
+
+  /// Public method to check if booking is ongoing (accessible from UI)
+  bool isBookingOngoing(BookingHistoryData booking) {
+    return _isBookingOngoing(booking);
+  }
+
   Future<void> fetchBookings() async {
     isLoadingBookings.value = true;
     try {
       final response = await bookingHistoryRepository.getBookingHistory(
           type: "upcoming");
+
+      if (response.success == true && response.data != null) {
+        // Sort bookings: ongoing bookings first, then by date/time
+        final sortedBookings = List<BookingHistoryData>.from(response.data!);
+        sortedBookings.sort((a, b) {
+          final aIsOngoing = _isBookingOngoing(a);
+          final bIsOngoing = _isBookingOngoing(b);
+
+          // Ongoing bookings come first
+          if (aIsOngoing && !bIsOngoing) return -1;
+          if (!aIsOngoing && bIsOngoing) return 1;
+
+          // For non-ongoing bookings, sort by date/time
+          try {
+            final aDate = DateTime.parse(a.bookingDate ?? '');
+            final bDate = DateTime.parse(b.bookingDate ?? '');
+            return aDate.compareTo(bDate);
+          } catch (e) {
+            return 0;
+          }
+        });
+
+        // Assign sorted data back to response
+        response.data = sortedBookings;
+      }
+
       bookings.value = response;
+
       if (response.success == true) {
         final bookingWithOpenMatch = response.data
             ?.where((e) => e.openMatchId?.sId?.isNotEmpty == true)
@@ -276,33 +309,104 @@ class HomeController extends GetxController {
         bookingWithOpenMatch != null && bookingWithOpenMatch.isNotEmpty
             ? bookingWithOpenMatch.first.openMatchId!.sId!
             : "";
-        
+
         // Store scoreboard IDs and booking mappings
         scoreboardIds.clear();
         openMatchToBookingMap.clear();
         response.data?.forEach((booking) {
           final actualBookingId = booking.sId;
           final openMatchIdValue = booking.openMatchId?.sId;
-          
+
           if (booking.bookingType == "openMatch" && openMatchIdValue != null && actualBookingId != null) {
             openMatchToBookingMap[openMatchIdValue] = actualBookingId;
           }
-          
-          final bookingId = booking.bookingType == "openMatch" 
-              ? openMatchIdValue 
+
+          final bookingId = booking.bookingType == "openMatch"
+              ? openMatchIdValue
               : actualBookingId;
           if (bookingId != null && booking.scoreboard?.sId != null) {
             scoreboardIds[bookingId] = booking.scoreboard!.sId!;
           }
         });
-        
-        CustomLogger.logMessage(msg: "Booking fetched", level: LogLevel.debug);
+
+        CustomLogger.logMessage(msg: "Booking fetched and sorted", level: LogLevel.debug);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: e, level: LogLevel.error);
     } finally {
       isLoadingBookings.value = false;
     }
+  }
+
+  // Helper method to check if booking is ongoing
+  bool _isBookingOngoing(BookingHistoryData booking) {
+    try {
+      if (booking.bookingDate == null ||
+          booking.slot == null ||
+          booking.slot!.isEmpty) {
+        return false;
+      }
+
+      final bookingDate = DateTime.parse(booking.bookingDate!);
+      final now = DateTime.now();
+
+      // Check if booking is today
+      if (bookingDate.year != now.year ||
+          bookingDate.month != now.month ||
+          bookingDate.day != now.day) {
+        return false;
+      }
+
+      // Get slot times
+      final slotTimes = booking.slot![0].slotTimes;
+      if (slotTimes == null || slotTimes.isEmpty) {
+        return false;
+      }
+
+      // Parse start and end times
+      final startTime = _parseTimeString(slotTimes.first.time);
+      final endTime = slotTimes.length > 1
+          ? _parseTimeString(slotTimes.last.time)
+          : startTime?.add(Duration(minutes: booking.duration ?? 60));
+
+      if (startTime == null || endTime == null) {
+        return false;
+      }
+
+      // Check if current time is between start and end
+      final currentTime =
+      DateTime(now.year, now.month, now.day, now.hour, now.minute);
+      return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
+    } catch (e) {
+      log("Error checking ongoing booking: $e");
+      return false;
+    }
+  }
+
+  DateTime? _parseTimeString(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return null;
+
+    try {
+      // Handle format like "09:00 AM" or "21:00"
+      final now = DateTime.now();
+
+      if (timeStr.contains('AM') || timeStr.contains('PM')) {
+        final format = DateFormat('hh:mm a');
+        final time = format.parse(timeStr);
+        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      } else {
+        final parts = timeStr.split(':');
+        if (parts.length == 2) {
+          final hour = int.parse(parts[0]);
+          final minute = int.parse(parts[1]);
+          return DateTime(now.year, now.month, now.day, hour, minute);
+        }
+      }
+    } catch (e) {
+      log("Error parsing time: $e");
+    }
+
+    return null;
   }
 
   String formatDate(String? dateStr) {
@@ -432,7 +536,7 @@ class HomeController extends GetxController {
 
       // Check if scoreboard already exists in fetched bookings
       final scoreboardId = scoreboardIds[bookingId];
-      
+
       if (scoreboardId != null && scoreboardId.isNotEmpty) {
         // Scoreboard exists, push open match into scoreboard
         await repository.pushOpenMatchIntoScoreboard(

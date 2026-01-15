@@ -13,6 +13,7 @@ import 'package:padel_mobile/presentations/open_match_for_all_court/widgets/semi
 import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
+import '../../data/request_models/booking/boking_history_model.dart';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 
@@ -287,80 +288,11 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  // Helper method to check if booking is ongoing
-  bool _isBookingOngoing(dynamic booking) {
-    try {
-      if (booking.bookingDate == null ||
-          booking.slot == null ||
-          booking.slot.isEmpty) {
-        return false;
-      }
-
-      final bookingDate = DateTime.parse(booking.bookingDate);
-      final now = DateTime.now();
-
-      // Check if booking is today
-      if (bookingDate.year != now.year ||
-          bookingDate.month != now.month ||
-          bookingDate.day != now.day) {
-        return false;
-      }
-
-      // Get slot times
-      final slotTimes = booking.slot[0].slotTimes;
-      if (slotTimes == null || slotTimes.isEmpty) {
-        return false;
-      }
-
-      // Parse start and end times
-      final startTime = _parseTimeString(slotTimes.first.time);
-      final endTime = slotTimes.length > 1
-          ? _parseTimeString(slotTimes.last.time)
-          : startTime?.add(Duration(minutes: booking.duration ?? 60));
-
-      if (startTime == null || endTime == null) {
-        return false;
-      }
-
-      // Check if current time is between start and end
-      final currentTime =
-      DateTime(now.year, now.month, now.day, now.hour, now.minute);
-      return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
-    } catch (e) {
-      log("Error checking ongoing booking: $e");
-      return false;
-    }
-  }
-
-  DateTime? _parseTimeString(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return null;
-
-    try {
-      // Handle format like "09:00 AM" or "21:00"
-      final now = DateTime.now();
-
-      if (timeStr.contains('AM') || timeStr.contains('PM')) {
-        final format = DateFormat('hh:mm a');
-        final time = format.parse(timeStr);
-        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      } else {
-        final parts = timeStr.split(':');
-        if (parts.length == 2) {
-          final hour = int.parse(parts[0]);
-          final minute = int.parse(parts[1]);
-          return DateTime(now.year, now.month, now.day, hour, minute);
-        }
-      }
-    } catch (e) {
-      log("Error parsing time: $e");
-    }
-
-    return null;
-  }
-
-  Widget _buildBookingCard(BuildContext context, dynamic b) {
+  Widget _buildBookingCard(BuildContext context, BookingHistoryData b) {
     final club = b.registerClubId;
-    final isOngoing = _isBookingOngoing(b);
+
+    // Use the controller's method to check if booking is ongoing
+    final isOngoing = controller.homeController.isBookingOngoing(b);
 
     return GestureDetector(
       onTap: () {
@@ -566,7 +498,7 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bookingTimeInfo(BuildContext context, dynamic b, bool isOngoing) {
+  Widget _bookingTimeInfo(BuildContext context, BookingHistoryData b, bool isOngoing) {
     return Container(
       color: Colors.transparent,
       child: Row(
@@ -584,7 +516,7 @@ class MainHomeScreen extends StatelessWidget {
                       : AppColors.blackColor,
                 ),
               ),
-              if (b.slot!.first.slotTimes != null &&
+              if (b.slot != null && b.slot!.isNotEmpty && b.slot!.first.slotTimes != null &&
                   b.slot!.first.slotTimes!.isNotEmpty)
                 Text(
                   b.slot!.first.slotTimes!.length > 1

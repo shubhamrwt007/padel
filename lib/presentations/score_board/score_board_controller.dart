@@ -20,7 +20,7 @@ class ScoreBoardController extends GetxController {
   RxBool isCompleted = false.obs;
 
   // Timer-related variables
-  RxInt remainingSeconds = (20 * 60).obs; // 20 minutes in seconds
+  RxInt remainingSeconds = (00 * 60).obs; // 20 minutes in seconds
   late Timer _gameTimer;
   RxBool isGameStarted = false.obs;
   RxBool isWithinMatchTime = false.obs;
@@ -180,7 +180,7 @@ class ScoreBoardController extends GetxController {
         final item = response.data!.first;
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
-        matchBookingId.value = item.bookingId?.sId??"";
+        matchBookingId.value = item.bookingId?.sId ?? "";
         bookingType.value = item.bookingId?.bookingType ?? "";
         matchType.value = (item?.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
         matchStatus.value = item?.matchStatus ?? false;
@@ -641,8 +641,8 @@ class ScoreBoardController extends GetxController {
         SnackBarUtils.showInfoSnackBar("Game Ended Successfully!");
         await fetchScoreBoard(showLoader: false);
         await profileController.fetchUserProfile();
-      }else{
-        SnackBarUtils.showErrorSnackBar(response.message??"");
+      } else {
+        SnackBarUtils.showErrorSnackBar(response.message ?? "");
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
@@ -673,6 +673,25 @@ class ScoreBoardController extends GetxController {
     if (team == 'Team A') return isUserInTeamA;
     if (team == 'Team B') return isUserInTeamB;
     return false;
+  }
+
+  ///Remove Player from Team-------------------------------------------------
+  void removePlayer(String playerId, String teamName) {
+    CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
+    try {
+      int teamIndex = teamName == 'Team A' ? 0 : 1;
+
+      if (teamIndex >= teams.length) return;
+
+      final teamPlayers = teams[teamIndex]['players'] as List;
+      teamPlayers.removeWhere((player) => player['playerId'] == playerId);
+
+      hasPlayerSwaps.value = true;
+      teams.refresh();
+      CustomLogger.logMessage(msg: 'Player removed successfully', level: LogLevel.info);
+    } catch (e) {
+      CustomLogger.logMessage(msg: 'Remove player error: $e', level: LogLevel.error);
+    }
   }
 
   ///Swap Players---------------------------------------------------------------
@@ -841,7 +860,7 @@ class ScoreBoardController extends GetxController {
 
       if (response?.success == true) {
         bookingType.value = "openMatch";
-        SnackBarUtils.showInfoSnackBar(response?.message??"Booking converted to open match successfully!");
+        SnackBarUtils.showInfoSnackBar(response?.message ?? "Booking converted to open match successfully!");
         await fetchScoreBoard(showLoader: false);
         await mainHomeController.homeController.fetchBookings();
       } else {
