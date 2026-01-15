@@ -266,8 +266,8 @@ class _WalletScreenState extends State<WalletScreen> {
             radius: 22,
             backgroundColor: Colors.grey.shade100,
             child: Icon(
-              isCredit ? Icons.arrow_upward : Icons.arrow_downward,
-              color: isCredit ? Colors.green : Colors.black,
+              isCredit ? Icons.arrow_downward:Icons.arrow_upward,
+              color: isCredit ? Colors.green : Colors.red,
             ),
           ),
           const SizedBox(width: 12),

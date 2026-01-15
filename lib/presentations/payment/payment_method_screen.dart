@@ -24,7 +24,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
       backgroundColor: AppColors.whiteColor,
       appBar: primaryAppBar(
         centerTitle: true,
-        title: Text(Platform.isIOS?"Direct Payment":"Book Now"),
+        title: Text("Payment"),
         // action: [
         //   Container(
         //     alignment: Alignment.center,
@@ -357,12 +357,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                                 SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
                                 return;
                               }
-                              // Platform-specific payment handling
-                              if (Platform.isIOS) {
-                                await controller.startPayment();
-                              } else {
-                                await controller.processDirectBooking();
-                              }
+                              // Use Razorpay payment for both platforms
+                              await controller.startPayment();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
@@ -372,8 +368,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                               ),
                             ),
                             child: Text(
-                              // "Book using ${title}",
-                              Platform.isIOS?"Pay using ${title}":"Book using ${title}",
+                              "Pay using ${title}",
                               style: TextStyle(
                                 color: AppColors.whiteColor,
                                 fontSize: 16,
@@ -429,12 +424,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
             }
           }
 
-            // Platform-specific payment handling
-            if (Platform.isIOS) {
-              await controller.startPayment();
-            } else {
-              await controller.processDirectBooking();
-            }
+            // Use Razorpay payment for both platforms
+            await controller.startPayment();
           },
           child: controller.isProcessing.value || cartController.isBooking.value
               ? LoadingAnimationWidget.waveDots(

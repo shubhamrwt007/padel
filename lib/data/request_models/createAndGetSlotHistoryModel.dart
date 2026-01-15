@@ -1,21 +1,49 @@
+class CreateAndGetSlotHistoryResponse {
+  final bool success;
+  final int count;
+  final List<CreateAndGetSlotHistoryModel> data;
+
+  CreateAndGetSlotHistoryResponse({
+    required this.success,
+    required this.count,
+    required this.data,
+  });
+
+  factory CreateAndGetSlotHistoryResponse.fromJson(Map<String, dynamic> json) {
+    return CreateAndGetSlotHistoryResponse(
+      success: json['success'] ?? false,
+      count: json['count'] ?? 0,
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((e) => CreateAndGetSlotHistoryModel.fromJson(e))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "success": success,
+    "count": count,
+    "data": data.map((e) => e.toJson()).toList(),
+  };
+}
+
 class CreateAndGetSlotHistoryModel {
   final bool success;
   final bool created;
-  final SlotData? data;
   final String? message;
+  final SlotData? data;
 
-  const CreateAndGetSlotHistoryModel({
+  CreateAndGetSlotHistoryModel({
     required this.success,
     required this.created,
-    this.data,
     this.message,
+    this.data,
   });
 
   factory CreateAndGetSlotHistoryModel.fromJson(Map<String, dynamic> json) {
     return CreateAndGetSlotHistoryModel(
       success: json['success'] ?? false,
       created: json['created'] ?? false,
-      message: json['message'] ?? "",
+      message: json['message'],
       data: json['data'] != null ? SlotData.fromJson(json['data']) : null,
     );
   }
@@ -34,7 +62,6 @@ class SlotData {
   final String? bookingDate;
   final String? time;
   final String? courtId;
-  final String? status;
   final int? duration;
   final int? totalTime;
   final String? bookingTime;
@@ -43,13 +70,12 @@ class SlotData {
   final String? updatedAt;
   final int? version;
 
-  const SlotData({
+  SlotData({
     this.id,
     this.slotId,
     this.bookingDate,
     this.time,
     this.courtId,
-    this.status,
     this.duration,
     this.totalTime,
     this.bookingTime,
@@ -66,7 +92,6 @@ class SlotData {
       bookingDate: json['bookingDate'],
       time: json['time'],
       courtId: json['courtId'],
-      status: json['status'],
       duration: json['duration'],
       totalTime: json['totalTime'],
       bookingTime: json['bookingTime'],
@@ -83,7 +108,6 @@ class SlotData {
     "bookingDate": bookingDate,
     "time": time,
     "courtId": courtId,
-    "status": status,
     "duration": duration,
     "totalTime": totalTime,
     "bookingTime": bookingTime,

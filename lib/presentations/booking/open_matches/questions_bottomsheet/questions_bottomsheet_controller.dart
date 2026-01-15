@@ -465,20 +465,13 @@ class QuestionsBottomsheetController extends GetxController {
     );
   }
 
-  // Platform-specific match creation
+  // Match creation with payment
   Future<void> initiateMatchCreation() async {
-    log("🚀 Starting platform-specific match creation process");
-    
-    if (Platform.isIOS) {
-      // Use Razorpay for iOS
-      await initiatePaymentAndCreateMatch();
-    } else {
-      // Direct match creation for Android
-      await createDirectMatch();
-    }
+    log("🚀 Starting match creation process with payment");
+    await initiatePaymentAndCreateMatch();
   }
 
-  // Payment method for iOS
+  // Payment method
   Future<void> initiatePaymentAndCreateMatch() async {
     log("💳 Starting payment initiation process");
     if (!validateSelections()) {
@@ -539,32 +532,30 @@ class QuestionsBottomsheetController extends GetxController {
 
   @override
   void onInit() {
-    // Only initialize Razorpay for iOS
-    if (Platform.isIOS) {
-      _paymentService = RazorpayPaymentService();
+    // Initialize Razorpay for both iOS and Android
+    _paymentService = RazorpayPaymentService();
 
-      _paymentService!.onPaymentSuccess = (response) {
-        onPaymentSuccess(
-          paymentId: response.paymentId ?? '',
-          orderId: response.orderId ?? '',
-          signature: response.signature ?? '',
-        );
-      };
+    _paymentService!.onPaymentSuccess = (response) {
+      onPaymentSuccess(
+        paymentId: response.paymentId ?? '',
+        orderId: response.orderId ?? '',
+        signature: response.signature ?? '',
+      );
+    };
 
-      _paymentService!.onPaymentFailure = (response) {
-        String errorMessage = 'Payment failed';
-        if (response.code == Razorpay.PAYMENT_CANCELLED) {
-          errorMessage = 'Payment was cancelled';
-        } else if (response.message != null) {
-          errorMessage = response.message!;
-        }
-        // onPaymentError(errorMessage);
-      };
+    _paymentService!.onPaymentFailure = (response) {
+      String errorMessage = 'Payment failed';
+      if (response.code == Razorpay.PAYMENT_CANCELLED) {
+        errorMessage = 'Payment was cancelled';
+      } else if (response.message != null) {
+        errorMessage = response.message!;
+      }
+      // onPaymentError(errorMessage);
+    };
 
-      _paymentService!.onExternalWallet = (response) {
-        log('External wallet used: ${response.walletName}');
-      };
-    }
+    _paymentService!.onExternalWallet = (response) {
+      log('External wallet used: ${response.walletName}');
+    };
 
     profileController.fetchUserProfile();
     

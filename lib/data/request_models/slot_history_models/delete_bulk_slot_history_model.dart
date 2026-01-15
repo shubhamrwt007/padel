@@ -11,15 +11,9 @@ class DeleteBulkSlotHistoryModel {
 
   factory DeleteBulkSlotHistoryModel.fromJson(Map<String, dynamic> json) {
     return DeleteBulkSlotHistoryModel(
-      success: json['success'] as bool?,
-      deletedCount: json['deletedCount'] as int?,
-      message: json['message'] as String?,
+      success: json['success'],
+      deletedCount: json['deletedCount'],
+      message: json['message'],
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'success': success,
-    'deletedCount': deletedCount,
-    'message': message,
-  };
 }
