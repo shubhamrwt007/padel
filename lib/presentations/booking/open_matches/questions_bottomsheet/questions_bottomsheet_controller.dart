@@ -146,6 +146,7 @@ class QuestionsBottomsheetController extends GetxController {
       if (razorpayPaymentId != null && razorpayOrderId != null) {
         matchBody['razorpay_payment_id'] = razorpayPaymentId;
         matchBody['razorpay_order_id'] = razorpayOrderId;
+        matchBody['initiatePayment'] = true;
       }
 
       log("Match payload after payment: $matchBody");
@@ -321,6 +322,8 @@ class QuestionsBottomsheetController extends GetxController {
     try {
       final matchBody = _buildMatchBody();
       if (matchBody == null) return;
+
+      matchBody['initiatePayment'] = false;
 
       log("Initial match payload: $matchBody");
 

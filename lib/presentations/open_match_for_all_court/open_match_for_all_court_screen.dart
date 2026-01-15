@@ -1332,56 +1332,56 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                 ),
               ),
             ),
-            if (_isLoginUserInMatch(data))
-              Container(
-                color: Colors.transparent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-
-                    Transform.translate(
-                      offset: const Offset(0, -3),
-                      child: GestureDetector(
-                        onTap: () {
-                          // Only allow if user is in the match
-                          if (!_isLoginUserInMatch(data)) {
-                            SnackBarUtils.showInfoSnackBar("You must be part of the match to play");
-                            return;
-                          }
-
-                          if (!controller.isCheckingScoreboard.value) {
-                            if (data.sId != null && data.sId!.isNotEmpty) {
-                              controller.createScoreBoardForOpenMatch(matchData: data);
-                            }
-                          }
-                        },
-                        child: Obx(() {
-                          final isLoading = controller.loadingMatchId.value == data.sId;
-                          return Container(
-                            height: 23,
-                            width: 55,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: AppColors.secondaryColor,
-                            ),
-                            child: isLoading
-                                ? LoadingAnimationWidget.waveDots(
-                              color: AppColors.whiteColor,
-                              size: 20,
-                            )
-                                : Text(
-                              "Play Now",
-                              style: Get.textTheme.headlineSmall!
-                                  .copyWith(color: Colors.white, fontSize: 10),
-                            ),
-                          );
-                        }),
-                      ),
-                    )
-                  ],
-                ),
-              ).paddingOnly(bottom: 12),
+            // if (_isLoginUserInMatch(data))
+            //   Container(
+            //     color: Colors.transparent,
+            //     child: Row(
+            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //       children: [
+            //
+            //         Transform.translate(
+            //           offset: const Offset(0, -3),
+            //           child: GestureDetector(
+            //             onTap: () {
+            //               // Only allow if user is in the match
+            //               if (!_isLoginUserInMatch(data)) {
+            //                 SnackBarUtils.showInfoSnackBar("You must be part of the match to play");
+            //                 return;
+            //               }
+            //
+            //               if (!controller.isCheckingScoreboard.value) {
+            //                 if (data.sId != null && data.sId!.isNotEmpty) {
+            //                   controller.createScoreBoardForOpenMatch(matchData: data);
+            //                 }
+            //               }
+            //             },
+            //             child: Obx(() {
+            //               final isLoading = controller.loadingMatchId.value == data.sId;
+            //               return Container(
+            //                 height: 23,
+            //                 width: 55,
+            //                 alignment: Alignment.center,
+            //                 decoration: BoxDecoration(
+            //                   borderRadius: BorderRadius.circular(8),
+            //                   color: AppColors.secondaryColor,
+            //                 ),
+            //                 child: isLoading
+            //                     ? LoadingAnimationWidget.waveDots(
+            //                   color: AppColors.whiteColor,
+            //                   size: 20,
+            //                 )
+            //                     : Text(
+            //                   "Play Now",
+            //                   style: Get.textTheme.headlineSmall!
+            //                       .copyWith(color: Colors.white, fontSize: 10),
+            //                 ),
+            //               );
+            //             }),
+            //           ),
+            //         )
+            //       ],
+            //     ),
+            //   ).paddingOnly(bottom: 12),
           ],
         ),
         // Play Now button row (similar to booking card)

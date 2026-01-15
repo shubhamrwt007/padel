@@ -81,7 +81,7 @@ class BookACourtScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                    const Text(
-                      "Cr 0",
+                      "0 Cr",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
