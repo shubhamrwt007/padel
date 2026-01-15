@@ -1,5 +1,8 @@
 import 'package:padel_mobile/data/request_models/score_board_models/add_guest_player_model.dart';
+import 'package:padel_mobile/data/request_models/score_board_models/convert_match_to_open_match_model.dart';
+import 'package:padel_mobile/data/request_models/score_board_models/push_open_match_into_score_board_model.dart';
 import 'package:padel_mobile/data/request_models/score_board_models/scoreboard_model.dart';
+import 'package:padel_mobile/data/request_models/score_board_models/update_booking_model.dart';
 import 'package:padel_mobile/data/request_models/score_board_models/update_scoreboard_model.dart';
 import 'package:padel_mobile/data/response_models/score_board_models/get_score_board_model.dart';
 
@@ -163,6 +166,108 @@ class ScoreBoardRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Add Guest Player failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  //Booking Update---------------------------------------------------------------
+  Future<UpdateBookingModel?> updateBooking({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Booking Update Request Body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.bookingUpdate,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Booking Update Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return UpdateBookingModel.fromJson(response.data);
+      } else {
+        throw Exception("Booking Update Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Booking Update failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  //Convert Match To Open Match-------------------------------------------------
+  Future<ConvertMatchToOpenMatchModel?> convertBookingToOpenMatch({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Convert Match To Open Match Request Body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.convertBookingToOpenMatch,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Convert Match To Open Match Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return ConvertMatchToOpenMatchModel.fromJson(response.data);
+      } else {
+        throw Exception("Convert Match To Open Match Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Convert Match To Open Match failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  //Push open match into scoreboard-------------------------------------------------
+  Future<PushOpenMatchInScoreBoardModel?> pushOpenMatchIntoScoreboard({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Push open match into scoreboard Request Body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.put(
+        AppEndpoints.pushOpenMatchIdInScoreCard,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Push open match into scoreboard Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return PushOpenMatchInScoreBoardModel.fromJson(response.data);
+      } else {
+        throw Exception("Push open match into scoreboard Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Push open match into scoreboard failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

@@ -1711,33 +1711,50 @@ class AppPlayersBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<OpenMatchesController>();
     controller.fetchNearByPlayers();
+    
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
+    
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18,vertical: 10),
+        constraints: BoxConstraints(
+          maxHeight: maxHeight,
+        ),
+        padding: EdgeInsets.only(
+          left: 18,
+          right: 18,
+          top: 10,
+          bottom: 10,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _header(),
-            PrimaryTextField(
-              hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                suffixIcon: Icon(Icons.search,color: AppColors.textColor),
-                hintText: 'Search by Name / Phone number'),
-            const SizedBox(height: 8),
-            Text(
-              'Nearby & match your level',
-              style: Get.textTheme.labelLarge,
-            ),
-            const SizedBox(height: 12),
-            _playersList(),
-            const SizedBox(height: 12),
-            _actionButtons(context),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _header(),
+              PrimaryTextField(
+                onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                  suffixIcon: Icon(Icons.search,color: AppColors.textColor),
+                  hintText: 'Search by Name / Phone number'),
+              const SizedBox(height: 8),
+              Text(
+                'Nearby & match your level',
+                style: Get.textTheme.labelLarge,
+              ),
+              const SizedBox(height: 12),
+              _playersList(),
+              const SizedBox(height: 12),
+              _actionButtons(context),
+            ],
+          ),
         ),
       ),
     );
@@ -1966,18 +1983,18 @@ class AppPlayersBottomSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40),
-            backgroundColor: Colors.green,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child:  Text('Invite Player through whatsapp',style: style,),
-        ),
-        const SizedBox(height: 4),
+        // ElevatedButton(
+        //   onPressed: () {},
+        //   style: ElevatedButton.styleFrom(
+        //     minimumSize: const Size.fromHeight(40),
+        //     backgroundColor: Colors.green,
+        //     shape: RoundedRectangleBorder(
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //   ),
+        //   child:  Text('Invite Player through whatsapp',style: style,),
+        // ),
+        // const SizedBox(height: 4),
         ElevatedButton(
           onPressed: () {
             AddPlayerBottomSheet.show(

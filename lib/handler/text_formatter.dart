@@ -83,6 +83,14 @@ extension StringExtension on String {
    String getNameInitials(String firstName, String lastName) {
   if (firstName.trim().isEmpty && lastName.trim().isEmpty) return "?";
 
+  // If lastName is empty but firstName contains space, split firstName
+  if (lastName.trim().isEmpty && firstName.trim().contains(' ')) {
+    final nameParts = firstName.trim().split(' ');
+    String f = nameParts[0].isNotEmpty ? nameParts[0][0].toUpperCase() : "";
+    String l = nameParts.length > 1 && nameParts[1].isNotEmpty ? nameParts[1][0].toUpperCase() : "";
+    return "$f$l";
+  }
+
   String f = firstName.trim().isNotEmpty ? firstName.trim()[0].toUpperCase() : "";
   String l = lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : "";
 

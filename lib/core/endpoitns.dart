@@ -5,16 +5,16 @@ class AppEndpoints {
   // static const String socketUrl = "http://103.185.212.117:5070";
 
   /// -----------------------Staging URL-------------------------------------------
-  static const String baseUrl = "http://103.142.118.40:5080/api/customer/";
-  static const String socketUrl = "http://103.142.118.40:5080";
+  static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
 
   /// -----------------------New Live URL-------------------------------------------
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
-  // static const String socketUrl = "http://192.168.0.129:5070";
+  // static const String baseUrl = "http://192.168.0.137:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.137:5070";
 
 
   // static const String login = "${baseUrl}customerLogin";
@@ -41,6 +41,9 @@ class AppEndpoints {
   static const String removeCartItems = "${baseUrl}court/cart/removeUserCart";
   static const String cancelBooking = "${baseUrl}court/booking/updateBookingStatus";
   static const String carteBooking = "${baseUrl}court/booking/createBooking";
+  static const String bookingUpdate = "${baseUrl}court/booking/bookingUpdate";
+  static const String convertBookingToOpenMatch = "${baseUrl}court/booking/convertBookingToOpenMatch";
+  static const String pushOpenMatchIdInScoreCard = "${baseUrl}court/scoreboard/pushOpenMatchIdInScoreCard";
   static const String bookingHistory = "${baseUrl}court/booking/getUserBookings";
   static const String bookingConfirmation = "${baseUrl}court/booking/findById";
   static const String createAndGetSlotHistory = "${baseUrl}court/booking/createOrGetSlotHistory";
@@ -79,7 +82,7 @@ class AppEndpoints {
   ///Wallet---------------------------------------------------------------------
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
-  static const String testWalletCreate = "${baseUrl}wallet/testWalletCreate";
+  static const String testWalletCreate = "${baseUrl}wallet/order";
 
   ///LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";

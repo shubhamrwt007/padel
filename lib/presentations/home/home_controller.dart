@@ -259,6 +259,8 @@ class HomeController extends GetxController {
   RxBool isLoadingBookings = false.obs;
 
   final openMatchId = "".obs;
+  final RxMap<String, String> scoreboardIds = <String, String>{}.obs;
+  final RxMap<String, String> openMatchToBookingMap = <String, String>{}.obs;
   Future<void> fetchBookings() async {
     isLoadingBookings.value = true;
     try {
@@ -274,6 +276,26 @@ class HomeController extends GetxController {
         bookingWithOpenMatch != null && bookingWithOpenMatch.isNotEmpty
             ? bookingWithOpenMatch.first.openMatchId!.sId!
             : "";
+        
+        // Store scoreboard IDs and booking mappings
+        scoreboardIds.clear();
+        openMatchToBookingMap.clear();
+        response.data?.forEach((booking) {
+          final actualBookingId = booking.sId;
+          final openMatchIdValue = booking.openMatchId?.sId;
+          
+          if (booking.bookingType == "openMatch" && openMatchIdValue != null && actualBookingId != null) {
+            openMatchToBookingMap[openMatchIdValue] = actualBookingId;
+          }
+          
+          final bookingId = booking.bookingType == "openMatch" 
+              ? openMatchIdValue 
+              : actualBookingId;
+          if (bookingId != null && booking.scoreboard?.sId != null) {
+            scoreboardIds[bookingId] = booking.scoreboard!.sId!;
+          }
+        });
+        
         CustomLogger.logMessage(msg: "Booking fetched", level: LogLevel.debug);
       }
     } catch (e) {
@@ -405,26 +427,24 @@ class HomeController extends GetxController {
   RxString loadingBookingId = ''.obs;
   Future<void> createScoreBoard({required String bookingId}) async {
     try {
-      isCheckingScoreboard.value = true; // 🔥 start loader
+      isCheckingScoreboard.value = true;
       loadingBookingId.value = bookingId;
 
-      // First, check if scoreboard already exists for this booking
-      final checkResponse = await repository.getScoreBoard(
-          bookingId: bookingId);
-
-      bool scoreboardExists = false;
-
-      if (checkResponse.data != null) {
-        if (checkResponse.data is List) {
-          scoreboardExists = (checkResponse.data as List).isNotEmpty;
-        } else {
-          scoreboardExists = true;
-        }
-      }
-
-      if (scoreboardExists) {
-        isCheckingScoreboard.value = false; // stop loader
-        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": bookingId});
+      // Check if scoreboard already exists in fetched bookings
+      final scoreboardId = scoreboardIds[bookingId];
+      
+      if (scoreboardId != null && scoreboardId.isNotEmpty) {
+        // Scoreboard exists, push open match into scoreboard
+        await repository.pushOpenMatchIntoScoreboard(
+          body: {
+            "scoreboardId": scoreboardId,
+            "openMatchId": bookingId,
+          },
+        );
+        isCheckingScoreboard.value = false;
+        // Use actual bookingId for navigation
+        final actualBookingId = openMatchToBookingMap[bookingId] ?? bookingId;
+        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId});
         return;
       }
 
@@ -446,6 +466,7 @@ class HomeController extends GetxController {
         "userId": storage.read("userId") ?? "",
         "courtName": booking.slot?[0].courtName ?? "",
         "clubName": booking.registerClubId?.clubName ?? "",
+        "matchType":booking.matchType??"",
         if (booking.bookingType != "normal" && openMatchId.value.isNotEmpty) "openMatchId": openMatchId.value,
         "teams": [
           {
@@ -462,13 +483,13 @@ class HomeController extends GetxController {
 
       final response = await repository.createScoreBoard(data: body);
 
-      isCheckingScoreboard.value = false; // 🔥 stop loader
+      isCheckingScoreboard.value = false;
 
       if (response.success == true) {
         Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": bookingId});
       }
     } catch (e) {
-      isCheckingScoreboard.value = false; // 🔥 always stop loader
+      isCheckingScoreboard.value = false;
       SnackBarUtils.showErrorSnackBar("Failed to load or create scoreboard");
     }finally{
       loadingBookingId.value = '';

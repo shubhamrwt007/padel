@@ -45,16 +45,10 @@ class LoggerInterceptor extends Interceptor {
         err.error is Exception &&
             err.error.toString().contains('SocketException')) {
       await _connectivityService.checkConnectivity();
-    } else if (err.response != null) {
-      if (err.response?.statusCode != 404) {
-        SnackBarUtils.showErrorSnackBar(
-          err.response?.data?['message'] ?? 'Api takes to much time to load',
-        );
-      }
-    } else {
-      SnackBarUtils.showErrorSnackBar(
-        err.response?.data?['message'] ?? 'Api takes to much time to load',
-      );
+    } else if (err.response != null && err.response?.statusCode != 404) {
+      // SnackBarUtils.showErrorSnackBar(
+      //   err.response?.data?['message'] ?? 'Api takes to much time to load',
+      // );
     }
 
     handler.next(err);

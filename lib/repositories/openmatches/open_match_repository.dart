@@ -126,17 +126,24 @@ class OpenMatchRepository {
       rethrow;
     }
   }
-  Future<FindNearByPlayerModel> findNearByPlayer() async {
+  Future<FindNearByPlayerModel> findNearByPlayer({dynamic? search}) async {
     try {
-      final response = await dioClient.get(AppEndpoints.findNearByPlayer);
+      final response = await dioClient.get(
+        AppEndpoints.findNearByPlayer,
+        queryParameters: {
+          if (search != null && search.isNotEmpty) "search": search,
+        },
+      );
+
       if (response.statusCode == 200) {
         CustomLogger.logMessage(
           msg: "Find Near By Players fetched successfully: ${response.data}",
           level: LogLevel.info,
         );
+
         return FindNearByPlayerModel.fromJson(response.data);
       } else {
-        throw Exception("Failed to fetch Near By Players Status: ${response.statusCode}");
+        throw Exception("Failed to fetch Near By Players: ${response.statusCode}");
       }
     } catch (e) {
       rethrow;

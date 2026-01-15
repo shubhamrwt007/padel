@@ -31,7 +31,7 @@ dependencies:
   dropdown_search:
   image_picker:
   cached_network_image:
-  razorpay_flutter:
+  razorpay_flutter: ^1.4.0
   flutter_local_notifications:
   firebase_messaging:
   timezone:

@@ -360,12 +360,12 @@ class OpenMatchesController extends GetxController {
     }
   }
   /// Find Near By Players Api--------------------------------------------------
-  Future<void> fetchNearByPlayers() async {
+  Future<void> fetchNearByPlayers({String search = ''}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
       
-      final response = await repository.findNearByPlayer();
+      final response = await repository.findNearByPlayer(search: search);
       if(response.status == 200 && response.players != null){
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
