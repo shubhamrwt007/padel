@@ -168,8 +168,7 @@ class HomeRepository {
     }
   }
 
-  ///Create and Get Slot History------------------------------------------------
-  Future<CreateAndGetSlotHistoryModel> createAndGetSlotHistory({
+  Future<CreateAndGetSlotHistoryResponse> createAndGetSlotHistory({
     required dynamic data,
   }) async {
     try {
@@ -183,7 +182,10 @@ class HomeRepository {
           msg: "Create and Get Slot History Data: ${response.data}",
           level: LogLevel.info,
         );
-        return CreateAndGetSlotHistoryModel.fromJson(response.data);
+
+        return CreateAndGetSlotHistoryResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
       } else {
         throw Exception("Create and Get Slot History failed: ${response.statusCode}");
       }
@@ -196,6 +198,7 @@ class HomeRepository {
       rethrow;
     }
   }
+
   ///Delete Slot History------------------------------------------------
   Future<DeleteSlotHistoryModel> deleteSlotHistory({
     required dynamic data,

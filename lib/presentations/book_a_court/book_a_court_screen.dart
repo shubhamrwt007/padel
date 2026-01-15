@@ -81,7 +81,7 @@ class BookACourtScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                    const Text(
-                      "₹ 0",
+                      "Cr 0",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -1323,16 +1323,25 @@ class BookACourtScreen extends StatelessWidget {
                     gradientColors: [Colors.white, Colors.white, Colors.white],
                     onTap: isProcessing.value
                         ? null
-                          : () {
+                          : () async {
                             if (Get.isSnackbarOpen) return;
-                            // Initialize CartController if not already present
-                            if (!Get.isRegistered<CartController>()) {
-                              Get.put(CartController());
+                            isProcessing.value = true;
+                            
+                            // Call API to process slot history
+                            final success = await controller.processSlotHistoryForPayment();
+                            
+                            isProcessing.value = false;
+                            
+                            if (success) {
+                              // Initialize CartController if not already present
+                              if (!Get.isRegistered<CartController>()) {
+                                Get.put(CartController());
+                              }
+                              // Sync selected slot amount to CartController for payment screen
+                              final cartController = Get.find<CartController>();
+                              cartController.totalPrice.value = _getSelectedSlotAmount();
+                              Get.toNamed(RoutesName.paymentMethod);
                             }
-                            // Sync selected slot amount to CartController for payment screen
-                            final cartController = Get.find<CartController>();
-                            cartController.totalPrice.value = _getSelectedSlotAmount();
-                            Get.toNamed(RoutesName.paymentMethod);
                           },
                     child: isProcessing.value
                         ? LoadingAnimationWidget.waveDots(
@@ -1572,9 +1581,30 @@ class BookACourtScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
-                  onTap: () {
-                    // Remove all selections in this group
+                  onTap: () async {
                     final selections = entry['selections'] as List<Map<String, dynamic>>;
+                    final slotsToDelete = <Map<String, dynamic>>[];
+                    
+                    for (var selection in selections) {
+                      final slot = selection['slot'] as Slots;
+                      final slotId = slot.sId ?? '';
+                      final courtId = selection['courtId'] as String;
+                      final dateString = selection['date'] as String;
+                      final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+                      final duration = isHalfSlot ? 30 : 60;
+                      
+                      slotsToDelete.add({
+                        "slotId": slotId,
+                        "courtId": courtId,
+                        "bookingDate": dateString,
+                        "time": slot.time ?? '',
+                        "bookingTime": slot.time ?? '',
+                        "duration": duration,
+                      });
+                    }
+                    
+                    await controller.deleteSlotHistory(slots: slotsToDelete);
+                    
                     for (var selection in selections) {
                       final slot = selection['slot'] as Slots;
                       controller.realCourtSelections.removeWhere((key, value) => 
