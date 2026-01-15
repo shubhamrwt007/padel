@@ -156,6 +156,18 @@ class ScoreBoardScreen extends StatelessWidget {
       ),
     );
   }
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
+  // Update the _buildMatchCard method in your ScoreBoardScreen class
+
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
   Widget _buildMatchCard(BuildContext context) {
     return Column(
       children: [
@@ -181,6 +193,7 @@ class ScoreBoardScreen extends StatelessWidget {
               _buildMatchHeader(context,),
               _buildPlayerRow(),
               const SizedBox(height: 10),
+              // Timer and Status Section
               Obx(() {
                 final teamAPlayers = controller.teams.isNotEmpty
                     ? controller.teams[0]["players"] as List
@@ -192,14 +205,43 @@ class ScoreBoardScreen extends StatelessWidget {
 
                 return Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: controller.isCompleted.value ? Colors.grey : AppColors.secondaryColor,
+                      color: controller.isCompleted.value
+                          ? Colors.grey
+                          : (allPlayersAdded && !controller.isShuffleMode.value
+                          ? (controller.isGameStarted.value ? AppColors.secondaryColor : Colors.orange)
+                          : Colors.orange),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(
-                      controller.isCompleted.value ? "🏁 Match Ended" : (allPlayersAdded ? "▶ Start Game" : "🕒 Waiting"),
-                      style: Get.textTheme.labelSmall!.copyWith(color: Colors.white),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Timer Display
+                        Obx(() => Text(
+                          controller.formattedTime,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        )),
+                        const SizedBox(width: 8),
+                        // Status Text
+                        Text(
+                          controller.isCompleted.value
+                              ? "🏁 Match Ended"
+                              : (controller.isShuffleMode.value
+                              ? "🔄 Shuffling"
+                              : (allPlayersAdded
+                              ? (controller.isGameStarted.value ? "▶ Playing" : "✓ Ready to Start")
+                              : "🕒 Waiting")),
+                          style: Get.textTheme.labelSmall!.copyWith(
+                            color: Colors.white,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -211,6 +253,82 @@ class ScoreBoardScreen extends StatelessWidget {
     );
   }
 
+// Update the _buildAddSetButton method in your ScoreBoardScreen class
+
+// Replace the _buildAddSetButton method in your ScoreBoardScreen class
+
+  Widget _buildAddSetButton() {
+    return Obx(() {
+      final teamAPlayers = controller.teams.isNotEmpty
+          ? controller.teams[0]["players"] as List
+          : [];
+      final teamBPlayers = controller.teams.length > 1
+          ? controller.teams[1]["players"] as List
+          : [];
+      bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
+
+      bool inShuffleMode = controller.isShuffleMode.value;
+      bool isDisabled = !allPlayersAdded || controller.isCompleted.value;
+
+      String buttonText = "";
+      if (inShuffleMode) {
+        buttonText = "Start Game";
+      } else {
+        buttonText = controller.isGameStarted.value ? "+ Add Set" : "Start Game";
+      }
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isDisabled ? Colors.grey : AppColors.primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          onPressed: isDisabled
+              ? null
+              : () async {
+            if (controller.isCompleted.value) {
+              SnackBarUtils.showErrorSnackBar("Game is already completed");
+              return;
+            }
+
+            if (inShuffleMode) {
+              // In shuffle mode, save swaps and start game
+              await controller.savePlayerSwaps();
+            } else if (!controller.isGameStarted.value) {
+              // Normal mode - first start game
+              await controller.startGame();
+            } else {
+              // Game already started - add new set
+              if (controller.sets.length >= 10) {
+                SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
+                return;
+              }
+              await controller.addSet();
+            }
+          },
+          child: Obx(() => controller.isAddingSet.value
+              ? const SizedBox(
+            height: 20,
+            width: 20,
+            child: LoadingWidget(color: Colors.white),
+          )
+              : Text(
+            buttonText,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
+          )),
+        ),
+      );
+    });
+  }
   Widget _buildMatchHeader(BuildContext context,) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1232,7 +1350,7 @@ class ScoreBoardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildAddSetButton() {
+  Widget buildAddSetButton() {
     return Obx(() {
       return Container(
         width: double.infinity,
@@ -1279,7 +1397,7 @@ class ScoreBoardScreen extends StatelessWidget {
                   child: LoadingWidget(color: Colors.white),
                 )
               : const Text(
-                  "+ Add Set",
+                  "Start Game",
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                 ),
         ),
