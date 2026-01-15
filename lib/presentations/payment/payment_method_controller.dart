@@ -1,10 +1,13 @@
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../../data/response_models/cart/carte_booking_model.dart';
 import '../../services/payment_services/razorpay.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import '../booking/successful_screens/booking_successful_screen.dart';
@@ -15,6 +18,7 @@ class PaymentMethodController extends GetxController {
   var option = ''.obs;
   RxBool isProcessing = false.obs;
   RazorpayPaymentService? _paymentService;
+  String? _razorpayOrderId;
   
   final CartController cartController = Get.find<CartController>();
   
@@ -74,7 +78,10 @@ class PaymentMethodController extends GetxController {
       },
     );
 
-    await _processBookingAfterPayment();
+    await _processBookingAfterPayment(
+      razorpayPaymentId: response.paymentId,
+      razorpayOrderId: _razorpayOrderId,
+    );
   }
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
@@ -121,7 +128,10 @@ class PaymentMethodController extends GetxController {
     await _processBookingAfterPayment();
   }
 
-  Future<void> _processBookingAfterPayment() async {
+  Future<void> _processBookingAfterPayment({
+    String? razorpayPaymentId,
+    String? razorpayOrderId,
+  }) async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
       
@@ -139,13 +149,29 @@ class PaymentMethodController extends GetxController {
         return;
       }
 
-      log("Booking payload after payment: $bookingPayload");
+      // Add payment details if provided
+      if (razorpayPaymentId != null && razorpayOrderId != null) {
+        for (var payload in bookingPayload) {
+          payload['razorpay_payment_id'] = razorpayPaymentId;
+          payload['razorpay_order_id'] = razorpayOrderId;
+        }
+      }
 
-      // ⬅️ Get true/false from bookCart() - same API for both cases
-      bool success = await cartController.bookCart(data: bookingPayload);
+      print("Booking payload after payment: $bookingPayload");
 
-      if (success) {
-        // 👍 Booking success
+      // Call API directly to handle response properly
+      final response = await cartController.cartRepository.dioClient.post(
+        AppEndpoints.carteBooking,
+        data: bookingPayload,
+      );
+
+      if (response.statusCode == 200) {
+        print("Booking confirmed: ${response.data}");
+        
+        // Refresh cart
+        await cartController.getCartItems();
+        
+        // Success
         SnackBarUtils.showSuccessSnackBar("Booking completed successfully");
         
         // Clear selections if from BookACourtController
@@ -155,24 +181,14 @@ class PaymentMethodController extends GetxController {
         
         Get.to(() => BookingSuccessfulScreen());
       } else {
-        // ❌ API returned error
-        Get.close(2);  // close "booking in progress"
+        // API returned error
+        Get.close(2);
         showBookingErrorDialog();
-
       }
     } catch (e) {
-      log("Error processing booking after payment: $e");
-
-      Get.close(2); // ⬅️ close dialog
+      print("Error processing booking after payment: $e");
+      Get.close(2);
       showBookingErrorDialog();
-
-      // Get.snackbar(
-      //   "Booking Error",
-      //   "Payment successful but booking failed: ${e.toString()}",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
     }
   }
 
@@ -303,32 +319,79 @@ class PaymentMethodController extends GetxController {
     debugPrint('Verifying payment: $paymentId, $orderId, $signature');
   }
 
+  String _generateRandomPaymentId() {
+    final random = Random();
+    final chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    return 'pay_${List.generate(14, (index) => chars[random.nextInt(chars.length)]).join()}';
+  }
+
   Future<void> startPayment() async {
     if (option.value.isEmpty) {
       Get.snackbar("Payment Method", "Please select a payment method");
       return;
     }
 
-    // Use Razorpay for both iOS and Android
     isProcessing.value = true;
 
     try {
-      double amountToPay;
-      if (isFromBookACourt && bookACourtController != null) {
-        amountToPay = bookACourtController!.totalAmount.value.toDouble();
-      } else {
-        amountToPay = cartController.totalPrice.value.toDouble();
-      }
+      // Step 1: Create initial booking
+      List<Map<String, dynamic>>? bookingPayload;
       
-      await _paymentService!.initiatePayment(
-        keyId: 'rzp_test_1DP5mmOlF5G5ag',
-        amount: amountToPay,
-        currency: 'INR',
-        name: 'Swoot',
-        description: 'Paying for court booking',
-        userEmail: 'test@example.com',
-        userContact: '9999999999',
+      if (isFromBookACourt && bookACourtController != null) {
+        bookingPayload = bookACourtController!.buildBookingPayload();
+      } else {
+        bookingPayload = cartController.buildBookingPayload();
+      }
+
+      if (bookingPayload == null) {
+        isProcessing.value = false;
+        Get.snackbar("Error", "No selected items available for booking");
+        return;
+      }
+
+      print("Initial booking payload: $bookingPayload");
+
+      // Call createBooking API first time
+      final response = await cartController.cartRepository.dioClient.post(
+        AppEndpoints.carteBooking,
+        data: bookingPayload,
       );
+      
+      if (response.statusCode == 200 && response.data != null) {
+        final responseData = response.data;
+        print("Booking API response: $responseData");
+        
+        // Extract orderId from response
+        if (responseData['orderId'] != null) {
+          _razorpayOrderId = responseData['orderId'];
+          print("Booking created with order ID: $_razorpayOrderId");
+
+          // Step 2: Open Razorpay
+          double amountToPay;
+          if (isFromBookACourt && bookACourtController != null) {
+            amountToPay = bookACourtController!.totalAmount.value.toDouble();
+          } else {
+            amountToPay = cartController.totalPrice.value.toDouble();
+          }
+          
+          await _paymentService!.initiatePayment(
+            // keyId: responseData['key'] ?? 'rzp_test_RtRFaVPUzoUtkG',
+            keyId: 'rzp_live_RtOIWe2johK6H7',
+            amount: amountToPay,
+            currency: 'INR',
+            name: 'Swoot',
+            description: 'Paying for court booking',
+            userEmail: 'test@example.com',
+            userContact: '9999999999',
+          );
+        } else {
+          isProcessing.value = false;
+          SnackBarUtils.showErrorSnackBar("Failed to create booking");
+        }
+      } else {
+        isProcessing.value = false;
+        SnackBarUtils.showErrorSnackBar("Failed to create booking");
+      }
       
     } catch (e) {
       isProcessing.value = false;
