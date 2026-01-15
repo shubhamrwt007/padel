@@ -170,9 +170,8 @@ class BookACourtController extends GetxController {
           "duration": duration,
         });
       }
-      
-      await _homeRepository.deleteBulkSlotHistory(data: {"slots": slots});
-      log('Bulk delete slot history on back: $slots');
+            log('Bulk delete slot history on back: $slots');
+      await _homeRepository.deleteSlotHistory(data: {"slots": slots});
     } catch (e) {
       log('Error in bulk delete on back: $e');
     }

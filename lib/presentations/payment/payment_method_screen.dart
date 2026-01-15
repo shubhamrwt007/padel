@@ -89,8 +89,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
       final totalAmount = isFromBookACourt
           ? bookACourtController.totalAmount.value
           : cartController.totalPrice.value;
-      final walletBalance = 0; // Replace with actual wallet balance
-      final amountToPay = totalAmount - walletBalance;
+      final walletBalance = controller.walletAmountUsed.value;
+      final amountToPay = controller.razorpayAmountUsed.value;
 
       return Container(
         margin: EdgeInsets.all(Get.width * 0.05),
@@ -345,19 +345,10 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () async {
-                              final CartController cartController = Get.find<CartController>();
-                              final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>() 
-                                  ? Get.find<BookACourtController>() 
-                                  : null;
-                              final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
-                              final int amountToCheck = isFromBookACourt
-                                  ? bookACourtController.totalAmount.value
-                                  : cartController.totalPrice.value;
-                              if (amountToCheck <= 0) {
+                              if (controller.razorpayAmountUsed.value <= 0) {
                                 SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
                                 return;
                               }
-                              // Use Razorpay payment for both platforms
                               await controller.startPayment();
                             },
                             style: ElevatedButton.styleFrom(
