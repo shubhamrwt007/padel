@@ -131,7 +131,7 @@ class ScoreBoardScreen extends StatelessWidget {
               children: [
                 Stack(
                   children: [
-                    Container( 
+                    Container(
                       height: 120,
                       color: AppColors.primaryColor,
                       width: Get.width,
@@ -158,15 +158,11 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 // Update the _buildMatchCard method in your ScoreBoardScreen class
 
+
+
+// Update the _buildMatchCard method in your ScoreBoardScreen class
+
   // Update the _buildMatchCard method in your ScoreBoardScreen class
-
-// Update the _buildMatchCard method in your ScoreBoardScreen class
-
-// Update the _buildMatchCard method in your ScoreBoardScreen class
-
-// Update the _buildMatchCard method in your ScoreBoardScreen class
-
-// Update the _buildMatchCard method in your ScoreBoardScreen class
 
   Widget _buildMatchCard(BuildContext context) {
     return Column(
@@ -268,64 +264,100 @@ class ScoreBoardScreen extends StatelessWidget {
       bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
 
       bool inShuffleMode = controller.isShuffleMode.value;
-      bool isDisabled = !allPlayersAdded || controller.isCompleted.value;
+      bool isGameStarted = controller.isGameStarted.value;
+      bool isWithinMatchTime = controller.isWithinMatchTime.value;
+      bool isCompleted = controller.isCompleted.value;
+
+      // Start game button disabled if: not all players added, not within match time, game completed
+      // Add Set button disabled if: game not started, max sets reached, game completed
+      bool isStartGameDisabled = !allPlayersAdded || !isWithinMatchTime || isCompleted;
+      bool isAddSetDisabled = !isGameStarted || controller.sets.length >= 10 || isCompleted;
+
+      bool isDisabled = inShuffleMode || isGameStarted
+          ? isAddSetDisabled
+          : isStartGameDisabled;
 
       String buttonText = "";
       if (inShuffleMode) {
         buttonText = "Start Game";
       } else {
-        buttonText = controller.isGameStarted.value ? "+ Add Set" : "Start Game";
+        buttonText = isGameStarted ? "+ Add Set" : "Start Game";
       }
 
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isDisabled ? Colors.grey : AppColors.primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onPressed: isDisabled
-              ? null
-              : () async {
-            if (controller.isCompleted.value) {
-              SnackBarUtils.showErrorSnackBar("Game is already completed");
-              return;
-            }
+      String? disabledReason;
+      if (isCompleted) {
+        disabledReason = "Game completed";
+      } else if (!allPlayersAdded) {
+        disabledReason = "Add all 4 players";
+      } else if (!isWithinMatchTime && !isGameStarted) {
+        disabledReason = "Match time not active";
+      }
 
-            if (inShuffleMode) {
-              // In shuffle mode, save swaps and start game
-              await controller.savePlayerSwaps();
-            } else if (!controller.isGameStarted.value) {
-              // Normal mode - first start game
-              await controller.startGame();
-            } else {
-              // Game already started - add new set
-              if (controller.sets.length >= 10) {
-                SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
-                return;
-              }
-              await controller.addSet();
-            }
-          },
-          child: Obx(() => controller.isAddingSet.value
-              ? const SizedBox(
-            height: 20,
-            width: 20,
-            child: LoadingWidget(color: Colors.white),
-          )
-              : Text(
-            buttonText,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
+      return Column(
+        children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDisabled ? Colors.grey : AppColors.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              onPressed: isDisabled
+                  ? null
+                  : () async {
+                if (isCompleted) {
+                  SnackBarUtils.showErrorSnackBar("Game is already completed");
+                  return;
+                }
+
+                if (inShuffleMode) {
+                  // In shuffle mode, save swaps and start game
+                  await controller.savePlayerSwaps();
+                } else if (!isGameStarted) {
+                  // Normal mode - first start game
+                  await controller.startGame();
+                } else {
+                  // Game already started - add new set
+                  if (controller.sets.length >= 10) {
+                    SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
+                    return;
+                  }
+                  await controller.addSet();
+                }
+              },
+              child: Obx(() => controller.isAddingSet.value
+                  ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: LoadingWidget(color: Colors.white),
+              )
+                  : Text(
+                buttonText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              )),
             ),
-          )),
-        ),
+          ),
+          if (disabledReason != null && isDisabled)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+              child: Text(
+                disabledReason,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+        ],
       );
     });
   }
@@ -654,7 +686,7 @@ class ScoreBoardScreen extends StatelessWidget {
         builder: (context, candidateData, rejectedData) {
           return AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            transform: candidateData.isNotEmpty 
+            transform: candidateData.isNotEmpty
                 ? (Matrix4.identity()..scale(1.1))
                 : Matrix4.identity(),
             width: 60,
@@ -900,7 +932,7 @@ class ScoreBoardScreen extends StatelessWidget {
               builder: (context, candidateData, rejectedData) {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  transform: candidateData.isNotEmpty 
+                  transform: candidateData.isNotEmpty
                       ? (Matrix4.identity()..scale(1.1))
                       : Matrix4.identity(),
                   child: _buildAvatarContainer(player, candidateData.isNotEmpty),
@@ -1164,8 +1196,8 @@ class ScoreBoardScreen extends StatelessWidget {
                     ? AppColors.secondaryColor.withOpacity(0.1)
                     : Colors.white,
         border: Border.all(
-          color: hasPlayer 
-              ? Colors.transparent 
+          color: hasPlayer
+              ? Colors.transparent
               : controller.isShuffleMode.value
                   ? AppColors.secondaryColor
                   : AppColors.primaryColor,
@@ -1311,10 +1343,10 @@ class ScoreBoardScreen extends StatelessWidget {
           ? controller.teams[1]["players"] as List
           : [];
       bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
-      
+
       // Check if logged-in user is part of any team
       bool isUserInMatch = controller.isUserInTeamA || controller.isUserInTeamB;
-      
+
       // Check if user's team can still score in any set
       bool canUserTeamScore = controller.sets.any((set) {
         if (controller.isUserInTeamA) {
@@ -1324,9 +1356,9 @@ class ScoreBoardScreen extends StatelessWidget {
         }
         return false;
       });
-      
+
       bool isDisabled = controller.isCompleted.value || !allPlayersAdded || !isUserInMatch || !canUserTeamScore;
-      
+
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1368,12 +1400,12 @@ class ScoreBoardScreen extends StatelessWidget {
               SnackBarUtils.showErrorSnackBar("Game is already completed");
               return;
             }
-            
+
             if (controller.sets.length >= 10) {
               SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
               return;
             }
-            
+
             final teamAPlayers = controller.teams.isNotEmpty
                 ? controller.teams[0]["players"] as List
                 : [];
@@ -1381,13 +1413,13 @@ class ScoreBoardScreen extends StatelessWidget {
                 ? controller.teams[1]["players"] as List
                 : [];
             bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
-            
+
             if (!allPlayersAdded) {
               if(Get.isSnackbarOpen)return;
               SnackBarUtils.showErrorSnackBar("Please add all players before adding a set");
               return;
             }
-            
+
             controller.addSet();
           },
           child: controller.isAddingSet.value
@@ -1635,18 +1667,18 @@ class ScoreBoardScreen extends StatelessWidget {
         ? controller.teams[1]["players"] as List
         : [];
     bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
-    
+
     if (!allPlayersAdded) {
       return const Icon(Icons.remove, color: Colors.black54, size: 16);
     }
-    
+
     // Check if user can score for this team
     bool canScore = controller.canScoreForTeam(team);
-    
+
     if (!canScore) {
       return const Icon(Icons.remove, color: Colors.black54, size: 16);
     }
-    
+
     return GestureDetector(
       onTap: () {
         _showQuickScoreDialog(team, setNumber);
@@ -1818,7 +1850,7 @@ class ScoreBoardScreen extends StatelessWidget {
                               width: 60,
                               child: () {
                                 final teamAScore = set["teamAScore"] ?? 0;
-                                
+
                                 return teamAScore > 0
                                     ? Text(
                                         "$teamAScore",
@@ -1837,7 +1869,7 @@ class ScoreBoardScreen extends StatelessWidget {
                               final teamBScore = set["teamBScore"] ?? 0;
                               bool hasScores = teamAScore > 0 || teamBScore > 0;
                               bool canEdit = hasScores && (controller.isUserInTeamA || controller.isUserInTeamB);
-                              
+
                               if (canEdit) {
                                 return GestureDetector(
                                   onTap: (){
@@ -1880,7 +1912,7 @@ class ScoreBoardScreen extends StatelessWidget {
                               width: 60,
                               child: () {
                                 final teamBScore = set["teamBScore"] ?? 0;
-                                
+
                                 return teamBScore > 0
                                     ? Row(
                                       children: [
@@ -1956,12 +1988,12 @@ class ScoreBoardScreen extends StatelessWidget {
                           final teamBScore = set["teamBScore"] ?? 0;
                           return teamAScore == 0 && teamBScore == 0;
                         });
-                        
+
                         if (hasEmptySet) {
                           SnackBarUtils.showErrorSnackBar("Cannot end game with empty sets. Please add scores first.");
                           return;
                         }
-                        
+
                         controller.endGame();
                       },
                       child: Container(
@@ -2005,17 +2037,17 @@ class ScoreBoardScreen extends StatelessWidget {
   // Shimmer loader for Set Section
   bool _shouldShowEndGameButton() {
     if (controller.sets.length < 3) return false;
-    
+
     final thirdSet = controller.sets.firstWhere(
       (set) => set["setNumber"] == 3,
       orElse: () => {},
     );
-    
+
     if (thirdSet.isEmpty) return false;
-    
+
     final teamAScore = thirdSet["teamAScore"] ?? 0;
     final teamBScore = thirdSet["teamBScore"] ?? 0;
-    
+
     // Check if third set has scores and at least one set has non-zero scores
     bool thirdSetHasScores = teamAScore > 0 && teamBScore > 0;
     bool hasAnyScores = controller.sets.any((set) {
@@ -2023,7 +2055,7 @@ class ScoreBoardScreen extends StatelessWidget {
       final bScore = set["teamBScore"] ?? 0;
       return aScore > 0 || bScore > 0;
     });
-    
+
     return thirdSetHasScores && hasAnyScores;
   }
 
@@ -2133,7 +2165,7 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
       currentSetNumber = widget.preselectedSet!;
       return;
     }
-    
+
     // Find the first set without scores
     for (var set in controller.sets) {
       final teamAScore = set["teamAScore"] ?? 0;
@@ -2217,12 +2249,12 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
     required Color bgColor,
     required List<String> avatars,
   }) {
-    final teamPlayers = title == "Team A" 
+    final teamPlayers = title == "Team A"
         ? (controller.teams.isNotEmpty ? controller.teams[0]["players"] as List : [])
         : (controller.teams.length > 1 ? controller.teams[1]["players"] as List : []);
-    
+
     final canScore = controller.canScoreForTeam(title);
-    
+
     return Expanded(
       child: Container(
         color: bgColor,
@@ -2343,7 +2375,7 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
         onPressed: controller.isAddingScore.value ? null : () {
           final teamAScore = int.tryParse(teamAController.text) ?? 0;
           final teamBScore = int.tryParse(teamBController.text) ?? 0;
-          
+
           // Get existing scores for this set
           final existingSet = controller.sets.firstWhere(
             (s) => s["setNumber"] == currentSetNumber,
@@ -2351,7 +2383,7 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
           );
           final existingTeamAScore = existingSet.isNotEmpty ? (existingSet["teamAScore"] ?? 0) : 0;
           final existingTeamBScore = existingSet.isNotEmpty ? (existingSet["teamBScore"] ?? 0) : 0;
-          
+
           // Only validate new scores, not existing ones
           if (controller.isUserInTeamA && teamBScore > 0 && existingTeamBScore == 0) {
             SnackBarUtils.showErrorSnackBar("You can only add scores for Team A");
@@ -2361,7 +2393,7 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
             SnackBarUtils.showErrorSnackBar("You can only add scores for Team B");
             return;
           }
-          
+
           controller.addScore(currentSetNumber, teamAScore, teamBScore).then((_) {
             if (!controller.isAddingScore.value) {
               Get.back();

@@ -10,15 +10,18 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   final BookingHistoryRepository bookingRepo = BookingHistoryRepository();
 
   Rx<BookingHistoryModel?> upcomingBookings = Rx<BookingHistoryModel?>(null);
+  Rx<BookingHistoryModel?> ongoingBookings = Rx<BookingHistoryModel?>(null);
   Rx<BookingHistoryModel?> completedBookings = Rx<BookingHistoryModel?>(null);
   Rx<BookingHistoryModel?> cancelledBookings = Rx<BookingHistoryModel?>(null);
 
   // Pagination variables
   RxInt upcomingPage = 1.obs;
+  RxInt ongoingPage = 1.obs;
   RxInt completedPage = 1.obs;
   RxInt cancelledPage = 1.obs;
 
   RxBool upcomingHasMore = true.obs;
+  RxBool ongoingHasMore = true.obs;
   RxBool completedHasMore = true.obs;
   RxBool cancelledHasMore = true.obs;
 
@@ -28,25 +31,25 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
   @override
   void onInit() {
-    tabController = TabController(length: 2, vsync: this);
+    tabController = TabController(length: 3, vsync: this); // Changed from 2 to 3
 
     // Add tab listener to fetch data when switching tabs
     tabController.addListener(() {
       if (!tabController.indexIsChanging) return;
-      
+
       final currentIndex = tabController.index;
       String type = "upcoming";
-      if (currentIndex == 1) type = "completed";
-      // if (currentIndex == 2) type = "cancelled";
-      
+      if (currentIndex == 1) type = "ongoing";
+      if (currentIndex == 2) type = "completed";
+
       // Fetch data for the tab if not already loaded
       switch (type) {
+        case "ongoing":
+          if (ongoingBookings.value == null) fetchBookings("ongoing");
+          break;
         case "completed":
           if (completedBookings.value == null) fetchBookings("completed");
           break;
-        // case "cancelled":
-        //   if (cancelledBookings.value == null) fetchBookings("cancelled");
-        //   break;
       }
     });
 
@@ -64,9 +67,11 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       } else {
         // Reset pagination for all types
         upcomingPage.value = 1;
+        ongoingPage.value = 1;
         completedPage.value = 1;
         cancelledPage.value = 1;
         upcomingHasMore.value = true;
+        ongoingHasMore.value = true;
         completedHasMore.value = true;
         cancelledHasMore.value = true;
 
@@ -90,19 +95,25 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       case "upcoming":
         upcomingPage.value = 1;
         upcomingBookings.value = data;
-        upcomingHasMore.value = (data.totalPages != null && data.page != null) 
+        upcomingHasMore.value = (data.totalPages != null && data.page != null)
+            ? data.page! < data.totalPages! : false;
+        break;
+      case "ongoing":
+        ongoingPage.value = 1;
+        ongoingBookings.value = data;
+        ongoingHasMore.value = (data.totalPages != null && data.page != null)
             ? data.page! < data.totalPages! : false;
         break;
       case "completed":
         completedPage.value = 1;
         completedBookings.value = data;
-        completedHasMore.value = (data.totalPages != null && data.page != null) 
+        completedHasMore.value = (data.totalPages != null && data.page != null)
             ? data.page! < data.totalPages! : false;
         break;
       case "cancelled":
         cancelledPage.value = 1;
         cancelledBookings.value = data;
-        cancelledHasMore.value = (data.totalPages != null && data.page != null) 
+        cancelledHasMore.value = (data.totalPages != null && data.page != null)
             ? data.page! < data.totalPages! : false;
         break;
     }
@@ -147,7 +158,6 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             upcomingBookings.value!.data!.addAll(newData.data!);
             upcomingPage.value = nextPage;
 
-            // Safe check
             if (newData.totalPages != null && newData.page != null) {
               upcomingHasMore.value = newData.page! < newData.totalPages!;
             } else {
@@ -157,11 +167,46 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             if (kDebugMode) {
               print("Updated upcoming: page $nextPage, hasMore: ${upcomingHasMore.value}");
             }
-            upcomingBookings.refresh(); // Force UI update
+            upcomingBookings.refresh();
           } else {
             upcomingHasMore.value = false;
             if (kDebugMode) {
               print("No more upcoming data available");
+            }
+          }
+          break;
+
+        case "ongoing":
+          nextPage = ongoingPage.value + 1;
+          if (kDebugMode) {
+            print("Loading ongoing page: $nextPage");
+          }
+
+          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          if (kDebugMode) {
+            print("Ongoing page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
+          }
+
+          if (newData.data != null && newData.data!.isNotEmpty) {
+            ongoingBookings.value ??= BookingHistoryModel();
+            ongoingBookings.value!.data ??= [];
+            ongoingBookings.value!.data!.addAll(newData.data!);
+            ongoingPage.value = nextPage;
+
+            if (newData.totalPages != null && newData.page != null) {
+              ongoingHasMore.value = newData.page! < newData.totalPages!;
+            } else {
+              ongoingHasMore.value = false;
+            }
+
+            if (kDebugMode) {
+              print("Updated ongoing: page $nextPage, hasMore: ${ongoingHasMore.value}");
+            }
+            ongoingBookings.refresh();
+          } else {
+            ongoingHasMore.value = false;
+            if (kDebugMode) {
+              print("No more ongoing data available");
             }
           }
           break;
@@ -259,6 +304,12 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
           print("hasMoreData upcoming: $result, page: ${upcomingPage.value}, totalPages: ${upcomingBookings.value?.totalPages}");
         }
         break;
+      case "ongoing":
+        result = ongoingHasMore.value;
+        if (kDebugMode) {
+          print("hasMoreData ongoing: $result, page: ${ongoingPage.value}, totalPages: ${ongoingBookings.value?.totalPages}");
+        }
+        break;
       case "completed":
         result = completedHasMore.value;
         if (kDebugMode) {
@@ -280,8 +331,6 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   void refreshBookings() {
     fetchBookings();
   }
-
-
 
   @override
   void onClose() {
