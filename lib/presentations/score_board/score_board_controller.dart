@@ -6,6 +6,7 @@ import 'package:padel_mobile/presentations/main_home_page/main_home_controller.d
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:uuid/uuid.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:padel_mobile/presentations/score_board/widgets/match_summary_dialog.dart';
 
 class ScoreBoardController extends GetxController {
   RxList<Map<String, dynamic>> sets = <Map<String, dynamic>>[].obs;
@@ -20,7 +21,7 @@ class ScoreBoardController extends GetxController {
   RxBool isCompleted = false.obs;
 
   // Timer-related variables
-  RxInt remainingSeconds = (00 * 60).obs; // 20 minutes in seconds
+  RxInt remainingSeconds = 0.obs;
   late Timer _gameTimer;
   RxBool isGameStarted = false.obs;
   RxBool isWithinMatchTime = false.obs;
@@ -30,30 +31,32 @@ class ScoreBoardController extends GetxController {
     try {
       if (matchTime.value.isEmpty) return 0;
 
-      // Parse match time (e.g., "7:00 PM - 8:00 PM" or "11 am - 12 pm")
       String timeStr = matchTime.value.trim();
       List<String> parts = timeStr.split('-');
 
-      if (parts.length < 2) return 0;
+      String startTimeStr;
+      String endTimeStr;
+      
+      if (parts.length == 1) {
+        // Single time format - add 60 minutes by default
+        startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        endTimeStr = DateFormat('h:mm a').format(endTime);
+      } else if (parts.length >= 2) {
+        startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        endTimeStr = _normalizeTimeFormat(parts[1].trim());
+      } else {
+        return 0;
+      }
 
-      // Get end time (second part)
-      String endTimeStr = parts[1].trim();
-
-      // Normalize time format
-      endTimeStr = _normalizeTimeFormat(endTimeStr);
-
-      // Parse end time
+      DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
       DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
       DateTime now = DateTime.now();
-      DateTime endDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        endTime.hour,
-        endTime.minute,
-      );
+      
+      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
+      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
 
-      // If end time is in the past, use tomorrow
       if (endDateTime.isBefore(now)) {
         endDateTime = endDateTime.add(const Duration(days: 1));
       }
@@ -66,73 +69,62 @@ class ScoreBoardController extends GetxController {
     }
   }
 
-  ///Check if current time is within match time window----------------------------------------------
+  ///Check if current time is at or after match start time----------------------------------------------
   bool _isWithinMatchTimeWindow() {
     try {
       if (matchTime.value.isEmpty) {
-        CustomLogger.logMessage(msg: "Match time is empty", level: LogLevel.warning);
+        CustomLogger.logMessage(msg: "matchTime is EMPTY", level: LogLevel.error);
         return false;
       }
 
       String timeStr = matchTime.value.trim();
+      CustomLogger.logMessage(msg: "Raw matchTime: '$timeStr'", level: LogLevel.info);
+      
       List<String> parts = timeStr.split('-');
-
-      if (parts.length < 2) {
-        CustomLogger.logMessage(msg: "Invalid match time format: $timeStr", level: LogLevel.warning);
+      
+      String startTimeStr;
+      String endTimeStr;
+      
+      if (parts.length == 1) {
+        // Only start time provided, calculate end time as start + 60 minutes
+        startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        endTimeStr = DateFormat('h:mm a').format(endTime);
+        CustomLogger.logMessage(msg: "Single time format detected, calculated end time", level: LogLevel.info);
+      } else if (parts.length >= 2) {
+        startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        endTimeStr = _normalizeTimeFormat(parts[1].trim());
+      } else {
+        CustomLogger.logMessage(msg: "Invalid format - parts: ${parts.length}", level: LogLevel.error);
         return false;
       }
-
-      // Parse start and end times
-      String startTimeStr = parts[0].trim();
-      String endTimeStr = parts[1].trim();
-
-      // Normalize time formats
-      startTimeStr = _normalizeTimeFormat(startTimeStr);
-      endTimeStr = _normalizeTimeFormat(endTimeStr);
-
+      
+      CustomLogger.logMessage(msg: "Normalized start: '$startTimeStr', end: '$endTimeStr'", level: LogLevel.info);
+      
       DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
       DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
-
       DateTime now = DateTime.now();
-
-      DateTime startDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        startTime.hour,
-        startTime.minute,
-      );
-
-      DateTime endDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        endTime.hour,
-        endTime.minute,
-      );
-
+      
+      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
+      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
+      
       // If end time is before start time, it's next day
       if (endDateTime.isBefore(startDateTime)) {
         endDateTime = endDateTime.add(const Duration(days: 1));
       }
-
-      // If we're before start time, check if match is today or tomorrow
-      if (now.isBefore(startDateTime)) {
-        // If start time is more than 12 hours away, it's probably tomorrow's match
-        if (startDateTime.difference(now).inHours > 12) {
-          CustomLogger.logMessage(msg: "Match is tomorrow (>12h away)", level: LogLevel.info);
-          return false;
-        }
-      }
-
-      bool isWithin = now.isAfter(startDateTime) && now.isBefore(endDateTime);
+      
+      // Check if current time is within match window
+      bool isWithin = (now.isAfter(startDateTime) || now.isAtSameMomentAs(startDateTime)) && now.isBefore(endDateTime);
+      
       CustomLogger.logMessage(
-        msg: "Match time check: now=$now, start=$startDateTime, end=$endDateTime, isWithin=$isWithin",
+        msg: "NOW: ${now.hour}:${now.minute}, START: ${startDateTime.hour}:${startDateTime.minute}, END: ${endDateTime.hour}:${endDateTime.minute}, RESULT: $isWithin",
         level: LogLevel.info
       );
+      
       return isWithin;
     } catch (e) {
-      CustomLogger.logMessage(msg: "Error checking match time: $e", level: LogLevel.error);
+      CustomLogger.logMessage(msg: "ERROR in _isWithinMatchTimeWindow: $e", level: LogLevel.error);
       return false;
     }
   }
@@ -156,6 +148,9 @@ class ScoreBoardController extends GetxController {
 
   ///Format elapsed time as MM:SS----------------------------------------------
   String get formattedTime {
+    if (!isWithinMatchTime.value && !isGameStarted.value) {
+      return '00:00';
+    }
     final minutes = (remainingSeconds.value ~/ 60).toString().padLeft(2, '0');
     final seconds = (remainingSeconds.value % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
@@ -294,14 +289,6 @@ class ScoreBoardController extends GetxController {
               "winner": s.winner,
             });
           }
-        } else {
-          sets.add({
-            "uniqueId": _uuid.v4(),
-            "setNumber": 1,
-            "teamAScore": 0,
-            "teamBScore": 0,
-            "winner": null,
-          });
         }
 
         sets.refresh();
@@ -362,23 +349,21 @@ class ScoreBoardController extends GetxController {
   }
 
   void _startGameTimer() {
-    // Cancel existing timer if any
     try {
       _gameTimer.cancel();
-    } catch (e) {
-      // Timer might not be initialized yet
-    }
+    } catch (e) {}
     
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (remainingSeconds.value > 0) {
-        remainingSeconds.value--;
-      } else {
+      int newRemaining = _calculateRemainingMatchTime();
+      remainingSeconds.value = newRemaining;
+      
+      if (newRemaining <= 0) {
         timer.cancel();
         isGameStarted.value = false;
-        SnackBarUtils.showInfoSnackBar("Match time is up!");
+        SnackBarUtils.showInfoSnackBar("Match time is up! Game ended automatically.");
+        endGame();
       }
     });
-    CustomLogger.logMessage(msg: "Game timer started with ${remainingSeconds.value} seconds", level: LogLevel.info);
   }
 
   Future<void> createSets(int setNumber, {String? type}) async {
@@ -448,52 +433,37 @@ class ScoreBoardController extends GetxController {
     _startPeriodicUpdates();
     _startMatchTimeCheck();
     
-    // Check if we should auto-start immediately
-    Future.delayed(const Duration(seconds: 2), () {
-      CustomLogger.logMessage(
-        msg: "Initial check: withinTime=${_isWithinMatchTimeWindow()}, gameStarted=${isGameStarted.value}, allPlayers=$allPlayersAdded, completed=${isCompleted.value}",
-        level: LogLevel.info
-      );
-      if (_isWithinMatchTimeWindow() && !isGameStarted.value && allPlayersAdded && !isCompleted.value) {
-        CustomLogger.logMessage(msg: "Auto-starting timer - already within match time", level: LogLevel.info);
-        isGameStarted.value = true;
-        int matchDuration = _calculateRemainingMatchTime();
-        remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
-        _startGameTimer();
-        SnackBarUtils.showInfoSnackBar("Match is active! Timer started.");
-      }
-    });
+    // Force immediate check
+    isWithinMatchTime.value = _isWithinMatchTimeWindow();
+    CustomLogger.logMessage(
+      msg: "Initial match time check: ${isWithinMatchTime.value}, matchTime: ${matchTime.value}",
+      level: LogLevel.info
+    );
+    
+    if (isWithinMatchTime.value) {
+      remainingSeconds.value = _calculateRemainingMatchTime();
+    } else {
+      remainingSeconds.value = 0;
+    }
   }
 
   void _startMatchTimeCheck() {
-    Timer.periodic(const Duration(seconds: 10), (timer) {
-      bool wasWithinMatchTime = isWithinMatchTime.value;
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      bool previousValue = isWithinMatchTime.value;
       isWithinMatchTime.value = _isWithinMatchTimeWindow();
-
-      CustomLogger.logMessage(
-        msg: "Timer check: wasWithin=$wasWithinMatchTime, isWithin=${isWithinMatchTime.value}, gameStarted=${isGameStarted.value}, allPlayers=$allPlayersAdded, completed=${isCompleted.value}",
-        level: LogLevel.info
-      );
-
-      // Auto-start timer when match time begins
-      if (!wasWithinMatchTime && isWithinMatchTime.value && !isGameStarted.value && allPlayersAdded && !isCompleted.value) {
-        CustomLogger.logMessage(msg: "Auto-starting timer - match time reached", level: LogLevel.info);
-        isGameStarted.value = true;
-        int matchDuration = _calculateRemainingMatchTime();
-        remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
-        _startGameTimer();
-        SnackBarUtils.showInfoSnackBar("Match time started! Timer is now running.");
+      
+      if (previousValue != isWithinMatchTime.value) {
+        CustomLogger.logMessage(
+          msg: "Match time status changed: $previousValue -> ${isWithinMatchTime.value}",
+          level: LogLevel.info
+        );
       }
 
-      // Update remaining time display based on match status
       if (!isGameStarted.value) {
         if (isWithinMatchTime.value) {
-          // Within match time, show remaining time until match ends
           remainingSeconds.value = _calculateRemainingMatchTime();
         } else {
-          // Not within match time, show remaining time until match starts
-          int timeUntilStart = _calculateTimeUntilMatchStart();
-          remainingSeconds.value = timeUntilStart;
+          remainingSeconds.value = 0;
         }
       }
     });
@@ -614,6 +584,12 @@ class ScoreBoardController extends GetxController {
 
   ///Add Score------------------------------------------------------------------
   Future<void> addScore(int setNumber, int teamAScore, int teamBScore) async {
+    // Prevent score addition if game hasn't started
+    if (!isGameStarted.value) {
+      SnackBarUtils.showErrorSnackBar("Cannot add score. Please start the match first.");
+      return;
+    }
+    
     CustomLogger.logMessage(msg: 'addScore API call - set: $setNumber, scores: $teamAScore-$teamBScore', level: LogLevel.info);
     if (teamAScore == 0 && teamBScore == 0) {
       SnackBarUtils.showErrorSnackBar("Both team scores cannot be zero.");
@@ -720,9 +696,9 @@ class ScoreBoardController extends GetxController {
       final response = await repository.updateScoreBoard(data: body);
 
       if (response.success == true) {
-        SnackBarUtils.showInfoSnackBar("Game Ended Successfully!");
         await fetchScoreBoard(showLoader: false);
         await profileController.fetchUserProfile();
+        showMatchSummaryDialog(this);
       } else {
         SnackBarUtils.showErrorSnackBar(response.message ?? "");
       }

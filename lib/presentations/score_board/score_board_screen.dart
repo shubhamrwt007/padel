@@ -155,9 +155,14 @@ class ScoreBoardScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildAddSetButton(),
                 const SizedBox(height: 12),
-                Obx(() => controller.isLoading.value
-                    ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
-                    : _buildSetSection().paddingOnly(left: 15, right: 15)),
+                Obx(() {
+                  if (!controller.isGameStarted.value) {
+                    return const SizedBox.shrink();
+                  }
+                  return controller.isLoading.value
+                      ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
+                      : _buildSetSection().paddingOnly(left: 15, right: 15);
+                }),
               ],
             ),
           );
