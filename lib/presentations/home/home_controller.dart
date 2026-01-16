@@ -545,44 +545,36 @@ class HomeController extends GetxController {
       isCheckingScoreboard.value = true;
       loadingBookingId.value = bookingId;
 
-      // Check if scoreboard already exists in fetched bookings
-      final scoreboardId = scoreboardIds[bookingId];
-
-      if (scoreboardId != null && scoreboardId.isNotEmpty) {
-        // Scoreboard exists, push open match into scoreboard
-        await repository.pushOpenMatchIntoScoreboard(
-          body: {
-            "scoreboardId": scoreboardId,
-            "openMatchId": bookingId,
-          },
-        );
-        isCheckingScoreboard.value = false;
-        // Use actual bookingId for navigation
-        final actualBookingId = openMatchToBookingMap[bookingId] ?? bookingId;
-        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId});
-        return;
-      }
-
-      // --- Create scoreboard ---
       final bookingList = bookings.value?.data ?? [];
-
       if (bookingList.isEmpty) {
         isCheckingScoreboard.value = false;
         SnackBarUtils.showInfoSnackBar("No booking data found");
         return;
       }
 
-      final booking = bookingList.first;
+      final booking = bookingList.firstWhere(
+        (b) => b.sId == bookingId || b.openMatchId?.sId == bookingId,
+        orElse: () => bookingList.first,
+      );
 
+      final actualBookingId = booking.bookingType == "openMatch" ? booking.sId : bookingId;
+
+      // If scoreboard already exists, just navigate
+      if (booking.scoreboard?.sId != null && booking.scoreboard!.sId!.isNotEmpty) {
+        isCheckingScoreboard.value = false;
+        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId ?? bookingId});
+        return;
+      }
+
+      // Create new scoreboard
       final body = {
-        "bookingId": bookingId,
+        "bookingId": actualBookingId ?? bookingId,
         "matchDate": booking.bookingDate ?? "",
         "matchTime": booking.slot?[0].slotTimes?[0].time ?? "",
         "userId": storage.read("userId") ?? "",
         "courtName": booking.slot?[0].courtName ?? "",
         "clubName": booking.registerClubId?.clubName ?? "",
         "matchType":booking.matchType??"",
-        if (booking.bookingType != "normal" && openMatchId.value.isNotEmpty) "openMatchId": openMatchId.value,
         "teams": [
           {
             "name": "Team A",
@@ -596,12 +588,14 @@ class HomeController extends GetxController {
         ]
       };
 
+      log("💡 Create Score Board Body-> $body");
+
       final response = await repository.createScoreBoard(data: body);
 
       isCheckingScoreboard.value = false;
 
       if (response.success == true) {
-        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": bookingId});
+        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId ?? bookingId});
       }
     } catch (e) {
       isCheckingScoreboard.value = false;

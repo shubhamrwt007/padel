@@ -759,7 +759,7 @@ class RequestsScreen extends StatelessWidget {
             Transform.translate(
               offset: Offset(0, 2),
               child: Text(
-                "₹ ${formatAmount('500')}",
+                "₹ ${formatAmount('')}",
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
