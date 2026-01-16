@@ -30,7 +30,7 @@ class ScoreBoardController extends GetxController {
     try {
       if (matchTime.value.isEmpty) return 0;
 
-      // Parse match time (e.g., "7:00 PM - 8:00 PM")
+      // Parse match time (e.g., "7:00 PM - 8:00 PM" or "11 am - 12 pm")
       String timeStr = matchTime.value.trim();
       List<String> parts = timeStr.split('-');
 
@@ -38,6 +38,9 @@ class ScoreBoardController extends GetxController {
 
       // Get end time (second part)
       String endTimeStr = parts[1].trim();
+
+      // Normalize time format
+      endTimeStr = _normalizeTimeFormat(endTimeStr);
 
       // Parse end time
       DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
@@ -66,16 +69,26 @@ class ScoreBoardController extends GetxController {
   ///Check if current time is within match time window----------------------------------------------
   bool _isWithinMatchTimeWindow() {
     try {
-      if (matchTime.value.isEmpty) return false;
+      if (matchTime.value.isEmpty) {
+        CustomLogger.logMessage(msg: "Match time is empty", level: LogLevel.warning);
+        return false;
+      }
 
       String timeStr = matchTime.value.trim();
       List<String> parts = timeStr.split('-');
 
-      if (parts.length < 2) return false;
+      if (parts.length < 2) {
+        CustomLogger.logMessage(msg: "Invalid match time format: $timeStr", level: LogLevel.warning);
+        return false;
+      }
 
       // Parse start and end times
       String startTimeStr = parts[0].trim();
       String endTimeStr = parts[1].trim();
+
+      // Normalize time formats
+      startTimeStr = _normalizeTimeFormat(startTimeStr);
+      endTimeStr = _normalizeTimeFormat(endTimeStr);
 
       DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
       DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
@@ -107,11 +120,17 @@ class ScoreBoardController extends GetxController {
       if (now.isBefore(startDateTime)) {
         // If start time is more than 12 hours away, it's probably tomorrow's match
         if (startDateTime.difference(now).inHours > 12) {
+          CustomLogger.logMessage(msg: "Match is tomorrow (>12h away)", level: LogLevel.info);
           return false;
         }
       }
 
-      return now.isAfter(startDateTime) && now.isBefore(endDateTime);
+      bool isWithin = now.isAfter(startDateTime) && now.isBefore(endDateTime);
+      CustomLogger.logMessage(
+        msg: "Match time check: now=$now, start=$startDateTime, end=$endDateTime, isWithin=$isWithin",
+        level: LogLevel.info
+      );
+      return isWithin;
     } catch (e) {
       CustomLogger.logMessage(msg: "Error checking match time: $e", level: LogLevel.error);
       return false;
@@ -181,7 +200,11 @@ class ScoreBoardController extends GetxController {
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
         matchBookingId.value = item.bookingId?.sId ?? "";
-        bookingType.value = item.bookingId?.bookingType ?? "";
+        bookingType.value = item.bookingId?.bookingType ?? "normal";
+        CustomLogger.logMessage(
+            msg: "Booking Type from API: ${item.bookingId?.bookingType}", level: LogLevel.info);
+        CustomLogger.logMessage(
+            msg: "Booking Type set to: ${bookingType.value}", level: LogLevel.info);
         matchType.value = (item?.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
         matchStatus.value = item?.matchStatus ?? false;
         CustomLogger.logMessage(
@@ -339,6 +362,13 @@ class ScoreBoardController extends GetxController {
   }
 
   void _startGameTimer() {
+    // Cancel existing timer if any
+    try {
+      _gameTimer.cancel();
+    } catch (e) {
+      // Timer might not be initialized yet
+    }
+    
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds.value > 0) {
         remainingSeconds.value--;
@@ -348,6 +378,7 @@ class ScoreBoardController extends GetxController {
         SnackBarUtils.showInfoSnackBar("Match time is up!");
       }
     });
+    CustomLogger.logMessage(msg: "Game timer started with ${remainingSeconds.value} seconds", level: LogLevel.info);
   }
 
   Future<void> createSets(int setNumber, {String? type}) async {
@@ -416,11 +447,43 @@ class ScoreBoardController extends GetxController {
     await fetchScoreBoard();
     _startPeriodicUpdates();
     _startMatchTimeCheck();
+    
+    // Check if we should auto-start immediately
+    Future.delayed(const Duration(seconds: 2), () {
+      CustomLogger.logMessage(
+        msg: "Initial check: withinTime=${_isWithinMatchTimeWindow()}, gameStarted=${isGameStarted.value}, allPlayers=$allPlayersAdded, completed=${isCompleted.value}",
+        level: LogLevel.info
+      );
+      if (_isWithinMatchTimeWindow() && !isGameStarted.value && allPlayersAdded && !isCompleted.value) {
+        CustomLogger.logMessage(msg: "Auto-starting timer - already within match time", level: LogLevel.info);
+        isGameStarted.value = true;
+        int matchDuration = _calculateRemainingMatchTime();
+        remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
+        _startGameTimer();
+        SnackBarUtils.showInfoSnackBar("Match is active! Timer started.");
+      }
+    });
   }
 
   void _startMatchTimeCheck() {
     Timer.periodic(const Duration(seconds: 10), (timer) {
+      bool wasWithinMatchTime = isWithinMatchTime.value;
       isWithinMatchTime.value = _isWithinMatchTimeWindow();
+
+      CustomLogger.logMessage(
+        msg: "Timer check: wasWithin=$wasWithinMatchTime, isWithin=${isWithinMatchTime.value}, gameStarted=${isGameStarted.value}, allPlayers=$allPlayersAdded, completed=${isCompleted.value}",
+        level: LogLevel.info
+      );
+
+      // Auto-start timer when match time begins
+      if (!wasWithinMatchTime && isWithinMatchTime.value && !isGameStarted.value && allPlayersAdded && !isCompleted.value) {
+        CustomLogger.logMessage(msg: "Auto-starting timer - match time reached", level: LogLevel.info);
+        isGameStarted.value = true;
+        int matchDuration = _calculateRemainingMatchTime();
+        remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
+        _startGameTimer();
+        SnackBarUtils.showInfoSnackBar("Match time started! Timer is now running.");
+      }
 
       // Update remaining time display based on match status
       if (!isGameStarted.value) {
@@ -441,7 +504,7 @@ class ScoreBoardController extends GetxController {
     try {
       if (matchTime.value.isEmpty) return 0;
 
-      // Parse match time (e.g., "7:00 PM - 8:00 PM")
+      // Parse match time (e.g., "7:00 PM - 8:00 PM" or "11 am - 12 pm")
       String timeStr = matchTime.value.trim();
       List<String> parts = timeStr.split('-');
 
@@ -449,6 +512,9 @@ class ScoreBoardController extends GetxController {
 
       // Get start time (first part)
       String startTimeStr = parts[0].trim();
+
+      // Normalize time format: "11 am" -> "11:00 AM"
+      startTimeStr = _normalizeTimeFormat(startTimeStr);
 
       // Parse start time
       DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
@@ -474,6 +540,22 @@ class ScoreBoardController extends GetxController {
     }
   }
 
+  ///Normalize time format to "h:mm a" format----------------------------------------------
+  String _normalizeTimeFormat(String time) {
+    time = time.trim();
+    // Convert "11 am" to "11:00 AM"
+    if (!time.contains(':')) {
+      final parts = time.split(' ');
+      if (parts.length == 2) {
+        time = '${parts[0]}:00 ${parts[1].toUpperCase()}';
+      }
+    } else {
+      // Ensure AM/PM is uppercase
+      time = time.replaceAllMapped(RegExp(r'(am|pm)', caseSensitive: false), (match) => match.group(0)!.toUpperCase());
+    }
+    return time;
+  }
+
   void _startPeriodicUpdates() {
     _periodicTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       await _fetchScoreBoardForStream();
@@ -488,9 +570,9 @@ class ScoreBoardController extends GetxController {
       if (response.status == 200 && response.data!.isNotEmpty) {
         final item = response.data!.first;
 
-        // Update sets
-        sets.clear();
+        // Only update sets if API has data, don't clear existing sets
         if (item.sets != null && item.sets!.isNotEmpty) {
+          sets.clear();
           for (var s in item.sets!) {
             sets.add({
               "uniqueId": _uuid.v4(),
@@ -500,8 +582,8 @@ class ScoreBoardController extends GetxController {
               "winner": s.winner,
             });
           }
+          sets.refresh();
         }
-        sets.refresh();
 
         // Update scores
         teamAWins.value = item.totalScore?.teamA ?? 0;

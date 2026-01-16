@@ -250,12 +250,12 @@ class BookACourtController extends GetxController {
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      Get.snackbar(
-        "Error",
-        "Failed to select slot. Please try again.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to select slot. Please try again.",
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
       return false;
     }
   }
@@ -277,6 +277,9 @@ class BookACourtController extends GetxController {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
 
+    // Get price from fetchAllSlotPrices based on duration
+    final dayName = getWeekday(currentDate.weekday);
+    
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
@@ -284,10 +287,14 @@ class BookACourtController extends GetxController {
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
       } else {
+        // Get 30-minute price from API
+        final halfSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 30);
+        final finalHalfAmount = halfSlotPrice ?? slot.amount ?? 0;
+        
         final halfSlot = Slots(
           sId: slotId,
           time: slot.time,
-          amount: (slot.amount ?? 0) ~/ 2,
+          amount: finalHalfAmount,
         );
         
         realCourtSelections[realCourtKey] = {
@@ -296,7 +303,7 @@ class BookACourtController extends GetxController {
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': halfSlot.amount ?? 0,
+          'amount': finalHalfAmount,
           'isHalfSlot': true,
           'isFirstHalf': isFirstHalf,
         };
@@ -308,13 +315,17 @@ class BookACourtController extends GetxController {
         realCourtSelections.remove(realCourtKey);
         selectedSlots.removeWhere((s) => s.sId == slotId);
       } else {
+        // Get 60-minute price from API
+        final fullSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 60);
+        final finalAmount = fullSlotPrice ?? slot.amount ?? 0;
+        
         realCourtSelections[realCourtKey] = {
           'slot': slot,
           'courtId': resolvedCourtId,
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': slot.amount ?? 0,
+          'amount': finalAmount,
         };
 
         if (!selectedSlots.any((s) => s.sId == slotId)) {

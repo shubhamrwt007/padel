@@ -1,6 +1,7 @@
 import 'package:padel_mobile/data/request_models/open%20matches/accept_or_reject_request_players_model.dart';
 import 'package:padel_mobile/data/request_models/open%20matches/request_player_to_open_match_model.dart';
 import 'package:padel_mobile/data/request_models/open%20matches/withdraw_request_model.dart';
+import 'package:padel_mobile/data/request_models/request_to_join_booking_model.dart';
 import 'package:padel_mobile/data/response_models/get_players_level_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/find_near_by_player_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_customer_data_by_phone_number_model.dart';
@@ -267,6 +268,40 @@ class OpenMatchRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Request Player For Open Match failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Request Player For Normal Match Api--------------------------------------------------------
+  Future<RequestToJoinBookingModel?> requestToJoinBookingModel({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Request Player For Normal Match request body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.requestToJoinBooking,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Request Player For Normal Match Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return RequestToJoinBookingModel.fromJson(response.data);
+      } else {
+        throw Exception("Request Player For Normal Match Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Request Player For Normal Match failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
