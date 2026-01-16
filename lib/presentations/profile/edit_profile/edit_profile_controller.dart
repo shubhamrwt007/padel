@@ -321,6 +321,7 @@ class EditProfileController extends GetxController{
 
   @override
   void onInit()async {
+    await profileController.fetchUserProfile();
     setValues();
    await fetchLocations();
     super.onInit();

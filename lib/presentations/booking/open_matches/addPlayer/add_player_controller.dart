@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_controller.dart';
 import 'package:padel_mobile/presentations/open_match_for_all_court/open_match_for_all_court_controller.dart';
@@ -259,8 +260,8 @@ class AddPlayerController extends GetxController {
         );
         return true;
       } else {
-        SnackBarUtils.showInfoSnackBar(
-            response?.message ?? "Failed to add player");
+        // SnackBarUtils.showInfoSnackBar(
+        //     response?.message ?? "Failed to add player");
         return false;
       }
     } catch (e) {
@@ -270,45 +271,77 @@ class AddPlayerController extends GetxController {
   }
 
   ///Request Player For Open Match Api-----------------------------------------------
-  Future<bool> requestPlayerForOpenMatch({String? type,String? bookingId}) async {
+  Future<bool> requestPlayerForOpenMatch({
+    String? type,
+    String? bookingId,
+  }) async {
     try {
       final body = {
         "matchId": matchId.value,
-        "bookingId":bookingId,
+        "bookingId": bookingId,
         "preferredTeam": selectedTeam.value,
       };
-      
+
       if (type != null) {
         body["type"] = type;
         body["playerId"] = playerId.value;
       } else {
-        // body["level"] = playerLevel.value;
         body["requesterId"] = playerId.value;
       }
-      
-      final response = await repository.requestPlayerForOpenMatch(body: body);
+
+      final response =
+      await repository.requestPlayerForOpenMatch(body: body);
 
       if (response != null) {
-        await openMatchBookingController?.fetchOpenMatchesBooking(type: "upcoming");
+        await openMatchBookingController
+            ?.fetchOpenMatchesBooking(type: "upcoming");
         await yourMatchRequestsController?.fetchJoinRequests();
+
         Get.back(result: true);
-        SnackBarUtils.showSuccessSnackBar(
-            "Player request sent successfully");
+        // SnackBarUtils.showSuccessSnackBar(
+        //   "Player request sent successfully",
+        // );
+
         CustomLogger.logMessage(
           msg: "Player Request Sent $body",
           level: LogLevel.info,
         );
         return true;
       } else {
-        SnackBarUtils.showInfoSnackBar(
-            "Failed to send player request");
+        // SnackBarUtils.showInfoSnackBar(
+        //   "Failed to send player request",
+        // );
         return false;
       }
+    } on DioException catch (e) {
+      /// ✅ Handle 404 error
+      if (e.response?.statusCode == 404) {
+        SnackBarUtils.showErrorSnackBar(
+          e.response?.data?['message'] ?? "Resource not found",
+        );
+      } else {
+        // SnackBarUtils.showErrorSnackBar(
+        //   e.response?.data?['message'] ?? "Something went wrong",
+        // );
+      }
+
+      CustomLogger.logMessage(
+        msg: "Dio Error :-> ${e.response?.data}",
+        level: LogLevel.error,
+      );
+      return false;
     } catch (e) {
-      CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
+      // SnackBarUtils.showErrorSnackBar(
+      //   "Unexpected error occurred",
+      // );
+      CustomLogger.logMessage(
+        msg: "Error :-> $e",
+        level: LogLevel.error,
+      );
       return false;
     }
   }
+
 
   ///Accept Request For Open Match Api-----------------------------------------------
   Future<bool> acceptRequest() async {
@@ -330,8 +363,8 @@ class AddPlayerController extends GetxController {
         );
         return true;
       } else {
-        SnackBarUtils.showInfoSnackBar(
-            "Failed to accept request");
+        // SnackBarUtils.showInfoSnackBar(
+        //     "Failed to accept request");
         return false;
       }
     } catch (e) {
@@ -376,8 +409,8 @@ class AddPlayerController extends GetxController {
         );
         return true;
       } else {
-        SnackBarUtils.showInfoSnackBar(
-            response?.message ?? "Failed to add player");
+        // SnackBarUtils.showInfoSnackBar(
+        //     response?.message ?? "Failed to add player");
         return false;
       }
     } catch (e) {

@@ -1343,13 +1343,14 @@ class ScoreBoardScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (!hasPlayer) {
-          log("Opening bottomsheet - scoreboardId: ${controller.scoreboardId.value}, openMatchId: ${controller.openMatchId.value}, bookingId: ${controller.bookingId.value}");
+          log("Opening bottomsheet - scoreboardId: ${controller.scoreboardId.value}, openMatchId: ${controller.openMatchId.value}, bookingId: ${controller.bookingId.value}, bookingType: ${controller.bookingType.value}");
           Get.bottomSheet(
             AppPlayersBottomSheetScore(
               matchId: controller.bookingId.value,
               teamName: teamName,
               openMatchId: controller.openMatchId.value,
               bookingId: controller.bookingId.value,
+              bookingType: controller.bookingType.value,
             ),
             isScrollControlled: true,
           );
@@ -2036,7 +2037,7 @@ class ScoreBoardScreen extends StatelessWidget {
       return Card(
         child: Container(
           constraints: BoxConstraints(
-            minHeight: Get.height * 0.5,
+            minHeight: Get.height * 0.4,
           ),
           width: Get.width,
           margin: const EdgeInsets.symmetric(horizontal: 0),

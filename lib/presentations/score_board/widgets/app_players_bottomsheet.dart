@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/primary_text_feild.dart';
+import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
@@ -15,6 +16,7 @@ class AppPlayersController extends GetxController {
   RxString requestingPlayerId = ''.obs;
   RxList<String> requestedPlayerIds = <String>[].obs;
   final OpenMatchRepository repository = OpenMatchRepository();
+  RxString bookingType = ''.obs;
 
   Future<void> fetchNearByPlayers({String search = ''}) async {
     try {
@@ -46,14 +48,16 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   final String teamName;
   final String? openMatchId;
   final String? bookingId;
+  final String? bookingType;
   
-  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId,this.bookingId});
+  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType});
   
   final AppPlayersController controller = Get.put(AppPlayersController());
 
   @override
   Widget build(BuildContext context) {
-    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId");
+    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType");
+    controller.bookingType.value = bookingType ?? '';
     controller.fetchNearByPlayers();
     
     final screenHeight = MediaQuery.of(context).size.height;
@@ -230,7 +234,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     });
   }
 
-  Widget _requestButton(bool sent, String playerId, String team,String bookingId) {
+  Widget _requestButton(bool sent, String playerId, String team, String bookingId) {
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
       final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
@@ -239,12 +243,40 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         onTap: (isRequested || isRequesting) ? null : () async {
           controller.requestingPlayerId.value = playerId;
           
-          final addPlayerController = Get.put(AddPlayerController());
-          addPlayerController.matchId.value = (openMatchId?.isEmpty ?? true) ? matchId : openMatchId!;
-          addPlayerController.playerId.value = playerId;
-          addPlayerController.selectedTeam.value = team;
+          print("=== REQUEST BUTTON TAPPED ===");
+          print("bookingType: ${controller.bookingType.value}");
+          print("bookingId: $bookingId");
+          print("playerId: $playerId");
+          print("team: $team");
           
-          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: bookingId);
+          bool success = false;
+          
+          if (controller.bookingType.value == 'openMatch') {
+            print("Calling requestPlayerForOpenMatch API");
+            final addPlayerController = Get.put(AddPlayerController());
+            addPlayerController.matchId.value = (openMatchId?.isEmpty ?? true) ? matchId : openMatchId!;
+            addPlayerController.playerId.value = playerId;
+            addPlayerController.selectedTeam.value = team;
+            success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest', bookingId: bookingId);
+          } else {
+            print("Calling requestToJoinBookingModel API");
+            final body = {
+              "bookingId": bookingId,
+              "playerId": playerId,
+              "preferredTeam": team,
+            };
+            print("Request body: $body");
+            try {
+              final response = await controller.repository.requestToJoinBookingModel(body: body);
+              if (response != null) {
+                // SnackBarUtils.showSuccessSnackBar("Player request sent successfully");
+                success = true;
+              }
+            } catch (e) {
+              print("Error calling API: $e");
+              // SnackBarUtils.showErrorSnackBar("Failed to send request");
+            }
+          }
           
           if (success) {
             controller.requestedPlayerIds.add(playerId);

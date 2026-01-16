@@ -275,17 +275,19 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _clubTicketList() {
-    final booking = controller.homeController.bookings.value?.data ?? [];
-    return SizedBox(
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16),
-        itemCount: booking.length,
-        itemBuilder: (context, index) =>
-            _buildBookingCard(context, booking[index]),
-      ),
-    );
+    return Obx(() {
+      final booking = controller.homeController.bookings.value?.data ?? [];
+      return SizedBox(
+        height: 80,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(left: 16),
+          itemCount: booking.length,
+          itemBuilder: (context, index) =>
+              _buildBookingCard(context, booking[index]),
+        ),
+      );
+    });
   }
 
   Widget _buildBookingCard(BuildContext context, BookingHistoryData b) {
@@ -297,7 +299,7 @@ class MainHomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (!controller.homeController.isCheckingScoreboard.value) {
-          final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
+          final id =  b.sId;
           if (id != null && id.isNotEmpty) {
             controller.homeController.createScoreBoard(bookingId: id);
           }
@@ -315,7 +317,7 @@ class MainHomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isOngoing
-                      ? Colors.red.shade300
+                      ? Colors.transparent
                       : b.bookingType == "normal"
                       ? Color(0xffC6F6D5)
                       : Color(0xff9EBAFF),
@@ -1099,32 +1101,32 @@ class MainHomeScreen extends StatelessWidget {
                 ),
               ),
               Text("Vaibhav Kumar", style: Get.textTheme.labelLarge),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "100 XP",
-                    style: Get.textTheme.labelMedium,
-                  ),
-                  Text(
-                    "100 XP",
-                    style: Get.textTheme.labelMedium,
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "100 XP",
-                    style: Get.textTheme.labelMedium,
-                  ),
-                  Text(
-                    "100 XP",
-                    style: Get.textTheme.labelMedium,
-                  ),
-                ],
-              )
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   children: [
+              //     Text(
+              //       "100 XP",
+              //       style: Get.textTheme.labelMedium,
+              //     ),
+              //     Text(
+              //       "100 XP",
+              //       style: Get.textTheme.labelMedium,
+              //     ),
+              //   ],
+              // ),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   children: [
+              //     Text(
+              //       "100 XP",
+              //       style: Get.textTheme.labelMedium,
+              //     ),
+              //     Text(
+              //       "100 XP",
+              //       style: Get.textTheme.labelMedium,
+              //     ),
+              //   ],
+              // )
             ],
           ),
         ).paddingOnly(top: 10, bottom: 10),

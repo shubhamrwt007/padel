@@ -270,21 +270,27 @@ class HomeController extends GetxController {
   Future<void> fetchBookings() async {
     isLoadingBookings.value = true;
     try {
-      final response = await bookingHistoryRepository.getBookingHistory(
-          type: "upcoming");
+      final ongoingResponse = await bookingHistoryRepository.getBookingHistory(type: "in-progress");
+      final upcomingResponse = await bookingHistoryRepository.getBookingHistory(type: "upcoming");
 
-      if (response.success == true && response.data != null) {
-        // Sort bookings: ongoing bookings first, then by date/time
-        final sortedBookings = List<BookingHistoryData>.from(response.data!);
-        sortedBookings.sort((a, b) {
+      final allBookings = <BookingHistoryData>[];
+      
+      if (ongoingResponse.success == true && ongoingResponse.data != null) {
+        allBookings.addAll(ongoingResponse.data!);
+      }
+      
+      if (upcomingResponse.success == true && upcomingResponse.data != null) {
+        allBookings.addAll(upcomingResponse.data!);
+      }
+
+      if (allBookings.isNotEmpty) {
+        allBookings.sort((a, b) {
           final aIsOngoing = _isBookingOngoing(a);
           final bIsOngoing = _isBookingOngoing(b);
 
-          // Ongoing bookings come first
           if (aIsOngoing && !bIsOngoing) return -1;
           if (!aIsOngoing && bIsOngoing) return 1;
 
-          // For non-ongoing bookings, sort by date/time
           try {
             final aDate = DateTime.parse(a.bookingDate ?? '');
             final bDate = DateTime.parse(b.bookingDate ?? '');
@@ -293,27 +299,26 @@ class HomeController extends GetxController {
             return 0;
           }
         });
-
-        // Assign sorted data back to response
-        response.data = sortedBookings;
       }
 
-      bookings.value = response;
+      bookings.value = BookingHistoryModel(
+        success: true,
+        data: allBookings,
+      );
 
-      if (response.success == true) {
-        final bookingWithOpenMatch = response.data
-            ?.where((e) => e.openMatchId?.sId?.isNotEmpty == true)
+      if (allBookings.isNotEmpty) {
+        final bookingWithOpenMatch = allBookings
+            .where((e) => e.openMatchId?.sId?.isNotEmpty == true)
             .toList();
 
         openMatchId.value =
-        bookingWithOpenMatch != null && bookingWithOpenMatch.isNotEmpty
+        bookingWithOpenMatch.isNotEmpty
             ? bookingWithOpenMatch.first.openMatchId!.sId!
             : "";
 
-        // Store scoreboard IDs and booking mappings
         scoreboardIds.clear();
         openMatchToBookingMap.clear();
-        response.data?.forEach((booking) {
+        allBookings.forEach((booking) {
           final actualBookingId = booking.sId;
           final openMatchIdValue = booking.openMatchId?.sId;
 
@@ -340,6 +345,12 @@ class HomeController extends GetxController {
 
   // Helper method to check if booking is ongoing
   bool _isBookingOngoing(BookingHistoryData booking) {
+    // First check if API explicitly marks it as in-progress
+    if (booking.bookingStatus?.toLowerCase() == "in-progress") {
+      return true;
+    }
+
+    // Fallback to time-based check
     try {
       if (booking.bookingDate == null ||
           booking.slot == null ||
