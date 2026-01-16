@@ -81,10 +81,8 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "Raw matchTime: '$timeStr'", level: LogLevel.info);
       
       List<String> parts = timeStr.split('-');
-      
       String startTimeStr;
       String endTimeStr;
-      
       if (parts.length == 1) {
         // Only start time provided, calculate end time as start + 60 minutes
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
@@ -734,21 +732,34 @@ class ScoreBoardController extends GetxController {
   }
 
   ///Remove Player from Team-------------------------------------------------
-  void removePlayer(String playerId, String teamName) {
-    CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
+  var isRemovingPlayer = false.obs;
+  
+  Future<void> removePlayer(String userId, String teamName) async {
+    CustomLogger.logMessage(msg: 'removePlayer called for $userId from $teamName', level: LogLevel.info);
+    
+    isRemovingPlayer.value = true;
     try {
-      int teamIndex = teamName == 'Team A' ? 0 : 1;
+      final body = {
 
-      if (teamIndex >= teams.length) return;
+        "matchId": scoreboardId.value,
+        "playerId": userId,
+        "team": teamName,
 
-      final teamPlayers = teams[teamIndex]['players'] as List;
-      teamPlayers.removeWhere((player) => player['playerId'] == playerId);
+      };
 
-      hasPlayerSwaps.value = true;
-      teams.refresh();
-      CustomLogger.logMessage(msg: 'Player removed successfully', level: LogLevel.info);
+      final response = await repository.removePlayerFromMatch(body: body);
+
+      if (response?.success == true) {
+        SnackBarUtils.showInfoSnackBar("Player removed successfully");
+        await fetchScoreBoard(showLoader: false);
+      } else {
+        SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to remove player");
+      }
     } catch (e) {
       CustomLogger.logMessage(msg: 'Remove player error: $e', level: LogLevel.error);
+      SnackBarUtils.showErrorSnackBar("Failed to remove player");
+    } finally {
+      isRemovingPlayer.value = false;
     }
   }
 
@@ -930,6 +941,29 @@ class ScoreBoardController extends GetxController {
     } finally {
       isConvertingToOpenMatch.value = false;
     }
+  }
+
+  ///Show Remove Player Confirmation Dialog------------------------------------
+  Future<void> showRemovePlayerDialog(String userId, String playerName, String teamName) async {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Remove Player'),
+        content: Text('Are you sure you want to remove $playerName from the team?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              await removePlayer(userId, teamName);
+            },
+            child: const Text('Yes', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   ///Share Scoreboard-----------------------------------------------------------

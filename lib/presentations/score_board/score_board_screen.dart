@@ -922,7 +922,14 @@ class ScoreBoardScreen extends StatelessWidget {
           right: -5,
           child: GestureDetector(
             onTap: () {
-              controller.removePlayer(player['playerId'], team);
+              final playerName = controller.capitalizeFirstWord(
+                player['name'].toString().split(' ').first.trim()
+              );
+              controller.showRemovePlayerDialog(
+                player['playerId'],
+                playerName,
+                team,
+              );
             },
             child: Container(
               height: 24,

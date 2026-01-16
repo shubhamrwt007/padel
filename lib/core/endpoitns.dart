@@ -3,24 +3,22 @@ class AppEndpoints {
   // /// -----------------------Live URL-------------------------------------------
   // static const String baseUrl = "http://103.185.212.117:5070/api/customer/";
   // static const String socketUrl = "http://103.185.212.117:5070";
-
   /// -----------------------Staging URL-------------------------------------------
-  // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
-  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  // /// -----------------------New Live URL-------------------------------------------
 
-  /// -----------------------New Live URL-------------------------------------------
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  static const String baseUrl = "http://192.168.0.116:5070/api/customer/";
-  static const String socketUrl = "http://192.168.0.116:5070";
+  // static const String baseUrl = "http://192.168.0.116:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.116:5070";
 
 
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
   static const String deleteAccount = "${baseUrl}deleteCustomer";
-
   static const String signUp = "${baseUrl}customerSignup";
   static const String fetchUserProfile = "${baseUrl}getCustomer";
   static const String updateUserProfile = "${baseUrl}updateCustomer";

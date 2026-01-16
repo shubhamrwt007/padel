@@ -275,4 +275,38 @@ class ScoreBoardRepository {
     }
   }
 
+  //Remove Player from Match----------------------------------------------------
+  Future<UpdateScoreBoardModel?> removePlayerFromMatch({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Remove Player Request Body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.put(
+        AppEndpoints.removePlayer,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Remove Player Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return UpdateScoreBoardModel.fromJson(response.data);
+      } else {
+        throw Exception("Remove Player Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Remove Player failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
 }
