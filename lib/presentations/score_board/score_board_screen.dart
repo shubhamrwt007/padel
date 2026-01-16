@@ -155,9 +155,14 @@ class ScoreBoardScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildAddSetButton(),
                 const SizedBox(height: 12),
-                Obx(() => controller.isLoading.value
-                    ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
-                    : _buildSetSection().paddingOnly(left: 15, right: 15)),
+                Obx(() {
+                  if (!controller.isGameStarted.value) {
+                    return const SizedBox.shrink();
+                  }
+                  return controller.isLoading.value
+                      ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
+                      : _buildSetSection().paddingOnly(left: 15, right: 15);
+                }),
               ],
             ),
           );
@@ -917,7 +922,14 @@ class ScoreBoardScreen extends StatelessWidget {
           right: -5,
           child: GestureDetector(
             onTap: () {
-              controller.removePlayer(player['playerId'], team);
+              final playerName = controller.capitalizeFirstWord(
+                player['name'].toString().split(' ').first.trim()
+              );
+              controller.showRemovePlayerDialog(
+                player['playerId'],
+                playerName,
+                team,
+              );
             },
             child: Container(
               height: 24,
@@ -2285,7 +2297,7 @@ class ScoreBoardScreen extends StatelessWidget {
     });
   }
 }
-
+////
 class SetScoreDialog extends StatefulWidget {
   final int? preselectedSet;
   const SetScoreDialog({super.key, this.preselectedSet});
