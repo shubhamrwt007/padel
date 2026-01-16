@@ -1470,6 +1470,8 @@ class BookACourtScreen extends StatelessWidget {
             'slot': firstSelection['slot'],
             'amount': totalAmount,
             'dateTime': firstSelection['dateTime'],
+            'courtId': firstSelection['courtId'],
+            'date': firstSelection['date'],
           });
         } else {
           // Single half or full slot - add as is

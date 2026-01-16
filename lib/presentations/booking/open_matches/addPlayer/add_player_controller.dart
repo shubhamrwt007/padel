@@ -393,7 +393,7 @@ class AddPlayerController extends GetxController {
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
         SnackBarUtils.showErrorSnackBar(
-          e.response?.data['message'] ?? "Request not found",
+          e.response?.data?['message'] ?? "Request not found",
         );
       } else {
         SnackBarUtils.showErrorSnackBar(
@@ -430,10 +430,9 @@ class AddPlayerController extends GetxController {
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
         SnackBarUtils.showErrorSnackBar(
-          e.response?.data['message'] ?? "Request not found",
+          e.response?.data?['message'] ?? "Request not found",
         );
       } else {
-        SnackBarUtils.showErrorSnackBar("Something went wrong");
       }
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
       return false;

@@ -13,6 +13,7 @@ import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_pl
 import 'package:get_storage/get_storage.dart';
 
 import '../../configs/routes/routes_name.dart';
+import '../../data/request_models/booking/boking_history_model.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import 'booking_history_controller.dart';
 
@@ -450,21 +451,52 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildTeamAvatars(dynamic booking, String team) {
-    final scoreboard = booking.scoreboard;
-    if (scoreboard?.teams == null) {
-      return _buildDefaultAvatarStack();
-    }
-
     List<Widget> avatars = [];
-    final teamIndex = team == "teamA" ? 0 : 1;
-
-    if (teamIndex < scoreboard.teams.length) {
-      final teamData = scoreboard.teams[teamIndex];
-      if (teamData.players != null) {
-        for (var player in teamData.players) {
-          final profilePic = player.playerId?.profilePic ?? '';
-          final name = player.playerId?.name ?? player.name ?? 'N/A';
-          avatars.add(_buildCompletedAvatar(profilePic, name));
+    
+    // Get players from booking.teamA or booking.teamB directly
+    final teamPlayers = team == "teamA" ? booking.teamA : booking.teamB;
+    if (teamPlayers != null && teamPlayers.isNotEmpty) {
+      for (var teamPlayer in teamPlayers) {
+        final userId = teamPlayer.userId;
+        final profilePic = userId?.profilePic ?? '';
+        final name = userId?.name ?? 'N/A';
+        avatars.add(_buildCompletedAvatar(profilePic, name));
+      }
+    }
+    
+    // Fallback to openMatchId if no players found
+    if (avatars.isEmpty) {
+      final openMatchId = booking.openMatchId;
+      if (openMatchId != null) {
+        final openTeamPlayers = team == "teamA" ? openMatchId.teamA : openMatchId.teamB;
+        if (openTeamPlayers != null && openTeamPlayers.isNotEmpty) {
+          for (var teamPlayer in openTeamPlayers) {
+            final playerId = booking.playerIds?.firstWhere(
+              (p) => p.sId == teamPlayer.userId,
+              orElse: () => PlayerId(),
+            );
+            final profilePic = playerId?.profilePic ?? '';
+            final name = playerId?.name ?? 'N/A';
+            avatars.add(_buildCompletedAvatar(profilePic, name));
+          }
+        }
+      }
+    }
+    
+    // Fallback to scoreboard if still no players found
+    if (avatars.isEmpty) {
+      final scoreboard = booking.scoreboard;
+      if (scoreboard?.teams != null) {
+        final teamIndex = team == "teamA" ? 0 : 1;
+        if (teamIndex < scoreboard.teams.length) {
+          final teamData = scoreboard.teams[teamIndex];
+          if (teamData.players != null) {
+            for (var player in teamData.players) {
+              final profilePic = player.playerId?.profilePic ?? '';
+              final name = player.playerId?.name ?? player.name ?? 'N/A';
+              avatars.add(_buildCompletedAvatar(profilePic, name));
+            }
+          }
         }
       }
     }
@@ -795,21 +827,55 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   List<Widget> _buildPlayerAvatarsFromScoreboard(dynamic booking) {
-    final scoreboard = booking.scoreboard;
-    if (scoreboard?.teams == null) return [];
-
     List<Widget> avatars = [];
-    int index = 0; // For theme consistency
-    for (var team in scoreboard.teams) {
-      if (team.players != null) {
-        for (var player in team.players) {
-          final name = player.playerId?.name ?? player.name ?? 'N/A';
-          final lastName = '';
-          final profilePic = player.playerId?.profilePic ?? '';
-          avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, lastName, booking.bookingType ?? '', index, booking: booking));
+    
+    // Get players from booking.teamA and booking.teamB directly
+    final teamAPlayers = booking.teamA ?? [];
+    final teamBPlayers = booking.teamB ?? [];
+    final allTeamPlayers = [...teamAPlayers, ...teamBPlayers];
+    
+    for (var teamPlayer in allTeamPlayers) {
+      final userId = teamPlayer.userId;
+      final name = userId?.name ?? 'N/A';
+      final profilePic = userId?.profilePic ?? '';
+      avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', avatars.length, booking: booking));
+    }
+    
+    // Fallback to openMatchId if no players found
+    if (avatars.isEmpty) {
+      final openMatchId = booking.openMatchId;
+      if (openMatchId != null) {
+        final allOpenTeamPlayers = [...?openMatchId.teamA, ...?openMatchId.teamB];
+        for (var teamPlayer in allOpenTeamPlayers) {
+          final playerId = booking.playerIds?.firstWhere(
+            (p) => p.sId == teamPlayer.userId,
+            orElse: () => PlayerId(),
+          );
+          final name = playerId?.name ?? 'N/A';
+          final profilePic = playerId?.profilePic ?? '';
+          avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', avatars.length, booking: booking));
         }
       }
     }
+    
+    // Fallback to scoreboard if still no players found
+    if (avatars.isEmpty) {
+      final scoreboard = booking.scoreboard;
+      if (scoreboard?.teams != null) {
+        int index = 0;
+        for (var team in scoreboard.teams) {
+          if (team.players != null) {
+            for (var player in team.players) {
+              final name = player.playerId?.name ?? player.name ?? 'N/A';
+              final profilePic = player.playerId?.profilePic ?? '';
+              avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', index, booking: booking));
+              index++;
+            }
+          }
+        }
+      }
+    }
+    
     return avatars;
   }
 
@@ -876,12 +942,27 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   List<Widget> _buildAddButtonsFromScoreboard(dynamic booking, String bookingType) {
-    final scoreboard = booking.scoreboard;
-    if (scoreboard?.teams == null) return List.generate(4, (index) => _buildAvailableCircleFromScoreboard(bookingType, booking: booking));
-
     int totalPlayers = 0;
-    for (var team in scoreboard.teams) {
-      totalPlayers += (team.players?.length ?? 0) as int;
+    
+    // Count players from booking.teamA and booking.teamB directly
+    totalPlayers = (booking.teamA?.length ?? 0) + (booking.teamB?.length ?? 0);
+    
+    // Fallback to openMatchId if no players found
+    if (totalPlayers == 0) {
+      final openMatchId = booking.openMatchId;
+      if (openMatchId != null) {
+        totalPlayers = (openMatchId.teamA?.length ?? 0) + (openMatchId.teamB?.length ?? 0);
+      }
+    }
+    
+    // Fallback to scoreboard if still no players found
+    if (totalPlayers == 0) {
+      final scoreboard = booking.scoreboard;
+      if (scoreboard?.teams != null) {
+        for (var team in scoreboard.teams) {
+          totalPlayers += (team.players?.length ?? 0) as int;
+        }
+      }
     }
 
     // Ensure minimum 4 total avatars (players + add buttons)
@@ -1188,7 +1269,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
             children: [
               Icon(Icons.group, size: 18),
               SizedBox(width: 8),
-              Text("4 attendee ($totalPlayers confirmed)", style: Get.textTheme.bodySmall),
+              Text("4 atten@dee ($totalPlayers confirmed)", style: Get.textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 8),
