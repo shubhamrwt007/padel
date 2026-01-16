@@ -507,11 +507,9 @@ class ScoreBoardScreen extends StatelessWidget {
       }
 
       bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
-
       if (allPlayersAdded) {
         return _buildAllPlayersView(teamAPlayers, teamBPlayers);
       }
-
       return IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
