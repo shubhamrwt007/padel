@@ -167,7 +167,7 @@ void showMatchSummaryDialog(ScoreBoardController controller) {
               ),
             )),
             const SizedBox(height: 24),
-            
+            ////
             // Close Button
             SizedBox(
               width: double.infinity,
