@@ -85,12 +85,9 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
     
     return Obx(() {
-      // Get total amount from appropriate controller
-      final totalAmount = isFromBookACourt
-          ? bookACourtController.totalAmount.value
-          : cartController.totalPrice.value;
       final walletBalance = controller.walletAmountUsed.value;
       final amountToPay = controller.razorpayAmountUsed.value;
+      final totalAmount = walletBalance + amountToPay;
 
       return Container(
         margin: EdgeInsets.all(Get.width * 0.05),

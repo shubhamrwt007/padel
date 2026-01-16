@@ -17,8 +17,16 @@ class GetRequestPlayersOpenMatchModel {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'requests': requests?.map((e) => e.toJson()).toList(),
+    };
+  }
 }
 
+/* -------------------------------------------------------------------------- */
 
 class Requests {
   final String? id;
@@ -64,29 +72,43 @@ class Requests {
       preferredTeam: json['preferredTeam']?.toString(),
       bookingId: json['bookingId']?.toString(),
       level: json['level']?.toString(),
-
       matchIdString: json['matchId'] is String ? json['matchId'] : null,
       match: json['matchId'] is Map<String, dynamic>
           ? MatchId.fromJson(json['matchId'])
           : null,
-
       requester: json['requesterId'] is Map<String, dynamic>
           ? RequesterId.fromJson(json['requesterId'])
           : null,
-
       matchCreator: json['matchCreatorId'] is Map<String, dynamic>
           ? RequesterId.fromJson(json['matchCreatorId'])
           : null,
-
       playerId: json['playerId']?.toString(),
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
       v: json['__v'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'type': type,
+      'status': status,
+      'preferredTeam': preferredTeam,
+      'bookingId': bookingId,
+      'level': level,
+      'matchId': match != null ? match!.toJson() : matchIdString,
+      'requesterId': requester?.toJson(),
+      'matchCreatorId': matchCreator?.toJson(),
+      'playerId': playerId,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      '__v': v,
+    };
+  }
 }
 
-
+/* -------------------------------------------------------------------------- */
 
 class MatchId {
   final String? id;
@@ -133,8 +155,23 @@ class MatchId {
       gender: json['gender']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'matchDate': matchDate,
+      'matchTime': matchTime,
+      'teamA': teamA?.map((e) => e.toJson()).toList(),
+      'teamB': teamB?.map((e) => e.toJson()).toList(),
+      'clubId': club?.toJson(),
+      'matchType': matchType,
+      'skillLevel': skillLevel,
+      'gender': gender,
+    };
+  }
 }
 
+/* -------------------------------------------------------------------------- */
 
 class TeamA {
   final RequesterId? user;
@@ -156,7 +193,17 @@ class TeamA {
       id: json['_id']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'userId': user?.toJson(),
+      'joinedAt': joinedAt,
+    };
+  }
 }
+
+/* -------------------------------------------------------------------------- */
 
 class TeamB {
   final RequesterId? user;
@@ -178,9 +225,17 @@ class TeamB {
       id: json['_id']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'userId': user?.toJson(),
+      'joinedAt': joinedAt,
+    };
+  }
 }
 
-
+/* -------------------------------------------------------------------------- */
 
 class RequesterId {
   final String? id;
@@ -217,8 +272,22 @@ class RequesterId {
       gender: json['gender']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'name': name,
+      'lastName': lastName,
+      'profilePic': profilePic,
+      'xpPoints': xpPoints,
+      'gender': gender,
+    };
+  }
 }
 
+/* -------------------------------------------------------------------------- */
 
 class ClubId {
   final String? id;
@@ -293,7 +362,32 @@ class ClubId {
       updatedAt: json['updatedAt']?.toString(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'ownerId': ownerId,
+      'clubName': clubName,
+      'description': description,
+      'address': address,
+      'city': city,
+      'state': state,
+      'zipCode': zipCode,
+      'courtCount': courtCount,
+      'courtType': courtType,
+      'features': features,
+      'location': location?.toJson(),
+      'isActive': isActive,
+      'isVerified': isVerified,
+      'isFeatured': isFeatured,
+      'isDeleted': isDeleted,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
+  }
 }
+
+/* -------------------------------------------------------------------------- */
 
 class Location {
   final String? type;
@@ -314,6 +408,11 @@ class Location {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'coordinates': coordinates,
+    };
+  }
 }
-
-
