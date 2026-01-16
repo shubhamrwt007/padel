@@ -2,6 +2,7 @@ import 'package:padel_mobile/data/request_models/open%20matches/accept_or_reject
 import 'package:padel_mobile/data/request_models/open%20matches/request_player_to_open_match_model.dart';
 import 'package:padel_mobile/data/request_models/open%20matches/withdraw_request_model.dart';
 import 'package:padel_mobile/data/request_models/request_to_join_booking_model.dart';
+import 'package:padel_mobile/data/request_models/respond_to_request_booking_model.dart';
 import 'package:padel_mobile/data/response_models/get_players_level_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/find_near_by_player_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_customer_data_by_phone_number_model.dart';
@@ -309,35 +310,52 @@ class OpenMatchRepository {
     }
   }
 
-  ///Get Request Players Open Match --------------------------------------------
+  /// Get Request Players Open Match --------------------------------------------
   Future<GetRequestPlayersOpenMatchModel?> getRequestPlayersOpenMatch({
     String? matchId,
     String? type,
-    String? filter
+    String? filter,
   }) async {
     try {
-      final url = "${AppEndpoints.getRequestUserForOpenMatch}matchId=$matchId&type=$type&filter=$filter";
+      final queryParams = <String, dynamic>{};
+
+      if (matchId != null && matchId.isNotEmpty) {
+        queryParams['matchId'] = matchId;
+      }
+      if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
+      if (filter != null && filter.isNotEmpty) {
+        queryParams['filter'] = filter;
+      }
 
       CustomLogger.logMessage(
-        msg: "Get Request Player For Open Match Bookings: $url",
+        msg:
+        "Get Request Player For Open Match Bookings params: $queryParams",
         level: LogLevel.info,
       );
 
-      final response = await dioClient.get(url);
+      final response = await dioClient.get(
+        AppEndpoints.getRequestUserForOpenMatch,
+        queryParameters: queryParams,
+      );
 
       if (response.statusCode == 200) {
         CustomLogger.logMessage(
-          msg: "Get Request Player For Open Match fetched successfully: ${response.data}",
+          msg:
+          "Get Request Player For Open Match fetched successfully: ${response.data}",
           level: LogLevel.info,
         );
         return GetRequestPlayersOpenMatchModel.fromJson(response.data);
       } else {
         throw Exception(
-            "Failed to fetch Get Request Player For Open Match Status: ${response.statusCode}");
+          "Failed to fetch Get Request Player For Open Match Status: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Error fetching Get Request Player For Open Match: ${e.toString()}",
+        msg:
+        "Error fetching Get Request Player For Open Match: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
@@ -372,6 +390,40 @@ class OpenMatchRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Accept Or Reject Request Player For Open Match failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Accept Or Reject Request Player For Normal Match Api--------------------------------------------------------
+  Future<RespondToBookingRequestModel?> respondToBookingRequest({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Accept Or Reject Request Player For Normal Match request body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.respondToBookingRequest,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Accept Or Reject Request Player For Normal Match Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return RespondToBookingRequestModel.fromJson(response.data);
+      } else {
+        throw Exception("Accept Or Reject Request For Normal Match Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Accept Or Reject Request For Normal Match failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

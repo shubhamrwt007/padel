@@ -299,7 +299,7 @@ class MainHomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (!controller.homeController.isCheckingScoreboard.value) {
-          final id =  b.sId;
+          final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
           if (id != null && id.isNotEmpty) {
             controller.homeController.createScoreBoard(bookingId: id);
           }
@@ -523,8 +523,7 @@ class MainHomeScreen extends StatelessWidget {
                 Text(
                   b.slot!.first.slotTimes!.length > 1
                       ? "${formatTimeSlot(b.slot!.first.slotTimes!.first.time ?? "")} - ${formatTimeSlot(b.slot!.first.slotTimes!.last.time ?? "")}"
-                      : formatTimeSlot(
-                      b.slot!.first.slotTimes!.first.time ?? ""),
+                      : b.slot!.first.slotTimes!.first.time ?? "",
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: isOngoing
                         ? Colors.red.shade700

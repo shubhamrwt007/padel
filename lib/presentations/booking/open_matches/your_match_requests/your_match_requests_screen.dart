@@ -36,10 +36,11 @@ class YourMatchRequestsScreen extends StatelessWidget {
     return players;
   }
 
-  List<Widget> _buildAvatarList(MatchId? match, Requests request, int index,BuildContext context) {
+  List<Widget> _buildAvatarList(MatchId? match, Requests request, BuildContext context) {
     final teamAPlayers = match?.teamA?.map((player) => player.user).where((user) => user != null).cast<RequesterId>().toList() ?? [];
     final teamBPlayers = match?.teamB?.map((player) => player.user).where((user) => user != null).cast<RequesterId>().toList() ?? [];
     final matchId = match?.id ?? "";
+    final isBookingInvitation = request.type == 'invitation';
     List<Widget> avatars = [];
 
     // Add Team A players (first 2 slots)
@@ -48,8 +49,8 @@ class YourMatchRequestsScreen extends StatelessWidget {
         Positioned(
           left: i * 35.0,
           child: i < teamAPlayers.length
-              ? _buildPlayerAvatar(teamAPlayers[i], index,context, isAdd: false)
-              : _buildPlayerAvatar(null, index,context, isAdd: true, team: "teamA", matchId: matchId, request: request),
+              ? _buildPlayerAvatar(teamAPlayers[i], isBookingInvitation, context, isAdd: false)
+              : _buildPlayerAvatar(null, isBookingInvitation, context, isAdd: true, team: "teamA", matchId: matchId, request: request),
         ),
       );
     }
@@ -60,8 +61,8 @@ class YourMatchRequestsScreen extends StatelessWidget {
         Positioned(
           left: (2 + i) * 35.0,
           child: i < teamBPlayers.length
-              ? _buildPlayerAvatar(teamBPlayers[i], index,context, isAdd: false)
-              : _buildPlayerAvatar(null, index,context, isAdd: true, team: "teamB", matchId: matchId, request: request),
+              ? _buildPlayerAvatar(teamBPlayers[i], isBookingInvitation, context, isAdd: false)
+              : _buildPlayerAvatar(null, isBookingInvitation, context, isAdd: true, team: "teamB", matchId: matchId, request: request),
         ),
       );
     }
@@ -125,14 +126,15 @@ class YourMatchRequestsScreen extends StatelessWidget {
   ) {
     final match = request.match;
     final club = match?.club;
+    final isBookingInvitation = request.type == 'invitation';
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: index % 2 == 0 ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+        border: Border.all(color: isBookingInvitation ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
         gradient: LinearGradient(
-          colors: index % 2 == 0
+          colors: isBookingInvitation
               ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
               : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
         ),
@@ -181,25 +183,28 @@ class YourMatchRequestsScreen extends StatelessWidget {
                       ).paddingOnly(left: 5),
                     ],
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 18),
-                      Text(
-                        " ${request.match?.skillLevel ?? 'N/A'} | ",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                  if ((request.match?.skillLevel?.isNotEmpty ?? false) ||
+                      (request.match?.gender?.isNotEmpty ?? false))
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        Text(
+                          " ${request.match?.skillLevel ?? ''} | ",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 2),
-                      genderIcon(match?.gender),
-                      const SizedBox(width: 4),
-                      Text(
-                        request.match?.gender ?? 'N/A',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 2),
+                        genderIcon(request.match?.gender),
+                        const SizedBox(width: 4),
+                        Text(
+                          request.match?.gender ?? '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+
                 ],
               ),
               Container(
@@ -231,14 +236,14 @@ class YourMatchRequestsScreen extends StatelessWidget {
             ],
           ),
           isExpanded
-              ? _expandedCard(context, index, request)
-              : _collapsedCard(context, index, request),
+              ? _expandedCard(context, request)
+              : _collapsedCard(context, request),
 
         ],
       )
     );
   }
-  Widget _collapsedCard(BuildContext context, int index, Requests request) {
+  Widget _collapsedCard(BuildContext context, Requests request) {
     final match = request.match;
     final club = match?.club;
     final totalPlayers = (match?.teamA?.length ?? 0) + (match?.teamB?.length ?? 0);
@@ -265,7 +270,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
             height: 50,
             child: Stack(
               clipBehavior: Clip.none,
-              children: _buildAvatarList(match, request, index,context),
+              children: _buildAvatarList(match, request, context),
             ),
           ),
         ),
@@ -318,7 +323,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
       ],
     );
   }
-  Widget _expandedCard(BuildContext context, int index, Requests request) {
+  Widget _expandedCard(BuildContext context, Requests request) {
     final match = request.match;
     final club = match?.club;
     final totalPlayers = (match?.teamA?.length ?? 0) + (match?.teamB?.length ?? 0);
@@ -379,7 +384,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
               height: 50,
               child: Stack(
                 clipBehavior: Clip.none,
-                children: _buildAvatarList(match, request, index,context),
+                children: _buildAvatarList(match, request, context),
               ),
             ),
           ),
@@ -460,7 +465,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
     return '${times.first} - ${times.last}';
   }
 
-  Widget _buildPlayerAvatar(RequesterId? player, int index,BuildContext context, {bool isAdd = false, String? team, String? matchId, Requests? request}) {
+  Widget _buildPlayerAvatar(RequesterId? player, bool isBookingInvitation, BuildContext context, {bool isAdd = false, String? team, String? matchId, Requests? request}) {
     return GestureDetector(
       onTap: isAdd ? () {
         AddPlayerBottomSheet.show(
@@ -472,22 +477,11 @@ class YourMatchRequestsScreen extends StatelessWidget {
             "matchLevel": "",
             "isLoginUser": true,
             "isMatchCreator": false,
-            "requestId":request?.id??"",
-            "bookingId":request?.bookingId??""
+            "requestId": request?.id ?? "",
+            "bookingId": request?.bookingId ?? "",
+            "requestType": request?.type ?? ""
           },
         );
-        // Get.toNamed(
-        //   '/addPlayer',
-        //   arguments: {
-        //     "team": request?.preferredTeam ?? team,
-        //     "matchId": matchId ?? "",
-        //     "needYourMatchRequests": true,
-        //     "matchLevel": "",
-        //     "isLoginUser": true,
-        //     "isMatchCreator": false,
-        //     "requestId":request?.id??""
-        //   },
-        // );
       } : null,
       child: CircleAvatar(
         radius: 26,
@@ -501,24 +495,24 @@ class YourMatchRequestsScreen extends StatelessWidget {
                   fit: BoxFit.cover,
                   placeholder: (context, url) => CircleAvatar(
                     radius: 24,
-                    backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+                    backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
                     child: Text(
                       _getInitials(player.name),
                       style: TextStyle(
                         fontSize: 18,
-                        color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+                        color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   errorWidget: (context, url, error) => CircleAvatar(
                     radius: 24,
-                    backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+                    backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
                     child: Text(
                       _getInitials(player.name),
                       style: TextStyle(
                         fontSize: 18,
-                        color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+                        color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -527,14 +521,14 @@ class YourMatchRequestsScreen extends StatelessWidget {
               )
             : CircleAvatar(
                 radius: 24,
-                backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+                backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
                 child: isAdd
-                    ? Icon(Icons.add, color: index % 2 == 0 ? AppColors.primaryColor : Colors.green)
+                    ? Icon(Icons.add, color: isBookingInvitation ? AppColors.primaryColor : Colors.green)
                     : Text(
                         _getInitials(player?.name),
                         style: TextStyle(
                           fontSize: 18,
-                          color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+                          color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

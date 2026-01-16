@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/services/network/session_expired_screen.dart';
 import '../../configs/components/snack_bars.dart';
 import '../../presentations/auth/forgot_password/widgets/forgot_password_exports.dart'
@@ -43,10 +44,8 @@ class LoggerInterceptor extends Interceptor {
         err.error is Exception &&
             err.error.toString().contains('SocketException')) {
       await _connectivityService.checkConnectivity();
-    // } else if (err.response != null && err.response?.statusCode != 404) {
-    //   SnackBarUtils.showErrorSnackBar(
-    //     err.response?.data?['message'] ?? 'Api takes to much time to load',
-    //   );
+    } else if (err.response != null && err.response?.statusCode != 404) {
+      CustomLogger.logMessage(msg:  err.response?.data?['message'] ?? 'Api takes to much time to load', level: LogLevel.error);
     }
 
     handler.next(err);

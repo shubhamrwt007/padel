@@ -126,12 +126,22 @@ class AddPlayerController extends GetxController {
             }
           }
         } else if (yourMatchRequestsController != null) {
-          final accepted = await acceptRequest();
-          if (accepted) {
-            CustomLogger.logMessage(
-              msg: "User Created & Request Accepted from Your Match Requests $body",
-              level: LogLevel.info,
-            );
+          if (requestType.value == 'booking_invitation') {
+            final responded = await respondToBookingRequest();
+            if (responded) {
+              CustomLogger.logMessage(
+                msg: "User Created & Booking Request Accepted $body",
+                level: LogLevel.info,
+              );
+            }
+          } else {
+            final accepted = await acceptRequest();
+            if (accepted) {
+              CustomLogger.logMessage(
+                msg: "User Created & Request Accepted from Your Match Requests $body",
+                level: LogLevel.info,
+              );
+            }
           }
         }
 
@@ -217,12 +227,22 @@ class AddPlayerController extends GetxController {
             }
           }
         } else if (yourMatchRequestsController != null) {
-          final accepted = await acceptRequest();
-          if (accepted) {
-            CustomLogger.logMessage(
-              msg: "Login User Request Accepted Directly from Your Match Requests",
-              level: LogLevel.info,
-            );
+          if (requestType.value == 'booking_invitation') {
+            final responded = await respondToBookingRequest();
+            if (responded) {
+              CustomLogger.logMessage(
+                msg: "Login User Booking Request Accepted Directly",
+                level: LogLevel.info,
+              );
+            }
+          } else {
+            final accepted = await acceptRequest();
+            if (accepted) {
+              CustomLogger.logMessage(
+                msg: "Login User Request Accepted Directly from Your Match Requests",
+                level: LogLevel.info,
+              );
+            }
           }
         }
       }
@@ -297,7 +317,7 @@ class AddPlayerController extends GetxController {
             ?.fetchOpenMatchesBooking(type: "upcoming");
         await yourMatchRequestsController?.fetchJoinRequests();
 
-        Get.back(result: true);
+        // Get.back(result: true);
         // SnackBarUtils.showSuccessSnackBar(
         //   "Player request sent successfully",
         // );
@@ -348,32 +368,80 @@ class AddPlayerController extends GetxController {
     try {
       final body = {
         "requestId": requestId.value,
-        "action": "accept"
+        "action": "accept",
       };
-      final response = await repository.acceptOrRejectRequestPlayer(body: body);
+
+      final response =
+      await repository.acceptOrRejectRequestPlayer(body: body);
 
       if (response != null) {
         await yourMatchRequestsController?.fetchJoinRequests();
         Get.back(result: true);
+
         SnackBarUtils.showSuccessSnackBar(
-            "Request accepted successfully");
+          "Request accepted successfully",
+        );
+
         CustomLogger.logMessage(
           msg: "Request Accepted $body",
           level: LogLevel.info,
         );
         return true;
-      } else {
-        // SnackBarUtils.showInfoSnackBar(
-        //     "Failed to accept request");
-        return false;
       }
+
+      return false;
     } catch (e) {
+      if (e is DioException && e.response?.statusCode == 404) {
+        SnackBarUtils.showErrorSnackBar(
+          e.response?.data['message'] ?? "Request not found",
+        );
+      } else {
+        SnackBarUtils.showErrorSnackBar(
+          "Something went wrong",
+        );
+      }
+
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
       return false;
     }
   }
 
-  ///Add Guest Player in the Simple Match---------------------------------------
+  ///Respond To Booking Request Api-----------------------------------------------
+  Future<bool> respondToBookingRequest() async {
+    try {
+      final body = {
+        "requestId": requestId.value,
+        "action": "accept",
+      };
+
+      final response = await repository.respondToBookingRequest(body: body);
+
+      if (response != null) {
+        await yourMatchRequestsController?.fetchJoinRequests();
+        Get.back(result: true);
+        SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
+        CustomLogger.logMessage(
+          msg: "Booking Request Accepted $body",
+          level: LogLevel.info,
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 404) {
+        SnackBarUtils.showErrorSnackBar(
+          e.response?.data['message'] ?? "Request not found",
+        );
+      } else {
+        SnackBarUtils.showErrorSnackBar("Something went wrong");
+      }
+      CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
+      return false;
+    }
+  }
+
+
+    ///Add Guest Player in the Simple Match---------------------------------------
   ScoreBoardRepository scoreBoardRepository = Get.put(ScoreBoardRepository());
   var scoreboardId = ''.obs;
   var openMatchId = ''.obs;
@@ -488,6 +556,7 @@ class AddPlayerController extends GetxController {
   ///Get Players Level Api------------------------------------------------------
   var matchLevel = ''.obs;
   var bookingId = ''.obs;
+  var requestType = ''.obs;
   Future<void> fetchPlayerLevels() async {
     isLoadingLevels.value = true;
     try {
@@ -517,6 +586,7 @@ class AddPlayerController extends GetxController {
     openMatchId.value = args["openMatchId"] ?? "";
     matchLevel.value = args["matchLevel"] ?? "";
     requestId.value = args["requestId"] ?? "";
+    requestType.value = args["requestType"] ?? "";
     isMatchCreator.value = args["isMatchCreator"] ?? false;
 
     if (args["needAllOpenMatches"] == true &&

@@ -64,6 +64,7 @@ class AppEndpoints {
   static const String requestUserForOpenMatch = "${baseUrl}court/openmatch/requestToJoin";
   static const String requestToJoinBooking = "${baseUrl}court/openmatch/requestToJoinBooking";
   static const String acceptOrRejectRequestUserForOpenMatch = "${baseUrl}court/openmatch/respondToRequest";
+  static const String respondToBookingRequest = "${baseUrl}court/openmatch/respondToBookingRequest";
   static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests?";
   static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
