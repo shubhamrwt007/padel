@@ -81,8 +81,10 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "Raw matchTime: '$timeStr'", level: LogLevel.info);
       
       List<String> parts = timeStr.split('-');
+      
       String startTimeStr;
       String endTimeStr;
+      
       if (parts.length == 1) {
         // Only start time provided, calculate end time as start + 60 minutes
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
@@ -734,17 +736,15 @@ class ScoreBoardController extends GetxController {
   ///Remove Player from Team-------------------------------------------------
   var isRemovingPlayer = false.obs;
   
-  Future<void> removePlayer(String userId, String teamName) async {
-    CustomLogger.logMessage(msg: 'removePlayer called for $userId from $teamName', level: LogLevel.info);
+  Future<void> removePlayer(String playerId, String teamName) async {
+    CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
     
     isRemovingPlayer.value = true;
     try {
       final body = {
-
-        "matchId": scoreboardId.value,
-        "playerId": userId,
+        "matchId": matchBookingId.value,
+        "playerId": playerId,
         "team": teamName,
-
       };
 
       final response = await repository.removePlayerFromMatch(body: body);
@@ -944,7 +944,7 @@ class ScoreBoardController extends GetxController {
   }
 
   ///Show Remove Player Confirmation Dialog------------------------------------
-  Future<void> showRemovePlayerDialog(String userId, String playerName, String teamName) async {
+  Future<void> showRemovePlayerDialog(String playerId, String playerName, String teamName) async {
     Get.dialog(
       AlertDialog(
         title: const Text('Remove Player'),
@@ -957,7 +957,7 @@ class ScoreBoardController extends GetxController {
           TextButton(
             onPressed: () async {
               Get.back();
-              await removePlayer(userId, teamName);
+              await removePlayer(playerId, teamName);
             },
             child: const Text('Yes', style: TextStyle(color: Colors.red)),
           ),

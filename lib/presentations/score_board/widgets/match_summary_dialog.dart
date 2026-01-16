@@ -82,85 +82,92 @@ void showMatchSummaryDialog(ScoreBoardController controller) {
             const SizedBox(height: 24),
             
             // Sets Summary
-            const Text(
-              "Sets Summary",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            Obx(() => Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
               ),
-            ),
-            const SizedBox(height: 12),
-            
-            Obx(() => Column(
-              children: controller.sets.map((set) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Set ${set['setNumber']}",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+              child: Column(
+                children: controller.sets.map((set) {
+                  final isTeamAWinner = set['winner'] == 'Team A';
+                  final isTeamBWinner = set['winner'] == 'Team B';
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Team A Score with Winner Indicator
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (isTeamAWinner) ...[
+                                const Icon(Icons.emoji_events, color: Colors.green, size: 16),
+                                const SizedBox(width: 4),
+                                const Text('W', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                                const SizedBox(width: 8),
+                              ],
+                              Text(
+                                "${set['teamAScore']}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isTeamAWinner ? Colors.green : Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: set['winner'] == 'Team A'
-                                  ? Colors.green.shade100
-                                  : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              "${set['teamAScore']}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: set['winner'] == 'Team A'
-                                    ? Colors.green.shade700
-                                    : Colors.black,
-                              ),
+                        // Set Number
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Text(
+                            "Set ${set['setNumber']}",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Text("-"),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: set['winner'] == 'Team B'
-                                  ? Colors.green.shade100
-                                  : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              "${set['teamBScore']}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: set['winner'] == 'Team B'
-                                    ? Colors.green.shade700
-                                    : Colors.black,
+                        ),
+                        // Team B Score with Winner Indicator
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${set['teamBScore']}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isTeamBWinner ? Colors.green : Colors.black87,
+                                ),
                               ),
-                            ),
+                              if (isTeamBWinner) ...[
+                                const SizedBox(width: 8),
+                                const Text('W', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.emoji_events, color: Colors.green, size: 16),
+                              ],
+                            ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             )),
             const SizedBox(height: 24),
-            
+            ////
             // Close Button
             SizedBox(
               width: double.infinity,
