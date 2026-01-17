@@ -17,12 +17,14 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 
 class BookACourtScreen extends StatelessWidget {
   final BookACourtController controller = Get.put(BookACourtController());
+  final WalletController walletController = Get.put(WalletController());
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
 
@@ -80,14 +82,14 @@ class BookACourtScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
-                   const Text(
-                      "0 Cr",
+                    Obx(() => Text(
+                      "₹${walletController.walletBalance.value ?? 0}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppColors.primaryColor,
                       ),
-                    )
+                    ))
                   ],
                 ),
               ),
@@ -1470,6 +1472,8 @@ class BookACourtScreen extends StatelessWidget {
             'slot': firstSelection['slot'],
             'amount': totalAmount,
             'dateTime': firstSelection['dateTime'],
+            'courtId': firstSelection['courtId'],
+            'date': firstSelection['date'],
           });
         } else {
           // Single half or full slot - add as is
@@ -1771,9 +1775,9 @@ class BookACourtScreen extends StatelessWidget {
     // Simulate payment processing
     Future.delayed(const Duration(seconds: 2), () {
       isProcessing.value = false;
-      SnackBarUtils.showSuccessSnackBar(
-        "Payment successful! Booking confirmed.",
-      );
+      // SnackBarUtils.showSuccessSnackBar(
+      //   "Payment successful! Booking confirmed.",
+      // );
       controller.clearAllSelections();
     });
   }

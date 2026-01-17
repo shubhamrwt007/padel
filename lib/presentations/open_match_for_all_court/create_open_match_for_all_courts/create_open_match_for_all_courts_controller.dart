@@ -257,9 +257,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
-
-    // Get price from fetchAllSlotPrices based on duration
-    final dayName = getWeekday(currentDate.weekday);
     
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
@@ -278,14 +275,10 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           return;
         }
 
-        // Get 30-minute price from API
-        final halfSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 30);
-        final finalHalfAmount = halfSlotPrice ?? slot.amount ?? 0;
-
         final halfSlot = Slots(
           sId: slotId,
           time: slot.time,
-          amount: finalHalfAmount,
+          amount: slot.amount ?? 0,
         );
 
         realCourtSelections[realCourtKey] = {
@@ -294,7 +287,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': finalHalfAmount,
+          'amount': slot.amount ?? 0,
           'isHalfSlot': true,
           'isFirstHalf': isFirstHalf,
         };
@@ -316,17 +309,13 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           return;
         }
 
-        // Get 60-minute price from API
-        final fullSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 60);
-        final finalAmount = fullSlotPrice ?? slot.amount ?? 0;
-
         realCourtSelections[realCourtKey] = {
           'slot': slot,
           'courtId': resolvedCourtId,
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': finalAmount,
+          'amount': slot.amount ?? 0,
         };
 
         if (!selectedSlots.any((s) => s.sId == slotId)) {
@@ -1042,7 +1031,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       isLoadingCourtsByDuration.value = true;
 
       final dateString = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
-      final duration = selectedDuration.value.replaceAll(' min', ''); // Remove 'min' suffix
 
       // Collect all selected slot times from multiDateSelections
       String formattedTime = '';
@@ -1065,30 +1053,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
 
       courtsByDuration.value = response;
 
-      // Collect all selected slot times for fetchAllSlotPrices API
-      String selectedTimes = '';
-      if (multiDateSelections.isNotEmpty) {
-        final selectedSlotTimes = <String>{};
-        multiDateSelections.forEach((key, selection) {
-          final slot = selection['slot'] as Slots;
-          if (slot.time != null && slot.time!.isNotEmpty) {
-            selectedSlotTimes.add(_formatTimeForAPI(slot.time!));
-          }
-        });
-        selectedTimes = selectedSlotTimes.join(',');
-      }
-
-      // Fetch slot prices for each court and update prices individually
-      if (response.data != null) {
-        for (var clubData in response.data!) {
-          if (clubData.registerClub?.id != null) {
-            await fetchAllSlotPrices(clubData.registerClub!.id!, selectedTimes: selectedTimes);
-            updateSlotPricesForSpecificClub(clubData);
-          }
-        }
-      }
-
-      log('Courts by duration fetched: ${response.data?.length} clubs, selected times: $selectedTimes');
+      log('Courts by duration fetched: ${response.data?.length} clubs');
     } catch (e) {
       log('Error fetching courts by duration: $e');
     } finally {

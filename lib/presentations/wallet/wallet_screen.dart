@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -13,12 +15,26 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   final WalletController controller = Get.put(WalletController());
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     controller.fetchTransaction();
     controller.fetchWallet();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      controller.loadMoreTransactions();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -76,7 +92,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: controller.walletBalance.value.toString(),
+                      text: formatAmount(controller.walletBalance.value.toString()),
                       style: Get.textTheme.titleLarge!.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -85,7 +101,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     TextSpan(
                       text: " Credits",
                       style: Get.textTheme.titleLarge!.copyWith(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                           fontSize: 18
                       ),
@@ -98,7 +114,7 @@ class _WalletScreenState extends State<WalletScreen> {
               Padding(
                 padding: EdgeInsets.only(bottom: 6),
                 child: Text(
-                  'Today 15 Jun',
+                  'Today ${_getCurrentDate()}',
                   style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
                 ),
               )
@@ -113,7 +129,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white),
               ),
               Text(
-                ' ₹ 0',
+                '${formatAmount(controller.totalDebitedBalance.value.toString())} Cr',
                 style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 13,fontWeight: FontWeight.w400),
               ),
             ],
@@ -156,7 +172,7 @@ class _WalletScreenState extends State<WalletScreen> {
         width: Get.width*0.3,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.white24),
         ),
@@ -193,15 +209,18 @@ class _WalletScreenState extends State<WalletScreen> {
                 style:Get.textTheme.headlineMedium
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.calendar_month,
-                  color: Colors.white,
+              GestureDetector(
+                onTap: () => _showDatePicker(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month,
+                    color: Colors.white,
+                  ),
                 ),
               )
             ],
@@ -224,21 +243,31 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(child: LoadingWidget(color: AppColors.primaryColor,));
                 }
                 if (controller.transactionList.isEmpty) {
                   return Center(child: Text('No transactions found'));
                 }
                 return ListView.separated(
-                  itemCount: controller.transactionList.length,
+                  physics: ClampingScrollPhysics(),
+                  controller: _scrollController,
+                  itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
                   padding: EdgeInsets.zero,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, index) => index < controller.transactionList.length ? const Divider(height: 1) : SizedBox.shrink(),
                   itemBuilder: (_, index) {
+                    if (index >= controller.transactionList.length) {
+                      return Obx(() => controller.isLoadingMore.value 
+                        ? Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+                          )
+                        : SizedBox.shrink());
+                    }
                     final transaction = controller.transactionList[index];
                     final isCredit = transaction.type == 'credit';
                     return _transactionTile(
                       title: transaction.description ?? 'Transaction',
-                      amount: '₹${transaction.amount ?? 0}',
+                      amount: '${formatAmount(transaction.amount ?? 0)} Cr',
                       isCredit: isCredit,
                       date: transaction.createdAt ?? '',
                     );
@@ -288,7 +317,7 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
 
           Text(
-            amount,
+            "${formatAmount(amount)} Cr",
             style: TextStyle(
               color: isCredit ? Colors.green : Colors.black,
               fontWeight: FontWeight.w600,
@@ -313,5 +342,22 @@ class _WalletScreenState extends State<WalletScreen> {
   String _getMonth(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month - 1];
+  }
+  
+  String _getCurrentDate() {
+    final now = DateTime.now();
+    return '${now.day} ${_getMonth(now.month)}';
+  }
+  
+  void _showDatePicker() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      // Filter transactions by selected date if needed
+    }
   }
 }
