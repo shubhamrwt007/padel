@@ -548,7 +548,6 @@ class HomeController extends GetxController {
       final bookingList = bookings.value?.data ?? [];
       if (bookingList.isEmpty) {
         isCheckingScoreboard.value = false;
-        SnackBarUtils.showInfoSnackBar("No booking data found");
         return;
       }
 
@@ -599,7 +598,6 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       isCheckingScoreboard.value = false;
-      SnackBarUtils.showErrorSnackBar("Failed to load or create scoreboard");
     }finally{
       loadingBookingId.value = '';
     }

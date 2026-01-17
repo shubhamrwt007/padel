@@ -19,9 +19,10 @@ class PaymentMethodController extends GetxController {
   RxBool isProcessing = false.obs;
   RazorpayPaymentService? _paymentService;
   String? _razorpayOrderId;
-  
-  RxInt walletAmountUsed = 0.obs;
-  RxInt razorpayAmountUsed = 0.obs;
+
+  RxDouble walletAmountUsed = 0.0.obs;
+  RxDouble razorpayAmountUsed = 0.0.obs;
+
   
   final CartController cartController = Get.find<CartController>();
   
@@ -93,7 +94,7 @@ class PaymentMethodController extends GetxController {
   void _handlePaymentFailure(PaymentFailureResponse response) {
     isProcessing.value = false;
     Get.back();
-    SnackBarUtils.showErrorSnackBar("Payment Failed: ${response.message}");
+    // SnackBarUtils.showErrorSnackBar("Payment Failed: ${response.message}");
   }
 
   // Direct booking without payment (for Android)
@@ -151,7 +152,7 @@ class PaymentMethodController extends GetxController {
 
       if (bookingPayload == null) {
         Get.back();
-        Get.snackbar("Error", "No selected items available for booking");
+        // Get.snackbar("Error", "No selected items available for booking");
         return;
       }
 
@@ -179,7 +180,7 @@ class PaymentMethodController extends GetxController {
         await cartController.getCartItems();
         
         // Success
-        SnackBarUtils.showSuccessSnackBar("Booking completed successfully");
+        // SnackBarUtils.showSuccessSnackBar("Booking completed successfully");
         
         // Clear selections if from BookACourtController
         if (isFromBookACourt && bookACourtController != null) {
@@ -335,7 +336,7 @@ class PaymentMethodController extends GetxController {
   Future<void> _createInitialBooking() async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
-      
+
       if (isFromBookACourt && bookACourtController != null) {
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else {
@@ -347,7 +348,6 @@ class PaymentMethodController extends GetxController {
         return;
       }
 
-      // Add paymentStatus: true for initial booking
       for (var payload in bookingPayload) {
         payload['initiatePayment'] = false;
       }
@@ -358,23 +358,32 @@ class PaymentMethodController extends GetxController {
         AppEndpoints.carteBooking,
         data: bookingPayload,
       );
-      
+
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;
         print("Booking API response: $responseData");
-        
+
         if (responseData['orderId'] != null) {
           _razorpayOrderId = responseData['orderId'];
-          walletAmountUsed.value = responseData['walletAmountUsed'] ?? 0;
-          razorpayAmountUsed.value = responseData['razorpayAmountUsed'] ?? 0;
-          print("Booking created with order ID: $_razorpayOrderId");
-          print("Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}");
+
+          walletAmountUsed.value =
+              (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
+
+          razorpayAmountUsed.value =
+              (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
+
+          print(
+            "Booking created with order ID: $_razorpayOrderId\n"
+                "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}",
+          );
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       print("Error creating initial booking: $e");
+      print(st);
     }
   }
+
 
   Future<void> startPayment() async {
     if (option.value.isEmpty) {
@@ -403,7 +412,7 @@ class PaymentMethodController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Payment failed: $e");
+      // SnackBarUtils.showErrorSnackBar("Payment failed: $e");
     }
   }
 

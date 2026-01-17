@@ -17,17 +17,35 @@ class WalletController extends GetxController{
   ProfileController profileController = Get.put(ProfileController());
   
   var isLoading = false.obs;
+  var isLoadingMore = false.obs;
+  var isWalletLoading = false.obs;
   var isAddingBalance = false.obs;
   var transactionList = <Transaction>[].obs;
-  var walletBalance = 0.obs;
+  var walletBalance = Rxn<int>();
+  var totalSpendingBalance = 0.obs;
+  var totalDebitedBalance = 0.obs;
   var pendingAmount = 0.obs;
+  var currentPage = 1;
+  var hasMoreTransactions = true.obs;
   
-  Future<void> fetchTransaction() async {
+  Future<void> fetchTransaction({bool isRefresh = false}) async {
     try {
+      if (isRefresh) {
+        currentPage = 1;
+        hasMoreTransactions.value = true;
+      }
       isLoading.value = true;
-      final response = await repository.getTransaction();
+      final response = await repository.getTransaction(
+        page: currentPage.toString(),
+        limit: 10
+      );
       if (response.status == 200) {
-        transactionList.value = response.transactions ?? [];
+        if (isRefresh) {
+          transactionList.value = response.transactions ?? [];
+        } else {
+          transactionList.addAll(response.transactions ?? []);
+        }
+        hasMoreTransactions.value = (response.transactions?.length ?? 0) >= 10;
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
@@ -36,12 +54,36 @@ class WalletController extends GetxController{
     }
   }
 
-  Future<void> fetchWallet() async {
+  Future<void> loadMoreTransactions() async {
+    if (isLoadingMore.value || !hasMoreTransactions.value) return;
     try {
-      final response = await repository.getWallet();
-      walletBalance.value = response.balance ?? 0;
+      isLoadingMore.value = true;
+      currentPage++;
+      final response = await repository.getTransaction(
+        page: currentPage.toString(),
+        limit: 10
+      );
+      if (response.status == 200) {
+        transactionList.addAll(response.transactions ?? []);
+        hasMoreTransactions.value = (response.transactions?.length ?? 0) >= 10;
+      }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> fetchWallet() async {
+    try {
+      isWalletLoading.value = true;
+      final response = await repository.getWallet();
+      walletBalance.value = response.balance ?? 0;
+      totalSpendingBalance.value = response.totalDebitedBalance ?? 0;
+    } catch (e) {
+      CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
+    } finally {
+      isWalletLoading.value = false;
     }
   }
 
@@ -59,12 +101,12 @@ class WalletController extends GetxController{
       if (response.orderId != null && response.amount != null) {
         await _initiateRazorpayPayment(response.orderId!, response.amount!);
       } else {
-        SnackBarUtils.showErrorSnackBar("Failed to create wallet order");
+        // SnackBarUtils.showErrorSnackBar("Failed to create wallet order");
         isAddingBalance.value = false;
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Something went wrong");
+      // SnackBarUtils.showErrorSnackBar("Something went wrong");
       isAddingBalance.value = false;
     }
   }
@@ -91,16 +133,16 @@ class WalletController extends GetxController{
       );
     } catch (e) {
       CustomLogger.logMessage(msg: "Payment initiation error: $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to initiate payment");
+      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment");
       isAddingBalance.value = false;
     }
   }
 
   Future<void> _onPaymentSuccess(String paymentId, String orderId, String signature) async {
     try {
-      SnackBarUtils.showSuccessSnackBar("Balance added successfully");
+      // SnackBarUtils.showSuccessSnackBar("Balance added successfully");
       await fetchWallet();
-      await fetchTransaction();
+      await fetchTransaction(isRefresh: true);
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
     } finally {
@@ -109,7 +151,8 @@ class WalletController extends GetxController{
   }
 
   void _onPaymentError(String error) {
-    SnackBarUtils.showErrorSnackBar("Payment failed: $error");
+    // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
+    CustomLogger.logMessage(msg: "Payment failed: $error", level: LogLevel.error);
     isAddingBalance.value = false;
   }
 

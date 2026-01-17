@@ -880,7 +880,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildFilledPlayerFromScoreboard(String? imageUrl, String name, String lastName, String bookingType, int index, {dynamic booking}) {
-    final isBlueTheme = bookingType.toLowerCase() == "openmatch" || bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "normal";
     final firstLetter = name.trim().isNotEmpty
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '??';
@@ -976,7 +976,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildAvailableCircleFromScoreboard(String bookingType, {dynamic booking}) {
-    final isBlueTheme = bookingType.toLowerCase() == "openmatch" || bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "normal";
     return GestureDetector(
       onTap: () {
         if (booking != null) {
@@ -1010,7 +1010,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         backgroundColor: Colors.white,
         child: CircleAvatar(
           radius: 20,
-          backgroundColor: !isBlueTheme ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+          backgroundColor: !isBlueTheme ? const Color(0xffeaf0ff):Color(0xffDFF7E6),
           child: Icon(Icons.add, color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor),
         ),
       ),
@@ -1020,7 +1020,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _collapsedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
     final isUpcoming = type == "upcoming";
     final bookingType = booking.bookingType ?? "";
-    final isBlueTheme = bookingType.toLowerCase() == "upcoming" || bookingType.toLowerCase() == "confirmed";
+    final isBlueTheme = bookingType.toLowerCase() == "normal";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1061,32 +1061,32 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 ),
               ),
             ),
-            if (isUpcoming)
-              GestureDetector(
-                onTap: () {
-                  _navigateToScoreboard(booking);
-                },
-                child: Container(
-                  color: Colors.transparent,
-                  child: Transform.translate(
-                    offset: const Offset(0, -3),
-                    child: Container(
-                      height: 23,
-                      width: 55,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppColors.secondaryColor,
-                      ),
-                      child: Text(
-                        "Play Now",
-                        style: Get.textTheme.headlineSmall!
-                            .copyWith(color: Colors.white, fontSize: 10),
-                      ),
-                    ),
-                  ),
-                ),
-              ).paddingOnly(bottom: 12),
+            // if (isUpcoming)
+            //   GestureDetector(
+            //     onTap: () {
+            //       _navigateToScoreboard(booking);
+            //     },
+            //     child: Container(
+            //       color: Colors.transparent,
+            //       child: Transform.translate(
+            //         offset: const Offset(0, -3),
+            //         child: Container(
+            //           height: 23,
+            //           width: 55,
+            //           alignment: Alignment.center,
+            //           decoration: BoxDecoration(
+            //             borderRadius: BorderRadius.circular(8),
+            //             color: AppColors.secondaryColor,
+            //           ),
+            //           child: Text(
+            //             "Play Now",
+            //             style: Get.textTheme.headlineSmall!
+            //                 .copyWith(color: Colors.white, fontSize: 10),
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ).paddingOnly(bottom: 12),
           ],
         ),
         const SizedBox(height: 16),

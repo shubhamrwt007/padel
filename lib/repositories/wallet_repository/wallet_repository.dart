@@ -16,10 +16,10 @@ class WalletRepository {
   WalletRepository._internal();
 
   ///Get Transaction-----------------------------------------------------------------
-  Future<TransactionHistoryModel> getTransaction() async {
+  Future<TransactionHistoryModel> getTransaction({int? limit , String? page}) async {
     try {
       final response = await dioClient.get(
-        AppEndpoints.getTransaction,
+        "${AppEndpoints.getTransaction}?page=$page&limit=$limit",
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

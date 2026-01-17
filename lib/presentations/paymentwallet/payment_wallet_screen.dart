@@ -4,6 +4,7 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/paymentwallet/payment_wallet_controller.dart';
 import 'package:padel_mobile/presentations/paymentwallet/widgets/custom_skeleton_loder.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../configs/app_colors.dart';
 import '../../configs/components/app_bar.dart';
@@ -130,19 +131,33 @@ class PaymentWalletScreen extends StatelessWidget {
             ),
            Row(
              children: [
+               Obx(() => (controller.walletController.isWalletLoading.value || controller.walletController.walletBalance.value == null)
+                 ? Shimmer.fromColors(
+                     baseColor:  Color(0x99d5dcf1),
+                     highlightColor:  Color(0x99dbf1e3),
+                     child: Container(
+                       height: 20,
+                       width: 80,
+                       decoration: BoxDecoration(
+                         color: Colors.white,
+                         borderRadius: BorderRadius.circular(4),
+                       ),
+                     ),
+                   )
+                 : Text(
+                     formatAmount(controller.walletController.walletBalance.value.toString()),
+                     style: Get.textTheme.titleMedium!.copyWith(
+                       color: AppColors.primaryColor,
+                     ),
+                   )),
                Text(
-                 "₹ ",
+                 " Credits",
                  style: Get.textTheme.titleMedium!.copyWith(
                      color: AppColors.primaryColor,
+                     fontSize: 15,
                      fontFamily: "Roboto"
                  ),
-               ).paddingOnly(top: 2),
-               Obx(() => Text(
-                 controller.walletController.walletBalance.value.toString(),
-                 style: Get.textTheme.titleMedium!.copyWith(
-                   color: AppColors.primaryColor,
-                 ),
-               )).paddingOnly(right: 30),
+               ).paddingOnly(top: 2,right: 40),
                Icon(Icons.arrow_forward_ios,size: 22,color: AppColors.textColor,)
              ],
            )

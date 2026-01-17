@@ -3,7 +3,7 @@ class TransactionHistoryModel {
   final String? message;
   final List<Transaction>? transactions;
   final int? totalPages;
-  final int? currentPage;
+  final String? currentPage;
   final int? total;
 
   TransactionHistoryModel({
@@ -69,7 +69,7 @@ class Transaction {
       userId:
       json['userId'] != null ? UserId.fromJson(json['userId']) : null,
       walletId: json['walletId'],
-      amount: json['amount'],
+      amount: (json['amount'] as num?)?.toInt(), // ✅ FIX
       type: json['type'],
       status: json['status'],
       description: json['description'],

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
 import '../../data/response_models/get_courts_by_duration_model.dart' hide CourtDurationSlots;
@@ -39,12 +40,12 @@ class BookACourtController extends GetxController {
   // Method to fetch clubs and hide main grid
   void fetchClubs() {
     if (multiDateSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
     
@@ -91,6 +92,13 @@ class BookACourtController extends GetxController {
     super.onInit();
     selectedDate.value = DateTime.now();
     _initializeMockData();
+    // Fetch wallet balance when controller initializes
+    try {
+      final walletController = Get.find<WalletController>();
+      walletController.fetchWallet();
+    } catch (e) {
+      // WalletController not found, ignore
+    }
   }
 
   void _initializeMockData() {
@@ -183,21 +191,21 @@ class BookACourtController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
 
-    Get.snackbar(
-      "Success",
-      "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    // Get.snackbar(
+    //   "Success",
+    //   "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}",
+    //   backgroundColor: Colors.green,
+    //   colorText: Colors.white,
+    // );
   }
 
   void refreshSlots({bool showUnavailable = false}) {
@@ -241,10 +249,10 @@ class BookACourtController extends GetxController {
 
       // ❌ All slots failed (locked)
       if (lockedSlots.isNotEmpty) {
-        SnackBarUtils.showInfoSnackBar(
-          lockedSlots.first.message ??
-              "Selected slots are currently locked. Please try again.",
-        );
+        // SnackBarUtils.showInfoSnackBar(
+        //   lockedSlots.first.message ??
+        //       "Selected slots are currently locked. Please try again.",
+        // );
       }
 
       return false;

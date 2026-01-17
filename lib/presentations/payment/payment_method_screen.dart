@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
@@ -252,7 +250,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     return GestureDetector(
       onTap: () {
         if (value.startsWith('visa') || value.contains('card')) {
-          SnackBarUtils.showInfoSnackBar("Coming Soon");
+          // SnackBarUtils.showInfoSnackBar("Coming Soon");
         } else {
           controller.option.value = value;
         }
@@ -407,7 +405,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
 
           if (!isFromBookACourt) {
             if (cartController.cartItems.isEmpty) {
-              SnackBarUtils.showWarningSnackBar("Cart is empty");
+              // SnackBarUtils.showWarningSnackBar("Cart is empty");
               return;
             }
           }
