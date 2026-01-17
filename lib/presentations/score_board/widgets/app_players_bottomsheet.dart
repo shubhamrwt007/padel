@@ -49,8 +49,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   final String? openMatchId;
   final String? bookingId;
   final String? bookingType;
+  final List<String>? currentPlayerIds;
   
-  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType});
+  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds});
   
   final AppPlayersController controller = Get.put(AppPlayersController());
 
@@ -165,6 +166,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           itemBuilder: (_, i) {
             final player = controller.nearbyPlayers[i];
             final isRequested = false;
+            final isAlreadyInMatch = currentPlayerIds?.contains(player['id']) ?? false;
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
@@ -224,7 +226,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId),
+                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId, isAlreadyInMatch),
                 ],
               ),
             );
@@ -234,13 +236,13 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     });
   }
 
-  Widget _requestButton(bool sent, String playerId, String team, String bookingId) {
+  Widget _requestButton(bool sent, String playerId, String team, String bookingId, bool isAlreadyInMatch) {
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
       final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
       
       return GestureDetector(
-        onTap: (isRequested || isRequesting) ? null : () async {
+        onTap: (isRequested || isRequesting || isAlreadyInMatch) ? null : () async {
           controller.requestingPlayerId.value = playerId;
           
           print("=== REQUEST BUTTON TAPPED ===");
@@ -287,7 +289,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF),
+            color: isAlreadyInMatch ? const Color(0xffE9ECF5) : (isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: isRequesting
@@ -300,9 +302,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                   ),
                 )
               : Text(
-                  isRequested ? 'Request Sent' : 'Send Request',
+                  isAlreadyInMatch ? 'Already Added' : (isRequested ? 'Request Sent' : 'Send Request'),
                   style: Get.textTheme.bodyLarge!.copyWith(
-                    color: isRequested ? Colors.grey : AppColors.primaryColor,
+                    color: (isAlreadyInMatch || isRequested) ? Colors.grey : AppColors.primaryColor,
                   ),
                 ),
         ),
