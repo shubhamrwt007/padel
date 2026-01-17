@@ -1414,6 +1414,7 @@ class ScoreBoardScreen extends StatelessWidget {
               openMatchId: controller.openMatchId.value,
               bookingId: controller.bookingId.value,
               bookingType: controller.bookingType.value,
+              currentPlayerIds: controller.currentPlayerIds,
             ),
             isScrollControlled: true,
           );

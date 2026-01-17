@@ -31,10 +31,11 @@ class ScoreBoardController extends GetxController {
       String endTimeStr;
       
       if (parts.length == 1) {
-        // Single time format - add 60 minutes by default
+        // Single time format - use slot duration
         String startTimeStr = _normalizeTimeFormat(parts[0].trim());
         DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        int slotDurationMinutes = _getSlotDurationMinutes();
+        DateTime endTime = startTime.add(Duration(minutes: slotDurationMinutes));
         endTimeStr = DateFormat('h:mm a').format(endTime);
       } else if (parts.length >= 2) {
         endTimeStr = _normalizeTimeFormat(parts[1].trim());
@@ -67,10 +68,13 @@ class ScoreBoardController extends GetxController {
       String endTimeStr;
       
       if (parts.length == 1) {
-        // Single time format - add 60 minutes by default
+        // Single time format - calculate duration from slot booking
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
         DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        
+        // Get slot duration and add to start time
+        int slotDurationMinutes = _getSlotDurationMinutes();
+        DateTime endTime = startTime.add(Duration(minutes: slotDurationMinutes));
         endTimeStr = DateFormat('h:mm a').format(endTime);
       } else if (parts.length >= 2) {
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
@@ -98,6 +102,32 @@ class ScoreBoardController extends GetxController {
     }
   }
 
+  ///Get slot duration in minutes from booking----------------------------------------------
+  int _getSlotDurationMinutes() {
+    try {
+      if (matchTime.value.isEmpty) return 60; // Default 60 minutes
+
+      String timeStr = matchTime.value.trim();
+      List<String> parts = timeStr.split('-');
+
+      if (parts.length >= 2) {
+        String startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        String endTimeStr = _normalizeTimeFormat(parts[1].trim());
+        
+        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+        DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
+        
+        int durationMinutes = endTime.difference(startTime).inMinutes;
+        return durationMinutes > 0 ? durationMinutes : 60;
+      }
+      
+      return 60; // Default if single time format
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error getting slot duration: $e", level: LogLevel.error);
+      return 60; // Default fallback
+    }
+  }
+
   ///Check if current time is at or after match start time----------------------------------------------
   bool _isWithinMatchTimeWindow() {
     try {
@@ -115,12 +145,13 @@ class ScoreBoardController extends GetxController {
       String endTimeStr;
       
       if (parts.length == 1) {
-        // Only start time provided, calculate end time as start + 60 minutes
+        // Only start time provided, calculate end time using slot duration
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
         DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        int slotDurationMinutes = _getSlotDurationMinutes();
+        DateTime endTime = startTime.add(Duration(minutes: slotDurationMinutes));
         endTimeStr = DateFormat('h:mm a').format(endTime);
-        CustomLogger.logMessage(msg: "Single time format detected, calculated end time", level: LogLevel.info);
+        CustomLogger.logMessage(msg: "Single time format detected, calculated end time with ${slotDurationMinutes}min duration", level: LogLevel.info);
       } else if (parts.length >= 2) {
         startTimeStr = _normalizeTimeFormat(parts[0].trim());
         endTimeStr = _normalizeTimeFormat(parts[1].trim());
@@ -183,6 +214,21 @@ class ScoreBoardController extends GetxController {
     final minutes = (remainingSeconds.value ~/ 60).toString().padLeft(2, '0');
     final seconds = (remainingSeconds.value % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  ///Get current player IDs in the match--------------------------------------
+  List<String> get currentPlayerIds {
+    List<String> playerIds = [];
+    for (var team in teams) {
+      final players = team['players'] as List;
+      for (var player in players) {
+        final playerId = player['playerId']?.toString();
+        if (playerId != null && playerId.isNotEmpty) {
+          playerIds.add(playerId);
+        }
+      }
+    }
+    return playerIds;
   }
 
   ///Check if all 4 players are added----------------------------------------------
