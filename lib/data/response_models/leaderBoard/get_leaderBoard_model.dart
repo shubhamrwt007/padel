@@ -7,22 +7,20 @@ class GetLeaderBoardModel {
   factory GetLeaderBoardModel.fromJson(Map<String, dynamic> json) {
     return GetLeaderBoardModel(
       success: json['success'],
-      data:
-      json['data'] != null ? LeaderboardData.fromJson(json['data']) : null,
+      data: json['data'] != null
+          ? LeaderboardData.fromJson(json['data'])
+          : null,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'success': success,
-    if (data != null) 'data': data!.toJson(),
-  };
 }
 
+/* ===================== DATA ===================== */
+
 class LeaderboardData {
-  final List<TopThree>? topThree;
-  final List<Leaderboard>? leaderboard;
+  final List<LeaderboardPlayer>? topThree;
+  final List<LeaderboardPlayer>? leaderboard;
   final Pagination? pagination;
-  final Leaderboard? myRank;
+  final LeaderboardPlayer? myRank;
 
   LeaderboardData({
     this.topThree,
@@ -34,65 +32,24 @@ class LeaderboardData {
   factory LeaderboardData.fromJson(Map<String, dynamic> json) {
     return LeaderboardData(
       topThree: (json['topThree'] as List?)
-          ?.map((e) => TopThree.fromJson(e))
+          ?.map((e) => LeaderboardPlayer.fromJson(e))
           .toList(),
       leaderboard: (json['leaderboard'] as List?)
-          ?.map((e) => Leaderboard.fromJson(e))
+          ?.map((e) => LeaderboardPlayer.fromJson(e))
           .toList(),
       pagination: json['pagination'] != null
           ? Pagination.fromJson(json['pagination'])
           : null,
       myRank: json['myRank'] != null
-          ? Leaderboard.fromJson(json['myRank'])
+          ? LeaderboardPlayer.fromJson(json['myRank'])
           : null,
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    if (topThree != null)
-      'topThree': topThree!.map((e) => e.toJson()).toList(),
-    if (leaderboard != null)
-      'leaderboard': leaderboard!.map((e) => e.toJson()).toList(),
-    if (pagination != null) 'pagination': pagination!.toJson(),
-    if (myRank != null) 'myRank': myRank!.toJson(),
-  };
 }
 
-class TopThree {
-  final int? rank;
-  final String? playerId;
-  final String? name;
-  final String? profilePic;
-  final int? xpPoints;
+/* ===================== PLAYER ===================== */
 
-  TopThree({
-    this.rank,
-    this.playerId,
-    this.name,
-    this.profilePic,
-    this.xpPoints,
-  });
-
-  factory TopThree.fromJson(Map<String, dynamic> json) {
-    return TopThree(
-      rank: json['rank'],
-      playerId: json['playerId'],
-      name: json['name'],
-      profilePic: json['profilePic'],
-      xpPoints: json['xpPoints'],
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'rank': rank,
-    'playerId': playerId,
-    'name': name,
-    'profilePic': profilePic,
-    'xpPoints': xpPoints,
-  };
-}
-
-class Leaderboard {
+class LeaderboardPlayer {
   final int? rank;
   final String? playerId;
   final String? name;
@@ -102,10 +59,10 @@ class Leaderboard {
   final int? matches;
   final int? losses;
   final int? currentWinStreak;
-  final int? winRatio;
+  final double? winRatio;
   final bool? isYou;
 
-  Leaderboard({
+  LeaderboardPlayer({
     this.rank,
     this.playerId,
     this.name,
@@ -119,8 +76,8 @@ class Leaderboard {
     this.isYou,
   });
 
-  factory Leaderboard.fromJson(Map<String, dynamic> json) {
-    return Leaderboard(
+  factory LeaderboardPlayer.fromJson(Map<String, dynamic> json) {
+    return LeaderboardPlayer(
       rank: json['rank'],
       playerId: json['playerId'],
       name: json['name'],
@@ -130,25 +87,13 @@ class Leaderboard {
       matches: json['matches'],
       losses: json['losses'],
       currentWinStreak: json['currentWinStreak'],
-      winRatio: json['winRatio'],
+      winRatio: (json['winRatio'] as num?)?.toDouble(),
       isYou: json['isYou'],
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'rank': rank,
-    'playerId': playerId,
-    'name': name,
-    'profilePic': profilePic,
-    'xpPoints': xpPoints,
-    'wins': wins,
-    'matches': matches,
-    'losses': losses,
-    'currentWinStreak': currentWinStreak,
-    'winRatio': winRatio,
-    'isYou': isYou,
-  };
 }
+
+/* ===================== PAGINATION ===================== */
 
 class Pagination {
   final int? page;
@@ -171,11 +116,4 @@ class Pagination {
       totalPages: json['totalPages'],
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'page': page,
-    'limit': limit,
-    'totalPlayers': totalPlayers,
-    'totalPages': totalPages,
-  };
 }

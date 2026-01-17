@@ -291,12 +291,12 @@ class NotificationController extends GetxController {
     if (message.notification != null) {
       await fetchUnreadNotificationCount();
       await fetchNotifications();
-      Get.snackbar(
-        message.notification!.title ?? 'New Message',
-        message.notification!.body ?? '',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 4),
-      );
+      // Get.snackbar(
+      //   message.notification!.title ?? 'New Message',
+      //   message.notification!.body ?? '',
+      //   snackPosition: SnackPosition.TOP,
+      //   duration: const Duration(seconds: 4),
+      // );
     }
   }
 

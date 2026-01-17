@@ -33,6 +33,11 @@ class BookACourtScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fetch wallet balance after build completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      walletController.fetchWallet();
+    });
+    
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       bottomNavigationBar: _buildPaymentPanel(),
@@ -83,7 +88,7 @@ class BookACourtScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${walletController.walletBalance.value ?? 0}",
+                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,

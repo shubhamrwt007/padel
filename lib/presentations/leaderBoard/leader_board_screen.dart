@@ -297,10 +297,17 @@ class LeaderboardScreen extends StatelessWidget {
   }
 
   Widget _buildPodiumSectionFor(List<Player> top3) {
+    if (top3.isEmpty) {
+      return const SizedBox(
+        height: 300,
+        child: Center(child: Text('No data available', style: TextStyle(color: Colors.white))),
+      );
+    }
+    
     if (top3.length < 3) {
       return const SizedBox(
         height: 300,
-        child: Center(child: Text('Not enough entries for podium')),
+        child: Center(child: Text('Not enough entries for podium', style: TextStyle(color: Colors.white))),
       );
     }
 
@@ -538,7 +545,7 @@ class LeaderboardScreen extends StatelessWidget {
                         );
                       }),
                       
-                      // My Rank section - only show for Player tab with API data
+                      // My Rank section - show for all cases when data exists
                       if (!controller.isHandleVisible.value)
                         SizedBox(height: 10,),
                       Container(
@@ -557,8 +564,7 @@ class LeaderboardScreen extends StatelessWidget {
                         ),
                       ),
                       Obx(() {
-                        if (controller.selectedCategory.value == 'Player' &&
-                            controller.myRankData.value != null) {
+                        if (controller.myRankData.value != null) {
                           return Column(
                             children: [
                               const SizedBox(height: 10),

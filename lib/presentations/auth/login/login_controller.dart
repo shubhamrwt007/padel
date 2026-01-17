@@ -83,7 +83,7 @@ class LoginController extends GetxController {
             'type': OtpScreenType.login,
           });
         } else {
-          SnackBarUtils.showErrorSnackBar(result.message!);
+          CustomLogger.logMessage(msg: result.message!, level: LogLevel.error);
         }
       } else {
         SnackBarUtils.showErrorSnackBar("Phone number ${phoneController.text.trim()} not found. Please sign up first.");
@@ -129,6 +129,7 @@ class LoginController extends GetxController {
 
       if (code == 404) {
         SnackBarUtils.showErrorSnackBar(message);
+        CustomLogger.logMessage(msg: message, level: LogLevel.error);
       }
     }  catch (e) {
       log(e.toString());

@@ -336,9 +336,9 @@ class AddPlayerController extends GetxController {
     } on DioException catch (e) {
       /// ✅ Handle 404 error
       if (e.response?.statusCode == 404) {
-        SnackBarUtils.showErrorSnackBar(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        // _showInsufficientBalanceDialog(
+        //   e.response?.data?['message'] ?? "Resource not found",
+        // );
       } else {
         // SnackBarUtils.showErrorSnackBar(
         //   e.response?.data?['message'] ?? "Something went wrong",
@@ -392,8 +392,8 @@ class AddPlayerController extends GetxController {
       return false;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
-        SnackBarUtils.showErrorSnackBar(
-          e.response?.data?['message'] ?? "Request not found",
+        _showInsufficientBalanceDialog(
+          e.response?.data?['message'] ?? "Resource not found",
         );
       } else {
         // SnackBarUtils.showErrorSnackBar(
@@ -429,8 +429,8 @@ class AddPlayerController extends GetxController {
       return false;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
-        SnackBarUtils.showErrorSnackBar(
-          e.response?.data?['message'] ?? "Request not found",
+        _showInsufficientBalanceDialog(
+          e.response?.data?['message'] ?? "Resource not found",
         );
       } else {
       }
@@ -636,6 +636,117 @@ class AddPlayerController extends GetxController {
     phoneController.clear();
     isNameFromApi.value = false;
     isLoginUserAdding.value = false;
+  }
+
+  void _showInsufficientBalanceDialog(String message) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Title
+              Text(
+                "Insufficient Balance",
+                style: Get.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Message
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Get.textTheme.bodyLarge,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Actions
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.grey.shade100,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        Get.toNamed('/wallet');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F49C6),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Add Money",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   @override

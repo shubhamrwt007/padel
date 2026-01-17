@@ -6,6 +6,7 @@ import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_screen.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
@@ -90,6 +91,13 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     super.onInit();
     selectedDate.value = DateTime.now();
     _initializeMockData();
+    // Fetch wallet balance when controller initializes
+    try {
+      final walletController = Get.find<WalletController>();
+      walletController.fetchWallet();
+    } catch (e) {
+      // WalletController not found, ignore
+    }
   }
 
   void _initializeMockData() {
