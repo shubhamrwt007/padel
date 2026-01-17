@@ -1,5 +1,6 @@
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_controller.dart';
 import 'package:get/get.dart';
@@ -85,7 +86,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.isLoadingRequests.value) {
-                return Center(child: CircularProgressIndicator());
+                return Center(child: LoadingWidget(color: AppColors.primaryColor,));
               }
               if (controller.joinRequests.isEmpty) {
                 return Center(child: Text("No match requests found"));
@@ -170,17 +171,17 @@ class YourMatchRequestsScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Text(
-                          "A",
-                          style: TextStyle(color: Colors.white, fontSize: 9),
-                        ),
-                      ).paddingOnly(left: 5),
+                      // Container(
+                      //   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.green,
+                      //     borderRadius: BorderRadius.circular(30),
+                      //   ),
+                      //   child: const Text(
+                      //     "A",
+                      //     style: TextStyle(color: Colors.white, fontSize: 9),
+                      //   ),
+                      // ).paddingOnly(left: 5),
                     ],
                   ),
                   if ((request.match?.skillLevel?.isNotEmpty ?? false) ||
@@ -310,7 +311,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
             Transform.translate(
               offset: Offset(0, 2),
               child: Text(
-                "₹ ${formatAmount('500')}",
+                "₹ ${formatAmount(request.totalAmount?.toString() ?? '0')}",
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -422,13 +423,13 @@ class YourMatchRequestsScreen extends StatelessWidget {
           Divider(color: Colors.grey,thickness: 0.1,),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 "Your Share:",
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                "₹500",
+                "₹${formatAmount(request.perShare?.toString() ?? '0')}",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -440,13 +441,13 @@ class YourMatchRequestsScreen extends StatelessWidget {
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 "Total Price:",
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                "₹2000",
+                "₹${formatAmount(((request.totalAmount ?? 0) * 4).toString())}",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

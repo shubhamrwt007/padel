@@ -32,7 +32,7 @@ class YourMatchRequestsController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
+      // Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }

@@ -33,11 +33,11 @@ class CarteBookingResponse {
 class PaymentData {
   final bool? requiresPayment;
   final String? orderId;
-  final int? amount;
+  final int? amount; // paise → keep int
   final String? currency;
   final String? key;
-  final int? walletAmountUsed;
-  final int? razorpayAmountUsed;
+  final double? walletAmountUsed;
+  final double? razorpayAmountUsed;
   final String? paymentMethod;
 
   PaymentData({
@@ -58,8 +58,8 @@ class PaymentData {
       amount: json['amount'],
       currency: json['currency'],
       key: json['key'],
-      walletAmountUsed: json['walletAmountUsed'],
-      razorpayAmountUsed: json['razorpayAmountUsed'],
+      walletAmountUsed: (json['walletAmountUsed'] as num?)?.toDouble(),
+      razorpayAmountUsed: (json['razorpayAmountUsed'] as num?)?.toDouble(),
       paymentMethod: json['paymentMethod'],
     );
   }

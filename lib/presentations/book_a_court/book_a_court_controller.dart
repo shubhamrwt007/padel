@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
 import '../../data/response_models/get_courts_by_duration_model.dart' hide CourtDurationSlots;
@@ -39,12 +40,12 @@ class BookACourtController extends GetxController {
   // Method to fetch clubs and hide main grid
   void fetchClubs() {
     if (multiDateSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
     
@@ -91,6 +92,13 @@ class BookACourtController extends GetxController {
     super.onInit();
     selectedDate.value = DateTime.now();
     _initializeMockData();
+    // Fetch wallet balance when controller initializes
+    try {
+      final walletController = Get.find<WalletController>();
+      walletController.fetchWallet();
+    } catch (e) {
+      // WalletController not found, ignore
+    }
   }
 
   void _initializeMockData() {
@@ -183,21 +191,21 @@ class BookACourtController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
 
-    Get.snackbar(
-      "Success",
-      "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
+    // Get.snackbar(
+    //   "Success",
+    //   "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}",
+    //   backgroundColor: Colors.green,
+    //   colorText: Colors.white,
+    // );
   }
 
   void refreshSlots({bool showUnavailable = false}) {
@@ -241,10 +249,10 @@ class BookACourtController extends GetxController {
 
       // ❌ All slots failed (locked)
       if (lockedSlots.isNotEmpty) {
-        SnackBarUtils.showInfoSnackBar(
-          lockedSlots.first.message ??
-              "Selected slots are currently locked. Please try again.",
-        );
+        // SnackBarUtils.showInfoSnackBar(
+        //   lockedSlots.first.message ??
+        //       "Selected slots are currently locked. Please try again.",
+        // );
       }
 
       return false;
@@ -276,9 +284,6 @@ class BookACourtController extends GetxController {
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
-
-    // Get price from fetchAllSlotPrices based on duration
-    final dayName = getWeekday(currentDate.weekday);
     
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
@@ -287,14 +292,10 @@ class BookACourtController extends GetxController {
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
       } else {
-        // Get 30-minute price from API
-        final halfSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 30);
-        final finalHalfAmount = halfSlotPrice ?? slot.amount ?? 0;
-        
         final halfSlot = Slots(
           sId: slotId,
           time: slot.time,
-          amount: finalHalfAmount,
+          amount: slot.amount ?? 0,
         );
         
         realCourtSelections[realCourtKey] = {
@@ -303,7 +304,7 @@ class BookACourtController extends GetxController {
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': finalHalfAmount,
+          'amount': slot.amount ?? 0,
           'isHalfSlot': true,
           'isFirstHalf': isFirstHalf,
         };
@@ -315,17 +316,13 @@ class BookACourtController extends GetxController {
         realCourtSelections.remove(realCourtKey);
         selectedSlots.removeWhere((s) => s.sId == slotId);
       } else {
-        // Get 60-minute price from API
-        final fullSlotPrice = findPriceForSlot(slot.time ?? '', dayName, 60);
-        final finalAmount = fullSlotPrice ?? slot.amount ?? 0;
-        
         realCourtSelections[realCourtKey] = {
           'slot': slot,
           'courtId': resolvedCourtId,
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
-          'amount': finalAmount,
+          'amount': slot.amount ?? 0,
         };
 
         if (!selectedSlots.any((s) => s.sId == slotId)) {
@@ -940,15 +937,6 @@ class BookACourtController extends GetxController {
       );
       
       courtsByDuration.value = response;
-      
-      if (response.data != null) {
-        for (var clubData in response.data!) {
-          if (clubData.registerClub?.id != null) {
-            await fetchAllSlotPrices(clubData.registerClub!.id!, selectedTimes: formattedTime);
-            updateSlotPricesForSpecificClub(clubData);
-          }
-        }
-      }
       
       log('Courts by duration fetched: ${response.data?.length} clubs');
     } catch (e) {

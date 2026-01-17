@@ -65,7 +65,9 @@ class BookingHistoryData {
   dynamic customerReview;
   OpenMatchId? openMatchId;
   Scoreboard? scoreboard;
-  List<PlayerId>? playerIds; // ✅ NEW FIELD ADDED
+  List<PlayerId>? playerIds;
+  List<BookingTeamPlayer>? teamA;
+  List<BookingTeamPlayer>? teamB;
 
   BookingHistoryData({
     this.sId,
@@ -85,7 +87,9 @@ class BookingHistoryData {
     this.customerReview,
     this.openMatchId,
     this.scoreboard,
-    this.playerIds, // ✅ NEW FIELD ADDED
+    this.playerIds,
+    this.teamA,
+    this.teamB,
   });
 
   BookingHistoryData.fromJson(Map<String, dynamic> json) {
@@ -118,16 +122,28 @@ class BookingHistoryData {
         ? OpenMatchId.fromJson(json['openMatchId'])
         : null;
 
-    // ✅ PARSE scoreboard
     scoreboard = json['scoreboard'] != null
         ? Scoreboard.fromJson(json['scoreboard'])
         : null;
 
-    // ✅ PARSE playerIds - NEW
     if (json['playerIds'] != null) {
       playerIds = <PlayerId>[];
       json['playerIds'].forEach((v) {
         playerIds!.add(PlayerId.fromJson(v));
+      });
+    }
+
+    if (json['teamA'] != null) {
+      teamA = <BookingTeamPlayer>[];
+      json['teamA'].forEach((v) {
+        teamA!.add(BookingTeamPlayer.fromJson(v));
+      });
+    }
+
+    if (json['teamB'] != null) {
+      teamB = <BookingTeamPlayer>[];
+      json['teamB'].forEach((v) {
+        teamB!.add(BookingTeamPlayer.fromJson(v));
       });
     }
   }
@@ -158,14 +174,20 @@ class BookingHistoryData {
       data['openMatchId'] = openMatchId!.toJson();
     }
 
-    // ✅ TO JSON
     if (scoreboard != null) {
       data['scoreboard'] = scoreboard!.toJson();
     }
 
-    // ✅ TO JSON - NEW
     if (playerIds != null) {
       data['playerIds'] = playerIds!.map((v) => v.toJson()).toList();
+    }
+
+    if (teamA != null) {
+      data['teamA'] = teamA!.map((v) => v.toJson()).toList();
+    }
+
+    if (teamB != null) {
+      data['teamB'] = teamB!.map((v) => v.toJson()).toList();
     }
 
     return data;
@@ -777,6 +799,30 @@ class SlotTimes {
     data['amount'] = amount;
     data['status'] = status;
     data['availabilityStatus'] = availabilityStatus;
+    return data;
+  }
+}
+
+class BookingTeamPlayer {
+  PlayerId? userId;
+  String? joinedAt;
+  String? sId;
+
+  BookingTeamPlayer({this.userId, this.joinedAt, this.sId});
+
+  BookingTeamPlayer.fromJson(Map<String, dynamic> json) {
+    userId = json['userId'] != null ? PlayerId.fromJson(json['userId']) : null;
+    joinedAt = json['joinedAt']?.toString();
+    sId = json['_id']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    if (userId != null) {
+      data['userId'] = userId!.toJson();
+    }
+    data['joinedAt'] = joinedAt;
+    data['_id'] = sId;
     return data;
   }
 }

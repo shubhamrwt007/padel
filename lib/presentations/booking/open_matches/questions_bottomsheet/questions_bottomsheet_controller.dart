@@ -28,9 +28,10 @@ class QuestionsBottomsheetController extends GetxController {
   RxString selectedMatchType = ''.obs;
   RazorpayPaymentService? _paymentService;
   String? _razorpayOrderId;
-  
-  RxInt walletAmountUsed = 0.obs;
-  RxInt razorpayAmountUsed = 0.obs;
+
+  RxDouble walletAmountUsed = 0.0.obs;
+  RxDouble razorpayAmountUsed = 0.0.obs;
+
   
   CartController get cartController => Get.find<CartController>();
   final storage = GetStorage();
@@ -125,7 +126,7 @@ class QuestionsBottomsheetController extends GetxController {
       );
     } catch (e) {
       log("Error after payment success: $e");
-      SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
+      // SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
     } finally {
       isProcessing.value = false;
     }
@@ -139,7 +140,7 @@ class QuestionsBottomsheetController extends GetxController {
       final matchBody = _buildMatchBody();
       if (matchBody == null) {
         Get.back();
-        Get.snackbar("Error", "Invalid match data");
+        // Get.snackbar("Error", "Invalid match data");
         return;
       }
 
@@ -158,7 +159,7 @@ class QuestionsBottomsheetController extends GetxController {
 
       if (response.statusCode == 200) {
         log("Match confirmed: ${response.data}");
-        SnackBarUtils.showSuccessSnackBar("Match created successfully!");
+        // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
         Get.offAllNamed(RoutesName.bottomNav);
         openMatchBookingController.fetchOpenMatchesBooking(type: 'upcoming');
       } else {
@@ -294,7 +295,7 @@ class QuestionsBottomsheetController extends GetxController {
       return;
     }
     if (_razorpayOrderId == null) {
-      SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
+      // SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
       return;
     }
 
@@ -314,7 +315,7 @@ class QuestionsBottomsheetController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       log("Payment initiation error: $e");
-      SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
+      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
   }
 
@@ -331,22 +332,33 @@ class QuestionsBottomsheetController extends GetxController {
         AppEndpoints.createMatches,
         data: matchBody,
       );
-      
+
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;
         log("Match API response: $responseData");
-        
+
         if (responseData['orderId'] != null) {
           _razorpayOrderId = responseData['orderId'];
-          walletAmountUsed.value = responseData['walletAmountUsed'] ?? 0;
-          razorpayAmountUsed.value = responseData['razorpayAmountUsed'] ?? 0;
-          log("Match created with order ID: $_razorpayOrderId");
+
+          walletAmountUsed.value =
+              (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
+
+          razorpayAmountUsed.value =
+              (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
+
+          log(
+            "Match created with order ID: $_razorpayOrderId | "
+                "Wallet: ${walletAmountUsed.value}, "
+                "Razorpay: ${razorpayAmountUsed.value}",
+          );
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       log("Error creating initial match: $e");
+      log(st.toString());
     }
   }
+
 
   Map<String, dynamic>? _buildMatchBody() {
     final matchDateValue = localMatchData["matchDate"];

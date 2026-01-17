@@ -272,8 +272,8 @@ class AddPlayerController extends GetxController {
 
         // Return success to caller so it can refresh immediately
         Get.back(result: true);
-        SnackBarUtils.showSuccessSnackBar(
-            response?.message ?? "Player added successfully");
+        // SnackBarUtils.showSuccessSnackBar(
+        //     response?.message ?? "Player added successfully");
         CustomLogger.logMessage(
           msg: "Player Added To the Match $body",
           level: LogLevel.info,
@@ -378,9 +378,9 @@ class AddPlayerController extends GetxController {
         await yourMatchRequestsController?.fetchJoinRequests();
         Get.back(result: true);
 
-        SnackBarUtils.showSuccessSnackBar(
-          "Request accepted successfully",
-        );
+        // SnackBarUtils.showSuccessSnackBar(
+        //   "Request accepted successfully",
+        // );
 
         CustomLogger.logMessage(
           msg: "Request Accepted $body",
@@ -393,12 +393,12 @@ class AddPlayerController extends GetxController {
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
         SnackBarUtils.showErrorSnackBar(
-          e.response?.data['message'] ?? "Request not found",
+          e.response?.data?['message'] ?? "Request not found",
         );
       } else {
-        SnackBarUtils.showErrorSnackBar(
-          "Something went wrong",
-        );
+        // SnackBarUtils.showErrorSnackBar(
+        //   "Something went wrong",
+        // );
       }
 
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
@@ -419,7 +419,7 @@ class AddPlayerController extends GetxController {
       if (response != null) {
         await yourMatchRequestsController?.fetchJoinRequests();
         Get.back(result: true);
-        SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
+        // SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
         CustomLogger.logMessage(
           msg: "Booking Request Accepted $body",
           level: LogLevel.info,
@@ -430,10 +430,9 @@ class AddPlayerController extends GetxController {
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
         SnackBarUtils.showErrorSnackBar(
-          e.response?.data['message'] ?? "Request not found",
+          e.response?.data?['message'] ?? "Request not found",
         );
       } else {
-        SnackBarUtils.showErrorSnackBar("Something went wrong");
       }
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
       return false;
@@ -469,8 +468,8 @@ class AddPlayerController extends GetxController {
         // await bookingHistoryController?.fetchBookings();
         Get.back(result: true);
         Get.back();
-        SnackBarUtils.showSuccessSnackBar(
-            response?.message ?? "Player added successfully");
+        // SnackBarUtils.showSuccessSnackBar(
+        //     response?.message ?? "Player added successfully");
         CustomLogger.logMessage(
           msg: "Player Added To the Match $body",
           level: LogLevel.info,

@@ -45,6 +45,8 @@ class Requests {
 
   final String? createdAt;
   final String? updatedAt;
+  final int? totalAmount;
+  final dynamic? perShare;
   final int? v;
 
   Requests({
@@ -61,6 +63,8 @@ class Requests {
     this.playerId,
     this.createdAt,
     this.updatedAt,
+    this.totalAmount,
+    this.perShare,
     this.v,
   });
 
@@ -86,6 +90,8 @@ class Requests {
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
       v: json['__v'],
+      totalAmount: json['totalAmount'],
+      perShare: json['perShare'],
     );
   }
 
@@ -103,6 +109,8 @@ class Requests {
       'playerId': playerId,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'perShare': perShare,
+      'totalAmount': totalAmount,
       '__v': v,
     };
   }

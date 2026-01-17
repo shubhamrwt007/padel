@@ -777,10 +777,10 @@ class MainHomeScreen extends StatelessWidget {
         Get.toNamed(RoutesName.openMatchForAllCourts);
         break;
       case 'americano':
-        SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
+        // SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
         break;
       case 'player':
-        SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
+        // SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
         break;
     }
   }

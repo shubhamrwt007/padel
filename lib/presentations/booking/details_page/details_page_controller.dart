@@ -139,7 +139,7 @@ class DetailsController extends GetxController {
 
     } catch (e) {
       log("Error after payment success: $e");
-      SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
+      // SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
     } finally {
       isProcessing.value = false;
     }
@@ -149,7 +149,7 @@ class DetailsController extends GetxController {
   void onPaymentError(String error) {
     log("Payment failed: $error");
     isProcessing.value = false;
-    SnackBarUtils.showErrorSnackBar("Payment failed: $error");
+    // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
   }
 
   // Separate method for creating match after payment success
@@ -255,7 +255,7 @@ class DetailsController extends GetxController {
       // ✅ Call API
       final response = await repository.createMatch(data: cleanedBody);
       log("🎯 Match Created -> ${response.toJson()}");
-      SnackBarUtils.showSuccessSnackBar("Match created successfully!");
+      // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
 
       // ✅ Call createBooking after successful match creation
       await createBooking();
@@ -494,7 +494,7 @@ class DetailsController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       log("Payment initiation error: $e");
-      SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
+      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
     // Note: isProcessing will be set to false in success/failure callbacks
   }
@@ -662,20 +662,17 @@ class DetailsController extends GetxController {
         // Update UI
         update();
 
-        // Show success message
-        SnackBarUtils.showSuccessSnackBar("Player added successfully!");
-
         // Clear form fields
         clearForm();
 
         // Close dialog
         Get.back();
       } else {
-        SnackBarUtils.showInfoSnackBar(response?.message ?? "Failed to create user");
+        // SnackBarUtils.showInfoSnackBar(response?.message ?? "Failed to create user");
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("An error occurred while creating user");
+      // SnackBarUtils.showErrorSnackBar("An error occurred while creating user");
     } finally {
       isLoading.value = false;
     }

@@ -1,18 +1,21 @@
 class GetAllSlotPricesOfCourtModel {
   final bool? success;
   final int? count;
+  final bool? hasThirtyMinPrice;
   final List<SlotPrice>? data;
 
   const GetAllSlotPricesOfCourtModel({
     this.success,
     this.count,
     this.data,
+    this.hasThirtyMinPrice,
   });
 
   factory GetAllSlotPricesOfCourtModel.fromJson(Map<String, dynamic> json) =>
       GetAllSlotPricesOfCourtModel(
         success: json['success'],
         count: json['count'],
+        hasThirtyMinPrice: json['hasThirtyMinPrice'],
         data: (json['data'] as List?)
             ?.map((e) => SlotPrice.fromJson(e))
             .toList(),
@@ -21,6 +24,7 @@ class GetAllSlotPricesOfCourtModel {
   Map<String, dynamic> toJson() => {
     'success': success,
     'count': count,
+    'hasThirtyMinPrice': hasThirtyMinPrice,
     'data': data?.map((e) => e.toJson()).toList(),
   };
 }
