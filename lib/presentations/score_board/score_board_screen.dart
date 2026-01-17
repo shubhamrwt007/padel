@@ -392,8 +392,8 @@ class ScoreBoardScreen extends StatelessWidget {
                       ),
                       TextSpan(
                         text: date != null
-                            ? "${DateFormat('dd MMM').format(date)} | ${formatTimeSlot(controller.matchTime.value)}"
-                            : "| ${formatTimeSlot(controller.matchTime.value)}",
+                            ? "${DateFormat('dd MMM').format(date)} | ${formatTimeSlot(controller.matchTime.value)}${controller.matchEndTime.isNotEmpty ? ' - ${controller.matchEndTime}' : ''}"
+                            : "| ${formatTimeSlot(controller.matchTime.value)}${controller.matchEndTime.isNotEmpty ? ' - ${controller.matchEndTime}' : ''}",
                         style: Get.textTheme.bodySmall!.copyWith(
                             fontWeight: FontWeight.w500, fontSize: 13
                         ),
@@ -1060,6 +1060,31 @@ class ScoreBoardScreen extends StatelessWidget {
                       ],
                     );
                   }),
+                  // Winner/Loser text
+                  Obx(() {
+                    bool isWinner = controller.isCompleted.value &&
+                        controller.winner.value == "Team A";
+                    bool isLoser = controller.isCompleted.value &&
+                        controller.winner.value == "Team B";
+                    
+                    if (isWinner) {
+                      return Text(
+                        "Winner",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    } else if (isLoser) {
+                      return Text(
+                        "-",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: Colors.grey,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
                   Text(
                     controller.capitalizeFirstWord(teamAPlayers[0]["name"].toString().split(' ').first.trim()),
                     textAlign: TextAlign.center,
@@ -1091,18 +1116,7 @@ class ScoreBoardScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (isWinner)
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events,
-                              color: Colors.amber,
-                              size: 20,
-                            ),
-                          ),
+                          Image.asset(Assets.imagesIcCrown, scale: 3),
                         if (isWinner) const SizedBox(width: 8),
                         Text(
                           "Team B",
@@ -1132,20 +1146,59 @@ class ScoreBoardScreen extends StatelessWidget {
                       ],
                     );
                   }),
-                  Text(
-                    controller.capitalizeFirstWord(teamBPlayers[0]["name"].toString().split(' ').first.trim()),
-                    textAlign: TextAlign.center,
-                    style: Get.textTheme.bodySmall!.copyWith(
-                      color: AppColors.textColor,
-                    ),
-                  ),
-                  Text(
-                    controller.capitalizeFirstWord(teamBPlayers[1]["name"].toString().split(' ').first.trim()),
-                    textAlign: TextAlign.center,
-                    style: Get.textTheme.bodySmall!.copyWith(
-                      color: AppColors.textColor,
-                    ),
-                  ),
+                  // Winner/Loser text for Team B
+                  Obx(() {
+                    bool isWinner = controller.isCompleted.value &&
+                        controller.winner.value == "Team B";
+                    bool isLoser = controller.isCompleted.value &&
+                        controller.winner.value == "Team A";
+                    
+                    if (isWinner) {
+                      return Text(
+                        "Winner",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    } else if (isLoser) {
+                      return Text(
+                        "-",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: Colors.grey,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                  // Show player names only if not loser
+                  Obx(() {
+                    bool isLoser = controller.isCompleted.value &&
+                        controller.winner.value == "Team A";
+                    
+                    if (isLoser) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    return Column(
+                      children: [
+                        Text(
+                          controller.capitalizeFirstWord(teamBPlayers[0]["name"].toString().split(' ').first.trim()),
+                          textAlign: TextAlign.center,
+                          style: Get.textTheme.bodySmall!.copyWith(
+                            color: AppColors.textColor,
+                          ),
+                        ),
+                        Text(
+                          controller.capitalizeFirstWord(teamBPlayers[1]["name"].toString().split(' ').first.trim()),
+                          textAlign: TextAlign.center,
+                          style: Get.textTheme.bodySmall!.copyWith(
+                            color: AppColors.textColor,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),

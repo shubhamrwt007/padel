@@ -4,8 +4,8 @@ class AppEndpoints {
   // static const String baseUrl = "http://103.185.212.117:5070/api/customer/";
   // static const String socketUrl = "http://103.185.212.117:5070";
   /// -----------------------Staging URL-------------------------------------------
-  // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
-  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
 
   // /// -----------------------New Live URL-------------------------------------------
 
@@ -13,8 +13,8 @@ class AppEndpoints {
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
-  static const String socketUrl = "http://192.168.0.129:5070";
+  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.129:5070";
 
 
 
@@ -88,5 +88,5 @@ class AppEndpoints {
 
   ///LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
-  static const String removePlayer = "${baseUrl}court/removePlayerFromMatch";
+  static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
 }
