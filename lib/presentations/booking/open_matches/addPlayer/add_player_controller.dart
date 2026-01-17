@@ -336,9 +336,9 @@ class AddPlayerController extends GetxController {
     } on DioException catch (e) {
       /// ✅ Handle 404 error
       if (e.response?.statusCode == 404) {
-        // _showInsufficientBalanceDialog(
-        //   e.response?.data?['message'] ?? "Resource not found",
-        // );
+        _showInsufficientBalanceDialog(
+          e.response?.data?['message'] ?? "Resource not found",
+        );
       } else {
         // SnackBarUtils.showErrorSnackBar(
         //   e.response?.data?['message'] ?? "Something went wrong",

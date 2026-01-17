@@ -90,6 +90,7 @@ class NotificationScreen extends StatelessWidget {
                   bookingStatus: n['bookingStatus'],
                   notificationType: n['notificationType'] ?? '',
                   profileImage: n['profileImage'] ?? '',
+                  userName: n['userName'] ?? '',
                 )),
                 const SizedBox(height: 16),
               ],
@@ -136,6 +137,7 @@ class _NotificationTile extends StatelessWidget {
   final bool isRead;
   final String notificationType;
   final String profileImage;
+  final String userName;
   const _NotificationTile({
     required this.id,
     required this.title,
@@ -148,6 +150,7 @@ class _NotificationTile extends StatelessWidget {
     required this.bookingStatus,
     required this.notificationType,
     required this.profileImage,
+    required this.userName,
   });
 
   @override
@@ -173,22 +176,30 @@ class _NotificationTile extends StatelessWidget {
               backgroundColor: isRead
                   ? Colors.grey.withValues(alpha: 0.1)
                   : AppColors.primaryColor.withValues(alpha: 0.1),
-              child: notificationType == 'match_invitation' && profileImage.isNotEmpty
+              child: profileImage.isNotEmpty
                   ? ClipOval(
                       child: CachedNetworkImage(
                         imageUrl: profileImage,
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Icon(
-                          icon,
-                          color: isRead ? Colors.grey : AppColors.primaryColor,
+                        errorWidget: (context, url, error) => Text(
+                          NotificationController.instance.getInitials(userName),
+                          style: TextStyle(
+                            color: isRead ? Colors.grey : AppColors.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     )
-                  : Icon(
-                      icon,
-                      color: isRead ? Colors.grey : AppColors.primaryColor,
+                  : Text(
+                      NotificationController.instance.getInitials(userName),
+                      style: TextStyle(
+                        color: isRead ? Colors.grey : AppColors.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
             ),
             const SizedBox(width: 12),
@@ -197,7 +208,7 @@ class _NotificationTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title.isNotEmpty ? title[0].toUpperCase() + title.substring(1).toLowerCase() : title,
+                    controller.capitalizeWords(title),
                     style: TextStyle(
                       fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                       fontSize: 16,

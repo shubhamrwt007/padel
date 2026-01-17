@@ -507,6 +507,12 @@ class LeaderboardScreen extends StatelessWidget {
         minChildSize: minSize,
         maxChildSize: maxSize,
         builder: (context, scroll) {
+          scroll.addListener(() {
+            if (scroll.position.pixels >= scroll.position.maxScrollExtent - 200) {
+              controller.loadMoreData();
+            }
+          });
+          
           return Obx(
                 () => AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -577,13 +583,39 @@ class LeaderboardScreen extends StatelessWidget {
                       }),
                       // const SizedBox(height: 10),
                       Column(
-                        children: List.generate(
-                          data.length,
-                              (index) => LeaderboardCard(
-                            item: data[index],
-                            index: index,
+                        children: [
+                          ...List.generate(
+                            data.length,
+                                (index) => LeaderboardCard(
+                              item: data[index],
+                              index: index,
+                            ),
                           ),
-                        ),
+                          // Loading more indicator
+                          Obx(() {
+                            if (controller.isLoadingMore.value) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
+                          // End message when no more data
+                          Obx(() {
+                            if (!controller.hasMoreData.value && data.isNotEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(
+                                  'No more data to load',
+                                  style: TextStyle(color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -695,10 +727,11 @@ class LeaderboardScreen extends StatelessWidget {
                 children: [
                   Container(
                     width: 25,
+                    color: Colors.transparent,
                     child: Text(
                       '${myRank['rank']}',
                       style: Get.textTheme.labelLarge!.copyWith(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryColor,
                       ),
