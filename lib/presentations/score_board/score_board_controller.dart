@@ -20,6 +20,35 @@ class ScoreBoardController extends GetxController {
   RxString courtName = "".obs;
   RxBool isCompleted = false.obs;
 
+  ///Get match end time----------------------------------------------
+  String get matchEndTime {
+    try {
+      if (matchTime.value.isEmpty) return "";
+
+      String timeStr = matchTime.value.trim();
+      List<String> parts = timeStr.split('-');
+
+      String endTimeStr;
+      
+      if (parts.length == 1) {
+        // Single time format - add 60 minutes by default
+        String startTimeStr = _normalizeTimeFormat(parts[0].trim());
+        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
+        DateTime endTime = startTime.add(const Duration(minutes: 60));
+        endTimeStr = DateFormat('h:mm a').format(endTime);
+      } else if (parts.length >= 2) {
+        endTimeStr = _normalizeTimeFormat(parts[1].trim());
+      } else {
+        return "";
+      }
+
+      return endTimeStr;
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error getting match end time: $e", level: LogLevel.error);
+      return "";
+    }
+  }
+
   // Timer-related variables
   RxInt remainingSeconds = 0.obs;
   late Timer _gameTimer;
