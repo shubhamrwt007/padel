@@ -354,7 +354,7 @@ class SignUpScreen extends GetView<SignUpController> {
             value: controller.selectedGender.value.isEmpty
                 ? null
                 : controller.selectedGender.value,
-            hint: Text("Select Gender", style: style),
+            hint: Text("Select Gender *", style: style),
             dropdownColor: Colors.white,
             isExpanded: true,
             items: controller.genderOptions

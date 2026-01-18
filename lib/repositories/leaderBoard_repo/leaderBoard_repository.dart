@@ -14,9 +14,9 @@ class LeaderboardRepository {
   LeaderboardRepository._internal();
 
   ///Get LeaderBoard------------------------------------------------------------
-  Future<GetLeaderBoardModel> getLeaderBoard({required id}) async {
+  Future<GetLeaderBoardModel> getLeaderBoard({required id,required int page,required int limit}) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getLeaderBoard}?_id=$id");
+      final response = await dioClient.get("${AppEndpoints.getLeaderBoard}?_id=$id&page=$page&limit=$limit");
 
       if (response.statusCode == 200) {
         CustomLogger.logMessage(

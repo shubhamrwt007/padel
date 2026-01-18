@@ -8,6 +8,7 @@ import 'package:padel_mobile/presentations/booking/americano/americano_controlle
 import 'package:http/http.dart' as http;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../repositories/home_repository/home_repository.dart';
 
 class BookingController extends GetxController with GetSingleTickerProviderStateMixin {
   DetailsController detailsController = Get.put(DetailsController());
@@ -32,6 +33,16 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     _loadBookingData();
   }
 
+  Future<void> _callDeleteSlotHistoryAPI() async {
+    try {
+      final repository = HomeRepository();
+      await repository.deleteSlotHistory(data: {"slots": []});
+      log('Called deleteSlotHistory API on page return');
+    } catch (e) {
+      log('Error calling deleteSlotHistory API: $e');
+    }
+  }
+
   void _loadBookingData() {
     final args = Get.arguments;
     if (args != null && args["data"] != null) {
@@ -44,6 +55,9 @@ class BookingController extends GetxController with GetSingleTickerProviderState
       log("Data Fetch Successfully -> ${courtsData.value}");
       profileController.fetchUserProfile();
       _refreshChildControllers();
+      
+      // Call delete slot history API when page loads
+      _callDeleteSlotHistoryAPI();
     }
   }
 

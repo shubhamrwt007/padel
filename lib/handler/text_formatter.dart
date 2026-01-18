@@ -54,12 +54,22 @@ extension StringExtension on String {
       // Normalize input (e.g., remove extra spaces, lowercase)
       final normalized = raw.trim().toLowerCase();
 
-      // Extract hour
-      final hourPart = normalized.split(" ")[0];
-      final periodPart = normalized.contains("pm") ? "pm" : "am";
+      // Handle formats like "10:00 pm" or "10 pm"
+      final parts = normalized.split(" ");
+      if (parts.isEmpty) return raw;
+      
+      final timePart = parts[0];
+      final periodPart = normalized.contains("pm") ? "PM" : "AM";
 
-      int hour = int.tryParse(hourPart) ?? 0;
-      if (hour == 0) hour = 12; // for 12-hour clock display
+      // Extract hour from time part (handle both "10" and "10:00" formats)
+      int hour;
+      if (timePart.contains(":")) {
+        hour = int.tryParse(timePart.split(":")[0]) ?? 0;
+      } else {
+        hour = int.tryParse(timePart) ?? 0;
+      }
+
+      if (hour == 0) return raw; // Invalid hour
 
       // Return formatted time with :00
       return "$hour:00 $periodPart";

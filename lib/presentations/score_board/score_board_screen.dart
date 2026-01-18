@@ -392,8 +392,8 @@ class ScoreBoardScreen extends StatelessWidget {
                       ),
                       TextSpan(
                         text: date != null
-                            ? "${DateFormat('dd MMM').format(date)} | ${formatTimeSlot(controller.matchTime.value)}${controller.matchEndTime.isNotEmpty ? ' - ${controller.matchEndTime}' : ''}"
-                            : "| ${formatTimeSlot(controller.matchTime.value)}${controller.matchEndTime.isNotEmpty ? ' - ${controller.matchEndTime}' : ''}",
+                            ? "${DateFormat('dd MMM').format(date)} | ${formatTimeSlot(controller.startTime.value)}${controller.endTime.value.isNotEmpty ? ' - ${formatTimeSlot(controller.endTime.value)}' : ''}"
+                            : "| ${formatTimeSlot(controller.startTime.value)}${controller.endTime.value.isNotEmpty ? ' - ${formatTimeSlot(controller.endTime.value)}' : ''}",
                         style: Get.textTheme.bodySmall!.copyWith(
                             fontWeight: FontWeight.w500, fontSize: 13
                         ),

@@ -19,6 +19,7 @@ class PaymentMethodController extends GetxController {
   RxBool isProcessing = false.obs;
   RazorpayPaymentService? _paymentService;
   String? _razorpayOrderId;
+  bool? initiatePayment;
 
   RxDouble walletAmountUsed = 0.0.obs;
   RxDouble razorpayAmountUsed = 0.0.obs;
@@ -49,7 +50,7 @@ class PaymentMethodController extends GetxController {
     // _paymentService!.onExternalWallet = _handleExternalWallet;
     
     // Create initial booking
-    _createInitialBooking();
+    // _createInitialBooking();
   }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     isProcessing.value = false;
@@ -333,7 +334,8 @@ class PaymentMethodController extends GetxController {
     return 'pay_${List.generate(14, (index) => chars[random.nextInt(chars.length)]).join()}';
   }
 
-  Future<void> _createInitialBooking() async {
+
+  Future<void> createInitialBooking() async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
@@ -363,28 +365,129 @@ class PaymentMethodController extends GetxController {
         final responseData = response.data;
         print("Booking API response: $responseData");
 
-        if (responseData['orderId'] != null) {
-          _razorpayOrderId = responseData['orderId'];
+        _razorpayOrderId = responseData['orderId'];
+// If the key is present → use its value (assumed to be true)
+// If the key is absent → payment is NOT required
+        initiatePayment = responseData.containsKey('requiresPayment')
+            ? (responseData['requiresPayment'] as bool)
+            : false;
+        walletAmountUsed.value =
+            (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
-          walletAmountUsed.value =
-              (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
+        razorpayAmountUsed.value =
+            (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
-          razorpayAmountUsed.value =
-              (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
+        print(
+          "Booking created with order ID: $_razorpayOrderId\n"
+              "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
+        );
 
-          print(
-            "Booking created with order ID: $_razorpayOrderId\n"
-                "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}",
-          );
+        // ✅ If payment is NOT required, go directly to success screen
+        if (initiatePayment == false) {
+          showBookingSuccessDialog();
+        }else{
+          await Get.toNamed(RoutesName.paymentMethod);
+
         }
       }
     } catch (e, st) {
       print("Error creating initial booking: $e");
       print(st);
+      // Optionally show error snackbar
+      // SnackBarUtils.showErrorSnackBar("Failed to create booking. Please try again.");
     }
   }
 
+  void showBookingSuccessDialog() {
+    Get.dialog(
+      barrierDismissible: false,
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: Get.width * 0.85,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Success Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
 
+              // Title
+              const Text(
+                "Booking Confirmed!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // Message
+              const Text(
+                "Your court has been booked successfully. No payment was required.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // OK Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Refresh cart
+                    cartController.getCartItems();
+                    // Clear selections if from Book A Court
+                    if (isFromBookACourt && bookACourtController != null) {
+                      bookACourtController!.clearAllSelections();
+                    }
+                    Get.back(); // Close dialog
+                    Get.offAllNamed(RoutesName.bottomNav); // Go to home
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "Go to Home",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   Future<void> startPayment() async {
     if (option.value.isEmpty) {
       Get.snackbar("Payment Method", "Please select a payment method");

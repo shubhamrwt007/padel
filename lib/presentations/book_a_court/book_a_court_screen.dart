@@ -17,6 +17,7 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
+import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
@@ -33,6 +34,11 @@ class BookACourtScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fetch wallet balance after build completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      walletController.fetchWallet();
+    });
+    
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       bottomNavigationBar: _buildPaymentPanel(),
@@ -83,7 +89,7 @@ class BookACourtScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${walletController.walletBalance.value ?? 0}",
+                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -1319,36 +1325,45 @@ class BookACourtScreen extends StatelessWidget {
                     width: Get.width * 0.9,
                     height: 55,
                     gradientColors: [Colors.white, Colors.white, Colors.white],
-                    onTap: isProcessing.value
-                        ? null
-                          : () async {
-                            if (Get.isSnackbarOpen) return;
-                            isProcessing.value = true;
-                            
-                            // Call API to process slot history
-                            final success = await controller.processSlotHistoryForPayment();
-                            
-                            isProcessing.value = false;
-                            
-                            if (success) {
-                              // Initialize CartController if not already present
-                              if (!Get.isRegistered<CartController>()) {
-                                Get.put(CartController());
-                              }
-                              // Sync selected slot amount to CartController for payment screen
-                              final cartController = Get.find<CartController>();
-                              cartController.totalPrice.value = _getSelectedSlotAmount();
-                              
-                              // Navigate and wait for result
-                              await Get.toNamed(RoutesName.paymentMethod);
-                              
-                              // When back, cleanup if API was called
-                              if (controller.hasCalledSlotHistoryAPI.value) {
-                                await controller.cleanupOnBack();
-                                controller.hasCalledSlotHistoryAPI.value = false;
-                              }
-                            }
-                          },
+                    onTap: () async {
+                      if (Get.isSnackbarOpen) return;
+
+                      isProcessing.value = true;
+
+                      // Call API to process slot history
+                      final success = await controller.processSlotHistoryForPayment();
+                      if (!success) {
+                        isProcessing.value = false;
+                        return;
+                      }
+
+                      // Sync selected slot amount to CartController
+                      if (!Get.isRegistered<CartController>()) {
+                        Get.put(CartController());
+                      }
+                      final cartController = Get.find<CartController>();
+                      cartController.totalPrice.value = _getSelectedSlotAmount();
+
+                      // ✅ Initialize PaymentMethodController and create booking BEFORE navigation
+                      final paymentController = Get.put(PaymentMethodController(), permanent: false);
+
+                      try {
+                        await paymentController.createInitialBooking();
+
+                        // Now navigate
+
+                        // Optional: cleanup if needed when coming back
+                        if (controller.hasCalledSlotHistoryAPI.value) {
+                          await controller.cleanupOnBack();
+                          controller.hasCalledSlotHistoryAPI.value = false;
+                        }
+                      } catch (e) {
+                        // Handle error (e.g., show snackbar)
+                        // SnackBarUtils.showErrorSnackBar("Failed to prepare booking. Please try again.");
+                      } finally {
+                        isProcessing.value = false;
+                      }
+                    },
                     child: isProcessing.value
                         ? LoadingAnimationWidget.waveDots(
                             color: AppColors.blackColor,

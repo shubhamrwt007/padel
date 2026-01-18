@@ -701,14 +701,14 @@ class CreateOpenMatchesScreen extends StatelessWidget {
 
               // Check if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
+                // Get.snackbar(
+                //   "Slot Unavailable",
+                //   "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
+                //   backgroundColor: Colors.redAccent,
+                //   colorText: Colors.white,
+                //   snackPosition: SnackPosition.TOP,
+                //   duration: const Duration(seconds: 2),
+                // );
                 return;
               }
 
@@ -721,14 +721,14 @@ class CreateOpenMatchesScreen extends StatelessWidget {
             } else {
               // For slots that don't support 30-min pricing or when selecting full slots
               if (isAnyHalfBooked) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This slot is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
+                // Get.snackbar(
+                //   "Slot Unavailable",
+                //   "This slot is already booked.",
+                //   backgroundColor: Colors.redAccent,
+                //   colorText: Colors.white,
+                //   snackPosition: SnackPosition.TOP,
+                //   duration: const Duration(seconds: 2),
+                // );
                 return;
               }
 
@@ -1174,11 +1174,18 @@ class CreateOpenMatchesScreen extends StatelessWidget {
               fontSize: 18,
             ),
           ).paddingOnly(right: 40),
-          onTap: () {
+          onTap: () async {
             if (!hasSelections) {
-              SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+              // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
               return;
             }
+            
+            // Call API to process slot history
+            final success = await controller.processSlotHistoryForPayment();
+            if (!success) {
+              return;
+            }
+            
             controller.onNext();
           },
         ),

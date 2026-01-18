@@ -224,7 +224,7 @@ class MainHomeScreen extends StatelessWidget {
     return Obx(() {
       final homeController = controller.homeController;
 
-      if (homeController.isLoadingBookings.value) {
+      if (homeController.isLoadingBookings.value && !homeController.isCreatingScoreboard.value) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: bookingShimmer(),
@@ -518,19 +518,21 @@ class MainHomeScreen extends StatelessWidget {
                       : AppColors.blackColor,
                 ),
               ),
-              if (b.slot != null && b.slot!.isNotEmpty && b.slot!.first.slotTimes != null &&
-                  b.slot!.first.slotTimes!.isNotEmpty)
-                Text(
-                  b.slot!.first.slotTimes!.length > 1
-                      ? "${formatTimeSlot(b.slot!.first.slotTimes!.first.time ?? "")} - ${formatTimeSlot(b.slot!.first.slotTimes!.last.time ?? "")}"
-                      : b.slot!.first.slotTimes!.first.time ?? "",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isOngoing
-                        ? Colors.red.shade700
-                        : AppColors.blackColor,
-                    fontSize: 11,
-                  ),
-                ).paddingOnly(left: 5),
+              if (b.startTime != null && b.endTime != null)
+                Container(
+                  color: Colors.transparent,
+                  width: Get.width*0.25,
+                  child: Text(
+                    overflow: TextOverflow.ellipsis,
+                    "${b.startTime ?? ""} - ${b.endTime ?? ""}",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: isOngoing
+                          ? Colors.red.shade700
+                          : AppColors.blackColor,
+                      fontSize: 11,
+                    ),
+                  ).paddingOnly(left: 5),
+                ),
             ],
           ),
           Text(
@@ -1408,6 +1410,11 @@ class MainHomeScreen extends StatelessWidget {
       // Use only API data, don't pad with extra results
       List<String> results = recentMatches.isNotEmpty ? recentMatches : [];
 
+      // Get only the last 5 items
+      final displayResults = results.length > 5
+          ? results.sublist(results.length - 5)
+          : results;
+
       return Container(
         color: Colors.transparent,
         width: Get.width,
@@ -1437,7 +1444,7 @@ class MainHomeScreen extends StatelessWidget {
                         style: Get.textTheme.headlineSmall!
                             .copyWith(color: Colors.white)),
                     const SizedBox(width: 8),
-                    ...results.map(
+                    ...displayResults.map(
                           (e) => Container(
                         margin: const EdgeInsets.only(right: 8),
                         width: 24,

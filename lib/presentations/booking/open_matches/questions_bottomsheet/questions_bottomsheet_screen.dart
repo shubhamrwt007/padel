@@ -159,21 +159,29 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                   //   },
                   //   isLoading: controller.isProcessing.value,
                   // )),
+                    // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
                     CustomButton(
-                        width: Get.width*0.9,
-                        height: 55,
-                        gradientColors: [Colors.white,Colors.white,Colors.white],
+                      width: Get.width * 0.9,
+                      height: 55,
+                      gradientColors: [Colors.white, Colors.white, Colors.white],
                       onTap: controller.isProcessing.value ? null : () {
-                        if(Get.isSnackbarOpen)return;
-                        if (!controller.validateSelections()) {
-                          return;
-                        }
-                        controller.initiateMatchCreation();
+                        if (Get.isSnackbarOpen) return;
+                        controller.onDirectPaymentTap();
                       },
-                        child:controller.isProcessing.value== true?LoadingAnimationWidget.waveDots(
-                          color: AppColors.blackColor,
-                          size: 45,
-                        ).paddingOnly(right: 40) : Text(Platform.isIOS?"Direct Payment":"Create Match",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.secondaryColor,fontSize: 16)).paddingOnly(right: 40),
+                      child: controller.isProcessing.value == true
+                          ? LoadingAnimationWidget.waveDots(
+                        color: AppColors.blackColor,
+                        size: 45,
+                      ).paddingOnly(right: 40)
+                          : Obx(() => Text(
+                        controller.requiresPayment.value
+                            ? (Platform.isIOS ? "Direct Payment" : "Create Match")
+                            : "Confirm Match",
+                        style: Get.textTheme.headlineLarge!.copyWith(
+                          color: AppColors.secondaryColor,
+                          fontSize: 16,
+                        ),
+                      )).paddingOnly(right: 40),
                     )
                   ],
                 ),

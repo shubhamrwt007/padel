@@ -342,7 +342,7 @@ class OpenMatchBookingController extends GetxController
       
       final response = await repository.acceptOrRejectRequestPlayer(body: body);
       joinRequests.removeWhere((req) => req['id'] == requestId);
-      SnackBarUtils.showSuccessSnackBar(response?.message ?? "Request accepted");
+      // SnackBarUtils.showSuccessSnackBar(response?.message ?? "Request accepted");
       fetchOpenMatchesBooking(type: 'upcoming');
     } catch (e) {
       CustomLogger.logMessage(msg: "Error $e", level: LogLevel.error);
@@ -361,7 +361,7 @@ class OpenMatchBookingController extends GetxController
       
       final response = await repository.acceptOrRejectRequestPlayer(body: body);
       joinRequests.removeWhere((req) => req['id'] == requestId);
-      SnackBarUtils.showSuccessSnackBar(response?.message ?? "Request rejected");
+      // SnackBarUtils.showSuccessSnackBar(response?.message ?? "Request rejected");
       // fetchOpenMatchesBooking(type: 'upcoming');
     } catch (e) {
       CustomLogger.logMessage(msg: "Error $e", level: LogLevel.error);

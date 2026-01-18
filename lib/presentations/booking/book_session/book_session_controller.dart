@@ -172,6 +172,9 @@ class BookSessionController extends GetxController {
 
   RxMap<String, Map<String, dynamic>> selectedSlotsWithCourtInfo = <String, Map<String, dynamic>>{}.obs;
   RxBool isBottomSheetOpen = false.obs;
+  
+  // Track if slot history API was called
+  RxBool hasCalledSlotHistoryAPI = false.obs;
 
   @override
   void onInit() {
@@ -186,7 +189,7 @@ class BookSessionController extends GetxController {
 
   @override
   void onClose() {
-    _cleanupOnBack();
+    cleanupOnBack();
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -195,7 +198,7 @@ class BookSessionController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _cleanupOnBack() async {
+  Future<void> cleanupOnBack() async {
     if (multiDateSelections.isEmpty) return;
     
     try {
@@ -393,9 +396,51 @@ class BookSessionController extends GetxController {
   Future<void> deleteSlotHistory({required List<Map<String, dynamic>> slots}) async {
     try {
       log('deleteSlotHistory called with body: $slots');
-      await repository.deleteSlotHistory(data: slots);
+      await repository.deleteSlotHistory(data: {"slots": slots});
     } catch (e) {
       log('Error in deleteSlotHistory: $e');
+    }
+  }
+
+  // Process slot history for payment - call APIs for all selections
+  Future<bool> processSlotHistoryForPayment() async {
+    if (multiDateSelections.isEmpty) return false;
+
+    try {
+      final slots = <Map<String, dynamic>>[];
+      
+      for (var entry in multiDateSelections.entries) {
+        final selection = entry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
+        final courtName = selection['courtName'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        
+        slots.add({
+          "slotId": slotId,
+          "courtId": courtId,
+          "courtName": courtName,
+          "bookingDate": dateString,
+          "time": bookingTime,
+          "bookingTime": bookingTime,
+          "duration": duration,
+          "totalTime": duration,
+        });
+      }
+      
+      final success = await createAndGetSlotHistory(slots: slots);
+      if (success) {
+        hasCalledSlotHistoryAPI.value = true;
+      }
+      return success;
+    } catch (e) {
+      log('Error processing slot history: $e');
+      return false;
     }
   }
 
@@ -879,13 +924,13 @@ class BookSessionController extends GetxController {
       cartLoader.value = true;
 
       if (multiDateSelections.isEmpty) {
-        Get.snackbar(
-          "No Slots Selected",
-          "Please select at least one slot before adding to cart.",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
+        // Get.snackbar(
+        //   "No Slots Selected",
+        //   "Please select at least one slot before adding to cart.",
+        //   backgroundColor: Colors.redAccent,
+        //   colorText: Colors.white,
+        //   snackPosition: SnackPosition.TOP,
+        // );
         return;
       }
 
