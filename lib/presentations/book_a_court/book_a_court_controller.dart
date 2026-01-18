@@ -1098,13 +1098,20 @@ class BookACourtController extends GetxController {
               })
           .toList() ?? [];
       
-      // Group selections by courtId + slotId to handle same time slots in different courts
+      // Group selections by courtId + slotId + date to handle half slots correctly
       final Map<String, List<Map<String, dynamic>>> slotGroups = {};
       for (var selection in clubSelections) {
         final slot = selection['slot'] as Slots;
         final courtId = selection['courtId'] as String;
         final slotId = slot.sId ?? '';
-        final groupKey = '${courtId}_$slotId'; // Unique key per court-slot combination
+        final dateString = selection['date'] as String;
+        final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+        
+        // Create unique key: for half slots include half info, for full slots just basic info
+        final groupKey = isHalfSlot 
+            ? '${dateString}_${courtId}_${slotId}_half'
+            : '${dateString}_${courtId}_${slotId}_full';
+            
         if (!slotGroups.containsKey(groupKey)) {
           slotGroups[groupKey] = [];
         }
@@ -1115,11 +1122,10 @@ class BookACourtController extends GetxController {
       final List<Map<String, dynamic>> slotData = [];
       
       for (var slotGroup in slotGroups.entries) {
-        final groupKey = slotGroup.key; // This is now 'courtId_slotId'
         final selections = slotGroup.value;
-        final slotId = groupKey.split('_').last; // Extract slotId from groupKey
+        final isHalfSlotGroup = slotGroup.key.endsWith('_half');
         
-        if (selections.length == 2) {
+        if (isHalfSlotGroup && selections.length == 2) {
           // Both halves selected - treat as one full slot
           final firstSelection = selections.first;
           final slot = firstSelection['slot'] as Slots;
@@ -1127,6 +1133,7 @@ class BookACourtController extends GetxController {
           final courtName = firstSelection['courtName'] as String;
           final dateTime = firstSelection['dateTime'] as DateTime;
           final dateString = DateFormat('yyyy-MM-dd').format(dateTime);
+          final slotId = slot.sId ?? '';
           
           // Calculate full slot amount
           final fullAmount = selections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
@@ -1148,25 +1155,31 @@ class BookACourtController extends GetxController {
             "bookingTime": slot.time ?? "",
           });
         } else {
-          // Single half selected
+          // Single selection (either full slot or single half)
           for (var selection in selections) {
             final slot = selection['slot'] as Slots;
             final courtId = selection['courtId'] as String;
             final courtName = selection['courtName'] as String;
             final dateTime = selection['dateTime'] as DateTime;
             final dateString = DateFormat('yyyy-MM-dd').format(dateTime);
+            final slotId = slot.sId ?? '';
             
             final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+            final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
             final durationMinutes = isHalfSlot ? 30 : 60;
             final totalTimeMinutes = isHalfSlot ? 30 : 60;
+            
+            final bookingTime = isHalfSlot 
+                ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+                : slot.time ?? '';
             
             slotData.add({
               "slotId": slotId,
               "businessHours": selectedBusinessHour,
               "slotTimes": [
                 {
-                  "time": slot.time ?? "",
-                  "amount": slot.amount ?? 0,
+                  "time": bookingTime,
+                  "amount": selection['amount'] as int? ?? slot.amount ?? 0,
                 }
               ],
               "courtId": courtId,
@@ -1174,7 +1187,7 @@ class BookACourtController extends GetxController {
               "bookingDate": dateString,
               "duration": durationMinutes,
               "totalTime": totalTimeMinutes,
-              "bookingTime": slot.time ?? "",
+              "bookingTime": bookingTime,
             });
           }
         }

@@ -259,8 +259,8 @@ class NotificationController extends GetxController {
         case '/yourMatchRequest':
           Get.toNamed(RoutesName.yourMatchRequest);
           break;
-        case '/BookingConfirmed':
-          Get.toNamed('/booking-confirmed');
+        case "/bookingRequests":
+          Get.toNamed(RoutesName.yourMatchRequest);
           break;
         case '/PaymentSuccess':
           Get.toNamed('/payment-success');

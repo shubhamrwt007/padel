@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/otp_model.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/reset_password.model.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/sign_up_model.dart';
@@ -91,6 +92,29 @@ class SignUpRepository {
           "OTP verification failed with status code: ${response.statusCode}",
         );
       }
+    } on DioException catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "OTP verification failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+
+      // Handle 400 error response and return as CommonModel
+      if (e.response != null && e.response!.statusCode == 400) {
+        // Extract error message from response if available
+        String errorMessage = "Invalid OTP";
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? errorMessage;
+        }
+
+        return CommonModel(
+          status: "400",
+          message: errorMessage,
+        );
+      }
+
+      // For other errors, rethrow
+      rethrow;
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "OTP verification failed with error: ${e.toString()}",

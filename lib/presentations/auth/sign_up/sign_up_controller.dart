@@ -1,5 +1,6 @@
 // SignUpController.dart
 import 'dart:developer';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/sign_up_model.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
@@ -110,7 +111,15 @@ class SignUpController extends GetxController {
         if (!userExists) {
           await sendOTP();
         } else {
-          SnackBarUtils.showErrorSnackBar("Phone number ${phoneController.text.trim()} already exists");
+          Fluttertoast.showToast(
+            msg: "Phone number ${phoneController.text.trim()} already exists",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            timeInSecForIosWeb: 3,
+          );
         }
       } catch (e) {
         log(e.toString());
@@ -121,6 +130,18 @@ class SignUpController extends GetxController {
   }
 
   Future<void> sendOTP() async {
+    if (selectedGender.value.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "Please select your gender",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 2,
+      );
+      return;
+    }
     Map<String, dynamic> body = {
       // "email": emailController.text.trim(),
       "phoneNumber": phoneController.text.trim(),
@@ -139,7 +160,15 @@ class SignUpController extends GetxController {
         },
       );
     } else {
-      SnackBarUtils.showErrorSnackBar(result.message!);
+      Fluttertoast.showToast(
+        msg: result.message!,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 3,
+      );
     }
   }
 
@@ -188,7 +217,15 @@ class SignUpController extends GetxController {
       }
 
     } else {
-      SnackBarUtils.showErrorSnackBar(result.message!);
+      Fluttertoast.showToast(
+        msg: result.message!,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 3,
+      );
     }
   }
   Future<String?> getFcmToken() async {

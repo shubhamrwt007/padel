@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/login_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -86,7 +87,15 @@ class LoginController extends GetxController {
           CustomLogger.logMessage(msg: result.message!, level: LogLevel.error);
         }
       } else {
-        SnackBarUtils.showErrorSnackBar("Phone number ${phoneController.text.trim()} not found. Please sign up first.");
+        Fluttertoast.showToast(
+          msg: "Phone number ${phoneController.text.trim()} not found. Please sign up first.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+          timeInSecForIosWeb: 3,
+        );
       }
     } catch (e) {
       log(e.toString());

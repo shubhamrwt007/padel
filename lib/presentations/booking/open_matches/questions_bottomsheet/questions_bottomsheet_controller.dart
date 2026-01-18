@@ -295,7 +295,7 @@ class QuestionsBottomsheetController extends GetxController {
       return;
     }
     if (_razorpayOrderId == null) {
-      // SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
+      SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
       return;
     }
 
@@ -318,13 +318,112 @@ class QuestionsBottomsheetController extends GetxController {
       // SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
   }
+  void showBookingSuccessDialog() {
+    Get.dialog(
+      barrierDismissible: false,
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: Get.width * 0.85,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Success Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
 
-  Future<void> _createInitialMatch() async {
+              // Title
+              const Text(
+                "Booking Confirmed!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // Message
+              const Text(
+                "Your court has been booked successfully. No payment was required.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // OK Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back(); // Close dialog
+                    Get.offAllNamed(RoutesName.bottomNav); // Go to home
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "Go to Home",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  Future<void> onDirectPaymentTap() async {
+    if (!validateSelections()) {
+      return;
+    }
+
+    if (requiresPayment.value == false) {
+      // If payment is required, first create match with isCalculation: false
+      await _createInitialMatch(isCalculation: false);
+      showBookingSuccessDialog();
+    } else {
+      // If no payment required, directly initiate match creation
+      await initiateMatchCreation();
+    }
+  }
+
+  Future<void> _createInitialMatch({required isCalculation}) async {
     try {
       final matchBody = _buildMatchBody();
       if (matchBody == null) return;
 
       matchBody['initiatePayment'] = false;
+      matchBody['isCalculation'] = isCalculation;
 
       log("Initial match payload: $matchBody");
 
@@ -336,22 +435,23 @@ class QuestionsBottomsheetController extends GetxController {
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;
         log("Match API response: $responseData");
+        _razorpayOrderId = responseData['orderId'];
 
-        if (responseData['orderId'] != null) {
-          _razorpayOrderId = responseData['orderId'];
+        walletAmountUsed.value =
+            (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
-          walletAmountUsed.value =
-              (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
+        razorpayAmountUsed.value =
+            (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
+        requiresPayment.value = responseData['requiresPayment'] ?? true;
 
-          razorpayAmountUsed.value =
-              (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
-
-          log(
-            "Match created with order ID: $_razorpayOrderId | "
-                "Wallet: ${walletAmountUsed.value}, "
-                "Razorpay: ${razorpayAmountUsed.value}",
-          );
-        }
+        log(
+          "Match created with order ID: $_razorpayOrderId | "
+              "Wallet: ${walletAmountUsed.value}, "
+              "Razorpay: ${razorpayAmountUsed.value}",
+        );
+        // if (responseData['orderId'] != null) {
+        //
+        // }
       }
     } catch (e, st) {
       log("Error creating initial match: $e");
@@ -516,14 +616,17 @@ class QuestionsBottomsheetController extends GetxController {
   }
   
   void initializeMatch() {
-    _createInitialMatch();
+    _createInitialMatch(isCalculation: true);
   }
+  RxBool requiresPayment = true.obs; // Add this flag
 
   @override
   void onClose() {
+    // Cleanup slot history if user exits without completing payment
     _paymentService?.dispose();
     super.onClose();
   }
+
   
   // Group consecutive slots
   List<Map<String, dynamic>> getGroupedSlots() {

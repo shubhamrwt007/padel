@@ -90,6 +90,9 @@ class CreateOpenMatchesController extends GetxController {
   // Keep existing for backward compatibility
   RxMap<String, Map<String, dynamic>> selectedSlotsWithCourtInfo = <String, Map<String, dynamic>>{}.obs;
   RxBool isBottomSheetOpen = false.obs;
+  
+  // Track if slot history API was called
+  RxBool hasCalledSlotHistoryAPI = false.obs;
   @override
   void onInit() {
     super.onInit();
@@ -103,7 +106,6 @@ class CreateOpenMatchesController extends GetxController {
 
   @override
   void onClose() {
-    _cleanupOnBack();
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -112,11 +114,21 @@ class CreateOpenMatchesController extends GetxController {
     super.onClose();
   }
 
-  Future<void> _cleanupOnBack() async {
-    if (multiDateSelections.isEmpty) return;
+  // API method for deleting slot history (batch)
+  Future<void> deleteSlotHistory({required List<Map<String, dynamic>> slots}) async {
+    try {
+      log('deleteSlotHistory called with body: $slots');
+      await repository.deleteSlotHistory(data: {"slots": slots});
+    } catch (e) {
+      log('Error in deleteSlotHistory: $e');
+    }
+  }
+
+  Future<void> cleanupSlotHistory() async {
+    if (multiDateSelections.isEmpty || !hasCalledSlotHistoryAPI.value) return;
     
     try {
-      final slots = [];
+      final slots = <Map<String, dynamic>>[];
       
       for (var entry in multiDateSelections.entries) {
         final selection = entry.value;
@@ -139,20 +151,22 @@ class CreateOpenMatchesController extends GetxController {
         });
       }
       
-      await repository.deleteSlotHistory(data: {"slots": slots});
-      log('Bulk delete slot history on back: $slots');
+      await deleteSlotHistory(slots: slots);
+      log('Cleanup slot history: $slots');
+      hasCalledSlotHistoryAPI.value = false;
     } catch (e) {
-      log('Error in bulk delete on back: $e');
+      log('Error in cleanup slot history: $e');
     }
   }
 
 
 
-  Future<void> processSlotHistoryForNext() async {
-    if (multiDateSelections.isEmpty) return;
+  // Process slot history for payment - call APIs for all selections
+  Future<bool> processSlotHistoryForPayment() async {
+    if (multiDateSelections.isEmpty) return false;
 
     try {
-      final slots = [];
+      final slots = <Map<String, dynamic>>[];
       
       for (var entry in multiDateSelections.entries) {
         final selection = entry.value;
@@ -171,19 +185,21 @@ class CreateOpenMatchesController extends GetxController {
           "courtId": courtId,
           "courtName": courtName,
           "bookingDate": dateString,
-          "userId": "",
-          "time": slot.time ?? '',
+          "time": bookingTime,
           "bookingTime": bookingTime,
           "duration": duration,
           "totalTime": duration,
         });
       }
       
-      await repository.createAndGetSlotHistory(data: {"slots": slots});
-      log('Batch create slot history: $slots');
+      final success = await createAndGetSlotHistory(slots);
+      if (success) {
+        hasCalledSlotHistoryAPI.value = true;
+      }
+      return success;
     } catch (e) {
-      log('Error in batch create: $e');
-      rethrow;
+      log('Error processing slot history: $e');
+      return false;
     }
   }
 
@@ -191,19 +207,16 @@ class CreateOpenMatchesController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+      // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
       return;
     }
 
     try {
-      await processSlotHistoryForNext();
+      final success = await processSlotHistoryForPayment();
+      if (!success) {
+        return;
+      }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Failed to process slots. Please try again.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       return;
     }
 
@@ -358,7 +371,11 @@ class CreateOpenMatchesController extends GetxController {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         isScrollControlled: true,
-      );
+      ).then((_) {
+        // Cleanup when bottomsheet is closed
+        cleanupSlotHistory();
+        Get.delete<QuestionsBottomsheetController>(tag: 'questions');
+      });
   } 
   void _autoSelectTab() {
     // Don't auto-select if user has manually selected a tab
@@ -461,14 +478,7 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
-  Future<void> deleteSlotHistory(List<Map<String, dynamic>> slots) async {
-    try {
-      await repository.deleteSlotHistory(data: {"slots": slots});
-      log('deleteSlotHistory called with slots: $slots');
-    } catch (e) {
-      log('Error in deleteSlotHistory: $e');
-    }
-  }
+
 
   void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isLeftHalf}) {
     Map<String, String>? resolvedCourtInfo;
@@ -513,7 +523,7 @@ class CreateOpenMatchesController extends GetxController {
   bool _canAddSlot() {
     final currentCount = getTotalSelectionsCount(); // Use the consolidated count
     if (currentCount >= maxSlots) {
-      SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
+      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
       return false;
     }
 
@@ -567,13 +577,13 @@ class CreateOpenMatchesController extends GetxController {
                                   multiDateSelections.containsKey(fullKey);
     
     if (!isSlotAlreadySelected && getTotalSelectionsCount() >= maxSlots) {
-      SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
+      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
       return;
     }
     
     // Check if this selection maintains consecutive slots
     if (!isSlotAlreadySelected && !_isConsecutiveSelectionAllowed(courtId, slotId, dateString)) {
-      SnackBarUtils.showErrorSnackBar("Please select consecutive time slots only.");
+      // SnackBarUtils.showErrorSnackBar("Please select consecutive time slots only.");
       return;
     }
     
@@ -930,13 +940,13 @@ class CreateOpenMatchesController extends GetxController {
       log("Stack trace: $stackTrace");
       slots.value = null;
 
-      Get.snackbar(
-        "Error",
-        "Failed to load courts. Please try again.",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to load courts. Please try again.",
+      //   backgroundColor: Colors.redAccent,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
     } finally {
       isLoadingCourts.value = false;
     }
@@ -1100,13 +1110,13 @@ class CreateOpenMatchesController extends GetxController {
       cartLoader.value = true;
 
       if (multiDateSelections.isEmpty) {
-        Get.snackbar(
-          "No Slots Selected",
-          "Please select at least one slot before adding to cart.",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
+        // Get.snackbar(
+        //   "No Slots Selected",
+        //   "Please select at least one slot before adding to cart.",
+        //   backgroundColor: Colors.redAccent,
+        //   colorText: Colors.white,
+        //   snackPosition: SnackPosition.TOP,
+        // );
         return;
       }
 
@@ -1190,22 +1200,22 @@ class CreateOpenMatchesController extends GetxController {
       (data is Map && data['message'] is String) ? data['message'] as String : null;
       final detailed = serverMessage ?? e.message ?? 'Something went wrong.';
       log("Add to cart failed (Dio): status=${e.response?.statusCode}, data=${e.response?.data}");
-      Get.snackbar(
-        "Error",
-        detailed,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      // Get.snackbar(
+      //   "Error",
+      //   detailed,
+      //   backgroundColor: Colors.redAccent,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
     } catch (e) {
       log("Error adding to cart: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to add slots to cart. Please try again.",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to add slots to cart. Please try again.",
+      //   backgroundColor: Colors.redAccent,
+      //   colorText: Colors.white,
+      //   snackPosition: SnackPosition.TOP,
+      // );
     } finally {
       cartLoader.value = false;
     }

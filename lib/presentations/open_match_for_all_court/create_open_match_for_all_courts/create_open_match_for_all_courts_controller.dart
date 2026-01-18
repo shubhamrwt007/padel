@@ -43,12 +43,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   // Method to fetch clubs and hide main grid
   void fetchClubs() {
     if (multiDateSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
 
@@ -231,21 +231,21 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
 
       // ❌ All slots failed (locked)
       if (lockedSlots.isNotEmpty) {
-        SnackBarUtils.showInfoSnackBar(
-          lockedSlots.first.message ??
-              "Selected slots are currently locked. Please try again.",
-        );
+        // SnackBarUtils.showInfoSnackBar(
+        //   lockedSlots.first.message ??
+        //       "Selected slots are currently locked. Please try again.",
+        // );
       }
 
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      Get.snackbar(
-        "Error",
-        "Failed to select slot. Please try again.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to select slot. Please try again.",
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
       return false;
     }
   }
@@ -274,12 +274,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         realCourtSelections.remove(realCourtKey);
       } else {
         if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString, isHalfSlot: true)) {
-          Get.snackbar(
-            "Selection Limit",
-            "You can only select 3 consecutive slots.",
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
+          // Get.snackbar(
+          //   "Selection Limit",
+          //   "You can only select 3 consecutive slots.",
+          //   backgroundColor: Colors.orange,
+          //   colorText: Colors.white,
+          // );
           return;
         }
 
@@ -308,12 +308,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         selectedSlots.removeWhere((s) => s.sId == slotId);
       } else {
         if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString)) {
-          Get.snackbar(
-            "Selection Limit",
-            "You can only select 3 consecutive slots.",
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
+          // Get.snackbar(
+          //   "Selection Limit",
+          //   "You can only select 3 consecutive slots.",
+          //   backgroundColor: Colors.orange,
+          //   colorText: Colors.white,
+          // );
           return;
         }
 
@@ -397,12 +397,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     } else {
       // Check if adding this slot would exceed 3 slots or break consecutiveness
       if (!_canAddSlot(slot, resolvedCourtId, dateString)) {
-        Get.snackbar(
-          "Selection Limit",
-          "You can only select 3 consecutive slots.",
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
+        // Get.snackbar(
+        //   "Selection Limit",
+        //   "You can only select 3 consecutive slots.",
+        //   backgroundColor: Colors.orange,
+        //   colorText: Colors.white,
+        // );
         return;
       }
 
@@ -647,12 +647,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     });
 
     if (isTimeAlreadySelected) {
-      Get.snackbar(
-        "Time Conflict",
-        "This time slot is already selected in another court.",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "Time Conflict",
+      //   "This time slot is already selected in another court.",
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
       return false;
     }
 
@@ -1131,12 +1131,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (realCourtSelections.isEmpty) {
-      Get.snackbar(
-        "No Selection",
-        "Please select at least one slot to continue.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   "No Selection",
+      //   "Please select at least one slot to continue.",
+      //   backgroundColor: Colors.orange,
+      //   colorText: Colors.white,
+      // );
       return;
     }
 

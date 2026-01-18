@@ -1260,7 +1260,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               ),).paddingOnly(right: 40),
               onTap: () {
                 if (!hasSelections) {
-                  SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+                  // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
                   return;
                 }
                 // SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
@@ -1613,9 +1613,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     // Simulate payment processing
     Future.delayed(const Duration(seconds: 2), () {
       isProcessing.value = false;
-      SnackBarUtils.showSuccessSnackBar(
-        "Payment successful! Booking confirmed.",
-      );
+      // SnackBarUtils.showSuccessSnackBar(
+      //   "Payment successful! Booking confirmed.",
+      // );
       controller.clearAllSelections();
     });
   }

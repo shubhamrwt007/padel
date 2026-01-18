@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
+import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import '../../configs/routes/routes_name.dart';
 
 class CartScreen extends StatelessWidget {
@@ -355,7 +356,10 @@ class CartScreen extends StatelessWidget {
             Get.snackbar("Empty Cart", "Please add items to cart.");
             return;
           }
-          Get.toNamed(RoutesName.paymentMethod);
+          
+          // Create PaymentMethodController and call createInitialBooking
+          final paymentController = Get.put(PaymentMethodController());
+          await paymentController.createInitialBooking();
         },
         child: Row(
           children: [

@@ -2,6 +2,8 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_controller.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/reset_password_screen.dart';
@@ -52,8 +54,16 @@ class OtpController extends GetxController {
       var result = await signUpRepository.verifyOTP(body: body);
       if (result.status == "200") {
         getPurpose();
-      } else {
-        SnackBarUtils.showErrorSnackBar(result.message!);
+      } else if (result.status == "400") {
+        Fluttertoast.showToast(
+          msg: result.message!,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+          timeInSecForIosWeb: 3,
+        );
       }
     } finally {
       isLoading.value = false;
@@ -75,6 +85,7 @@ class OtpController extends GetxController {
   Future<void> resendOtp() async {
     if (isResending.value) return;
     isResending.value = true;
+    valueController.clear();
     if (arguments['type'] == OtpScreenType.createAccount) {
       await signUpController.sendOTP();
     } else if (arguments['type'] == OtpScreenType.login) {
@@ -85,6 +96,8 @@ class OtpController extends GetxController {
 
     isResending.value = false;
     startTimer();
+    pinFocusNode.requestFocus();
+
   }
   Timer? _timer;
   RxInt secondsRemaining = 60.obs;

@@ -539,10 +539,12 @@ class HomeController extends GetxController {
 
   ScoreBoardRepository repository = Get.put(ScoreBoardRepository());
   RxBool isCheckingScoreboard = false.obs;
+  RxBool isCreatingScoreboard = false.obs;
   RxString loadingBookingId = ''.obs;
   Future<void> createScoreBoard({required String bookingId}) async {
     try {
       isCheckingScoreboard.value = true;
+      isCreatingScoreboard.value = true;
       loadingBookingId.value = bookingId;
 
       final bookingList = bookings.value?.data ?? [];
@@ -552,20 +554,30 @@ class HomeController extends GetxController {
       }
 
       final booking = bookingList.firstWhere(
-        (b) => b.sId == bookingId || b.openMatchId?.sId == bookingId,
+            (b) => b.sId == bookingId || b.openMatchId?.sId == bookingId,
         orElse: () => bookingList.first,
       );
 
       final actualBookingId = booking.bookingType == "openMatch" ? booking.sId : bookingId;
 
-      // If scoreboard already exists, just navigate
-      if (booking.scoreboard?.sId != null && booking.scoreboard!.sId!.isNotEmpty) {
-        isCheckingScoreboard.value = false;
-        Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId ?? bookingId});
-        return;
+      // ✅ SOLUTION: First check if scoreboard exists via API
+      try {
+        final scoreboardResponse = await repository.getScoreBoard(bookingId: actualBookingId ?? bookingId);
+
+        if (scoreboardResponse.status == 200 &&
+            scoreboardResponse.data != null &&
+            scoreboardResponse.data!.isNotEmpty) {
+          // Scoreboard already exists, just navigate
+          isCheckingScoreboard.value = false;
+          Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId ?? bookingId});
+          return;
+        }
+      } catch (e) {
+        // Scoreboard doesn't exist, continue to create
+        CustomLogger.logMessage(msg: "No existing scoreboard found: $e", level: LogLevel.info);
       }
 
-      // Create new scoreboard
+      // Create new scoreboard only if none exists
       final body = {
         "bookingId": actualBookingId ?? bookingId,
         "matchDate": booking.bookingDate ?? "",
@@ -573,7 +585,7 @@ class HomeController extends GetxController {
         "userId": storage.read("userId") ?? "",
         "courtName": booking.slot?[0].courtName ?? "",
         "clubName": booking.registerClubId?.clubName ?? "",
-        "matchType":booking.matchType??"",
+        "matchType": booking.matchType ?? "",
         "teams": [
           {
             "name": "Team A",
@@ -592,14 +604,18 @@ class HomeController extends GetxController {
       final response = await repository.createScoreBoard(data: body);
 
       isCheckingScoreboard.value = false;
+      isCreatingScoreboard.value = false;
 
       if (response.success == true) {
         Get.toNamed(RoutesName.scoreBoard, arguments: {"bookingId": actualBookingId ?? bookingId});
+        await fetchBookings();
       }
     } catch (e) {
       isCheckingScoreboard.value = false;
-    }finally{
+      isCreatingScoreboard.value = false;
+    } finally {
       loadingBookingId.value = '';
+      isCreatingScoreboard.value = false;
     }
   }
 }
