@@ -340,10 +340,10 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (controller.razorpayAmountUsed.value <= 0) {
-                                SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
-                                return;
-                              }
+                              // if (controller.razorpayAmountUsed.value <= 0) {
+                              //   SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
+                              //   return;
+                              // }
                               await controller.startPayment();
                             },
                             style: ElevatedButton.styleFrom(

@@ -39,6 +39,8 @@ class Data {
   String? createdAt;
   String? updatedAt;
   String? matchType;
+  String? startTime;
+  String? endTime;
   bool? matchStatus;
   int? iV;
   bool? isCompleted;
@@ -62,6 +64,8 @@ class Data {
     this.isCompleted,
     this.matchType,
     this.matchStatus,
+    this.startTime,
+    this.endTime,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -86,6 +90,8 @@ class Data {
     isCompleted = json['isCompleted'];
     matchType = json['matchType'];
     matchStatus = json['matchStatus'];
+    startTime = json['startTime'];
+    endTime = json['endTime'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -107,6 +113,8 @@ class Data {
         'isCompleted': isCompleted,
         'matchType': matchType,
         'matchStatus': matchStatus,
+        'startTime': startTime,
+        'endTime': endTime,
       };
 }
 

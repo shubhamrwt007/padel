@@ -68,6 +68,8 @@ class BookingHistoryData {
   List<PlayerId>? playerIds;
   List<BookingTeamPlayer>? teamA;
   List<BookingTeamPlayer>? teamB;
+  String? startTime;
+  String? endTime;
 
   BookingHistoryData({
     this.sId,
@@ -90,6 +92,8 @@ class BookingHistoryData {
     this.playerIds,
     this.teamA,
     this.teamB,
+    this.startTime,
+    this.endTime,
   });
 
   BookingHistoryData.fromJson(Map<String, dynamic> json) {
@@ -146,6 +150,9 @@ class BookingHistoryData {
         teamB!.add(BookingTeamPlayer.fromJson(v));
       });
     }
+
+    startTime = json['startTime']?.toString();
+    endTime = json['endTime']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -189,6 +196,9 @@ class BookingHistoryData {
     if (teamB != null) {
       data['teamB'] = teamB!.map((v) => v.toJson()).toList();
     }
+
+    data['startTime'] = startTime;
+    data['endTime'] = endTime;
 
     return data;
   }

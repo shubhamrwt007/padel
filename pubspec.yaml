@@ -48,6 +48,7 @@ dependencies:
   flutter_cache_manager:
   carousel_slider:
   dashed_circular_progress_bar:
+  fluttertoast:
 
 dev_dependencies:
   flutter_test:

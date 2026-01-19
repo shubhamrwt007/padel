@@ -18,32 +18,17 @@ class LeaderboardController extends GetxController {
   
   // Loading state
   final isLoading = false.obs;
+  final isLoadingMore = false.obs;
+  
+  // Pagination
+  int currentPage = 1;
+  final hasMoreData = true.obs;
   
   // API data
   final apiLeaderboardData = <Map<String, dynamic>>[].obs;
   final apiTopThree = <Player>[].obs;
   final myRankData = Rxn<Map<String, dynamic>>();
-  // Player list
-  final players = <Player>[
-    Player("Dianne Smith", 122, ""),
-    Player("Jane Cooper", 110, ""),
-    Player("Lily Johnson", 100, ""),
-    Player("Sophia Brown", 95, ""),
-    Player("Olivia Davis", 90, ""),
-    Player("Emma Wilson", 88, ""),
-    Player("Ava Martinez", 85, ""),
-    Player("Isabella Anderson", 83, ""),
-    Player("Mia Thomas", 80, ""),
-    Player("Charlotte Taylor", 78, ""),
-    Player("Amelia Moore", 75, ""),
-  ].obs;
-  final clubs = <Player>[
-    Player("Raptors Club", 200, ""),
-    Player("Falcons Club", 180, ""),
-    Player("Lions Club", 175, ""),
-    Player("Eagles Club", 160, ""),
-    Player("Wolves Club", 150, ""),
-  ].obs;
+
 
   final selectedTab = 0.obs;
   final leftScore = 16.obs;
@@ -84,94 +69,107 @@ class LeaderboardController extends GetxController {
     'Thiruvananthapuram',
   ];
 
-  // ✅ Convert players into leaderboardData (Map format)
+  // ✅ Use only API data for leaderboard
   List<Map<String, dynamic>> get leaderboardData {
-    // Use API data for Player tab, static data for others
-    if (selectedCategory.value == 'Player' && apiLeaderboardData.isNotEmpty) {
-      return apiLeaderboardData;
-    }
-    
-    final list = selectedCategory.value == 'Team' ? clubs : players;
-
-    return List.generate(list.length, (index) {
-      final p = list[index];
-      return {
-        'rank': index + 1,
-        'name': p.name,
-        'score': p.points,
-        'change': (index % 3 == 0)
-            ? 1
-            : (index % 3 == 1 ? -1 : 0), // mock rank change
-        'image': p.imageUrl,
-        'streak': (index + 1) * 2,
-        'matches': 40 + index,
-        'wins': 20 + index,
-        'losses': 10 + index,
-      };
-    });
+    return apiLeaderboardData;
   }
 
   // Get top 3 players for podium
   List<Player> get topThreePlayers {
-    if (selectedCategory.value == 'Player' && apiTopThree.isNotEmpty) {
-      return apiTopThree;
-    }
-    
-    final list = selectedCategory.value == 'Team' ? clubs : players;
-    return list.take(3).toList();
+    return apiTopThree;
   }
 
   // Fetch leaderboard data from API
-  Future<void> fetchLeaderboardData() async {
+  Future<void> fetchLeaderboardData({bool isRefresh = false}) async {
     try {
-      isLoading.value = true;
-       final userId = storage.read("userId");
-      final response = await _repository.getLeaderBoard(id: userId);
+      if (isRefresh) {
+        isLoading.value = true;
+        currentPage = 1;
+        apiLeaderboardData.clear();
+      } else {
+        isLoading.value = true;
+      }
+      
+      final userId = storage.read("userId");
+      print('🔍 Fetching leaderboard for userId: $userId, page: $currentPage');
+      
+      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10);
+      print('🔍 API Response success: ${response.success}');
       
       if (response.success == true && response.data != null) {
-        // Convert API data to required format
-        _convertApiDataToFormat(response.data!);
+        print('🔍 Converting API data to format');
+        _convertApiDataToFormat(response.data!, isRefresh: isRefresh);
+        print('🔍 After conversion - apiLeaderboardData length: ${apiLeaderboardData.length}');
+      } else {
+        print('🔍 API response failed or no data');
       }
     } catch (e) {
-      print('Error fetching leaderboard: $e');
+      print('❌ Error fetching leaderboard: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  void _convertApiDataToFormat(LeaderboardData data) {
-    // Convert top three
-    if (data.topThree != null) {
-      apiTopThree.value = data.topThree!.map((item) => Player(
-        item.name ?? '',
-        item.xpPoints ?? 0,
-        item.profilePic ?? '',
-      )).toList();
+  // Load more data for pagination
+  Future<void> loadMoreData() async {
+    if (isLoadingMore.value || !hasMoreData.value) return;
+    
+    try {
+      isLoadingMore.value = true;
+      currentPage++;
+      
+      final userId = storage.read("userId");
+      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10);
+      
+      if (response.success == true && response.data != null) {
+        _convertApiDataToFormat(response.data!, isLoadMore: true);
+      }
+    } catch (e) {
+      print('❌ Error loading more data: $e');
+      currentPage--; // Revert page increment on error
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  void _convertApiDataToFormat(LeaderboardData data, {bool isRefresh = false, bool isLoadMore = false}) {
+    print('🔍 Converting data - leaderboard: ${data.leaderboard?.length}');
+    
+    // Convert top three and myRank only on initial load or refresh
+    if (!isLoadMore) {
+      if (data.topThree != null && data.topThree!.isNotEmpty) {
+        apiTopThree.value = data.topThree!.map((item) => Player(
+          item.name ?? '',
+          item.xpPoints ?? 0,
+          item.profilePic ?? '',
+        )).toList();
+        print('🔍 Top three converted: ${apiTopThree.length} items');
+      }
+
+      if (data.myRank != null) {
+        myRankData.value = {
+          'rank': data.myRank!.rank ?? 0,
+          'name': data.myRank!.name ?? '',
+          'score': data.myRank!.xpPoints ?? 0,
+          'change': 0,
+          'image': data.myRank!.profilePic ?? '',
+          'streak': data.myRank!.currentWinStreak ?? 0,
+          'matches': data.myRank!.matches ?? 0,
+          'wins': data.myRank!.wins ?? 0,
+          'losses': data.myRank!.losses ?? 0,
+        };
+        print('🔍 MyRank converted: ${myRankData.value}');
+      }
     }
 
-    // Convert myRank
-    if (data.myRank != null) {
-      myRankData.value = {
-        'rank': data.myRank!.rank ?? 0,
-        'name': data.myRank!.name ?? '',
-        'score': data.myRank!.xpPoints ?? 0,
-        'change': 0,
-        'image': data.myRank!.profilePic ?? '',
-        'streak': data.myRank!.currentWinStreak ?? 0,
-        'matches': data.myRank!.matches ?? 0,
-        'wins': data.myRank!.wins ?? 0,
-        'losses': data.myRank!.losses ?? 0,
-      };
-    }
-
-    // Convert leaderboard
-    if (data.leaderboard != null) {
-      apiLeaderboardData.value = data.leaderboard!.map((item) {
+    // Convert leaderboard data
+    if (data.leaderboard != null && data.leaderboard!.isNotEmpty) {
+      final newData = data.leaderboard!.map((item) {
         return {
           'rank': item.rank ?? 0,
           'name': item.name ?? '',
           'score': item.xpPoints ?? 0,
-          'change': 0, // API doesn't provide change data
+          'change': 0,
           'image': item.profilePic ?? '',
           'streak': item.currentWinStreak ?? 0,
           'matches': item.matches ?? 0,
@@ -179,6 +177,18 @@ class LeaderboardController extends GetxController {
           'losses': item.losses ?? 0,
         };
       }).toList();
+      
+      if (isLoadMore) {
+        apiLeaderboardData.addAll(newData);
+      } else {
+        apiLeaderboardData.value = newData;
+      }
+      
+      // Check if there's more data
+      hasMoreData.value = data.leaderboard!.length >= 10;
+      print('🔍 Leaderboard converted: ${apiLeaderboardData.length} total items, hasMore: ${hasMoreData.value}');
+    } else {
+      hasMoreData.value = false;
     }
   }
 

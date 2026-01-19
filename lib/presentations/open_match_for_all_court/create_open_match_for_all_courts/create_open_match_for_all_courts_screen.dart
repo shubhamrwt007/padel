@@ -20,12 +20,14 @@ import 'package:padel_mobile/presentations/booking/book_session/widgets/court_sl
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart' as GetCourtsByDurationModel;
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'create_open_match_for_all_courts_controller.dart';
 
 
 
 class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   final CreateOpenMatchForAllCourtsController controller = Get.put(CreateOpenMatchForAllCourtsController());
+  final WalletController walletController = Get.put(WalletController());
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
 
@@ -33,6 +35,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fetch wallet balance when screen builds
+    walletController.fetchWallet();
+    
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       bottomNavigationBar: _buildPaymentPanel(),
@@ -82,14 +87,14 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
-                    const Text(
-                      "0 Cr",
+                    Obx(() => Text(
+                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppColors.primaryColor,
                       ),
-                    )
+                    ))
                   ],
                 ),
               ),
@@ -1255,7 +1260,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               ),).paddingOnly(right: 40),
               onTap: () {
                 if (!hasSelections) {
-                  SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+                  // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
                   return;
                 }
                 // SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
@@ -1608,9 +1613,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     // Simulate payment processing
     Future.delayed(const Duration(seconds: 2), () {
       isProcessing.value = false;
-      SnackBarUtils.showSuccessSnackBar(
-        "Payment successful! Booking confirmed.",
-      );
+      // SnackBarUtils.showSuccessSnackBar(
+      //   "Payment successful! Booking confirmed.",
+      // );
       controller.clearAllSelections();
     });
   }

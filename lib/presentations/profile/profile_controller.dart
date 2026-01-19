@@ -170,7 +170,7 @@ var profileModel = Rxn<ProfileModel>();
     try{
       final response = await profileRepository.deleteCustomer();
       if(response.status == 200){
-        SnackBarUtils.showSuccessSnackBar(response.message??"User Delete");
+        // SnackBarUtils.showSuccessSnackBar(response.message??"User Delete");
         Get.offAllNamed(RoutesName.login);
       }
     }catch(e){

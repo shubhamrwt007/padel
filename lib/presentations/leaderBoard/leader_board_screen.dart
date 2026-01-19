@@ -297,10 +297,17 @@ class LeaderboardScreen extends StatelessWidget {
   }
 
   Widget _buildPodiumSectionFor(List<Player> top3) {
+    if (top3.isEmpty) {
+      return const SizedBox(
+        height: 300,
+        child: Center(child: Text('No data available', style: TextStyle(color: Colors.white))),
+      );
+    }
+    
     if (top3.length < 3) {
       return const SizedBox(
         height: 300,
-        child: Center(child: Text('Not enough entries for podium')),
+        child: Center(child: Text('Not enough entries for podium', style: TextStyle(color: Colors.white))),
       );
     }
 
@@ -500,6 +507,12 @@ class LeaderboardScreen extends StatelessWidget {
         minChildSize: minSize,
         maxChildSize: maxSize,
         builder: (context, scroll) {
+          scroll.addListener(() {
+            if (scroll.position.pixels >= scroll.position.maxScrollExtent - 200) {
+              controller.loadMoreData();
+            }
+          });
+          
           return Obx(
                 () => AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -538,7 +551,7 @@ class LeaderboardScreen extends StatelessWidget {
                         );
                       }),
                       
-                      // My Rank section - only show for Player tab with API data
+                      // My Rank section - show for all cases when data exists
                       if (!controller.isHandleVisible.value)
                         SizedBox(height: 10,),
                       Container(
@@ -557,8 +570,7 @@ class LeaderboardScreen extends StatelessWidget {
                         ),
                       ),
                       Obx(() {
-                        if (controller.selectedCategory.value == 'Player' &&
-                            controller.myRankData.value != null) {
+                        if (controller.myRankData.value != null) {
                           return Column(
                             children: [
                               const SizedBox(height: 10),
@@ -571,13 +583,39 @@ class LeaderboardScreen extends StatelessWidget {
                       }),
                       // const SizedBox(height: 10),
                       Column(
-                        children: List.generate(
-                          data.length,
-                              (index) => LeaderboardCard(
-                            item: data[index],
-                            index: index,
+                        children: [
+                          ...List.generate(
+                            data.length,
+                                (index) => LeaderboardCard(
+                              item: data[index],
+                              index: index,
+                            ),
                           ),
-                        ),
+                          // Loading more indicator
+                          Obx(() {
+                            if (controller.isLoadingMore.value) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
+                          // End message when no more data
+                          Obx(() {
+                            if (!controller.hasMoreData.value && data.isNotEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(
+                                  'No more data to load',
+                                  style: TextStyle(color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
+                        ],
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -689,10 +727,11 @@ class LeaderboardScreen extends StatelessWidget {
                 children: [
                   Container(
                     width: 25,
+                    color: Colors.transparent,
                     child: Text(
                       '${myRank['rank']}',
                       style: Get.textTheme.labelLarge!.copyWith(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryColor,
                       ),

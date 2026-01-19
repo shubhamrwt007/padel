@@ -259,8 +259,8 @@ class NotificationController extends GetxController {
         case '/yourMatchRequest':
           Get.toNamed(RoutesName.yourMatchRequest);
           break;
-        case '/BookingConfirmed':
-          Get.toNamed('/booking-confirmed');
+        case "/bookingRequests":
+          Get.toNamed(RoutesName.yourMatchRequest);
           break;
         case '/PaymentSuccess':
           Get.toNamed('/payment-success');
@@ -291,12 +291,12 @@ class NotificationController extends GetxController {
     if (message.notification != null) {
       await fetchUnreadNotificationCount();
       await fetchNotifications();
-      Get.snackbar(
-        message.notification!.title ?? 'New Message',
-        message.notification!.body ?? '',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 4),
-      );
+      // Get.snackbar(
+      //   message.notification!.title ?? 'New Message',
+      //   message.notification!.body ?? '',
+      //   snackPosition: SnackPosition.TOP,
+      //   duration: const Duration(seconds: 4),
+      // );
     }
   }
 
@@ -475,6 +475,32 @@ class NotificationController extends GetxController {
     _sendTokenToServer(newToken);
   }
 
+  /// Generate initials from name
+  String getInitials(String name) {
+    if (name.isEmpty) return 'U';
+
+    // Remove extra whitespace and split by space
+    final words = name.trim().split(RegExp(r'\s+'));
+
+    if (words.isEmpty) return 'U';
+
+    if (words.length == 1) {
+      // Single word: return first character in uppercase
+      return words[0][0].toUpperCase();
+    }
+
+    // Multiple words: return first character of first two words in uppercase
+    return '${words[0][0]}${words[1][0]}'.toUpperCase();
+  }
+  String capitalizeWords(String text) {
+    if (text.isEmpty) return text;
+
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
   @override
   void onClose() {
     _notificationService.dispose();
@@ -528,6 +554,7 @@ class NotificationController extends GetxController {
               'bookingStatus': notif.bookingId?.bookingStatus ?? '',
               'notificationType': notif.notificationType ?? '',
               'profileImage': notif.profileImage ?? '',
+              'userName': notif.title ?? 'User',
             };
           }).toList(),
         );

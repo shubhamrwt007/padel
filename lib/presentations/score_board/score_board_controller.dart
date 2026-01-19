@@ -16,6 +16,8 @@ class ScoreBoardController extends GetxController {
   RxString winner = "".obs;
   RxString matchDate = "".obs;
   RxString matchTime = "".obs;
+  RxString startTime = "".obs;
+  RxString endTime = "".obs;
   RxString clubName = "".obs;
   RxString courtName = "".obs;
   RxBool isCompleted = false.obs;
@@ -286,6 +288,8 @@ class ScoreBoardController extends GetxController {
             level: LogLevel.info);
         matchDate.value = item.matchDate ?? "";
         matchTime.value = item.matchTime ?? "";
+        startTime.value = item.startTime ?? "";
+        endTime.value = item.endTime ?? "";
         clubName.value = item.clubName ?? "";
         courtName.value = item.courtName ?? "";
 
