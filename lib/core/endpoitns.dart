@@ -13,13 +13,10 @@ class AppEndpoints {
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-<<<<<<< HEAD
-  static const String baseUrl = "http://192.168.0.118:5070/api/customer/";
-  static const String socketUrl = "http://192.168.0.118:5070";
-=======
+  // static const String baseUrl = "http://192.168.0.118:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.118:5070";
   // static const String baseUrl = "http://172.20.10.5:5070/api/customer/";
   // static const String socketUrl = "http://172.20.10.5:5070";
->>>>>>> 60eab327f90161d4d42724b0dae0e36df46973b8
 
 
 
