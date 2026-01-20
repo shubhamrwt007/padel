@@ -44,6 +44,8 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
               const SizedBox(height: 16),
               _buildTabBar(),
               const SizedBox(height: 10),
+              _buildCountdownTimer(),
+              const SizedBox(height: 10),
               Obx(() => controller.selectedTab.value == 0
                   ? _buildRankingInfo()
                   : SizedBox.shrink()),
@@ -93,6 +95,49 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
               ),
             );
           }),
+        ),
+      );
+    });
+  }
+
+  Widget _buildCountdownTimer() {
+    return Obx(() {
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: controller.isTimerActive.value 
+              ? AppColors.secondaryColor 
+              : Colors.grey.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: controller.isTimerActive.value 
+                ? AppColors.secondaryColor 
+                : Colors.grey.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              controller.isTimerActive.value 
+                  ? Icons.timer 
+                  : Icons.timer_off,
+              color: AppColors.whiteColor,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              controller.formattedTime,
+              style: Get.textTheme.headlineMedium!.copyWith(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
       );
     });
