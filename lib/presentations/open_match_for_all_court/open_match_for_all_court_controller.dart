@@ -342,7 +342,7 @@ class OpenMatchForAllCourtController extends GetxController {
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
 
-      SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
+      // SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
 
       // Refresh matches
       await fetchMatchesForSelection();
@@ -366,7 +366,7 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      SnackBarUtils.showSuccessSnackBar("Request rejected");
+      // SnackBarUtils.showSuccessSnackBar("Request rejected");
     } catch (e) {
       CustomLogger.logMessage(msg: "Error rejecting request: $e", level: LogLevel.error);
     } finally {

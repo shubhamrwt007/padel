@@ -776,34 +776,15 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   Widget _buildAvailableCircle(String team, String matchId, String? skillLevel, int index, MatchData? match) {
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
+    final hasActiveRequest = match?.isRequest == true;
     
     return GestureDetector(
-      onTap: () {
+      onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team), isScrollControlled: true);
         } else {
-          AddPlayerBottomSheet.show(
-            context,
-            arguments: {
-              "team": team,
-              "matchId": matchId,
-              "needOpenMatches": true,
-              "matchLevel": skillLevel,
-              "isLoginUser": !isLoginUserInMatch,
-              "isMatchCreator": isMatchCreator,
-            },
-          );
-          // Get.toNamed(
-          //   RoutesName.addPlayer,
-          //   arguments: {
-          //     "team": team,
-          //     "matchId": matchId,
-          //     "needOpenMatches": true,
-          //     "matchLevel": skillLevel,
-          //     "isLoginUser": !isLoginUserInMatch,
-          //     "isMatchCreator": isMatchCreator,
-          //   },
-          // );
+          // Direct API call for login user
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId ?? '');
         }
       },
       child: CircleAvatar(
@@ -811,8 +792,11 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
         backgroundColor: Colors.white,
         child: CircleAvatar(
           radius: 20,
-          backgroundColor:const Color(0xffeaf0ff),
-          child: Icon(Icons.add, color:AppColors.primaryColor),
+          backgroundColor: hasActiveRequest ? Colors.grey.withOpacity(0.3) : const Color(0xffeaf0ff),
+          child: Icon(
+            Icons.add, 
+            color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
+          ),
         ),
       ),
     );
@@ -843,6 +827,133 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 
     // createdBy is a UserId object, so we need to check the sId field
     return match.createdBy == userId.toString();
+  }
+
+  // Direct request to join match for login user
+  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId) async {
+    final userId = storage.read('userId');
+    if (userId == null) return;
+
+    // Find the match data to check isRequest
+    final matchData = controller.matchesBySelection.value?.data?.firstWhere(
+      (match) => match.sId == matchId,
+      orElse: () => MatchData(),
+    );
+
+    // Check if there's already an active request
+    if (matchData?.isRequest == true) {
+      Get.dialog(
+        Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info,
+                  color: Colors.orange,
+                  size: 60,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Request Already Sent',
+                  style: Get.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'You have already sent a request to join this match. Please wait for the match creator to respond.',
+                  textAlign: TextAlign.center,
+                  style: Get.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final addPlayerController = Get.put(AddPlayerController());
+      
+      // Set required values
+      addPlayerController.matchId.value = matchId;
+      addPlayerController.selectedTeam.value = team;
+      addPlayerController.playerId.value = userId;
+      addPlayerController.openMatchesController = controller;
+      
+      // Call the request API directly
+      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId);
+      if (success) {
+        Get.dialog(
+          Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Request Sent!',
+                    style: Get.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your request to join the match has been sent successfully.',
+                    textAlign: TextAlign.center,
+                    style: Get.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error requesting to join match: $e", level: LogLevel.error);
+    }
   }
 
   void _makeCall(String phoneNumber) async {

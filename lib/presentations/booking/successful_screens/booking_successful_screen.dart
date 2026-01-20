@@ -1,4 +1,5 @@
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
+import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 
 class BookingSuccessfulScreen extends StatelessWidget {
@@ -10,8 +11,8 @@ class BookingSuccessfulScreen extends StatelessWidget {
       body: Column(
         children: [
           Center(
-            child: Image.asset(Assets.imagesImgBookingSuccessful, scale: 9),
-          ).paddingOnly(top: Get.height * 0.2),
+            child: Image.asset(Assets.imagesImgBookingSuccessful, scale: 4),
+          ).paddingOnly(top: Get.height * 0.2,bottom: Get.height*0.02),
           Text(
             AppStrings.bookingSuccessful,
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -31,7 +32,7 @@ class BookingSuccessfulScreen extends StatelessWidget {
               Get.offAllNamed(RoutesName.bottomNav);
             },
             text: AppStrings.continueText,
-          ).paddingOnly(bottom: Get.height * 0.17),
+          ).paddingOnly(bottom: Get.height * 0.14),
           Text(
             AppStrings.youWillReceiveReminder,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
@@ -40,7 +41,7 @@ class BookingSuccessfulScreen extends StatelessWidget {
             ),
           ).paddingOnly(bottom: Get.height * 0.02),
           GestureDetector(
-            onTap: () => Get.toNamed(RoutesName.bookingHistory),
+            onTap: () => Get.to(BookingHistoryUi(buttonType: "drawer",)),
             child: Container(
               color: Colors.transparent,
               child: Text(

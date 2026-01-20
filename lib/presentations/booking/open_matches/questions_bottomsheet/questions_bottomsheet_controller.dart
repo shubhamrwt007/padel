@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
+import 'package:padel_mobile/presentations/booking/successful_screens/booking_successful_screen.dart';
 import 'package:padel_mobile/presentations/openmatchbooking/openmatch_booking_controller.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
@@ -160,7 +161,8 @@ class QuestionsBottomsheetController extends GetxController {
       if (response.statusCode == 200) {
         log("Match confirmed: ${response.data}");
         // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
-        Get.offAllNamed(RoutesName.bottomNav);
+        // Get.offAllNamed(RoutesName.bottomNav);
+        Get.to(() => BookingSuccessfulScreen());
         openMatchBookingController.fetchOpenMatchesBooking(type: 'upcoming');
       } else {
         Get.close(2);
