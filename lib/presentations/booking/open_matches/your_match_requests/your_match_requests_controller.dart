@@ -3,6 +3,8 @@ import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart'
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 
 class YourMatchRequestsController extends GetxController {
   RxInt expandedIndex = (-1).obs;
@@ -71,6 +73,10 @@ class YourMatchRequestsController extends GetxController {
   }
 
   void _showInsufficientBalanceDialog(String message) {
+    final TextEditingController amountController = TextEditingController();
+    final WalletController walletController = Get.put(WalletController());
+    walletController.fetchWallet();
+
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -113,10 +119,39 @@ class YourMatchRequestsController extends GetxController {
                 ),
               ),
               const SizedBox(height: 10),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Current Balance: ₹${formatAmount(walletController.walletBalance.value.toString())} Credits",
+                  style: Get.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )),
+              const SizedBox(height: 16),
               Text(
                 message,
                 textAlign: TextAlign.center,
                 style: Get.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: "Enter amount",
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Row(
@@ -141,23 +176,38 @@ class YourMatchRequestsController extends GetxController {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        Get.toNamed('/wallet');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2F49C6),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    child: Obx(
+                      () => ElevatedButton(
+                        onPressed: walletController.isAddingBalance.value
+                            ? null
+                            : () {
+                                final amount = int.tryParse(amountController.text) ?? 0;
+                                if (amount > 0) {
+                                  walletController.createBalance(amount);
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2F49C6),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        "Add Credits",
-                        style: Get.textTheme.labelLarge!
-                            .copyWith(color: Colors.white),
+                        child: walletController.isAddingBalance.value
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Pay Now",
+                                style: Get.textTheme.labelLarge!
+                                    .copyWith(color: Colors.white),
+                              ),
                       ),
                     ),
                   ),

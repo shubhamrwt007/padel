@@ -42,10 +42,12 @@ class MatchData {
   bool? adminStatus;
   bool? isActive;
   bool? isDeleted;
+  bool? isRequest;
   String? createdAt;
   String? updatedAt;
   int? iV;
   int? pendingRequestsCount;
+  String? bookingId;
 
   MatchData({
     this.sId,
@@ -64,11 +66,13 @@ class MatchData {
     this.status,
     this.adminStatus,
     this.isActive,
+    this.isRequest,
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
     this.iV,
-    this.pendingRequestsCount
+    this.pendingRequestsCount,
+    this.bookingId,
   });
 
   static String? _asJoinedString(dynamic value) {
@@ -119,6 +123,8 @@ class MatchData {
     adminStatus = json['adminStatus'];
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
+    isRequest = json['isRequest'];
+    bookingId = json['bookingId'];
     createdAt = _asJoinedString(json['createdAt']);
     updatedAt = _asJoinedString(json['updatedAt']);
     iV = json['__v'];
@@ -140,6 +146,8 @@ class MatchData {
     map['matchDate'] = matchDate;
     map['matchTime'] = matchTime;
     map['matchStatus'] = matchStatus;
+    map['isRequest'] = isRequest;
+    map['bookingId'] = bookingId;
     if (teamA != null) {
       map['teamA'] = teamA!.map((v) => v.toJson()).toList();
     }
