@@ -1,197 +1,306 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/score_board/score_board_controller.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 void showMatchSummaryDialog(ScoreBoardController controller) {
+  // Determine if user is winner or loser
+  final isUserWinner = _isUserWinner(controller);
+  
+  if (isUserWinner) {
+    showWinnerDialog(controller);
+  } else {
+    showLoserDialog(controller);
+  }
+}
+
+bool _isUserWinner(ScoreBoardController controller) {
+  final winner = controller.winner.value;
+  if (winner.isEmpty || winner.toLowerCase() == 'none' || winner == '-') {
+    return false;
+  }
+  
+  final isUserInTeamA = controller.isUserInTeamA;
+  final isUserInTeamB = controller.isUserInTeamB;
+  
+  if (winner.toLowerCase() == 'team a' && isUserInTeamA) {
+    return true;
+  }
+  if (winner.toLowerCase() == 'team b' && isUserInTeamB) {
+    return true;
+  }
+  
+  return false;
+}
+
+void showWinnerDialog(ScoreBoardController controller) {
+  ProfileController? profileController;
+  try {
+    profileController = Get.find<ProfileController>();
+  } catch (e) {
+    // ProfileController not found, use default value
+  }
+  
+  final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
+  
   Get.dialog(
     Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: Colors.white,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Trophy Icon
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emoji_events,
-                color: Colors.amber,
-                size: 48,
-              ),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
             ),
-            const SizedBox(height: 16),
-            
-            // Title
-            const Text(
-              "Match Completed!",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // Winner
-            Obx(() => Text(
-              "${controller.winner.value} Wins!",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.amber.shade700,
-              ),
-            )),
-            const SizedBox(height: 24),
-            
-            // Final Score
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    "Final Score",
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Green WIN Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    "WIN!",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Obx(() => Text(
-                    "${controller.teamAWins.value} - ${controller.teamBWins.value}",
-                    style: const TextStyle(
-                      fontSize: 36,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 2,
                     ),
-                  )),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Sets Summary
-            Obx(() => Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: controller.sets.map((set) {
-                  final isTeamAWinner = set['winner'] == 'Team A';
-                  final isTeamBWinner = set['winner'] == 'Team B';
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Team A Score with Winner Indicator
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              if (isTeamAWinner) ...[
-                                const Icon(Icons.emoji_events, color: Colors.green, size: 16),
-                                const SizedBox(width: 4),
-                                const Text('W', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
-                                const SizedBox(width: 8),
-                              ],
-                              Text(
-                                "${set['teamAScore']}",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: isTeamAWinner ? Colors.green : Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
+                  ),
+                ),
+                
+                // Main content
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Congratulations text
+                      const Text(
+                        "Congratulations!",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                        // Set Number
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Text(
-                            "Set ${set['setNumber']}",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Your XP Points label
+                      const Text(
+                        "Your XP Points",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // XP Score (reactive if profileController exists)
+                      profileController != null
+                          ? Obx(() {
+                              final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
+                              return Text(
+                                "$xpPoints",
+                                style: const TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              );
+                            })
+                          : Text(
+                              "$initialXpPoints",
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
+                      const SizedBox(height: 16),
+                      
+                      // XP Bonus badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "+100 XP",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                        // Team B Score with Winner Indicator
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${set['teamBScore']}",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: isTeamBWinner ? Colors.green : Colors.black87,
-                                ),
-                              ),
-                              if (isTeamBWinner) ...[
-                                const SizedBox(width: 8),
-                                const Text('W', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.emoji_events, color: Colors.green, size: 16),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            )),
-            const SizedBox(height: 24),
-            ////
-            // Close Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Text(
-                  "Close",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Close button
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.black87),
+              onPressed: () => Get.back(),
+            ),
+          ),
+        ],
+      ),
+    ),
+    barrierDismissible: false,
+  );
+}
+
+void showLoserDialog(ScoreBoardController controller) {
+  ProfileController? profileController;
+  try {
+    profileController = Get.find<ProfileController>();
+  } catch (e) {
+    // ProfileController not found, use default value
+  }
+  
+  final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
+  
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Red LOST Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    "LOST",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+                
+                // Main content
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Bad Luck text
+                      const Text(
+                        "Bad Luck!",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Your XP Points label
+                      const Text(
+                        "Your XP Points",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // XP Score (reactive if profileController exists)
+                      profileController != null
+                          ? Obx(() {
+                              final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
+                              return Text(
+                                "$xpPoints",
+                                style: const TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              );
+                            })
+                          : Text(
+                              "$initialXpPoints",
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                      const SizedBox(height: 16),
+                      
+                      // XP Deduction badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD32F2F),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "-100 XP",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Close button
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.black87),
+              onPressed: () => Get.back(),
+            ),
+          ),
+        ],
       ),
     ),
     barrierDismissible: false,

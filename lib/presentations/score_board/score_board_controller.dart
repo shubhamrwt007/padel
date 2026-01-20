@@ -55,43 +55,42 @@ class ScoreBoardController extends GetxController {
   // Timer-related variables
   RxInt remainingSeconds = 0.obs;
   late Timer _gameTimer;
+  late Timer _countdownTimer;
   RxBool isGameStarted = false.obs;
   RxBool isWithinMatchTime = false.obs;
+  RxBool isCountdownActive = false.obs;
+
+  ///Calculate total match duration in seconds----------------------------------------------
+  int _calculateTotalMatchDuration() {
+    try {
+      if (startTime.value.isEmpty || endTime.value.isEmpty) return 0;
+
+      String startTimeStr = _normalizeTimeFormat(startTime.value.trim());
+      String endTimeStr = _normalizeTimeFormat(endTime.value.trim());
+      
+      DateTime startTimeObj = DateFormat('h:mm a').parse(startTimeStr);
+      DateTime endTimeObj = DateFormat('h:mm a').parse(endTimeStr);
+      
+      int durationMinutes = endTimeObj.difference(startTimeObj).inMinutes;
+      return durationMinutes * 60; // Convert to seconds
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error calculating total match duration: $e", level: LogLevel.error);
+      return 0;
+    }
+  }
 
   ///Calculate remaining match time in seconds----------------------------------------------
   int _calculateRemainingMatchTime() {
     try {
-      if (matchTime.value.isEmpty) return 0;
+      if (endTime.value.isEmpty) return 0;
 
-      String timeStr = matchTime.value.trim();
-      List<String> parts = timeStr.split('-');
-
-      String startTimeStr;
-      String endTimeStr;
-      
-      if (parts.length == 1) {
-        // Single time format - calculate duration from slot booking
-        startTimeStr = _normalizeTimeFormat(parts[0].trim());
-        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-        
-        // Get slot duration and add to start time
-        int slotDurationMinutes = _getSlotDurationMinutes();
-        DateTime endTime = startTime.add(Duration(minutes: slotDurationMinutes));
-        endTimeStr = DateFormat('h:mm a').format(endTime);
-      } else if (parts.length >= 2) {
-        startTimeStr = _normalizeTimeFormat(parts[0].trim());
-        endTimeStr = _normalizeTimeFormat(parts[1].trim());
-      } else {
-        return 0;
-      }
-
-      DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-      DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
+      String endTimeStr = _normalizeTimeFormat(endTime.value.trim());
+      DateTime endTimeObj = DateFormat('h:mm a').parse(endTimeStr);
       DateTime now = DateTime.now();
       
-      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
-      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
+      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTimeObj.hour, endTimeObj.minute);
 
+      // If end time is in the past, it means it's for next day
       if (endDateTime.isBefore(now)) {
         endDateTime = endDateTime.add(const Duration(days: 1));
       }
@@ -99,7 +98,7 @@ class ScoreBoardController extends GetxController {
       int remainingSeconds = endDateTime.difference(now).inSeconds;
       return remainingSeconds > 0 ? remainingSeconds : 0;
     } catch (e) {
-      CustomLogger.logMessage(msg: "Error calculating match time: $e", level: LogLevel.error);
+      CustomLogger.logMessage(msg: "Error calculating remaining match time: $e", level: LogLevel.error);
       return 0;
     }
   }
@@ -133,43 +132,20 @@ class ScoreBoardController extends GetxController {
   ///Check if current time is at or after match start time----------------------------------------------
   bool _isWithinMatchTimeWindow() {
     try {
-      if (matchTime.value.isEmpty) {
-        CustomLogger.logMessage(msg: "matchTime is EMPTY", level: LogLevel.error);
+      if (startTime.value.isEmpty || endTime.value.isEmpty) {
+        CustomLogger.logMessage(msg: "startTime or endTime is EMPTY", level: LogLevel.error);
         return false;
       }
 
-      String timeStr = matchTime.value.trim();
-      CustomLogger.logMessage(msg: "Raw matchTime: '$timeStr'", level: LogLevel.info);
+      String startTimeStr = _normalizeTimeFormat(startTime.value.trim());
+      String endTimeStr = _normalizeTimeFormat(endTime.value.trim());
       
-      List<String> parts = timeStr.split('-');
-      
-      String startTimeStr;
-      String endTimeStr;
-      
-      if (parts.length == 1) {
-        // Only start time provided, calculate end time using slot duration
-        startTimeStr = _normalizeTimeFormat(parts[0].trim());
-        DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-        int slotDurationMinutes = _getSlotDurationMinutes();
-        DateTime endTime = startTime.add(Duration(minutes: slotDurationMinutes));
-        endTimeStr = DateFormat('h:mm a').format(endTime);
-        CustomLogger.logMessage(msg: "Single time format detected, calculated end time with ${slotDurationMinutes}min duration", level: LogLevel.info);
-      } else if (parts.length >= 2) {
-        startTimeStr = _normalizeTimeFormat(parts[0].trim());
-        endTimeStr = _normalizeTimeFormat(parts[1].trim());
-      } else {
-        CustomLogger.logMessage(msg: "Invalid format - parts: ${parts.length}", level: LogLevel.error);
-        return false;
-      }
-      
-      CustomLogger.logMessage(msg: "Normalized start: '$startTimeStr', end: '$endTimeStr'", level: LogLevel.info);
-      
-      DateTime startTime = DateFormat('h:mm a').parse(startTimeStr);
-      DateTime endTime = DateFormat('h:mm a').parse(endTimeStr);
+      DateTime startTimeObj = DateFormat('h:mm a').parse(startTimeStr);
+      DateTime endTimeObj = DateFormat('h:mm a').parse(endTimeStr);
       DateTime now = DateTime.now();
       
-      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
-      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
+      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTimeObj.hour, startTimeObj.minute);
+      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTimeObj.hour, endTimeObj.minute);
       
       // If end time is before start time, it's next day
       if (endDateTime.isBefore(startDateTime)) {
@@ -178,11 +154,6 @@ class ScoreBoardController extends GetxController {
       
       // Check if current time is within match window
       bool isWithin = (now.isAfter(startDateTime) || now.isAtSameMomentAs(startDateTime)) && now.isBefore(endDateTime);
-      
-      CustomLogger.logMessage(
-        msg: "NOW: ${now.hour}:${now.minute}, START: ${startDateTime.hour}:${startDateTime.minute}, END: ${endDateTime.hour}:${endDateTime.minute}, RESULT: $isWithin",
-        level: LogLevel.info
-      );
       
       return isWithin;
     } catch (e) {
@@ -208,14 +179,24 @@ class ScoreBoardController extends GetxController {
     return first[0].toUpperCase() + first.substring(1).toLowerCase();
   }
 
-  ///Format elapsed time as MM:SS----------------------------------------------
+  ///Format remaining time as HH:MM:SS or MM:SS----------------------------------------------
   String get formattedTime {
     if (!isWithinMatchTime.value && !isGameStarted.value) {
       return '00:00';
     }
-    final minutes = (remainingSeconds.value ~/ 60).toString().padLeft(2, '0');
-    final seconds = (remainingSeconds.value % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    
+    final totalMinutes = remainingSeconds.value ~/ 60;
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    final seconds = remainingSeconds.value % 60;
+    
+    if (hours > 0) {
+      // Show hours:minutes:seconds format (e.g., 1:59:59)
+      return '${hours.toString()}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } else {
+      // Show minutes:seconds format (e.g., 59:59)
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
   }
 
   ///Get current player IDs in the match--------------------------------------
@@ -373,7 +354,7 @@ class ScoreBoardController extends GetxController {
 
         teamAWins.value = item.totalScore?.teamA ?? 0;
         teamBWins.value = item.totalScore?.teamB ?? 0;
-        winner.value = item.winner?.toString() ?? "None";
+        winner.value = item.winner?.toString() ?? "";
         isCompleted.value = item.isCompleted ?? false;
 
         CustomLogger.logMessage(msg: "=== FINAL TEAMS ===", level: LogLevel.info);
@@ -418,8 +399,18 @@ class ScoreBoardController extends GetxController {
 
     // Start the game for the first time
     isGameStarted.value = true;
-    int matchDuration = _calculateRemainingMatchTime();
-    remainingSeconds.value = matchDuration > 0 ? matchDuration : 0;
+    
+    // Stop the countdown timer but keep the current remaining time
+    // Don't reset remainingSeconds - continue with the same countdown
+    _stopCountdownTimer();
+    
+    // If remainingSeconds is 0 or not set, calculate it from current time to end time
+    // Otherwise, keep the current remaining time that was already counting down
+    if (remainingSeconds.value <= 0) {
+      remainingSeconds.value = _calculateRemainingMatchTime();
+    }
+    
+    // Start the game timer which will continue counting down from current remaining time
     _startGameTimer();
 
     // Add the first set
@@ -431,11 +422,15 @@ class ScoreBoardController extends GetxController {
       _gameTimer.cancel();
     } catch (e) {}
     
+    // Calculate remaining time from end time each second for accuracy
+    // This ensures the timer continues from where it was, not restarting
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      int newRemaining = _calculateRemainingMatchTime();
-      remainingSeconds.value = newRemaining;
+      int remaining = _calculateRemainingMatchTime();
       
-      if (newRemaining <= 0) {
+      if (remaining > 0) {
+        remainingSeconds.value = remaining;
+      } else {
+        remainingSeconds.value = 0;
         timer.cancel();
         isGameStarted.value = false;
         SnackBarUtils.showInfoSnackBar("Match time is up! Game ended automatically.");
@@ -520,6 +515,7 @@ class ScoreBoardController extends GetxController {
     
     if (isWithinMatchTime.value) {
       remainingSeconds.value = _calculateRemainingMatchTime();
+      _startCountdownTimer();
     } else {
       remainingSeconds.value = 0;
     }
@@ -535,8 +531,15 @@ class ScoreBoardController extends GetxController {
           msg: "Match time status changed: $previousValue -> ${isWithinMatchTime.value}",
           level: LogLevel.info
         );
+        
+        if (isWithinMatchTime.value && !isCountdownActive.value) {
+          _startCountdownTimer();
+        } else if (!isWithinMatchTime.value && isCountdownActive.value) {
+          _stopCountdownTimer();
+        }
       }
 
+      // Only update timer if game hasn't started yet
       if (!isGameStarted.value) {
         if (isWithinMatchTime.value) {
           remainingSeconds.value = _calculateRemainingMatchTime();
@@ -636,7 +639,7 @@ class ScoreBoardController extends GetxController {
         // Update scores
         teamAWins.value = item.totalScore?.teamA ?? 0;
         teamBWins.value = item.totalScore?.teamB ?? 0;
-        winner.value = item.winner?.toString() ?? "None";
+        winner.value = item.winner?.toString() ?? "";
         isCompleted.value = item.isCompleted ?? false;
 
         if (!_scoreboardStreamController.isClosed) {
@@ -648,11 +651,37 @@ class ScoreBoardController extends GetxController {
     }
   }
 
+  void _startCountdownTimer() {
+    if (isCountdownActive.value) return;
+    
+    isCountdownActive.value = true;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!isGameStarted.value) {
+        int remaining = _calculateRemainingMatchTime();
+        remainingSeconds.value = remaining;
+        
+        if (remaining <= 0) {
+          _stopCountdownTimer();
+        }
+      }
+    });
+  }
+
+  void _stopCountdownTimer() {
+    if (isCountdownActive.value) {
+      try {
+        _countdownTimer.cancel();
+      } catch (e) {}
+      isCountdownActive.value = false;
+    }
+  }
+
   @override
   void onClose() {
     if (isGameStarted.value) {
       _gameTimer.cancel();
     }
+    _stopCountdownTimer();
     _periodicTimer.cancel();
     if (!_scoreboardStreamController.isClosed) {
       _scoreboardStreamController.close();
@@ -814,22 +843,49 @@ class ScoreBoardController extends GetxController {
   ///Remove Player from Team-------------------------------------------------
   var isRemovingPlayer = false.obs;
   
+  /// Convert team name from "Team A"/"Team B" to "teamA"/"teamB" format
+  String _normalizeTeamName(String teamName) {
+    if (teamName.trim().toLowerCase() == 'team a') {
+      return 'teamA';
+    } else if (teamName.trim().toLowerCase() == 'team b') {
+      return 'teamB';
+    }
+    // If already in correct format, return as is
+    return teamName;
+  }
+  
   Future<void> removePlayer(String playerId, String teamName) async {
     CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
     
     isRemovingPlayer.value = true;
     try {
+      // Normalize team name to API format (teamA or teamB)
+      final normalizedTeamName = _normalizeTeamName(teamName);
+      
       final body = {
         "matchId": matchBookingId.value,
         "playerId": playerId,
-        "team": teamName,
+        "team": normalizedTeamName,
       };
 
+      CustomLogger.logMessage(msg: 'Remove player request body: $body', level: LogLevel.info);
       final response = await repository.removePlayerFromMatch(body: body);
 
       if (response?.success == true) {
         SnackBarUtils.showInfoSnackBar("Player removed successfully");
+        
+        // Immediately update local teams data to reflect removal
+        final teamIndex = normalizedTeamName == 'teamA' ? 0 : 1;
+        if (teamIndex < teams.length) {
+          final teamPlayers = teams[teamIndex]['players'] as List;
+          teamPlayers.removeWhere((player) => player['playerId'] == playerId);
+          teams.refresh();
+        }
+        
+        // Refresh the scoreboard to get updated team data from server
         await fetchScoreBoard(showLoader: false);
+        
+        CustomLogger.logMessage(msg: 'Player removed successfully, UI refreshed', level: LogLevel.info);
       } else {
         SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to remove player");
       }
@@ -938,7 +994,6 @@ class ScoreBoardController extends GetxController {
       } else {
         targetTeamPlayers.add(playerToMove);
       }
-
       hasPlayerSwaps.value = true;
       teams.refresh();
       CustomLogger.logMessage(msg: 'Player moved to empty slot successfully', level: LogLevel.info);
@@ -990,7 +1045,6 @@ class ScoreBoardController extends GetxController {
       await fetchScoreBoard(showLoader: false);
     }
   }
-
   ///Convert Booking To Open Match---------------------------------------------
   var isConvertingToOpenMatch = false.obs;
   MainHomeController mainHomeController = Get.put(MainHomeController());
@@ -1090,7 +1144,7 @@ class ScoreBoardController extends GetxController {
 $setsResults
 
 🏆 *Overall Score:* ${teamAWins.value} - ${teamBWins.value}
-${winner.value != "None" && winner.value.isNotEmpty ? "🎉 *Winner:* ${winner.value}" : ""}
+${winner.value.isNotEmpty && winner.value != "-" ? "🎉 *Winner:* ${winner.value}" : ""}
 
 Great game! 🏓
 ''';
