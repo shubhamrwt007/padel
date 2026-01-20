@@ -12,6 +12,7 @@ import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 
 class OpenMatchForAllCourtController extends GetxController {
+  final isMyBooking = true.obs;
   Rx<bool> viewUnavailableSlots = false.obs;
   RxList<String> selectedSlots = <String>[].obs;
   RxString selectedTimeFilter = 'morning'.obs; // New: for tab selection
@@ -200,8 +201,11 @@ class OpenMatchForAllCourtController extends GetxController {
 
       final formattedDate = DateFormat("yyyy-MM-dd").format(selectedDate.value);
       final matchDate = formattedDate.isEmpty ? DateFormat("yyyy-MM-dd").format(DateTime.now()) : formattedDate;
-
+      final userId = storage.read("userId")??"";
+      final filter = isMyBooking.value ? 'myMatch' : 'allMatches';
       final response = await repository.getOpenMatchBookings(
+        userid: userId,
+        filter: filter,
         type: '',
         matchDate: matchDate
       );
@@ -384,6 +388,8 @@ class OpenMatchForAllCourtController extends GetxController {
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
           'level': player.level ?? '',
+          'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+          'xpPoints': player.xpPoints ?? '',
         }).toList();
       }
     } catch (e) {

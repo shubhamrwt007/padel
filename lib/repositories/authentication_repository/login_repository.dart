@@ -1,3 +1,5 @@
+import 'package:padel_mobile/data/request_models/logout_model.dart';
+
 import '../../core/endpoitns.dart';
 import '../../core/network/dio_client.dart';
 import '../../data/request_models/authentication_models/login_model.dart';
@@ -63,6 +65,33 @@ class LoginRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Login failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+  ///LogOut---------------------------------------------------------------------
+  Future<LogoutModel> logOutUser({required Map<String,dynamic> body}) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "LOGOUT BODY:-> $body",
+        level: LogLevel.info,
+      );
+      final response = await dioClient.post(AppEndpoints.logout, data: body);
+
+      if (response.statusCode == 200) {
+        CustomLogger.logMessage(
+          msg: "LogOut successful: ${response.data}",
+          level: LogLevel.info,
+        );
+        return LogoutModel.fromJson(response.data);
+      } else {
+        throw Exception("LogOut failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "LogOut failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

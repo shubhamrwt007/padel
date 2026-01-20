@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 
 class YourMatchRequestsController extends GetxController {
   RxInt expandedIndex = (-1).obs;
@@ -36,5 +38,136 @@ class YourMatchRequestsController extends GetxController {
     } finally {
       isLoadingRequests.value = false;
     }
+  }
+
+  Future<void> acceptRequest(String requestId, String requestType) async {
+    try {
+      final body = {
+        "requestId": requestId,
+        "action": "accept",
+      };
+
+      if (requestType == 'booking_invitation') {
+        await repository.respondToBookingRequest(body: body);
+      } else if (requestType == 'invitation') {
+        await repository.acceptOrRejectRequestPlayer(body: body);
+      }
+      
+      // Refresh the list after accepting
+      fetchJoinRequests();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        _showInsufficientBalanceDialog(
+          e.response?.data?['message'] ?? "Resource not found",
+        );
+      } else {
+        CustomLogger.logMessage(msg: "Error accepting request: $e", level: LogLevel.error);
+        Get.snackbar("Error", "Failed to accept request");
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error accepting request: $e", level: LogLevel.error);
+      Get.snackbar("Error", "Failed to accept request");
+    }
+  }
+
+  void _showInsufficientBalanceDialog(String message) {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Insufficient Balance",
+                style: Get.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Get.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.grey.shade100,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        Get.toNamed('/wallet');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2F49C6),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Add Credits",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 }

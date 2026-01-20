@@ -32,6 +32,8 @@ class Player {
   final String? city;
   final String? level;
   final String? profilePic;
+  final int? totalMatchesPlayed;
+  final int? xpPoints;
 
   const Player({
     this.id,
@@ -39,6 +41,8 @@ class Player {
     this.city,
     this.level,
     this.profilePic,
+    this.totalMatchesPlayed,
+    this.xpPoints,
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,8 @@ class Player {
       city: json['city'],
       level: json['playerLevel'],
       profilePic: json['profilePic'],
+      totalMatchesPlayed: json['totalMatchesPlayed'],
+      xpPoints: json['xpPoints'],
     );
   }
 
@@ -57,5 +63,7 @@ class Player {
     'city': city,
     'playerLevel': level,
     'profilePic': profilePic,
+    'totalMatchesPlayed': totalMatchesPlayed,
+    'xpPoints': xpPoints,
   };
 }

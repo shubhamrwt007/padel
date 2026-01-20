@@ -12,17 +12,20 @@ import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 import 'package:padel_mobile/presentations/open_match_for_all_court/widgets/semi_circle_progress_bar.dart';
 import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
 import 'dart:developer';
-import 'package:intl/intl.dart';
 
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
+  final WalletController walletController = Get.put(WalletController());
+
   MainHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    walletController.fetchWallet();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: primaryAppBar(
@@ -117,7 +120,39 @@ class MainHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ).paddingOnly(right: 5),
+          ).paddingOnly(right: 10),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: ()=>Get.toNamed(RoutesName.wallet),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 7,vertical: 2),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.transparent,
+
+                  border: Border.all(
+                    color: AppColors.whiteColor,
+                    style: BorderStyle.solid, // dotted simulated below
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(Assets.imagesIcWallet2,height: 20,width: 20,).paddingOnly(right: 4),
+                    Obx(() => Text(
+                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.whiteColor,
+                      ),
+                    ))
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
         context: context,
       ),
@@ -558,7 +593,7 @@ class MainHomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: const DecorationImage(
-            image: AssetImage(Assets.imagesImgSwootBanner),
+            image: AssetImage(Assets.imagesNewHomeBanner),
             fit: BoxFit.cover,
             alignment: Alignment(0, -0.3),
           ),
@@ -580,10 +615,12 @@ class MainHomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Discover, Book\nand Play",
-                style: Get.textTheme.titleMedium!.copyWith(color: Colors.white),
-              ),
+              Transform.translate(
+                  offset: Offset(0, -5),
+                  child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
+              Transform.translate(
+                  offset: Offset(0, -10),
+                  child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
               const Spacer(),
               GestureDetector(
                 onTap: () {
@@ -592,7 +629,7 @@ class MainHomeScreen extends StatelessWidget {
                 child: Container(
                   width: Get.width * 0.35,
                   padding:
-                  const EdgeInsets.symmetric(vertical: 3, horizontal: 5),
+                  const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(40),
                     color: Colors.white,
@@ -602,10 +639,10 @@ class MainHomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         "BOOK NOW!",
-                        style: Get.textTheme.titleSmall!.copyWith(fontSize: 13),
+                        style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
                       ).paddingOnly(left: 10),
                       CircleAvatar(
-                        radius: 15,
+                        radius: 14,
                         backgroundColor: AppColors.primaryColor,
                         child: const Icon(Icons.arrow_forward,
                             color: Colors.white),
@@ -638,15 +675,15 @@ class MainHomeScreen extends StatelessWidget {
         "action": "match",
         "boxSize": 65.0,
         "iconSize": 34.0,
-        "offset": Offset(0, 3)
+        "offset": Offset(0, 4)
       },
       {
-        "icon": Assets.imagesIcChallengesNew,
+        "icon": Assets.imagesIcFindAPlayer,
         "title": "Find a Player",
         "action": "player",
         "boxSize": 65.0,
-        "iconSize": 34.0,
-        "offset": Offset(0, 1)
+        "iconSize": 40.0,
+        "offset": Offset(0, 4)
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
@@ -925,8 +962,8 @@ class MainHomeScreen extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.black.withValues(alpha: 0.15),
-                        Colors.black.withOpacity(0.35),
-                        Colors.black.withOpacity(0.75),
+                        Colors.black.withValues(alpha: 0.35),
+                        Colors.black.withValues(alpha: 0.75),
                       ],
                     ),
                   ),
@@ -945,7 +982,7 @@ class MainHomeScreen extends StatelessWidget {
                         Colors.transparent,
                         Colors.transparent,
                         Colors.transparent,
-                        Colors.black.withOpacity(0.75),
+                        Colors.black.withValues(alpha: 0.75),
                       ],
                     ),
                   ),
@@ -1138,32 +1175,32 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   /// TOURNAMENT CARD
-  Widget _tournamentCard() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF4FF),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text("Friday 21 June | 9:00 AM - 10:00 AM",
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 6),
-            Text("Professional | Mixed"),
-            SizedBox(height: 12),
-            Text("The Good Club"),
-            SizedBox(height: 8),
-            Text("₹ 2000",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _tournamentCard() {
+  //   return Padding(
+  //     padding: const EdgeInsets.all(16),
+  //     child: Container(
+  //       padding: const EdgeInsets.all(16),
+  //       decoration: BoxDecoration(
+  //         color: const Color(0xFFEFF4FF),
+  //         borderRadius: BorderRadius.circular(16),
+  //       ),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: const [
+  //           Text("Friday 21 June | 9:00 AM - 10:00 AM",
+  //               style: TextStyle(fontWeight: FontWeight.bold)),
+  //           SizedBox(height: 6),
+  //           Text("Professional | Mixed"),
+  //           SizedBox(height: 12),
+  //           Text("The Good Club"),
+  //           SizedBox(height: 8),
+  //           Text("₹ 2000",
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   ///
   Widget statsDashboard() {
