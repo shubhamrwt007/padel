@@ -17,24 +17,16 @@ class GetRequestPlayersOpenMatchModel {
           : null,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'message': message,
-      'requests': requests?.map((e) => e.toJson()).toList(),
-    };
-  }
 }
 
 /* -------------------------------------------------------------------------- */
 
 class Requests {
   final String? id;
-  final String? type; // request | invitation
+  final String? type; // request | invitation | booking_invitation
   final String? status;
   final String? preferredTeam;
   final String? bookingId;
-  final String? level;
 
   final String? matchIdString;
   final MatchId? match;
@@ -46,7 +38,7 @@ class Requests {
   final String? createdAt;
   final String? updatedAt;
   final int? totalAmount;
-  final dynamic? perShare;
+  final int? perShare;
   final int? v;
 
   Requests({
@@ -55,7 +47,6 @@ class Requests {
     this.status,
     this.preferredTeam,
     this.bookingId,
-    this.level,
     this.matchIdString,
     this.match,
     this.requester,
@@ -75,44 +66,28 @@ class Requests {
       status: json['status']?.toString(),
       preferredTeam: json['preferredTeam']?.toString(),
       bookingId: json['bookingId']?.toString(),
-      level: json['level']?.toString(),
+
+      // matchId can be String or Object
       matchIdString: json['matchId'] is String ? json['matchId'] : null,
       match: json['matchId'] is Map<String, dynamic>
           ? MatchId.fromJson(json['matchId'])
           : null,
+
       requester: json['requesterId'] is Map<String, dynamic>
           ? RequesterId.fromJson(json['requesterId'])
           : null,
+
       matchCreator: json['matchCreatorId'] is Map<String, dynamic>
           ? RequesterId.fromJson(json['matchCreatorId'])
           : null,
+
       playerId: json['playerId']?.toString(),
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
-      v: json['__v'],
       totalAmount: json['totalAmount'],
       perShare: json['perShare'],
+      v: json['__v'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'type': type,
-      'status': status,
-      'preferredTeam': preferredTeam,
-      'bookingId': bookingId,
-      'level': level,
-      'matchId': match != null ? match!.toJson() : matchIdString,
-      'requesterId': requester?.toJson(),
-      'matchCreatorId': matchCreator?.toJson(),
-      'playerId': playerId,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'perShare': perShare,
-      'totalAmount': totalAmount,
-      '__v': v,
-    };
   }
 }
 
@@ -122,9 +97,12 @@ class MatchId {
   final String? id;
   final String? matchDate;
   final List<String>? matchTime;
+
   final List<TeamA>? teamA;
   final List<TeamB>? teamB;
+
   final ClubId? club;
+  final List<Slot>? slot;
 
   final String? matchType;
   final String? skillLevel;
@@ -137,6 +115,7 @@ class MatchId {
     this.teamA,
     this.teamB,
     this.club,
+    this.slot,
     this.matchType,
     this.skillLevel,
     this.gender,
@@ -149,33 +128,27 @@ class MatchId {
       matchTime: json['matchTime'] != null
           ? List<String>.from(json['matchTime'].map((x) => x.toString()))
           : null,
+
       teamA: json['teamA'] != null
           ? List<TeamA>.from(json['teamA'].map((x) => TeamA.fromJson(x)))
           : null,
+
       teamB: json['teamB'] != null
           ? List<TeamB>.from(json['teamB'].map((x) => TeamB.fromJson(x)))
           : null,
+
       club: json['clubId'] is Map<String, dynamic>
           ? ClubId.fromJson(json['clubId'])
           : null,
+
+      slot: json['slot'] != null
+          ? List<Slot>.from(json['slot'].map((x) => Slot.fromJson(x)))
+          : null,
+
       matchType: json['matchType']?.toString(),
       skillLevel: json['skillLevel']?.toString(),
       gender: json['gender']?.toString(),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'matchDate': matchDate,
-      'matchTime': matchTime,
-      'teamA': teamA?.map((e) => e.toJson()).toList(),
-      'teamB': teamB?.map((e) => e.toJson()).toList(),
-      'clubId': club?.toJson(),
-      'matchType': matchType,
-      'skillLevel': skillLevel,
-      'gender': gender,
-    };
   }
 }
 
@@ -201,14 +174,6 @@ class TeamA {
       id: json['_id']?.toString(),
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'userId': user?.toJson(),
-      'joinedAt': joinedAt,
-    };
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -233,13 +198,62 @@ class TeamB {
       id: json['_id']?.toString(),
     );
   }
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'userId': user?.toJson(),
-      'joinedAt': joinedAt,
-    };
+/* -------------------------------------------------------------------------- */
+
+class Slot {
+  final String? slotId;
+  final String? courtName;
+  final String? courtId;
+  final String? bookingDate;
+  final List<SlotTime>? slotTimes;
+
+  Slot({
+    this.slotId,
+    this.courtName,
+    this.courtId,
+    this.bookingDate,
+    this.slotTimes,
+  });
+
+  factory Slot.fromJson(Map<String, dynamic> json) {
+    return Slot(
+      slotId: json['slotId']?.toString(),
+      courtName: json['courtName']?.toString(),
+      courtId: json['courtId']?.toString(),
+      bookingDate: json['bookingDate']?.toString(),
+      slotTimes: json['slotTimes'] != null
+          ? List<SlotTime>.from(
+        json['slotTimes'].map((x) => SlotTime.fromJson(x)),
+      )
+          : null,
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
+class SlotTime {
+  final String? time;
+  final int? amount;
+  final String? status;
+  final String? availabilityStatus;
+
+  SlotTime({
+    this.time,
+    this.amount,
+    this.status,
+    this.availabilityStatus,
+  });
+
+  factory SlotTime.fromJson(Map<String, dynamic> json) {
+    return SlotTime(
+      time: json['time']?.toString(),
+      amount: json['amount'],
+      status: json['status']?.toString(),
+      availabilityStatus: json['availabilityStatus']?.toString(),
+    );
   }
 }
 
@@ -252,8 +266,9 @@ class RequesterId {
   final String? name;
   final String? lastName;
   final String? profilePic;
-  final String? xpPoints;
+  final String? level;
   final String? gender;
+  final int? xpPoints;
 
   RequesterId({
     this.id,
@@ -262,8 +277,9 @@ class RequesterId {
     this.name,
     this.lastName,
     this.profilePic,
-    this.xpPoints,
+    this.level,
     this.gender,
+    this.xpPoints,
   });
 
   factory RequesterId.fromJson(Map<String, dynamic> json) {
@@ -274,24 +290,14 @@ class RequesterId {
           ? json['phoneNumber']
           : int.tryParse(json['phoneNumber']?.toString() ?? ''),
       name: json['name']?.toString(),
-      lastName: json['lastName']?.toString(),
       profilePic: json['profilePic']?.toString(),
-      xpPoints: json['xpPoints']?.toString(),
+      level: json['level']?.toString(),
+      lastName: json['lastName']?.toString(),
       gender: json['gender']?.toString(),
+      xpPoints: json['xpPoints'] is int
+          ? json['xpPoints']
+          : int.tryParse(json['xpPoints']?.toString() ?? ''),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'email': email,
-      'phoneNumber': phoneNumber,
-      'name': name,
-      'lastName': lastName,
-      'profilePic': profilePic,
-      'xpPoints': xpPoints,
-      'gender': gender,
-    };
   }
 }
 
@@ -362,36 +368,13 @@ class ClubId {
       location: json['location'] is Map<String, dynamic>
           ? Location.fromJson(json['location'])
           : null,
-      isActive: json['isActive'] as bool?,
-      isVerified: json['isVerified'] as bool?,
-      isFeatured: json['isFeatured'] as bool?,
-      isDeleted: json['isDeleted'] as bool?,
+      isActive: json['isActive'],
+      isVerified: json['isVerified'],
+      isFeatured: json['isFeatured'],
+      isDeleted: json['isDeleted'],
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'ownerId': ownerId,
-      'clubName': clubName,
-      'description': description,
-      'address': address,
-      'city': city,
-      'state': state,
-      'zipCode': zipCode,
-      'courtCount': courtCount,
-      'courtType': courtType,
-      'features': features,
-      'location': location?.toJson(),
-      'isActive': isActive,
-      'isVerified': isVerified,
-      'isFeatured': isFeatured,
-      'isDeleted': isDeleted,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-    };
   }
 }
 
@@ -415,12 +398,5 @@ class Location {
       )
           : null,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'coordinates': coordinates,
-    };
   }
 }

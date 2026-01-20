@@ -43,7 +43,7 @@ class AppStrings{
   static const String done = "Done";
 
   // Home Screen----------------------------------------------------------------
-  static const String hello = "Hello!  ";
+  static const String hello = "Hello  ";
   static const String search = "Search";
   static const String yourBooking = "Your Booking";
   static const String newBooking = "New Booking";

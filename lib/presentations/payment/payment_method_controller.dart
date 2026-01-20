@@ -94,7 +94,7 @@ class PaymentMethodController extends GetxController {
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
     isProcessing.value = false;
-    Get.back();
+    // Get.back();
     // SnackBarUtils.showErrorSnackBar("Payment Failed: ${response.message}");
   }
 
