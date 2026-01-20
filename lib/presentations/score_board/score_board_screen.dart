@@ -133,40 +133,128 @@ class ScoreBoardScreen extends StatelessWidget {
             ),
           ],
           context: context),
-      body: StreamBuilder<Map<String, dynamic>>(
-        stream: controller.scoreboardStream,
-        builder: (context, snapshot) {
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: StreamBuilder<Map<String, dynamic>>(
+              stream: controller.scoreboardStream,
+              builder: (context, snapshot) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      height: 120,
-                      color: AppColors.primaryColor,
-                      width: Get.width,
+                    Stack(
+                      children: [
+                        Container(
+                          height: 120,
+                          color: AppColors.primaryColor,
+                          width: Get.width,
+                        ),
+                        Obx(() => controller.isLoading.value
+                            ? BuildMatchCardShimmer().paddingOnly(left: 15, right: 15, top: 10)
+                            : _buildMatchCard(context).paddingOnly(left: 15, right: 15, top: 10)),
+                      ],
                     ),
-                    Obx(() => controller.isLoading.value
-                        ? BuildMatchCardShimmer().paddingOnly(left: 15, right: 15, top: 10)
-                        : _buildMatchCard(context).paddingOnly(left: 15, right: 15, top: 10)),
+                    const SizedBox(height: 12),
+                    _buildAddSetButton(),
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      if (!controller.isGameStarted.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return controller.isLoading.value
+                          ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
+                          : _buildSetSection().paddingOnly(left: 15, right: 15);
+                    }),
+
+                    // Add bottom padding when in shuffle mode to prevent content from being hidden behind remove zone
+                    Obx(() => controller.isShuffleMode.value 
+                        ? const SizedBox(height: 100) 
+                        : const SizedBox.shrink()),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _buildAddSetButton(),
-                const SizedBox(height: 12),
-                Obx(() {
-                  if (!controller.isGameStarted.value) {
-                    return const SizedBox.shrink();
-                  }
-                  return controller.isLoading.value
-                      ? BuildSetSectionShimmer().paddingOnly(left: 15, right: 15)
-                      : _buildSetSection().paddingOnly(left: 15, right: 15);
-                }),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+          // Remove button positioned above find players button
+          Obx(() => controller.isShuffleMode.value 
+              ? Positioned(
+            bottom: 30,
+            left: Get.width * 0.25,
+            right: Get.width * 0.25,
+                  child: DragTarget<Map<String, dynamic>>(
+                    onAccept: (data) {
+                      final playerId = data['player']['playerId'];
+                      final playerName = controller.capitalizeFirstWord(
+                        data['player']['name'].toString().split(' ').first.trim()
+                      );
+                      final team = data['team'];
+                      
+                      Get.dialog(
+                        AlertDialog(
+                          title: const Text('Remove Player'),
+                          content: Text('Remove $playerName from the match?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Get.back();
+                                await controller.removePlayer(playerId, team);
+                              },
+                              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      final isActive = candidateData.isNotEmpty;
+                      return AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: isActive ? 1.0 : 0.0,
+                        child: IgnorePointer(
+                          ignoring: !isActive,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: isActive ? [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ] : [],
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.delete_forever, color: Colors.white, size: 18),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Remove',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              : const SizedBox.shrink()),
+        ],
       ),
     );
   }
@@ -206,45 +294,109 @@ class ScoreBoardScreen extends StatelessWidget {
                 bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
 
                 return Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: controller.isCompleted.value
-                          ? Colors.grey
-                          : (allPlayersAdded && !controller.isShuffleMode.value
-                          ? (controller.isGameStarted.value ? AppColors.secondaryColor : Colors.orange)
-                          : Colors.orange),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Obx(() => Center(
-                          child: Text(
-                            controller.formattedTime,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 16,
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 30,
+                        width: 70,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(),
+                        decoration: BoxDecoration(
+                          color: controller.isCompleted.value
+                              ? Colors.grey
+                              : (allPlayersAdded && !controller.isShuffleMode.value
+                              ? (controller.isGameStarted.value ? AppColors.secondaryColor : Colors.orange)
+                              : Colors.orange),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Obx(() => Center(
+                              child: Text(
+                                controller.formattedTime,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            )),
+                            Text(
+                              controller.isCompleted.value
+                                  ? ""
+                                  : (controller.isShuffleMode.value
+                                  ? ""
+                                  : (allPlayersAdded
+                                  ? (controller.isGameStarted.value ? "" : "")
+                                  : "")),
+                              style: Get.textTheme.labelSmall!.copyWith(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                        )),
-                        const SizedBox(width: 8),
-                        Text(
-                          controller.isCompleted.value
-                              ? ""
-                              : (controller.isShuffleMode.value
-                              ? ""
-                              : (allPlayersAdded
-                              ? (controller.isGameStarted.value ? "" : "")
-                              : "")),
-                          style: Get.textTheme.labelSmall!.copyWith(
-                            color: Colors.white,
-                            fontSize: 11,
+                          ],
+                        ),
+                      ),
+                      if (controller.isShuffleMode.value && !controller.isGameStarted.value)
+                        Positioned.fill(
+                          child: DragTarget<Map<String, dynamic>>(
+                            onAccept: (data) {
+                              final playerId = data['player']['playerId'];
+                              final playerName = controller.capitalizeFirstWord(
+                                data['player']['name'].toString().split(' ').first.trim()
+                              );
+                              final team = data['team'];
+                              
+                              Get.dialog(
+                                AlertDialog(
+                                  title: const Text('Remove Player'),
+                                  content: Text('Remove $playerName from the match?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Get.back(),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        Get.back();
+                                        await controller.removePlayer(playerId, team);
+                                      },
+                                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              final isActive = candidateData.isNotEmpty;
+                              return AnimatedOpacity(
+                                duration: const Duration(milliseconds: 200),
+                                opacity: isActive ? 1.0 : 0.0,
+                                child: IgnorePointer(
+                                  ignoring: !isActive,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        'Remove',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 );
               }),
@@ -359,6 +511,58 @@ class ScoreBoardScreen extends StatelessWidget {
     });
   }
 
+  /// Get formatted time range with proper end time fallback
+  String _getFormattedTimeRange(ScoreBoardController controller) {
+    final startTimeStr = controller.startTime.value.isNotEmpty 
+        ? _formatTimeWithMinutes(controller.startTime.value)
+        : '';
+    
+    // Use endTime.value if available, otherwise fall back to matchEndTime
+    String endTimeStr = '';
+    if (controller.endTime.value.isNotEmpty) {
+      endTimeStr = _formatTimeWithMinutes(controller.endTime.value);
+    } else if (controller.matchEndTime.isNotEmpty) {
+      endTimeStr = _formatTimeWithMinutes(controller.matchEndTime);
+    }
+    
+    if (startTimeStr.isEmpty) return '';
+    if (endTimeStr.isEmpty) return startTimeStr;
+    return '$startTimeStr - $endTimeStr';
+  }
+
+  /// Format time while preserving minutes (e.g., "1:30 pm" stays "1:30 PM", "1 pm" becomes "1:00 PM")
+  String _formatTimeWithMinutes(String timeStr) {
+    if (timeStr.isEmpty) return '';
+    
+    try {
+      final normalized = timeStr.trim();
+      final lower = normalized.toLowerCase();
+      
+      // Check if it already has minutes
+      if (normalized.contains(':')) {
+        // Already has minutes, just normalize AM/PM
+        return normalized.replaceAllMapped(
+          RegExp(r'(am|pm)', caseSensitive: false),
+          (match) => match.group(0)!.toUpperCase(),
+        );
+      }
+      
+      // No minutes, format to :00
+      final parts = lower.split(' ');
+      if (parts.length >= 2) {
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final period = parts[1].toUpperCase();
+        if (hour > 0) {
+          return '$hour:00 $period';
+        }
+      }
+      
+      return normalized;
+    } catch (e) {
+      return timeStr;
+    }
+  }
+
   Widget _buildMatchHeader(BuildContext context,) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -392,8 +596,8 @@ class ScoreBoardScreen extends StatelessWidget {
                       ),
                       TextSpan(
                         text: date != null
-                            ? "${DateFormat('dd MMM').format(date)} | ${formatTimeSlot(controller.startTime.value)}${controller.endTime.value.isNotEmpty ? ' - ${formatTimeSlot(controller.endTime.value)}' : ''}"
-                            : "| ${formatTimeSlot(controller.startTime.value)}${controller.endTime.value.isNotEmpty ? ' - ${formatTimeSlot(controller.endTime.value)}' : ''}",
+                            ? "${DateFormat('dd MMM').format(date)} | ${_getFormattedTimeRange(controller)}"
+                            : "| ${_getFormattedTimeRange(controller)}",
                         style: Get.textTheme.bodySmall!.copyWith(
                             fontWeight: FontWeight.w500, fontSize: 13
                         ),
@@ -769,6 +973,86 @@ class ScoreBoardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildFloatingRemoveZone() {
+    return Positioned(
+      bottom: 0,
+      left: 20,
+      right: 20,
+      child: DragTarget<Map<String, dynamic>>(
+        onAccept: (data) {
+          final playerId = data['player']['playerId'];
+          final playerName = controller.capitalizeFirstWord(
+            data['player']['name'].toString().split(' ').first.trim()
+          );
+          final team = data['team'];
+          
+          Get.dialog(
+            AlertDialog(
+              title: const Text('Remove Player'),
+              content: Text('Remove $playerName from the match?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Get.back();
+                    await controller.removePlayer(playerId, team);
+                  },
+                  child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
+          );
+        },
+        builder: (context, candidateData, rejectedData) {
+          final isActive = candidateData.isNotEmpty;
+          return AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: isActive ? 1.0 : 0.0,
+            child: IgnorePointer(
+              ignoring: !isActive,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 40,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: isActive ? [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.4),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ] : [],
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.delete_forever, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Remove',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildShufflePlayerItem(Map<String, dynamic> player, int index, String team) {
     return Stack(
       clipBehavior: Clip.none,
@@ -912,44 +1196,6 @@ class ScoreBoardScreen extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-        // Remove button
-        Positioned(
-          top: -5,
-          right: -5,
-          child: GestureDetector(
-            onTap: () {
-              final playerName = controller.capitalizeFirstWord(
-                player['name'].toString().split(' ').first.trim()
-              );
-              controller.showRemovePlayerDialog(
-                player['playerId'],
-                playerName,
-                team,
-              );
-            },
-            child: Container(
-              height: 24,
-              width: 24,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 14,
-              ),
-            ),
           ),
         ),
       ],
@@ -2308,43 +2554,134 @@ class ScoreBoardScreen extends StatelessWidget {
 
   Widget buildMatchSummary() {
     return Obx(() {
-      return Container(
-        width: Get.width,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text("Match Summary",
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-            const SizedBox(height: 8),
-            Row(
+      return Stack(
+        children: [
+          Container(
+            width: Get.width,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Team A Wins:"),
-                Text("${controller.teamAWins.value}"),
+                const Text("Match Summary",
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Team A Wins:"),
+                    Text("${controller.teamAWins.value}"),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Team B Wins:"),
+                    Text("${controller.teamBWins.value}"),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Winner:"),
+                    Obx(() {
+                      final winnerText = controller.winner.value;
+                      final hasWinner = winnerText.isNotEmpty && 
+                                        winnerText.toLowerCase() != 'none' && 
+                                        winnerText != '-';
+                      return Text(hasWinner ? winnerText : "-");
+                    }),
+                  ],
+                ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Team B Wins:"),
-                Text("${controller.teamBWins.value}"),
-              ],
+          ),
+          if (controller.isShuffleMode.value)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: DragTarget<Map<String, dynamic>>(
+                onAccept: (data) {
+                  final playerId = data['player']['playerId'];
+                  final playerName = controller.capitalizeFirstWord(
+                    data['player']['name'].toString().split(' ').first.trim()
+                  );
+                  final team = data['team'];
+                  
+                  Get.dialog(
+                    AlertDialog(
+                      title: const Text('Remove Player'),
+                      content: Text('Remove $playerName from the match?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Get.back();
+                            await controller.removePlayer(playerId, team);
+                          },
+                          child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                builder: (context, candidateData, rejectedData) {
+                  final isActive = candidateData.isNotEmpty;
+                  return AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: isActive ? 1.0 : 0.0,
+                    child: IgnorePointer(
+                      ignoring: !isActive,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 35,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: isActive ? [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.4),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ] : [],
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.delete_forever, color: Colors.white, size: 18),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Remove',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Winner:"),
-                Text(controller.winner.value),
-              ],
-            ),
-          ],
-        ),
+        ],
       );
     });
   }
