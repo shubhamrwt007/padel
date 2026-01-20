@@ -900,7 +900,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
             ),
           ),
         );
-
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error requesting to join match: $e", level: LogLevel.error);

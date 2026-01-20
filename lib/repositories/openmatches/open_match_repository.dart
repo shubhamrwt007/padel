@@ -72,7 +72,7 @@ class OpenMatchRepository {
         'page': page,
         'limit': limit,
         'filter': filter,
-        'userid': userid,
+        'userId': userid,
         if (matchDate != null) 'matchDate': matchDate,
       };
 
