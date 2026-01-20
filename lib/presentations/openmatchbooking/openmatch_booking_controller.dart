@@ -314,7 +314,7 @@ class OpenMatchBookingController extends GetxController
           'id': request.id ?? '',
           'name': request.requester?.name ?? 'Unknown',
           'profilePic': request.requester?.profilePic?? '',
-          'level': request.level ?? '',
+          // 'level': request.level ?? '',
           'lastName': request.requester?.lastName ?? '',
           'requestedAt': request.createdAt ?? DateTime.now(),
         }).toList();
