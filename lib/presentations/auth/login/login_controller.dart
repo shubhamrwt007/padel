@@ -155,7 +155,7 @@ class LoginController extends GetxController {
       final result = await openMatchRepository.getCustomerNameByPhoneNumber(
           phoneNumber: phoneNumber);
 
-      if (result.result != null && result.result?.name != null && result.result!.name!.isNotEmpty) {
+      if (result.status == 200) {
         return true; // User found
       } else {
         return false; // User not found

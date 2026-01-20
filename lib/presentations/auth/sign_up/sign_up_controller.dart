@@ -142,6 +142,18 @@ class SignUpController extends GetxController {
       );
       return;
     }
+    else if (selectedLocation.value.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "Please select your Location",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 2,
+      );
+      return;
+    }
     Map<String, dynamic> body = {
       // "email": emailController.text.trim(),
       "phoneNumber": phoneController.text.trim(),

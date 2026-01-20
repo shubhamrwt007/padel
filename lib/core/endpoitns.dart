@@ -1,25 +1,22 @@
 class AppEndpoints {
   AppEndpoints._();
-  // /// -----------------------Live URL-------------------------------------------
-  // static const String baseUrl = "http://103.185.212.117:5070/api/customer/";
-  // static const String socketUrl = "http://103.185.212.117:5070";
   /// -----------------------Staging URL-------------------------------------------
-  static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
-  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
+  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
 
   // /// -----------------------New Live URL-------------------------------------------
-
-  // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
-  // static const String socketUrl = "https://apimobile.swootapp.com";
+  static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
+  static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://172.20.10.5:5070/api/customer/";
-  // static const String socketUrl = "http://172.20.10.5:5070";
+  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.129:5070";
 
 
 
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
+  static const String logout = "${baseUrl}owner/ownerLogout";
   static const String deleteAccount = "${baseUrl}deleteCustomer";
   static const String signUp = "${baseUrl}customerSignup";
   static const String fetchUserProfile = "${baseUrl}getCustomer";
@@ -65,7 +62,7 @@ class AppEndpoints {
   static const String requestToJoinBooking = "${baseUrl}court/openmatch/requestToJoinBooking";
   static const String acceptOrRejectRequestUserForOpenMatch = "${baseUrl}court/openmatch/respondToRequest";
   static const String respondToBookingRequest = "${baseUrl}court/openmatch/respondToBookingRequest";
-  static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests?";
+  static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests";
   static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
   ///Notification---------------------------------------------------------------

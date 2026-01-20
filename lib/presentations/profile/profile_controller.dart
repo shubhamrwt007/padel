@@ -1,10 +1,12 @@
 // ✅ FILE: profile_controller.dart
  import 'dart:developer';
 import 'package:padel_mobile/core/network/dio_client.dart';
+import 'package:padel_mobile/data/request_models/logout_model.dart';
 import 'package:padel_mobile/data/response_models/home_models/profile_model.dart';
 import 'package:padel_mobile/presentations/booking/details_page/details_page_controller.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 import 'package:padel_mobile/presentations/chat/chat_controller.dart';
+import 'package:padel_mobile/repositories/authentication_repository/login_repository.dart';
 
 class ProfileController extends GetxController {
   // Repositories
@@ -175,6 +177,56 @@ var profileModel = Rxn<ProfileModel>();
       }
     }catch(e){
       CustomLogger.logMessage(msg: "Error-> $e", level: LogLevel.error);
+    }
+  }
+
+  ///Logout Api-----------------------------------------------------------------
+  LoginRepository loginRepository = Get.put(LoginRepository());
+  Future<void> onLogOut() async {
+    FocusManager.instance.primaryFocus!.unfocus();
+    try {
+      if (isLoading.value) return;
+      Get.dialog(
+        Center(
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+                child: LoadingWidget(color: AppColors.whiteColor,)
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      final firebaseToken = storage.read('firebase_token');
+      final ownerId = storage.read('userId');
+      isLoading.value = true;
+
+      // Build request body conditionally excluding fcmToken if null or empty
+      final Map<String, dynamic> body = {
+        "ownerId": ownerId ?? "",
+        "fcmToken":firebaseToken??""
+      };
+
+      // if (firebaseToken != null && firebaseToken.toString().isNotEmpty) {
+      //   body["fcmToken"] = firebaseToken;
+      // }
+
+      LogoutModel result = await loginRepository.logOutUser(body: body);
+
+      if (result.status == "200") {
+        await storage.erase();
+        Get.offAllNamed(RoutesName.login);
+        CustomLogger.logMessage(msg: "${result.message ?? 'LogOut SuccessFull'}", level: LogLevel.debug);
+      } else {
+        SnackBarUtils.showErrorSnackBar(result.message!);
+      }
+    } catch (e) {
+      log(e.toString());
+    } finally {
+      isLoading.value = false;
+      Get.back(); // Close the dialog
     }
   }
 }

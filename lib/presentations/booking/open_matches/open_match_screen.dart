@@ -1869,7 +1869,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                /// Name + City
+                /// Name + Level + XP + Matches + City
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1881,6 +1881,25 @@ class AppPlayersBottomSheet extends StatelessWidget {
                             .copyWith(fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            '${player['level'] ?? 'Beginner'}',
+                            style: Get.textTheme.bodySmall!
+                                .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
+                          ),
+                          Text(
+                            ' • ${player['xpPoints'] ?? 0} XP',
+                            style: Get.textTheme.bodySmall!
+                                .copyWith(fontSize: 10, color: Colors.orange),
+                          ),
+                          Text(
+                            ' • ${player['totalMatchesPlayed'] ?? 0} matches',
+                            style: Get.textTheme.bodySmall!
+                                .copyWith(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                       Text(
                         player['city'] ?? '',
                         style: Get.textTheme.bodyLarge!

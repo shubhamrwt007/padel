@@ -26,6 +26,7 @@ class Assets {
   static const String imagesIcEyeOff = 'assets/images/ic_eye_off.png';
   static const String imagesIcFilter = 'assets/images/ic_filter.png';
   static const String imagesIcFindAGame = 'assets/images/ic_find_a_game.svg';
+  static const String imagesIcFindAPlayer = 'assets/images/ic_find_a_player.svg';
   static const String imagesIcGooglePayment = 'assets/images/ic_google_payment.svg';
   static const String imagesIcHomeBottomBar = 'assets/images/ic_home_bottomBar.svg';
   static const String imagesIcLocation = 'assets/images/ic_location.png';
@@ -47,6 +48,7 @@ class Assets {
   static const String imagesIcTradingDown = 'assets/images/ic_trading_down.svg';
   static const String imagesIcTreadingUp = 'assets/images/ic_treading_up.svg';
   static const String imagesIcWallet = 'assets/images/ic_wallet.svg';
+  static const String imagesIcWallet2 = 'assets/images/ic_wallet_2.svg';
   static const String imagesIconLeaderBoard = 'assets/images/icon_leaderBoard.svg';
   static const String imagesImgBackground = 'assets/images/img_background.svg';
   static const String imagesImgBackgroundBottomBar = 'assets/images/img_background_bottomBar.png';
@@ -74,6 +76,7 @@ class Assets {
   static const String imagesImgScoreView = 'assets/images/img_score_view.svg';
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
+  static const String imagesNewHomeBanner = 'assets/images/new_home_banner.jpg';
   static const String imagesPadelLogo = 'assets/images/Padel_logo.svg';
   static const String imagesPadelLogo11 = 'assets/images/Padel_logo_11.svg';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';

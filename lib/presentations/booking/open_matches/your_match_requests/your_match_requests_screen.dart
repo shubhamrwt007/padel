@@ -253,27 +253,49 @@ class YourMatchRequestsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        Container(
-          width: 4 * 30 + 42,
-          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, -2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 4 * 30 + 42,
+              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, -2),
+                    ),
+                  ]
+              ),
+              child: SizedBox(
+                height: 50,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: _buildAvatarList(match, request, context),
                 ),
-              ]
-          ),
-          child: SizedBox(
-            height: 50,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: _buildAvatarList(match, request, context),
+              ),
             ),
-          ),
+            OutlinedButton(
+              onPressed: () {
+                controller.acceptRequest(request.id ?? "", request.type ?? "");
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 15),
+                side: BorderSide(color: Colors.white),
+                backgroundColor:AppColors.primaryColor ,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                  "Accept",
+                  style: Get.textTheme.labelLarge!.copyWith(color: Colors.white)
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Row(
@@ -447,7 +469,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                "₹${formatAmount(((request.totalAmount ?? 0) * 4).toString())}",
+                "₹${formatAmount(((request.totalAmount ?? 0)).toString())}",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -467,74 +489,56 @@ class YourMatchRequestsScreen extends StatelessWidget {
   }
 
   Widget _buildPlayerAvatar(RequesterId? player, bool isBookingInvitation, BuildContext context, {bool isAdd = false, String? team, String? matchId, Requests? request}) {
-    return GestureDetector(
-      onTap: isAdd ? () {
-        AddPlayerBottomSheet.show(
-          context,
-          arguments: {
-            "team": request?.preferredTeam ?? team,
-            "matchId": matchId ?? "",
-            "needYourMatchRequests": true,
-            "matchLevel": "",
-            "isLoginUser": true,
-            "isMatchCreator": false,
-            "requestId": request?.id ?? "",
-            "bookingId": request?.bookingId ?? "",
-            "requestType": request?.type ?? ""
-          },
-        );
-      } : null,
-      child: CircleAvatar(
-        radius: 26,
-        backgroundColor: Colors.white,
-        child: !isAdd && player?.profilePic != null && player!.profilePic!.isNotEmpty
-            ? ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: player.profilePic!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => CircleAvatar(
-                    radius: 24,
-                    backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
-                    child: Text(
-                      _getInitials(player.name),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => CircleAvatar(
-                    radius: 24,
-                    backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
-                    child: Text(
-                      _getInitials(player.name),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return CircleAvatar(
+      radius: 26,
+      backgroundColor: Colors.white,
+      child: !isAdd && player?.profilePic != null && player!.profilePic!.isNotEmpty
+          ? ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: player.profilePic!,
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => CircleAvatar(
+                  radius: 24,
+                  backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+                  child: Text(
+                    _getInitials(player.name),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              )
-            : CircleAvatar(
-                radius: 24,
-                backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
-                child: isAdd
-                    ? Icon(Icons.add, color: isBookingInvitation ? AppColors.primaryColor : Colors.green)
-                    : Text(
-                        _getInitials(player?.name),
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                errorWidget: (context, url, error) => CircleAvatar(
+                  radius: 24,
+                  backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+                  child: Text(
+                    _getInitials(player.name),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-      ),
+            )
+          : CircleAvatar(
+              radius: 24,
+              backgroundColor: isBookingInvitation ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+              child: isAdd
+                  ? Icon(Icons.add, color: isBookingInvitation ? AppColors.primaryColor : Colors.green)
+                  : Text(
+                      _getInitials(player?.name),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: isBookingInvitation ? AppColors.primaryColor : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
     );
   }
 

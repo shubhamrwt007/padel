@@ -62,6 +62,8 @@ class OpenMatchRepository {
     required String type, // "upcoming" or "completed"
     int page = 1,
     int limit = 10,
+    String? userid,
+    String? filter,
     String? matchDate,
   }) async {
     try {
@@ -69,6 +71,8 @@ class OpenMatchRepository {
         'type': type,
         'page': page,
         'limit': limit,
+        'filter': filter,
+        'userid': userid,
         if (matchDate != null) 'matchDate': matchDate,
       };
 
@@ -310,35 +314,33 @@ class OpenMatchRepository {
     }
   }
 
-  /// Get Request Players Open Match --------------------------------------------
   Future<GetRequestPlayersOpenMatchModel?> getRequestPlayersOpenMatch({
     String? matchId,
     String? type,
     String? filter,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
+      String url = AppEndpoints.getRequestUserForOpenMatch;
+
+      List<String> params = [];
+
+      if (type != null && type.isNotEmpty) {
+        params.add("type=$type");
+      }
+
+      if (filter != null && filter.isNotEmpty) {
+        params.add("filter=$filter");
+      }
 
       if (matchId != null && matchId.isNotEmpty) {
-        queryParams['matchId'] = matchId;
-      }
-      if (type != null && type.isNotEmpty) {
-        queryParams['type'] = type;
-      }
-      if (filter != null && filter.isNotEmpty) {
-        queryParams['filter'] = filter;
+        params.add("matchId=$matchId");
       }
 
-      CustomLogger.logMessage(
-        msg:
-        "Get Request Player For Open Match Bookings params: $queryParams",
-        level: LogLevel.info,
-      );
+      if (params.isNotEmpty) {
+        url = "$url?${params.join("&")}";
+      }
 
-      final response = await dioClient.get(
-        AppEndpoints.getRequestUserForOpenMatch,
-        queryParameters: queryParams,
-      );
+      final response = await dioClient.get(url);
 
       if (response.statusCode == 200) {
         CustomLogger.logMessage(

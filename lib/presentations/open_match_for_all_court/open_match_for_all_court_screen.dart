@@ -1,13 +1,11 @@
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
+import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../booking/widgets/booking_exports.dart';
 import '../notification/notification_controller.dart';
 import 'open_match_for_all_court_controller.dart';
@@ -20,11 +18,14 @@ class OpenMatchForAllCourtScreen extends StatefulWidget {
 
 class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen> {
   final OpenMatchForAllCourtController controller = Get.put(OpenMatchForAllCourtController());
+  final WalletController walletController = Get.put(WalletController());
+
   final storage = GetStorage();
   final List<bool> _expandedStates = [];
 
   @override
   Widget build(BuildContext context) {
+    walletController.fetchWallet();
     return Scaffold(
       bottomNavigationBar: _bottomButton(context),
       appBar: primaryAppBar(
@@ -78,7 +79,38 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                 ),
               ],
             ),
-          ).paddingOnly(right: 5),
+          ).paddingOnly(right: 10),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: ()=>Get.toNamed(RoutesName.wallet),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 7,vertical: 3),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.textFieldColor
+                  // border: Border.all(
+                  //   color: AppColors.primaryColor,
+                  //   style: BorderStyle.solid, // dotted simulated below
+                  //   width: 1.2,
+                  // ),
+                ),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
+                    Obx(() => Text(
+                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.primaryColor,
+                      ),
+                    ))
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -99,45 +131,39 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                 children: [
                   SizedBox(height: 10,),
                   _buildDatePicker(),
-                  Transform.translate(
-                    offset: Offset(0, -Get.height * 0.03),
-                    child: _buildTimeTabs(),
-                  ),
-                  Transform.translate(
-                    offset: Offset(0, -Get.height * 0.015),
-                    child: Obx(() {
-                      if (controller.isLoading.value) {
-                        return Center(child: ListView.builder(shrinkWrap: true,itemCount: 3,itemBuilder: (context,index){
-                          return buildMatchCardShimmer();
-                        }));
-                      }
-                      final matches = controller.matchesBySelection.value;
-                      if (matches == null || (matches.data?.isEmpty ?? true)) {
-                        return Center(
-                          child: Column(
-                            children: [
-                              Icon(Icons.event_busy_outlined, size: 50, color: AppColors.darkGrey),
-                              Text(
-                                'No matches available for this time',
-                                style: Get.textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ).paddingOnly(top: Get.height * 0.1),
-                        );
-                      }
-                      // Initialize expanded states if needed
-                      if (_expandedStates.length != matches.data!.length) {
-                        _expandedStates.clear();
-                        _expandedStates.addAll(List.filled(matches.data!.length, false));
-                      }
-
-                      return Column(
-                        children: matches.data!.asMap().entries.map((entry) =>
-                            _buildMatchCardFromData(context, entry.value, entry.key)).toList(),
+                  _buildTimeTabs().paddingOnly(bottom: 10),
+                  Obx(() {
+                    if (controller.isLoading.value) {
+                      return Center(child: ListView.builder(shrinkWrap: true,itemCount: 3,itemBuilder: (context,index){
+                        return buildMatchCardShimmer();
+                      }));
+                    }
+                    final matches = controller.matchesBySelection.value;
+                    if (matches == null || (matches.data?.isEmpty ?? true)) {
+                      return Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.event_busy_outlined, size: 50, color: AppColors.darkGrey),
+                            Text(
+                              'No matches available for this time',
+                              style: Get.textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ).paddingOnly(top: Get.height * 0.1),
                       );
-                    }),
-                  ),
+                    }
+                    // Initialize expanded states if needed
+                    if (_expandedStates.length != matches.data!.length) {
+                      _expandedStates.clear();
+                      _expandedStates.addAll(List.filled(matches.data!.length, false));
+                    }
+
+                    return Column(
+                      children: matches.data!.asMap().entries.map((entry) =>
+                          _buildMatchCardFromData(context, entry.value, entry.key)).toList(),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -180,171 +206,173 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Select Date",
-              style: Get.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.w600),
-            ),
-            // Obx(() => PopupMenuButton<String>(
-            //   offset: Offset(0, 30),
-            //   splashRadius: 0,
-            //   padding: EdgeInsets.zero,
-            //   child: Container(
-            //     padding: EdgeInsets.symmetric(horizontal: 7, vertical: 6),
-            //     decoration: BoxDecoration(
-            //       color: AppColors.primaryColor,
-            //       border: Border.all(color: AppColors.blackColor.withAlpha(20)),
-            //       borderRadius: BorderRadius.circular(4),
-            //     ),
-            //     child: Row(
-            //       mainAxisSize: MainAxisSize.min,
-            //       children: [
-            //         Text(
-            //           controller.selectedGameLevel.value,
-            //           style: Get.textTheme.labelMedium!.copyWith(color: Colors.white),
-            //         ),
-            //         SizedBox(width: 4),
-            //         Icon(
-            //           controller.isGameLevelSelected.value ? Icons.close : Icons.keyboard_arrow_down,
-            //           size: 16,
-            //           color: Colors.white,
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            //   itemBuilder: (context) => [
-            //     PopupMenuItem(height: 40,value: "Beginner", child: Text("Beginner",style: Get.textTheme.labelMedium)),
-            //     PopupMenuItem(height: 40,value: "Intermediate", child: Text("Intermediate",style: Get.textTheme.labelMedium)),
-            //     PopupMenuItem(height: 40,value: "Advanced", child: Text("Advanced",style: Get.textTheme.labelMedium)),
-            //     PopupMenuItem(height: 40,value: "Professional", child: Text("Professional",style: Get.textTheme.labelMedium)),
-            //   ],
-            //   onSelected: (value) {
-            //     controller.selectedGameLevel.value = value;
-            //     controller.isGameLevelSelected.value = true;
-            //     controller.fetchMatchesForSelection();
-            //   },
-            // )),
-          ],
-        ),
-        Obx(
-              () => Transform.translate(
-            offset: Offset(0, -19),
-            child: Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 55,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    color: Color(0xffF3F3F5),
-                    border: Border.all(color: AppColors.blackColor.withAlpha(10)),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: DateFormat('MMM')
-                        .format(controller.focusedDate.value)
-                        .toUpperCase()
-                        .split('')
-                        .map((char) => Text(
-                      char,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        height: 1.0,
-                        color: Colors.black,
-                      ),
-                    ))
-                        .toList(),
-                  ),
-                ).paddingOnly(right: 5),
-                Expanded(
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (scrollNotification) {
-                      if (scrollNotification is ScrollUpdateNotification) {
-                        final scrollOffset = scrollNotification.metrics.pixels;
-                        final itemExtent = 46.0;
-                        final itemsScrolled = (scrollOffset / itemExtent).round();
-                        final estimatedDate = DateTime.now().add(Duration(days: itemsScrolled));
-
-                        // Only update focusedDate for month display, not selectedDate
-                        controller.focusedDate.value = estimatedDate;
-                      }
-                      return false;
-                    },
-                    child: EasyDateTimeLinePicker.itemBuilder(
-                      headerOptions: HeaderOptions(
-                        headerBuilder: (_, context, date) => const SizedBox.shrink(),
-                      ),
-                      selectionMode: SelectionMode.alwaysFirst(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2030, 3, 18),
-                      focusedDate: controller.selectedDate.value,
-                      itemExtent: 46,
-                      itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
-                        final dayName = DateFormat('E').format(date);
-                        return GestureDetector(
-                          onTap: onTap,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            child: Container(
-                              height: 55,
-                              width: Get.width * 0.11,
-                              key: ValueKey(isSelected),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                gradient: isSelected ? LinearGradient(
-                                  colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ) : null,
-                                color: isSelected ? null : Colors.white,
-                                border: Border.all(
-                                  color: isSelected ? Colors.transparent : AppColors.blackColor.withAlpha(20),
-                                  width: 1,
-                                ),
+        Container(
+          height: 120,
+          width: Get.width,
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned(
+                top: 40,
+                left: 0,
+                right: 0,
+                child: Obx(
+                      () => Transform.translate(
+                    offset: Offset(0, -19),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 55,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Color(0xffF3F3F5),
+                            border: Border.all(color: AppColors.blackColor.withAlpha(10)),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: DateFormat('MMM')
+                                .format(controller.focusedDate.value)
+                                .toUpperCase()
+                                .split('')
+                                .map((char) => Text(
+                              char,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                height: 1.0,
+                                color: Colors.black,
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    date.day.toString(),
-                                    style: Get.textTheme.titleMedium!.copyWith(
-                                      fontSize: 18,
-                                      color: isSelected ? Colors.white : AppColors.textColor,
-                                    ),
-                                  ),
-                                  Transform.translate(
-                                    offset: Offset(0, -2),
-                                    child: Text(
-                                      dayName,
-                                      style: Get.textTheme.bodySmall!.copyWith(
-                                        fontSize: 11,
-                                        color: isSelected ? Colors.white : Colors.black,
+                            ))
+                                .toList(),
+                          ),
+                        ).paddingOnly(right: 5),
+                        Expanded(
+                          child: NotificationListener<ScrollNotification>(
+                            onNotification: (scrollNotification) {
+                              if (scrollNotification is ScrollUpdateNotification) {
+                                final scrollOffset = scrollNotification.metrics.pixels;
+                                final itemExtent = 46.0;
+                                final itemsScrolled = (scrollOffset / itemExtent).round();
+                                final estimatedDate = DateTime.now().add(Duration(days: itemsScrolled));
+
+                                // Only update focusedDate for month display, not selectedDate
+                                controller.focusedDate.value = estimatedDate;
+                              }
+                              return false;
+                            },
+                            child: EasyDateTimeLinePicker.itemBuilder(
+                              headerOptions: HeaderOptions(
+                                headerBuilder: (_, context, date) => const SizedBox.shrink(),
+                              ),
+                              selectionMode: SelectionMode.alwaysFirst(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2030, 3, 18),
+                              focusedDate: controller.selectedDate.value,
+                              itemExtent: 46,
+                              itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
+                                final dayName = DateFormat('E').format(date);
+                                return GestureDetector(
+                                  onTap: onTap,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    child: Container(
+                                      height: 55,
+                                      width: Get.width * 0.11,
+                                      key: ValueKey(isSelected),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(5),
+                                        gradient: isSelected ? LinearGradient(
+                                          colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                        ) : null,
+                                        color: isSelected ? null : Colors.white,
+                                        border: Border.all(
+                                          color: isSelected ? Colors.transparent : AppColors.blackColor.withAlpha(20),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            date.day.toString(),
+                                            style: Get.textTheme.titleMedium!.copyWith(
+                                              fontSize: 18,
+                                              color: isSelected ? Colors.white : AppColors.textColor,
+                                            ),
+                                          ),
+                                          Transform.translate(
+                                            offset: Offset(0, -2),
+                                            child: Text(
+                                              dayName,
+                                              style: Get.textTheme.bodySmall!.copyWith(
+                                                fontSize: 11,
+                                                color: isSelected ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ).paddingSymmetric(vertical: 6);
+                              },
+                              onDateChange: (date) {
+                                controller.selectedDate.value = date;
+                                controller.focusedDate.value = date; // Sync on selection
+                                controller.selectedTime = null;
+                                controller.selectedSlots.clear();
+                                controller.fetchMatchesForSelection();
+                              },
                             ),
                           ),
-                        ).paddingSymmetric(vertical: 6);
-                      },
-                      onDateChange: (date) {
-                        controller.selectedDate.value = date;
-                        controller.focusedDate.value = date; // Sync on selection
-                        controller.selectedTime = null;
-                        controller.selectedSlots.clear();
-                        controller.fetchMatchesForSelection();
-                      },
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Select Date",
+                    style: Get.textTheme.labelLarge!
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+
+                  Obx(() {
+
+                    return ToggleButtons(
+                      isSelected: [
+                        controller.isMyBooking.value,
+                        !controller.isMyBooking.value,
+                      ],
+                      borderRadius: BorderRadius.circular(5),
+                      constraints: const BoxConstraints(minHeight: 25, minWidth: 90),
+                      onPressed: (index) {
+                        controller.isMyBooking.value = index == 0;
+                        controller.fetchMatchesForSelection();
+                      },
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text("My Booking",style: Get.textTheme.labelMedium,),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Text("All Bookings",style: Get.textTheme.labelMedium,),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -372,7 +400,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
             Container(
               padding: const EdgeInsets.all(0),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(5),
                 border: Border.all(color: Colors.black26),
               ),
               child: Row(
@@ -391,7 +419,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         height: 30,
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(5),
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -699,35 +727,15 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   Widget _buildAvailableCircle(String team, String matchId, String? skillLevel, int index, OpenMatchBookingData? match) {
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
+    final hasActiveRequest = match?.isRequest == true;
 
     return GestureDetector(
-      onTap: () {
+      onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId??"",), isScrollControlled: true);
         } else {
-          AddPlayerBottomSheet.show(
-            context,
-            arguments: {
-              "bookingId":match?.bookingId??'',
-              "team": team,
-              "matchId": match?.sId??'',
-              "needOpenMatchesForAllCourts": true,
-              "matchLevel": skillLevel,
-              "isLoginUser": !isLoginUserInMatch,
-              "isMatchCreator": isMatchCreator,
-            },
-          );
-          // Get.toNamed(
-          //   RoutesName.addPlayer,
-          //   arguments: {
-          //     "team": team,
-          //     "matchId": matchId,
-          //     "needOpenMatchesForAllCourts": true,
-          //     "matchLevel": skillLevel,
-          //     "isLoginUser": !isLoginUserInMatch,
-          //     "isMatchCreator": isMatchCreator,
-          //   },
-          // );
+          // Direct API call for login user
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId ?? '');
         }
       },
       child: CircleAvatar(
@@ -735,8 +743,11 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         backgroundColor: Colors.white,
         child: CircleAvatar(
           radius: 20,
-          backgroundColor: const Color(0xffeaf0ff),
-          child: Icon(Icons.add, color: AppColors.primaryColor),
+          backgroundColor: hasActiveRequest ? Colors.grey.withOpacity(0.3) : const Color(0xffeaf0ff),
+          child: Icon(
+            Icons.add, 
+            color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
+          ),
         ),
       ),
     );
@@ -767,6 +778,133 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     // createdBy is a UserId object, so we need to check the sId field
     return match.createdBy?.sId == userId.toString();
+  }
+
+  // Direct request to join match for login user
+  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId) async {
+    final userId = storage.read('userId');
+    if (userId == null) return;
+
+    // Find the match data to check isRequest
+    final matchData = controller.matchesBySelection.value?.data?.firstWhere(
+      (match) => match.sId == matchId,
+      orElse: () => OpenMatchBookingData(),
+    );
+
+    // Check if there's already an active request
+    if (matchData?.isRequest == true) {
+      Get.dialog(
+        Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info,
+                  color: Colors.orange,
+                  size: 60,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Request Already Sent',
+                  style: Get.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'You have already sent a request to join this match. Please wait for the match creator to respond.',
+                  textAlign: TextAlign.center,
+                  style: Get.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final addPlayerController = Get.put(AddPlayerController());
+      
+      // Set required values
+      addPlayerController.matchId.value = matchId;
+      addPlayerController.selectedTeam.value = team;
+      addPlayerController.playerId.value = userId;
+      addPlayerController.openMatchForAllCourtController = controller;
+      
+      // Call the request API directly
+      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId);
+      if (success) {
+        Get.dialog(
+          Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Request Sent!',
+                    style: Get.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your request to join the match has been sent successfully.',
+                    textAlign: TextAlign.center,
+                    style: Get.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error requesting to join match: $e", level: LogLevel.error);
+    }
   }
 
   void _makeCall(String phoneNumber) async {
@@ -1730,26 +1868,6 @@ class AppPlayersBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _searchField() {
-    return TextField(
-      decoration: InputDecoration(
-          hintText: 'Search by Name / Phone number',
-          prefixIcon: const Icon(Icons.search),
-          filled: true,
-          fillColor: const Color(0xffF5F6FA),
-          contentPadding: EdgeInsets.symmetric(vertical: 5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade500)
-          )
-      ),
-    );
-  }
-
   Widget _playersList() {
     final controller = Get.find<OpenMatchForAllCourtController>();
     return Obx(() {
@@ -1820,7 +1938,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  /// Name + City
+                  /// Name + Level + XP + Matches + City
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1832,6 +1950,25 @@ class AppPlayersBottomSheet extends StatelessWidget {
                               .copyWith(fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Text(
+                              '${player['level'] ?? 'Beginner'}',
+                              style: Get.textTheme.bodySmall!
+                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
+                            ),
+                            Text(
+                              ' • ${player['xpPoints'] ?? 0} XP',
+                              style: Get.textTheme.bodySmall!
+                                  .copyWith(fontSize: 10, color: Colors.orange),
+                            ),
+                            Text(
+                              ' • ${player['totalMatchesPlayed'] ?? 0} matches',
+                              style: Get.textTheme.bodySmall!
+                                  .copyWith(fontSize: 10, color: Colors.grey),
+                            ),
+                          ],
+                        ),
                         Text(
                           player['city'] ?? '',
                           style: Get.textTheme.bodyLarge!

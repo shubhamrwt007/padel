@@ -374,6 +374,8 @@ class OpenMatchesController extends GetxController {
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
           'level': player.level ?? '',
+          'xpPoints': player.xpPoints ?? '',
+          'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
         }).toList();
       }
     } catch (e) {

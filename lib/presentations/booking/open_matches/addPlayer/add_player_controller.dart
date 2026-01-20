@@ -733,7 +733,7 @@ class AddPlayerController extends GetxController {
                         elevation: 0,
                       ),
                       child: Text(
-                        "Add Money",
+                        "Add Credits",
                         style: Get.textTheme.labelLarge!
                             .copyWith(color: Colors.white),
                       ),
