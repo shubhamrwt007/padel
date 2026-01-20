@@ -286,7 +286,6 @@ class ScoreBoardController extends GetxController {
         CustomLogger.logMessage(
             msg: "Teams count in response: ${item.teams?.length ?? 0}",
             level: LogLevel.info);
-
         matchDate.value = item.matchDate ?? "";
         matchTime.value = item.matchTime ?? "";
         startTime.value = item.startTime ?? "";
