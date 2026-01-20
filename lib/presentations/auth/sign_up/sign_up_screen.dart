@@ -255,7 +255,7 @@ class SignUpScreen extends GetView<SignUpController> {
                   children: [
                     Text(
                       controller.selectedLocation.value.isEmpty
-                          ? "Preferred Location"
+                          ? "Preferred Location *"
                           : controller.selectedLocation.value,
                       style: style.copyWith(
                         color: controller.selectedLocation.value.isEmpty

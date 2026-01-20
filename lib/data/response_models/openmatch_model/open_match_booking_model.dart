@@ -67,6 +67,7 @@ class OpenMatchBookingData {
   String? gender;
   bool? status;
   bool? adminStatus;
+  bool? isRequest;
   bool? isActive;
   bool? isDeleted;
   String? createdAt;
@@ -97,6 +98,7 @@ class OpenMatchBookingData {
     this.gender,
     this.status,
     this.adminStatus,
+    this.isRequest,
     this.isActive,
     this.isDeleted,
     this.createdAt,
@@ -129,6 +131,7 @@ class OpenMatchBookingData {
     gender = json['gender'];
     status = json['status'];
     adminStatus = json['adminStatus'];
+    isRequest = json['isRequest'];
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     createdAt = json['createdAt'];
@@ -160,6 +163,7 @@ class OpenMatchBookingData {
         'gender': gender,
         'status': status,
         'adminStatus': adminStatus,
+        'isRequest': isRequest,
         'isActive': isActive,
         'isDeleted': isDeleted,
         'createdAt': createdAt,

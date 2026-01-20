@@ -79,7 +79,7 @@ class WalletController extends GetxController{
       isWalletLoading.value = true;
       final response = await repository.getWallet();
       walletBalance.value = response.balance ?? 0;
-      totalSpendingBalance.value = response.totalDebitedBalance ?? 0;
+      totalDebitedBalance.value = response.totalDebitedBalance ?? 0;
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
     } finally {

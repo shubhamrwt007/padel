@@ -59,7 +59,7 @@ class RequestsController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
+      // Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -79,7 +79,7 @@ class RequestsController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching my requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch my requests");
+      // Get.snackbar("Error", "Failed to fetch my requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -98,7 +98,7 @@ class RequestsController extends GetxController {
       if (response != null) {
         // Remove the accepted request from the list
         joinRequests.removeWhere((request) => request.id == requestId);
-        Get.snackbar("Success", "Player request accepted successfully");
+        // Get.snackbar("Success", "Player request accepted successfully");
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error accepting player request: $e", level: LogLevel.error);
@@ -118,11 +118,11 @@ class RequestsController extends GetxController {
           CustomLogger.logMessage(msg: response.message ?? "", level: LogLevel.debug);
           // Remove the request from the list after successful withdrawal
           myRequests.removeWhere((request) => request.id == requestId);
-          Get.snackbar("Success", "Request withdrawn successfully");
+          // Get.snackbar("Success", "Request withdrawn successfully");
         }
       } catch (e) {
         CustomLogger.logMessage(msg: "Error request: $e", level: LogLevel.error);
-        Get.snackbar("Error", "Failed to withdraw request");
+        // Get.snackbar("Error", "Failed to withdraw request");
       } finally {
         isLoadingRequests.value = false;
       }

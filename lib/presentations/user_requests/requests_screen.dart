@@ -181,12 +181,12 @@ class RequestsScreen extends StatelessWidget {
         child: Row(
           children: [
             _tabButton(
-              title: "Join Requests",
+              title: "Receive",
               selected: controller.selectedTab.value == 0,
               onTap: () => controller.changeTab(0),
             ),
             _tabButton(
-              title: "My Requests",
+              title: "Sent",
               selected: controller.selectedTab.value == 1,
               onTap: () => controller.changeTab(1),
             ),
