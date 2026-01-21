@@ -31,7 +31,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
-          height: Get.height * 0.5,
+          height: Get.height * 0.45,
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -54,7 +54,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
               style: Get.textTheme.headlineMedium!.copyWith(
                 fontWeight: FontWeight.w600,
               ),
-            ).paddingOnly(bottom: 16),
+            ).paddingOnly(bottom: 11),
             // Content
             Expanded(
               child: Padding(
@@ -64,7 +64,8 @@ class AddPlayerBottomSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       textFieldWithLabel(
-                        "Phone Number *",
+                        "Enter Phone Number",
+                        labelText: "Phone Number *",
                         controller.phoneController,
                         context,
                         action: TextInputAction.next,
@@ -82,7 +83,8 @@ class AddPlayerBottomSheet extends StatelessWidget {
                         },
                       ),
                       textFieldWithLabel(
-                        "Name",
+                        "Enter Name",
+                          labelText: "Name *",
                         textCapitalization: TextCapitalization.words,
                         controller.nameController,
                         context,
@@ -92,14 +94,14 @@ class AddPlayerBottomSheet extends StatelessWidget {
                         color:  controller.isLoginUserAdding.value || controller.isNameFromApi.value?Colors.grey.shade200:AppColors.textFieldColor
                       ),
                       textFieldWithLabel(
-                        "Email (Optional)",
+                        "Enter Email",
+                        labelText: "Email (Optional)",
                         controller.emailController,
                         context,
                         action: TextInputAction.next,
                         keyboardType: TextInputType.emailAddress,
                         readOnly: controller.isLoginUserAdding.value,
                       ),
-                      const SizedBox(height: 80), // Space for bottom button
                     ],
                   )),
                 ),
@@ -136,7 +138,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
           child: controller.isLoading.value
               ? const AppLoader(size: 30, strokeWidth: 5)
               : null,
-        ),
+        ).paddingOnly(bottom: 20),
       ),
     );
   }
@@ -151,21 +153,23 @@ class AddPlayerBottomSheet extends StatelessWidget {
         int? maxLength,
         TextCapitalization? textCapitalization,
         dynamic Function(String)? onChanged,
-        Color? color
+        Color? color,
+        String? labelText
 
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Get.textTheme.headlineSmall!.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.labelBlackColor,
-          ),
-        ).paddingOnly(top: Get.height * .01),
+        // Text(
+        //   label,
+        //   style: Get.textTheme.headlineSmall!.copyWith(
+        //     fontWeight: FontWeight.w600,
+        //     color: AppColors.labelBlackColor,
+        //   ),
+        // ).paddingOnly(top: Get.height * .01),
         PrimaryTextField(
-          hintText: "Enter $label",
+          hintText: label,
+          labelText: labelText,
           controller: controller,
           readOnly: readOnly,
           keyboardType: keyboardType,
@@ -174,7 +178,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
           maxLength: maxLength,
           onChanged: onChanged,
           color: color,
-        ).paddingOnly(top: 10),
+        ).paddingOnly(top: 20),
       ],
     );
   }

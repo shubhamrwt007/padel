@@ -110,90 +110,79 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
               _buildDatePicker(context),
-              Transform.translate(offset: Offset(0, -30), child: fadeDivider()),
-              Transform.translate(
-                offset: Offset(0, -22),
-                child: Obx(() => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
-                        style: Get.textTheme.labelLarge
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        controller.toggleSlotsCollapse();
-                      },
-                      child: AnimatedRotation(
-                        turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 250),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: AppColors.primaryColor,
-                              shape: BoxShape.circle
-                          ),
-                          child: Icon(
-                            Icons.keyboard_arrow_up,
-                            size: 22,
-                            color: AppColors.whiteColor,
-                          ),
+              fadeDivider().paddingOnly(bottom: 15),
+              Obx(() => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                      controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
+                      style: Get.textTheme.labelLarge
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      controller.toggleSlotsCollapse();
+                    },
+                    child: AnimatedRotation(
+                      turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: AppColors.primaryColor,
+                            shape: BoxShape.circle
+                        ),
+                        child: Icon(
+                          Icons.keyboard_arrow_up,
+                          size: 22,
+                          color: AppColors.whiteColor,
                         ),
                       ),
                     ),
-                  ],
-                )),
-              ),
-              Transform.translate(
-                offset: Offset(0, -15),
-                child: Obx(() => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1.0, 0.0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeInOut,
-                      )),
-                      child: FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: controller.showMainGrid.value
-                      ? _buildAllCourtsWithSlots()
-                      : _buildSelectedSlotsList(),
-                )),
-              ),
-              Transform.translate(
-                offset: Offset(0, -10),
-                child: Align(
-                  alignment: AlignmentGeometry.centerRight,
-                  child: Obx(() => controller.showMainGrid.value
-                      ? GestureDetector(
-                    onTap: () => controller.fetchClubs(),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 12,horizontal: 14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                      ),
-                      child: Text("Fetch Clubs",style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontSize: 11),),
+                  ),
+                ],
+              )).paddingOnly(bottom: 10),
+              Obx(() => AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeInOut,
+                    )),
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
                     ),
-                  )
-                      : SizedBox.shrink()),
-                ),
-              ),
+                  );
+                },
+                child: controller.showMainGrid.value
+                    ? _buildAllCourtsWithSlots()
+                    : _buildSelectedSlotsList(),
+              )),
+              Align(
+                alignment: AlignmentGeometry.centerRight,
+                child: Obx(() => controller.showMainGrid.value
+                    ? GestureDetector(
+                  onTap: () => controller.fetchClubs(),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 12,horizontal: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                    ),
+                    child: Text("Fetch Clubs",style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontSize: 11),),
+                  ),
+                )
+                    : SizedBox.shrink()),
+              ).paddingOnly(bottom: 10),
               Obx(() => !controller.showMainGrid.value
-                  ? Transform.translate(
-                  offset: Offset(0, -5),
-                  child: availableCourts())
+                  ? availableCourts()
                   : SizedBox.shrink()),
               const SizedBox(height: 20),
             ],
@@ -475,290 +464,331 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
   /// Date Picker - Fixed spacing and toggle functionality
   Widget _buildDatePicker(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        /// Top Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Select Date",
-              style: Get.textTheme.labelLarge!.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            GestureDetector(
-              onTap: () => showChangeLocationBottomSheet(context),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.textFieldColor,
-                  borderRadius: BorderRadius.circular(5),
-                ),
+    return Container(
+      height: 110,
+      width: Get.width,
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          /// Date picker wrapped separately with Obx
+          Positioned(
+            top: 25,
+            left: 0,
+            right: 0,
+            child: Obx(
+                  () => Transform.translate(
+                offset: Offset(0, -13),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      color: AppColors.primaryColor,
-                      size: 17,
+                    Transform.translate(
+                      offset: Offset(0, 0),
+                      child: Container(
+                        width: 25,
+                        height: 55,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Color(0xffF3F3F5),
+                          border: Border.all(
+                            color: AppColors.blackColor.withAlpha(10),
+                          ),
+                        ),
+                        // Display month vertically (O C T) - now uses focusedMonth
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: DateFormat('MMM')
+                              .format(controller.focusedMonth.value)
+                              .toUpperCase()
+                              .split('')
+                              .map(
+                                (char) => Text(
+                              char,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                height: 1.0,
+                                color: Colors.black,
+                              ),
+                            ),
+                          )
+                              .toList(),
+                        ),
+                      ).paddingOnly(right: 5),
                     ),
-                    Text(
-                      'Change Location',
-                      style: Get.textTheme.labelLarge!.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.primaryColor,
+                    Expanded(
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: (scrollNotification) {
+                          if (scrollNotification is ScrollUpdateNotification) {
+                            final scrollOffset = scrollNotification.metrics.pixels;
+                            final itemExtent = 46.0;
+                            final itemsScrolled = (scrollOffset / itemExtent)
+                                .round();
+                            final estimatedDate = DateTime.now().add(
+                              Duration(days: itemsScrolled),
+                            );
+
+                            // Update focusedMonth based on scroll position
+                            final newMonth = DateTime(
+                              estimatedDate.year,
+                              estimatedDate.month,
+                              1,
+                            );
+                            if (controller.focusedMonth.value.month !=
+                                newMonth.month ||
+                                controller.focusedMonth.value.year !=
+                                    newMonth.year) {
+                              controller.focusedMonth.value = newMonth;
+                            }
+                          }
+                          return false;
+                        },
+                        child: EasyDateTimeLinePicker.itemBuilder(
+                          controller: controller.dateTimelineController,
+                          headerOptions: HeaderOptions(
+                            headerBuilder: (_, context, date) =>
+                            const SizedBox.shrink(),
+                          ),
+                          selectionMode: SelectionMode.alwaysFirst(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2030, 3, 18),
+                          focusedDate: controller.selectedDate.value,
+                          itemExtent: 43,
+                          itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
+                            final now = DateTime.now();
+                            final today = DateTime(now.year, now.month, now.day);
+                            final currentDate = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                            );
+                            if (currentDate.isBefore(today)) {
+                              return const SizedBox.shrink();
+                            }
+                            final dayName = DateFormat('E').format(date);
+                            final dateString =
+                                "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+                            return GestureDetector(
+                              onTap: onTap,
+                              child: Obx(() {
+                                final realCourtSelections =
+                                controller.realCourtSelections.entries
+                                    .where((entry) => entry.value['date'] == dateString)
+                                    .map((entry) => entry.value)
+                                    .toList();
+                                final totalSelections = realCourtSelections.length;
+
+                                return AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 500),
+                                  child: SizedBox(
+                                    height: 55,
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        Container(
+                                          height: 55,
+                                          width: Get.width * 0.11,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(5),
+                                            gradient: isSelected
+                                                ? LinearGradient(
+                                              colors: [
+                                                Color(0xff1F41BB),
+                                                Color(0xff0E1E55),
+                                              ],
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                            )
+                                                : null,
+                                            color: isSelected ? null : Colors.white,
+                                            // color: isSelected
+                                            //     ? Colors.black
+                                            //     : dateSelections.isNotEmpty
+                                            //     ? AppColors.primaryColor.withValues(alpha: 0.1)
+                                            //     : AppColors.playerCardBackgroundColor,
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? Colors.transparent
+                                                  : totalSelections > 0
+                                                  ? AppColors.primaryColor
+                                                  : AppColors.blackColor.withAlpha(
+                                                20,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                "${date.day}",
+                                                style: Get.textTheme.titleMedium!
+                                                    .copyWith(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : totalSelections > 0
+                                                      ? AppColors.primaryColor
+                                                      : AppColors.textColor,
+                                                ),
+                                              ),
+                                              Transform.translate(
+                                                offset: Offset(0, -2),
+                                                child: Text(
+                                                  dayName,
+                                                  style: Get.textTheme.bodySmall!
+                                                      .copyWith(
+                                                    fontSize: 11,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                        : totalSelections > 0
+                                                        ? AppColors.primaryColor
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (totalSelections > 0)
+                                          Positioned(
+                                            top: -2,
+                                            right: -6,
+                                            child: Container(
+                                              height: 16,
+                                              width: 16,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: isSelected
+                                                    ? AppColors.secondaryColor
+                                                    : AppColors.primaryColor,
+                                              ),
+                                              child: Text(
+                                                "$totalSelections",
+                                                style: const TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                            );
+                          },
+                          onDateChange: (date) {
+                            final wasShowingClubs = controller.courtsByDuration.value != null && !controller.showMainGrid.value;
+
+                            controller.selectedDate.value = date;
+                            controller.focusedMonth.value = DateTime(
+                              date.year,
+                              date.month,
+                              1,
+                            );
+                            controller.clearAllSelections();
+                            controller.isLoadingCourts.value = true;
+                            controller.refreshSlots(
+                              showUnavailable:
+                              controller.showUnavailableSlots.value,
+                            );
+                            controller.slots.refresh();
+
+                            // If clubs were showing before date change, refetch them after slots are refreshed
+                            if (wasShowingClubs) {
+                              Future.delayed(Duration(milliseconds: 600), () {
+                                if (controller.multiDateSelections.isNotEmpty) {
+                                  controller.fetchCourtsByDuration();
+                                }
+                              });
+                            }
+                          },
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
-
-        /// Date picker wrapped separately with Obx
-        Obx(
-              () => Transform.translate(
-            offset: Offset(0, -13),
-            child: Row(
-              children: [
-                Transform.translate(
-                  offset: Offset(0, 0),
-                  child: Container(
-                    width: 25,
-                    height: 55,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: Color(0xffF3F3F5),
-                      border: Border.all(
-                        color: AppColors.blackColor.withAlpha(10),
-                      ),
-                    ),
-                    // Display month vertically (O C T) - now uses focusedMonth
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: DateFormat('MMM')
-                          .format(controller.focusedMonth.value)
-                          .toUpperCase()
-                          .split('')
-                          .map(
-                            (char) => Text(
-                          char,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            height: 1.0,
-                            color: Colors.black,
-                          ),
-                        ),
-                      )
-                          .toList(),
-                    ),
-                  ).paddingOnly(right: 5),
-                ),
-                Expanded(
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (scrollNotification) {
-                      if (scrollNotification is ScrollUpdateNotification) {
-                        final scrollOffset = scrollNotification.metrics.pixels;
-                        final itemExtent = 46.0;
-                        final itemsScrolled = (scrollOffset / itemExtent)
-                            .round();
-                        final estimatedDate = DateTime.now().add(
-                          Duration(days: itemsScrolled),
-                        );
-
-                        // Update focusedMonth based on scroll position
-                        final newMonth = DateTime(
-                          estimatedDate.year,
-                          estimatedDate.month,
-                          1,
-                        );
-                        if (controller.focusedMonth.value.month !=
-                            newMonth.month ||
-                            controller.focusedMonth.value.year !=
-                                newMonth.year) {
-                          controller.focusedMonth.value = newMonth;
-                        }
-                      }
-                      return false;
-                    },
-                    child: EasyDateTimeLinePicker.itemBuilder(
-                      headerOptions: HeaderOptions(
-                        headerBuilder: (_, context, date) =>
-                        const SizedBox.shrink(),
-                      ),
-                      selectionMode: SelectionMode.alwaysFirst(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2030, 3, 18),
-                      focusedDate: controller.selectedDate.value,
-                      itemExtent: 43,
-                      itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
-                        final now = DateTime.now();
-                        final today = DateTime(now.year, now.month, now.day);
-                        final currentDate = DateTime(
-                          date.year,
-                          date.month,
-                          date.day,
-                        );
-                        if (currentDate.isBefore(today)) {
-                          return const SizedBox.shrink();
-                        }
-                        final dayName = DateFormat('E').format(date);
-                        final dateString =
-                            "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-
-                        return GestureDetector(
-                          onTap: onTap,
-                          child: Obx(() {
-                            final realCourtSelections =
-                            controller.realCourtSelections.entries
-                                .where((entry) => entry.value['date'] == dateString)
-                                .map((entry) => entry.value)
-                                .toList();
-                            final totalSelections = realCourtSelections.length;
-
-                            return AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              child: SizedBox(
-                                height: 55,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Container(
-                                      height: 55,
-                                      width: Get.width * 0.11,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        gradient: isSelected
-                                            ? LinearGradient(
-                                          colors: [
-                                            Color(0xff1F41BB),
-                                            Color(0xff0E1E55),
-                                          ],
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                        )
-                                            : null,
-                                        color: isSelected ? null : Colors.white,
-                                        // color: isSelected
-                                        //     ? Colors.black
-                                        //     : dateSelections.isNotEmpty
-                                        //     ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                        //     : AppColors.playerCardBackgroundColor,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? Colors.transparent
-                                              : totalSelections > 0
-                                              ? AppColors.primaryColor
-                                              : AppColors.blackColor.withAlpha(
-                                            20,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            "${date.day}",
-                                            style: Get.textTheme.titleMedium!
-                                                .copyWith(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : totalSelections > 0
-                                                  ? AppColors.primaryColor
-                                                  : AppColors.textColor,
-                                            ),
-                                          ),
-                                          Transform.translate(
-                                            offset: Offset(0, -2),
-                                            child: Text(
-                                              dayName,
-                                              style: Get.textTheme.bodySmall!
-                                                  .copyWith(
-                                                fontSize: 11,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : totalSelections > 0
-                                                    ? AppColors.primaryColor
-                                                    : Colors.black,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (totalSelections > 0)
-                                      Positioned(
-                                        top: -2,
-                                        right: -6,
-                                        child: Container(
-                                          height: 16,
-                                          width: 16,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isSelected
-                                                ? AppColors.secondaryColor
-                                                : AppColors.primaryColor,
-                                          ),
-                                          child: Text(
-                                            "$totalSelections",
-                                            style: const TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                        );
-                      },
-                      onDateChange: (date) {
-                        final wasShowingClubs = controller.courtsByDuration.value != null && !controller.showMainGrid.value;
-                        
-                        controller.selectedDate.value = date;
-                        controller.focusedMonth.value = DateTime(
-                          date.year,
-                          date.month,
-                          1,
-                        );
-                        controller.clearAllSelections();
-                        controller.isLoadingCourts.value = true;
-                        controller.refreshSlots(
-                          showUnavailable:
-                          controller.showUnavailableSlots.value,
-                        );
-                        controller.slots.refresh();
-                        
-                        // If clubs were showing before date change, refetch them after slots are refreshed
-                        if (wasShowingClubs) {
-                          Future.delayed(Duration(milliseconds: 600), () {
-                            if (controller.multiDateSelections.isNotEmpty) {
-                              controller.fetchCourtsByDuration();
-                            }
-                          });
-                        }
-                      },
+          ),
+          /// Top Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    "Select Date",
+                    style: Get.textTheme.labelLarge!.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  GestureDetector(
+                    onTap: () {
+                      controller.openDatePicker(context);
+                    },
+                    child: Container(
+                      height: 25,
+                      width: 25,
+                      decoration: BoxDecoration(
+                        color: AppColors.textFieldColor,
+                        borderRadius: BorderRadius.circular(5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.calendar_month_outlined,
+                          color: AppColors.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ).paddingOnly(left: 10)
+                ],
+              ),
+              GestureDetector(
+                onTap: () => showChangeLocationBottomSheet(context),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.textFieldColor,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: AppColors.primaryColor,
+                        size: 17,
+                      ),
+                      Obx(() => Text(
+                        controller.getSelectedLocationName(),
+                        style: Get.textTheme.labelLarge!.copyWith(
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.primaryColor,
+                        ),
+                      )),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ],
+
+        ],
+      ),
     );
   }
 
@@ -1036,7 +1066,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   ),
 
                 /// LEFT BLUE STRIP (ONLY WHEN NOT SELECTED)
-                if (!isSelected && !supports30Min)
+                if (!isSelected)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
@@ -1226,7 +1256,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const ChangeLocationBottomSheet(),
+      builder: (_) => ChangeLocationBottomSheet(),
     );
   }
 
@@ -1629,41 +1659,23 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 }
 
 class ChangeLocationBottomSheet extends StatelessWidget {
-  const ChangeLocationBottomSheet({super.key});
+  final CreateOpenMatchForAllCourtsController controller = Get.put(CreateOpenMatchForAllCourtsController());
+  ChangeLocationBottomSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cities = [
-      'Panchkula, Haryana',
-      'Jaipur, Rajasthan',
-      'Mumbai, Maharashtra',
-      'Mohali, Punjab',
-      'Shimla, Himachal',
-    ];
-
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.5,
+        height: MediaQuery.of(context).size.height * 0.45,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            // const SizedBox(height: 12),
-            //
-            // /// DRAG HANDLE
-            // Container(
-            //   width: 40,
-            //   height: 4,
-            //   decoration: BoxDecoration(
-            //     color: Colors.grey.shade400,
-            //     borderRadius: BorderRadius.circular(2),
-            //   ),
-            // ),
             const SizedBox(height: 5),
 
             /// HEADER
@@ -1690,69 +1702,140 @@ class ChangeLocationBottomSheet extends StatelessWidget {
               ),
             ),
             fadeDivider(),
-
-            /// SEARCH
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                style: Get.textTheme.headlineSmall!.copyWith(
-                  color: AppColors.labelBlackColor,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Search by city name',
-                  suffixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppColors.textFieldColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
+            //
+            // /// SEARCH
+            // Padding(
+            //   padding: const EdgeInsets.all(16),
+            //   child: TextField(
+            //     style: Get.textTheme.headlineSmall!.copyWith(
+            //       color: AppColors.labelBlackColor,
+            //     ),
+            //     decoration: InputDecoration(
+            //       hintText: 'Search by city name',
+            //       suffixIcon: const Icon(Icons.search),
+            //       filled: true,
+            //       fillColor: AppColors.textFieldColor,
+            //       border: OutlineInputBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //         borderSide: BorderSide.none,
+            //       ),
+            //     ),
+            //   ),
+            // ),
 
             /// CITY LIST
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: cities.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (_, index) {
-                  return Text(
-                    cities[index],
-                    style: Get.textTheme.headlineSmall!.copyWith(
-                      color: AppColors.labelBlackColor,
-                    ),
-                  ).paddingOnly(left: 12);
-                },
-              ),
+              child: Obx(() {
+                if (controller.isLoadingLocations.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.primaryColor),
+                  );
+                }
+
+                final locations = controller.locationsData.value?.data;
+                if (locations == null || locations.isEmpty) {
+                  return const Center(child: Text('No locations available'));
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  itemCount: locations.length,
+                  separatorBuilder: (_, __) =>  Divider(height: 1,color: Colors.grey.withValues(alpha: 0.3),),
+                  itemBuilder: (context, index) {
+                    final location = locations[index];
+
+                    return Obx(() {
+                      final isSelected =
+                          controller.selectedCityId.value == location.id;
+
+                      return InkWell(
+                        onTap: () {
+                          controller.selectedCityId.value = location.id ?? '';
+                        },
+                        borderRadius: BorderRadius.circular(5),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xffE8ECFF) // blue selected tile
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  location.name ?? '',
+                                  style: Get.textTheme.bodyLarge!.copyWith(
+                                    fontWeight:
+                                    isSelected ? FontWeight.w600 : FontWeight.w400,
+                                    color: isSelected
+                                        ? AppColors.primaryColor
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.primaryColor,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    });
+                  },
+
+                );
+              }),
             ),
 
             /// CHANGE BUTTON
             Padding(
               padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff2C3EBB),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              child: Obx(() {
+                final isEnabled = controller.selectedCityId.value.isNotEmpty;
+
+                return SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isEnabled
+                          ? const Color(0xff2C3EBB)
+                          : Colors.grey.shade300,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: isEnabled
+                        ? () {
+                      // handle change location
+                      final selectedId =
+                          controller.selectedCityId.value;
+                      print("Selected city: $selectedId");
+                      Navigator.pop(context);
+                    }
+                        : null,
+                    child: Text(
+                      'Change',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isEnabled ? Colors.white : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  onPressed: () {},
-                  child: const Text(
-                    'Change',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+                );
+              }),
             ),
+
+            const SizedBox(height: 10),
             SizedBox(height: 20),
           ],
         ),

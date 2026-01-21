@@ -1528,7 +1528,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                             Text(
                               '⭐ 0 XP Points ',
                               style: Get.textTheme.bodySmall
-                                  ?.copyWith(color: Colors.orange),
+                                  ?.copyWith(color: AppColors.secondaryColor),
                             ),
                             Text(
                               '| $countryCode-$phoneNumber',

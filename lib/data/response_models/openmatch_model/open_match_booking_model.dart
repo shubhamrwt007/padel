@@ -376,6 +376,7 @@ class UserId {
   String? email;
   String? countryCode;
   int? phoneNumber;
+  int? xpPoints;
   String? name;
   String? lastName;
   String? gender;
@@ -412,6 +413,7 @@ class UserId {
     profilePic = json['profilePic'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
+    xpPoints = json['xpPoints'];
     iV = json['__v'];
   }
 
@@ -434,6 +436,7 @@ class UserId {
         'profilePic': profilePic,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
+        'xpPoints': xpPoints,
         '__v': iV,
       };
 }

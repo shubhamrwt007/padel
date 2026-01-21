@@ -63,10 +63,12 @@ class SignUpScreen extends GetView<SignUpController> {
             labelText: "Phone Number *",
           ).paddingOnly(bottom: Get.height * 0.03),
           PrimaryTextField(
-            keyboardType: TextInputType.name,
+            keyboardType: TextInputType.text,
             action: TextInputAction.next,
+            textCapitalization: TextCapitalization.words,
             onFieldSubmitted: (v) => controller.onFieldSubmit(),
             controller: controller.nameController,
+
             hintText: "Enter Name",
             labelText: "Name *",
             validator: (v) {
