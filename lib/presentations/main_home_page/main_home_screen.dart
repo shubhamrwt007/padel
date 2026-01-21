@@ -169,9 +169,13 @@ class MainHomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              _bookingSection(),
-              const SizedBox(height: 20),
+              _banner(),
+              const SizedBox(height: 16),
               _quickActions(),
+
+              const SizedBox(height: 20),
+              _bookingSection(),
+
               const SizedBox(height: 15),
               statsDashboard(),
               const SizedBox(height: 20),
@@ -270,7 +274,7 @@ class MainHomeScreen extends StatelessWidget {
       final bookings = homeController.bookings.value?.data ?? [];
 
       if (bookings.isEmpty) {
-        return _banner();
+        return SizedBox.shrink();
       } else {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1161,17 +1165,39 @@ class MainHomeScreen extends StatelessWidget {
                             placeholder: (context, url) => CircleAvatar(
                               radius: 24,
                               backgroundColor: AppColors.secondaryColor,
+                              child: Text(
+                                _getInitials(player.name ?? ""),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                             errorWidget: (context, url, error) => CircleAvatar(
                               radius: 24,
                               backgroundColor: AppColors.secondaryColor,
-                              child: Icon(Icons.person, color: Colors.white),
+                              child: Text(
+                                _getInitials(player.name ?? ""),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           )
                         : CircleAvatar(
                             radius: 24,
                             backgroundColor: AppColors.primaryColor,
-                            child: Icon(Icons.person, color: Colors.white),
+                            child: Text(
+                              _getInitials(player.name ?? ""),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                   ),
                   Transform.translate(
@@ -1187,7 +1213,7 @@ class MainHomeScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    player.name ?? "Unknown Player",
+                    player.name?.capitalizeFirstChar() ?? "Unknown Player",
                     style: Get.textTheme.labelLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1472,6 +1498,17 @@ class MainHomeScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return "?";
+    
+    final words = name.trim().split(' ');
+    if (words.length == 1) {
+      return words[0][0].toUpperCase();
+    }
+    
+    return (words[0][0] + words[1][0]).toUpperCase();
   }
 
   Widget _recentMatches() {

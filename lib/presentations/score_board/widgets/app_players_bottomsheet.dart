@@ -5,6 +5,8 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/primary_text_feild.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 
@@ -28,7 +30,6 @@ class AppPlayersController extends GetxController {
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
           'name': player.name ?? '',
-          // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
           'level': player.level ?? '',
@@ -42,6 +43,17 @@ class AppPlayersController extends GetxController {
     } finally {
       isLoadingNearbyPlayers.value = false;
     }
+  }
+}
+String getInitials(String? fullName) {
+  if (fullName == null || fullName.trim().isEmpty) return '';
+
+  final parts = fullName.trim().split(RegExp(r'\s+'));
+
+  if (parts.length == 1) {
+    return parts[0][0].toUpperCase();
+  } else {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 }
 
@@ -90,21 +102,26 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _header(),
-              PrimaryTextField(
-                onChanged: (value) => controller.fetchNearByPlayers(search: value),
-                hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                suffixIcon: Icon(Icons.search, color: AppColors.textColor),
-                hintText: 'Search by Name / Phone number',
+              SizedBox(
+                height: 45,
+                child: PrimaryTextField(contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                  hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                  suffixIcon: Icon(Icons.search, color: AppColors.textColor),
+                  hintText: 'Search by Name / Phone number',
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Nearby & match your level',
-                style: Get.textTheme.labelLarge,
-              ),
+              // const SizedBox(height: 8),
+              // Text(
+              //   'Nearby & match your level',
+              //   style: Get.textTheme.labelLarge,
+              // ),
               const SizedBox(height: 12),
               _playersList(bookingId??""),
               const SizedBox(height: 12),
               _actionButtons(context),
+              const SizedBox(height: 20),
+
             ],
           ),
         ),
@@ -169,6 +186,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             final player = controller.nearbyPlayers[i];
             final isRequested = false;
             final isAlreadyInMatch = currentPlayerIds?.contains(player['id']) ?? false;
+            final initials = getInitials(player['name']);
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
@@ -185,14 +203,14 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                               width: 44,
                               height: 44,
                               placeholder: (context, url) => Text(
-                                '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                                initials,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryColor,
                                 ),
                               ),
                               errorWidget: (context, url, error) => Text(
-                                '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                                initials,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryColor,
@@ -201,7 +219,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                      initials,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryColor,
@@ -214,8 +232,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${(player['name'] ?? '').toString().capitalizeFirst} '
-                              '${(player['lastName'] ?? '').toString().capitalizeFirst}',
+                          '${(player['name'] ?? '').toString().capitalizeFirstChar()} ',
                           style: Get.textTheme.labelLarge!
                               .copyWith(fontWeight: FontWeight.w500),
                         ),
@@ -223,26 +240,45 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              '${player['level'] ?? 'Beginner'}',
+                              '${player['level'] ?? 'Beginner'} • ',
                               style: Get.textTheme.bodySmall!
                                   .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
                             ),
-                            Text(
-                              ' • ${player['xpPoints'] ?? 0} XP',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, color: Colors.orange),
+                            Container(
+                              // height: 25,
+                              // width: 55,
+                              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppColors.secondaryColor,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                '${formatAmount(player['xpPoints'] ?? 0)} XP',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                             Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0} matches',
+                              ' • ${player['totalMatchesPlayed'] ?? 0} Played',
                               style: Get.textTheme.bodySmall!
                                   .copyWith(fontSize: 10, color: Colors.grey),
                             ),
                           ],
                         ),
-                        Text(
-                          player['city'] ?? '',
-                          style: Get.textTheme.bodyLarge!
-                              .copyWith(fontSize: 11),
+                        Row(
+                          children: [
+                            Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              player['city'] ?? '',
+                              style: Get.textTheme.bodyLarge!
+                                  .copyWith(fontSize: 11),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -340,10 +376,10 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         OutlinedButton(
           onPressed: () {},
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40),
+            minimumSize: const Size.fromHeight(45),
             side: const BorderSide(color: Colors.green),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
           child: Text(
@@ -388,10 +424,10 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             // );
           },
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40),
+            minimumSize: const Size.fromHeight(45),
             backgroundColor: const Color(0xff2D3EBE),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
           child: Text('Add Guest  →', style: style),

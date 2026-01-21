@@ -1,17 +1,26 @@
+import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:get/get.dart';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
+import '../../repositories/authentication_repository/sign_up_repository.dart';
 import '../../data/response_models/get_courts_by_duration_model.dart' hide CourtDurationSlots;
 import '../../data/response_models/get_all_slot_prices_of_court_model.dart';
+import '../../data/response_models/get_locations_model.dart';
 
 class BookACourtController extends GetxController {
   final HomeRepository _homeRepository = HomeRepository();
+  final SignUpRepository _signUpRepository = SignUpRepository();
+  
+  // Locations data
+  Rx<GetLocationsModel?> locationsData = Rx<GetLocationsModel?>(null);
+  RxBool isLoadingLocations = false.obs;
   
   ///Available Slots------------------------------------------------------------
   // Remove duration selection - always use 60 min
@@ -36,22 +45,154 @@ class BookACourtController extends GetxController {
     // Don't reset available courts - keep them visible
     // User can modify selections and re-fetch if needed
   }
-  
-  // Method to fetch clubs and hide main grid
+
   void fetchClubs() {
     if (multiDateSelections.isEmpty) {
-      // Get.snackbar(
-      //   "No Selection",
-      //   "Please select at least one slot to continue.",
-      //   backgroundColor: Colors.orange,
-      //   colorText: Colors.white,
-      // );
+      showNoSelectionDialog();
       return;
     }
-    
+
     showMainGrid.value = false; // Hide main grid
     fetchCourtsIfReady(); // Hit the API
   }
+  void showNoSelectionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Title
+              Text(
+                "No Selection",
+                style: Get.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Message
+              Text(
+                "Please select at least one slot to continue.",
+                textAlign: TextAlign.center,
+                style: Get.textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade700,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Action
+              SizedBox(
+                width: Get.width*0.5,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "OK",
+                    style: Get.textTheme.labelLarge!
+                        .copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+  ///Date Picker----------------------------------------------------------------
+  Future<void> openDatePicker(BuildContext context) async {
+
+    final DateTime today = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate.value ?? today,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue.shade800,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textTheme: TextTheme(
+              // Header (month/year)
+              headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // Days of week (Mon, Tue, ...)
+              titleSmall: TextStyle(fontSize: 14),
+              // Date numbers
+              bodyLarge: TextStyle(fontSize: 16),
+              // Buttons (CANCEL/OK)
+              labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+
+          ),
+          child: Transform.scale(
+            scale: 0.9, // 👈 Adjust this to control overall calendar height
+            child: child!,
+          ),
+        );
+      },
+    );
+    if (picked != null) {
+      selectedDate.value = picked;
+      dateTimelineController.animateToDate(picked);
+
+      // // Refresh slots for all selected courts for the new date
+      // for (String courtId in selectedCourtIds) {
+      //   await getAvailableCourtsById(
+      //       registerClubId: registerClubId.value,
+      //       courtId: courtId
+      //   );
+      // }
+    }
+  }
+  final EasyDatePickerController dateTimelineController = EasyDatePickerController();
+
 
   final selectedDate = Rxn<DateTime>();
   Rx<DateTime> focusedMonth = DateTime.now().obs;
@@ -87,11 +228,41 @@ class BookACourtController extends GetxController {
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
   
+  // Fetch locations from SignUpRepository
+  Future<void> fetchLocations() async {
+    try {
+      isLoadingLocations.value = true;
+      final response = await _signUpRepository.getLocations();
+      locationsData.value = response;
+    } catch (e) {
+      log('Error fetching locations: $e');
+    } finally {
+      isLoadingLocations.value = false;
+    }
+  }
+    RxString selectedCityId = ''.obs;
+
+  // Get selected location name for display
+  String getSelectedLocationName() {
+    if (selectedCityId.value.isEmpty || locationsData.value?.data == null) {
+      return 'Change Location';
+    }
+    
+    final location = locationsData.value!.data!.firstWhere(
+      (loc) => loc.id == selectedCityId.value,
+      orElse: () => GetLocationData(),
+    );
+    
+    return location.name ?? 'Change Location';
+  }
+
+
   @override
-  void onInit() {
+  void onInit()async {
     super.onInit();
     selectedDate.value = DateTime.now();
     _initializeMockData();
+    await fetchLocations();
     // Fetch wallet balance when controller initializes
     try {
       final walletController = Get.find<WalletController>();
