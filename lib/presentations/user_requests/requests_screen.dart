@@ -257,9 +257,9 @@ class RequestsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: index % 2 == 0 ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+          border: Border.all(color: request.type != "booking_invitation" ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
           gradient: LinearGradient(
-            colors: index % 2 == 0
+            colors: request.type != "booking_invitation"
                 ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
                 : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
           ),
@@ -275,12 +275,20 @@ class RequestsScreen extends StatelessWidget {
                     radius: 22,
                     child: CircleAvatar(
                       radius: 20,
-                      backgroundImage: (request.requester?.profilePic?.isNotEmpty ?? false)
-                          ? CachedNetworkImageProvider(request.requester!.profilePic!)
+                      backgroundImage: (request.type == "request" 
+                          ? request.requester?.profilePic?.isNotEmpty ?? false
+                          : request.matchCreator?.profilePic?.isNotEmpty ?? false)
+                          ? CachedNetworkImageProvider(request.type == "request" 
+                              ? request.requester!.profilePic!
+                              : request.matchCreator!.profilePic!)
                           : null,
-                      child: (request.requester?.profilePic?.isEmpty ?? true)
+                      child: (request.type == "request" 
+                          ? request.requester?.profilePic?.isEmpty ?? true
+                          : request.matchCreator?.profilePic?.isEmpty ?? true)
                           ? Text(
-                              _getInitials("${request.requester?.name ?? ''} ${request.requester?.lastName ?? ''}".trim()),
+                              _getInitials(request.type == "request"
+                                  ? "${request.requester?.name ?? ''} ${request.requester?.lastName ?? ''}"
+                                  : "${request.matchCreator?.name ?? ''} ${request.matchCreator?.lastName ?? ''}").trim(),
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
@@ -301,17 +309,19 @@ class RequestsScreen extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("${request.requester?.name ?? 'Unknown'} ${request.requester?.lastName ?? ''}".trim(),
+                            Text((request.type == "request"
+                                ? request.requester?.name?.capitalizeFirstChar() ?? 'Unknown'
+                                : request.matchCreator?.name?.capitalizeFirstChar() ?? 'Unknown').trim(),
                                 style: Get.textTheme.labelLarge),
                             const SizedBox(height: 4),
                             Row(
                               children: [
                                 Text(
-                                  '⭐ ${request.requester?.xpPoints ?? 0} XP Points ',
+                                  '⭐ ${formatAmount('${request.type == "request" ? request.requester?.xpPoints ?? 0 : request.matchCreator?.xpPoints ?? 0}')} XP Points ',
                                   style: Get.textTheme.bodySmall
                                       ?.copyWith(color: Colors.orange),
                                 ),Text(
-                                  '| ${request.requester?.gender ?? 'N/A'}',
+                                  '| ${request.type == "request" ? request.requester?.gender ?? 'N/A' : request.matchCreator?.gender ?? 'N/A'}',
                                   style: Get.textTheme.bodySmall
                                       ?.copyWith(fontWeight: FontWeight.w500),
                                 ),
@@ -320,8 +330,12 @@ class RequestsScreen extends StatelessWidget {
                           ],
                         ),
                         OutlinedButton(
-                          onPressed: (){
-                            _showAcceptConfirmation(context, request.match?.id ?? "", request.preferredTeam ?? "", request.match?.skillLevel ?? "", request.id ?? "");
+                          onPressed: () {
+                            if (request.type == "request") {
+                              _showAcceptConfirmation(context, request.match?.id ?? "", request.preferredTeam ?? "", request.match?.skillLevel ?? "", request.id ?? "", request.type ?? "");
+                            } else {
+                              controller.acceptPlayerRequest(request.id ?? "", request.match?.id ?? "", request.preferredTeam ?? "", request.type ?? "");
+                            }
                           },
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 15),
@@ -331,10 +345,22 @@ class RequestsScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: Text(
-                              "Accept",
-                              style: Get.textTheme.labelLarge!.copyWith(color: Colors.white)
-                          ),
+                          child: Obx(() {
+                            final isLoading = controller.acceptingRequests[request.id] ?? false;
+                            return isLoading
+                                ? SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Accept",
+                                    style: Get.textTheme.labelLarge!.copyWith(color: Colors.white)
+                                  );
+                          }),
                         ),
                       ],
                     ),
@@ -386,25 +412,26 @@ class RequestsScreen extends StatelessWidget {
                         // ).paddingOnly(left: 5),
                       ],
                     ),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 18),
-                        Text(
-                          " ${request.match?.skillLevel ?? 'N/A'} | ",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                    if (request.type != "booking_invitation")
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 18),
+                          Text(
+                            " ${request.match?.skillLevel ?? 'N/A'} | ",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 2),
-                        genderIcon(match?.gender),
-                        const SizedBox(width: 4),
-                        Text(
-                          request.match?.gender ?? 'N/A',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 2),
+                          genderIcon(match?.gender),
+                          const SizedBox(width: 4),
+                          Text(
+                            request.match?.gender ?? 'N/A',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
                 Container(
@@ -443,7 +470,7 @@ class RequestsScreen extends StatelessWidget {
         )
     );
   }
-  void _showAcceptConfirmation(BuildContext context, String matchId, String team, String skillLevel, String requestId) {
+  void _showAcceptConfirmation(BuildContext context, String matchId, String team, String skillLevel, String requestId, String requestType) {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -543,7 +570,7 @@ class RequestsScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         Get.back();
-                        controller.acceptPlayerRequest(requestId, matchId, team);
+                        controller.acceptPlayerRequest(requestId, matchId, team, requestType);
                       },
                       child: const Text(
                         'Accept',
@@ -759,7 +786,7 @@ class RequestsScreen extends StatelessWidget {
             Transform.translate(
               offset: Offset(0, 2),
               child: Text(
-                "₹ ${formatAmount('')}",
+                "₹ ${controller.formatAmount('${controller.getPerShare(request)}')}",
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -871,14 +898,14 @@ class RequestsScreen extends StatelessWidget {
           Divider(color: Colors.grey,thickness: 0.1,),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Your Share:",
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                "₹500",
-                style: TextStyle(
+                "₹${controller.formatAmount('${controller.getPerShare(request)}')}",
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xff1c46a0),
@@ -889,14 +916,14 @@ class RequestsScreen extends StatelessWidget {
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 "Total Price:",
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                "₹2000",
-                style: TextStyle(
+                "₹${controller.formatAmount('${controller.getTotalAmount(request)}')}",
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xff1c46a0),
@@ -960,24 +987,24 @@ class RequestsScreen extends StatelessWidget {
             fit: BoxFit.cover,
             placeholder: (context, url) => CircleAvatar(
               radius: 20,
-              backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+              backgroundColor: request?.type != "booking_invitation" ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
               child: Text(
                 _getInitials(player.name),
                 style: TextStyle(
                   fontSize: 18,
-                  color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+                  color: request?.type != "booking_invitation" ? AppColors.primaryColor : Colors.green,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             errorWidget: (context, url, error) => CircleAvatar(
               radius: 20,
-              backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+              backgroundColor: request?.type != "booking_invitation" ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
               child: Text(
                 _getInitials(player.name),
                 style: TextStyle(
                   fontSize: 18,
-                  color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+                  color: request?.type != "booking_invitation" ? AppColors.primaryColor : Colors.green,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -986,14 +1013,14 @@ class RequestsScreen extends StatelessWidget {
         )
             : CircleAvatar(
           radius: 20,
-          backgroundColor: index % 2 == 0 ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
+          backgroundColor: request?.type != "booking_invitation" ? const Color(0xffeaf0ff) : Color(0xffDFF7E6),
           child: isAdd
-              ? Icon(Icons.add, color: index % 2 == 0 ? AppColors.primaryColor : Colors.green)
+              ? Icon(Icons.add, color: request?.type != "booking_invitation" ? AppColors.primaryColor : Colors.green)
               : Text(
             _getInitials(player?.name),
             style: TextStyle(
               fontSize: 18,
-              color: index % 2 == 0 ? AppColors.primaryColor : Colors.green,
+              color: request?.type != "booking_invitation" ?Colors.green: AppColors.primaryColor ,
               fontWeight: FontWeight.bold,
             ),
           ),

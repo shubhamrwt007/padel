@@ -173,7 +173,7 @@ class MainHomeScreen extends StatelessWidget {
               _quickActions(),
               const SizedBox(height: 15),
               statsDashboard(),
-              const SizedBox(height: 15),
+              const SizedBox(height: 20),
               _sectionTitle("Courts Near you", () {
                 Get.toNamed(RoutesName.home);
               }),
@@ -226,7 +226,7 @@ class MainHomeScreen extends StatelessWidget {
                         fontSize: 15),
                   ),
                   TextSpan(
-                    text: displayName,
+                    text: "$displayName!",
                     style: Get.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -665,7 +665,7 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcBookACourtNew,
         "title": "Find a Court",
         "action": "book",
-        "boxSize": 65.0,
+        "boxSize": 70.0,
         "iconSize": 34.0,
         "offset": Offset(0, 3)
       },
@@ -673,7 +673,7 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcOpenMatchNew,
         "title": "Find a Game",
         "action": "match",
-        "boxSize": 65.0,
+        "boxSize": 70.0,
         "iconSize": 34.0,
         "offset": Offset(0, 4)
       },
@@ -681,7 +681,7 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcFindAPlayer,
         "title": "Find a Player",
         "action": "player",
-        "boxSize": 65.0,
+        "boxSize": 70.0,
         "iconSize": 40.0,
         "offset": Offset(0, 4)
       },
@@ -689,7 +689,7 @@ class MainHomeScreen extends StatelessWidget {
         "icon": Assets.imagesIcAmericanoNew,
         "title": "Americano",
         "action": "americano",
-        "boxSize": 65.0,
+        "boxSize": 70.0,
         "iconSize": 34.0,
         "offset": Offset(0, 3)
       },
@@ -836,7 +836,7 @@ class MainHomeScreen extends StatelessWidget {
             onTap: onTap,
             child: Container(
               color: Colors.transparent,
-              child: Text("See all",
+              child: Text("View all",
                   style: Get.textTheme.labelLarge!
                       .copyWith(color: AppColors.primaryColor)),
             ),
@@ -1011,7 +1011,7 @@ class MainHomeScreen extends StatelessWidget {
                             child: Text(
                               court.clubName ?? "N/A",
                               style: Get.textTheme.titleMedium!
-                                  .copyWith(color: Colors.white, fontSize: 14),
+                                  .copyWith(color: Colors.white, fontSize: 16),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),

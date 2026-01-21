@@ -49,9 +49,16 @@ class BookingSuccessfulScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                   color: AppColors.primaryColor,
                 ),
-              ).paddingOnly(bottom: Get.height * 0.02),
+              ).paddingOnly(bottom: Get.height * 0.06),
             ),
           ),
+          Text(
+            "Powered By RowthTech",
+            style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+              color: AppColors.blackColor,
+              fontWeight: FontWeight.w400,fontSize: 12,
+            ),
+          )
         ],
       ).paddingOnly(left: Get.width * 0.05, right: Get.width * 0.05),
     );

@@ -303,7 +303,7 @@ class OpenMatchesController extends GetxController {
           'name': request.requester?.name ?? '',
           'lastName': request.requester?.lastName ?? '',
           'profilePic': request.requester?.profilePic ?? '',
-          'level': request.level ?? '',
+          // 'level': request.level ?? '',
         }).toList();
       }
     } catch (e) {

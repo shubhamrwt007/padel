@@ -176,7 +176,7 @@ class BookACourtScreen extends StatelessWidget {
                     ? GestureDetector(
                         onTap: () => controller.fetchClubs(),
                         child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 10,horizontal: 12),
+                          padding: EdgeInsets.symmetric(vertical: 12,horizontal: 14),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5),
                             gradient: const LinearGradient(
@@ -185,7 +185,7 @@ class BookACourtScreen extends StatelessWidget {
                               end: Alignment.centerRight,
                             ),
                           ),
-                          child: Text("Fetch Clubs",style: Get.textTheme.labelMedium!.copyWith(color: Colors.white),),
+                          child: Text("Fetch Clubs",style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontSize: 11),),
                         ),
                       )
                     : SizedBox.shrink()),
@@ -371,7 +371,14 @@ class BookACourtScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Text("Up to:  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),),
+                        Column(
+                          children: [
+                            Text("Up  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),),
+                            Transform.translate(
+                                offset: Offset(0, -2),
+                                child: Text("to  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),)),
+                          ],
+                        ),
                         Text(
                           '₹ ${clubData.registerClub?.totalAmount ?? 0}',
                           style: Get.textTheme.titleLarge!.copyWith(
@@ -1058,8 +1065,8 @@ class BookACourtScreen extends StatelessWidget {
               Center(
                 child: Container(
                   width: 2,
-                  height: 30,
-                  color: AppColors.primaryColor.withValues(alpha: 0.5),
+                  height: 35,
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
                 ),
               ),
 
@@ -1370,7 +1377,7 @@ class BookACourtScreen extends StatelessWidget {
                             size: 45,
                           ).paddingOnly(right: 40)
                         : Text(
-                            "Direct Payment",
+                            "Pay Now",
                             style: Get.textTheme.headlineLarge!.copyWith(
                               color: AppColors.secondaryColor,
                               fontSize: 16,

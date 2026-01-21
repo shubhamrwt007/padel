@@ -55,20 +55,20 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
             _buildUPIOptions(context),
 
             SizedBox(height: Get.height * 0.03),
-
-            // Credit & Debit Cards Section
-            Text(
-              "Credit & Debit Cards",
-              style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ).paddingSymmetric(horizontal: Get.width * 0.05),
-
-            SizedBox(height: Get.height * 0.02),
-
-            _buildCardOptions(context),
-
-            SizedBox(height: Get.height * 0.03),
+            //
+            // // Credit & Debit Cards Section
+            // Text(
+            //   "Credit & Debit Cards",
+            //   style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+            //     fontWeight: FontWeight.w600,
+            //   ),
+            // ).paddingSymmetric(horizontal: Get.width * 0.05),
+            //
+            // SizedBox(height: Get.height * 0.02),
+            //
+            // _buildCardOptions(context),
+            //
+            // SizedBox(height: Get.height * 0.03),
           ],
         ),
       ),
