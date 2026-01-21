@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/get_notification_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/repositories/notification_repo/notification_repository.dart';
 
 import '../../services/notification_service/firebase_notification.dart';
@@ -262,8 +263,8 @@ class NotificationController extends GetxController {
         case "/bookingRequests":
           Get.toNamed(RoutesName.yourMatchRequest);
           break;
-        case '/PaymentSuccess':
-          Get.toNamed('/payment-success');
+        case '/matches':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
           break;
         default:
           if (kDebugMode) {

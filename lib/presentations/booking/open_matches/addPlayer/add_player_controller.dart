@@ -302,7 +302,7 @@ class AddPlayerController extends GetxController {
       final body = {
         "matchId": matchId.value,
         "bookingId": bookingId,
-        "preferredTeam": selectedTeam.value,
+        // "preferredTeam": selectedTeam.value,
       };
 
       if (type != null) {

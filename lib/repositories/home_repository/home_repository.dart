@@ -7,6 +7,7 @@ import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_m
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_location_maps_model.dart';
 import 'package:padel_mobile/data/response_models/get_register_club_model.dart';
+import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import '../../core/endpoitns.dart';
 import '../../core/network/dio_client.dart';
@@ -245,6 +246,30 @@ class HomeRepository {
         st: st,
       );
       rethrow;
+    }
+  }
+
+  ///Get Near City Players------------------------------------------------------
+  Future<GetNearCityPlayers> getNearCityPlayers({required id}) async {
+    try {
+      final url = "${AppEndpoints.geNaerCityPlayer}?_id=$id";
+
+      final response = await dioClient.get(url);
+
+      if (response.statusCode == 200) {
+        log("Get Near City Players: ${response.data}");
+        return GetNearCityPlayers.fromJson(response.data);
+      } else {
+        throw Exception("Failed to load Get Near City Players - status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("Dio Error: ${e.response?.statusMessage}");
+        throw Exception("Server error: ${e.response?.statusCode}");
+      } else {
+        debugPrint("Dio Error: ${e.message}");
+        throw Exception("Network error: ${e.message}");
+      }
     }
   }
 }

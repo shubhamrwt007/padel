@@ -161,6 +161,7 @@ class MainHomeScreen extends StatelessWidget {
         onRefresh: () async {
           await controller.homeController.retryFetch();
           await controller.profileController.fetchUserProfile();
+          await controller.fetchNearCityPlayers();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -1085,94 +1086,128 @@ class MainHomeScreen extends StatelessWidget {
 
   /// PLAYERS
   Widget _players() {
-    return SizedBox(
-      height: 160,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (_, i) => Container(
-          width: 120,
-          padding: EdgeInsets.symmetric(horizontal: 5),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.4),
-                    spreadRadius: 1.5,
-                    blurRadius: 5.0)
-              ]),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.secondaryColor,
-                child: CachedNetworkImage(
-                  imageUrl: "https://picsum.photos/100/100?random=$i",
-                  imageBuilder: (context, imageProvider) => CircleAvatar(
-                    radius: 24,
-                    backgroundImage: imageProvider,
-                  ),
-                  placeholder: (context, url) => CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.secondaryColor,
-                  ),
-                  errorWidget: (context, url, error) => CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.secondaryColor,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                ),
+    return Obx(() {
+      if (controller.isLoadingPlayers.value) {
+        return SizedBox(
+          height: 160,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: 3,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) => Container(
+              width: 120,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(12),
               ),
-              Transform.translate(
-                offset: Offset(0, -5),
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: AppColors.secondaryColor),
-                  child: Text("1000 XP",
-                      style: Get.textTheme.labelMedium!
-                          .copyWith(color: Colors.white)),
-                ),
+              child: const Center(
+                child: LoadingWidget(color: AppColors.primaryColor),
               ),
-              Text("Vaibhav Kumar", style: Get.textTheme.labelLarge),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //   children: [
-              //     Text(
-              //       "100 XP",
-              //       style: Get.textTheme.labelMedium,
-              //     ),
-              //     Text(
-              //       "100 XP",
-              //       style: Get.textTheme.labelMedium,
-              //     ),
-              //   ],
-              // ),
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //   children: [
-              //     Text(
-              //       "100 XP",
-              //       style: Get.textTheme.labelMedium,
-              //     ),
-              //     Text(
-              //       "100 XP",
-              //       style: Get.textTheme.labelMedium,
-              //     ),
-              //   ],
-              // )
-            ],
+            ),
           ),
-        ).paddingOnly(top: 10, bottom: 10),
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemCount: 5,
-      ),
-    );
+        );
+      }
+
+      final players = controller.nearCityPlayers.value?.data?.leaderboard ?? [];
+      
+      if (players.isEmpty) {
+        return SizedBox(
+          height: 160,
+          child: Center(
+            child: Text(
+              "No players found in your city",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      return SizedBox(
+        height: 160,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: players.length > 10 ? 10 : players.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (_, i) {
+            final player = players[i];
+            return Container(
+              width: 120,
+              padding: EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.grey.withValues(alpha: 0.4),
+                        spreadRadius: 1.5,
+                        blurRadius: 5.0)
+                  ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: AppColors.secondaryColor,
+                    child: player.profilePic != null && player.profilePic!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: player.profilePic!,
+                            imageBuilder: (context, imageProvider) => CircleAvatar(
+                              radius: 24,
+                              backgroundImage: imageProvider,
+                            ),
+                            placeholder: (context, url) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.secondaryColor,
+                            ),
+                            errorWidget: (context, url, error) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.secondaryColor,
+                              child: Icon(Icons.person, color: Colors.white),
+                            ),
+                          )
+                        : CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.primaryColor,
+                            child: Icon(Icons.person, color: Colors.white),
+                          ),
+                  ),
+                  Transform.translate(
+                    offset: Offset(0, -5),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.secondaryColor),
+                      child: Text("${player.xpPoints ?? 0} XP",
+                          style: Get.textTheme.labelMedium!
+                              .copyWith(color: Colors.white)),
+                    ),
+                  ),
+                  Text(
+                    player.name ?? "Unknown Player",
+                    style: Get.textTheme.labelLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Text(
+                  //   "Rank #${player.rank ?? 0}",
+                  //   style: Get.textTheme.labelSmall?.copyWith(
+                  //     color: AppColors.primaryColor,
+                  //     fontWeight: FontWeight.w600,
+                  //   ),
+                  // ),
+                ],
+              ),
+            ).paddingOnly(top: 10,bottom: 10);
+          },
+        ),
+      );
+    });
   }
+
 
   /// TOURNAMENT CARD
   // Widget _tournamentCard() {

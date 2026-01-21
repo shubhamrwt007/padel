@@ -1,3 +1,13 @@
+// ================= HELPER =================
+
+String? parseId(dynamic value) {
+  if (value == null) return null;
+  if (value is Map<String, dynamic>) return value['_id']?.toString();
+  return value.toString();
+}
+
+// ================= ROOT MODEL =================
+
 class AcceptOrRejectRequestPlayersModel {
   String? message;
   Request? request;
@@ -6,9 +16,8 @@ class AcceptOrRejectRequestPlayersModel {
 
   AcceptOrRejectRequestPlayersModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    request = json['request'] != null
-        ? Request.fromJson(json['request'])
-        : null;
+    request =
+    json['request'] != null ? Request.fromJson(json['request']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -19,11 +28,13 @@ class AcceptOrRejectRequestPlayersModel {
   }
 }
 
+// ================= REQUEST =================
+
 class Request {
   String? id;
   MatchId? matchId;
   RequesterId? requesterId;
-  String? matchCreatorId;
+  String? matchCreatorId; // fixed
   String? preferredTeam;
   String? status;
   String? level;
@@ -46,13 +57,17 @@ class Request {
 
   Request.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
-    matchId = json['matchId'] != null
-        ? MatchId.fromJson(json['matchId'])
-        : null;
+
+    matchId =
+    json['matchId'] != null ? MatchId.fromJson(json['matchId']) : null;
+
     requesterId = json['requesterId'] != null
         ? RequesterId.fromJson(json['requesterId'])
         : null;
-    matchCreatorId = json['matchCreatorId'];
+
+    // 🔴 String OR Object safe
+    matchCreatorId = parseId(json['matchCreatorId']);
+
     preferredTeam = json['preferredTeam'];
     status = json['status'];
     level = json['level'];
@@ -77,19 +92,21 @@ class Request {
   }
 }
 
+// ================= MATCH =================
+
 class MatchId {
   String? id;
-  String? clubId;
+  String? clubId; // fixed
   List<Slot>? slot;
   String? matchType;
   String? skillLevel;
-  List<dynamic>? skillDetails; // changed null type to dynamic
+  List<dynamic>? skillDetails;
   String? matchDate;
   List<String>? matchTime;
   bool? matchStatus;
   List<TeamA>? teamA;
   List<TeamB>? teamB;
-  String? createdBy;
+  String? createdBy; // fixed
   String? gender;
   bool? status;
   bool? adminStatus;
@@ -124,7 +141,9 @@ class MatchId {
 
   MatchId.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
-    clubId = json['clubId'];
+
+    // 🔴 String OR Object safe
+    clubId = parseId(json['clubId']);
 
     if (json['slot'] != null) {
       slot = List.from(json['slot'].map((e) => Slot.fromJson(e)));
@@ -132,9 +151,7 @@ class MatchId {
 
     matchType = json['matchType'];
     skillLevel = json['skillLevel'];
-
     skillDetails = json['skillDetails']?.map((e) => e).toList();
-
     matchDate = json['matchDate'];
     matchTime = json['matchTime']?.cast<String>();
     matchStatus = json['matchStatus'];
@@ -147,7 +164,9 @@ class MatchId {
       teamB = List.from(json['teamB'].map((e) => TeamB.fromJson(e)));
     }
 
-    createdBy = json['createdBy'];
+    // 🔴 String OR Object safe
+    createdBy = parseId(json['createdBy']);
+
     gender = json['gender'];
     status = json['status'];
     adminStatus = json['adminStatus'];
@@ -184,6 +203,8 @@ class MatchId {
   }
 }
 
+// ================= SLOT =================
+
 class Slot {
   String? slotId;
   String? courtName;
@@ -198,7 +219,8 @@ class Slot {
     courtId = json['courtId'];
 
     if (json['slotTimes'] != null) {
-      slotTimes = List.from(json['slotTimes'].map((e) => SlotTimes.fromJson(e)));
+      slotTimes =
+          List.from(json['slotTimes'].map((e) => SlotTimes.fromJson(e)));
     }
   }
 
@@ -213,6 +235,8 @@ class Slot {
     return data;
   }
 }
+
+// ================= SLOT TIMES =================
 
 class SlotTimes {
   String? time;
@@ -239,6 +263,8 @@ class SlotTimes {
   }
 }
 
+// ================= TEAM A =================
+
 class TeamA {
   String? userId;
   String? joinedAt;
@@ -247,7 +273,9 @@ class TeamA {
   TeamA({this.userId, this.joinedAt, this.id});
 
   TeamA.fromJson(Map<String, dynamic> json) {
-    userId = json['userId'];
+    // 🔴 String OR Object safe
+    userId = parseId(json['userId']);
+
     joinedAt = json['joinedAt'];
     id = json['_id'];
   }
@@ -260,6 +288,9 @@ class TeamA {
     return data;
   }
 }
+
+
+// ================= TEAM B =================
 
 class TeamB {
   String? userId;
@@ -269,7 +300,9 @@ class TeamB {
   TeamB({this.userId, this.joinedAt, this.id});
 
   TeamB.fromJson(Map<String, dynamic> json) {
-    userId = json['userId'];
+    // 🔴 String OR Object safe
+    userId = parseId(json['userId']);
+
     joinedAt = json['joinedAt'];
     id = json['_id'];
   }
@@ -283,6 +316,9 @@ class TeamB {
   }
 }
 
+
+// ================= REQUESTER =================
+
 class RequesterId {
   Location? location;
   String? id;
@@ -290,9 +326,7 @@ class RequesterId {
   String? countryCode;
   int? phoneNumber;
   String? name;
-  String? password;
   String? city;
-  bool? agreeTermsAndCondition;
   String? category;
   bool? isActive;
   bool? isDeleted;
@@ -304,14 +338,6 @@ class RequesterId {
   String? dob;
   String? gender;
   String? profilePic;
-  String? lastName;
-  String? customerAge;
-  String? customerRacketSport;
-  String? customerScale;
-  String? playerLevel;
-  String? reboundSkills;
-  String? receivingTP;
-  String? volleyNetPositioning;
 
   RequesterId({
     this.location,
@@ -320,9 +346,7 @@ class RequesterId {
     this.countryCode,
     this.phoneNumber,
     this.name,
-    this.password,
     this.city,
-    this.agreeTermsAndCondition,
     this.category,
     this.isActive,
     this.isDeleted,
@@ -334,28 +358,17 @@ class RequesterId {
     this.dob,
     this.gender,
     this.profilePic,
-    this.lastName,
-    this.customerAge,
-    this.customerRacketSport,
-    this.customerScale,
-    this.playerLevel,
-    this.reboundSkills,
-    this.receivingTP,
-    this.volleyNetPositioning,
   });
 
   RequesterId.fromJson(Map<String, dynamic> json) {
-    location = json['location'] != null
-        ? Location.fromJson(json['location'])
-        : null;
+    location =
+    json['location'] != null ? Location.fromJson(json['location']) : null;
     id = json['_id'];
     email = json['email'];
     countryCode = json['countryCode'];
     phoneNumber = json['phoneNumber'];
     name = json['name'];
-    password = json['password'];
     city = json['city'];
-    agreeTermsAndCondition = json['agreeTermsAndCondition'];
     category = json['category'];
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
@@ -367,14 +380,6 @@ class RequesterId {
     dob = json['dob'];
     gender = json['gender'];
     profilePic = json['profilePic'];
-    lastName = json['lastName'];
-    customerAge = json['customerAge'];
-    customerRacketSport = json['customerRacketSport'];
-    customerScale = json['customerScale'];
-    playerLevel = json['playerLevel'];
-    reboundSkills = json['reboundSkills'];
-    receivingTP = json['receivingTP'];
-    volleyNetPositioning = json['volleyNetPositioning'];
   }
 
   Map<String, dynamic> toJson() {
@@ -385,9 +390,7 @@ class RequesterId {
     data['countryCode'] = countryCode;
     data['phoneNumber'] = phoneNumber;
     data['name'] = name;
-    data['password'] = password;
     data['city'] = city;
-    data['agreeTermsAndCondition'] = agreeTermsAndCondition;
     data['category'] = category;
     data['isActive'] = isActive;
     data['isDeleted'] = isDeleted;
@@ -399,17 +402,11 @@ class RequesterId {
     data['dob'] = dob;
     data['gender'] = gender;
     data['profilePic'] = profilePic;
-    data['lastName'] = lastName;
-    data['customerAge'] = customerAge;
-    data['customerRacketSport'] = customerRacketSport;
-    data['customerScale'] = customerScale;
-    data['playerLevel'] = playerLevel;
-    data['reboundSkills'] = reboundSkills;
-    data['receivingTP'] = receivingTP;
-    data['volleyNetPositioning'] = volleyNetPositioning;
     return data;
   }
 }
+
+// ================= LOCATION =================
 
 class Location {
   String? type;

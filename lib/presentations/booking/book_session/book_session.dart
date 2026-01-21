@@ -857,7 +857,7 @@ class BookSession extends StatelessWidget {
                       bottom: 0,
                       child: Container(
                         width: 2,
-                        color: AppColors.primaryColor.withValues(alpha: 0.5),
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
                       ),
                     ),
 
