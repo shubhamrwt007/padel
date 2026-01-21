@@ -313,6 +313,7 @@ class UserId {
   String? createdAt;
   String? updatedAt;
   int? iV;
+  int? xpPoints;
   String? dob;
   String? gender;
   String? profilePic;
@@ -333,6 +334,7 @@ class UserId {
     this.createdAt,
     this.updatedAt,
     this.iV,
+    this.xpPoints,
     this.dob,
     this.gender,
     this.profilePic,
@@ -354,6 +356,7 @@ class UserId {
     createdAt = MatchData._asJoinedString(json['createdAt']);
     updatedAt = MatchData._asJoinedString(json['updatedAt']);
     iV = json['__v'];
+    xpPoints = json['xpPoints'];
     dob = MatchData._asJoinedString(json['dob']);
     gender = MatchData._asJoinedString(json['gender']);
     profilePic = MatchData._asJoinedString(json['profilePic']);
@@ -378,6 +381,7 @@ class UserId {
     map['createdAt'] = createdAt;
     map['updatedAt'] = updatedAt;
     map['__v'] = iV;
+    map['xpPoints'] = xpPoints;
     map['dob'] = dob;
     map['gender'] = gender;
     map['profilePic'] = profilePic;

@@ -1,3 +1,4 @@
+import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ import 'package:padel_mobile/data/response_models/openmatch_model/open_match_mod
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
+import 'package:flutter/material.dart';
 
 class OpenMatchForAllCourtController extends GetxController {
   final isMyBooking = true.obs;
@@ -106,6 +108,57 @@ class OpenMatchForAllCourtController extends GetxController {
       fetchMatchesForSelection();
     }
   }
+
+  ///Date Picker----------------------------------------------------------------
+  Future<void> openDatePicker(BuildContext context) async {
+
+    final DateTime today = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate.value ?? today,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.blue.shade800,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textTheme: TextTheme(
+              // Header (month/year)
+              headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // Days of week (Mon, Tue, ...)
+              titleSmall: TextStyle(fontSize: 14),
+              // Date numbers
+              bodyLarge: TextStyle(fontSize: 16),
+              // Buttons (CANCEL/OK)
+              labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+
+          ),
+          child: Transform.scale(
+            scale: 0.9, // 👈 Adjust this to control overall calendar height
+            child: child!,
+          ),
+        );
+      },
+    );
+    if (picked != null) {
+      selectedDate.value = picked;
+      dateTimelineController.animateToDate(picked);
+
+      // // Refresh slots for all selected courts for the new date
+      // for (String courtId in selectedCourtIds) {
+      //   await getAvailableCourtsById(
+      //       registerClubId: registerClubId.value,
+      //       courtId: courtId
+      //   );
+      // }
+    }
+  }
+  final EasyDatePickerController dateTimelineController = EasyDatePickerController();
 
   /// Get time period (morning, noon, night) for a given time slot
   String getTimePeriod(String timeSlot) {

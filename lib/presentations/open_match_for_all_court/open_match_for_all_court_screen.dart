@@ -263,6 +263,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                               return false;
                             },
                             child: EasyDateTimeLinePicker.itemBuilder(
+                              controller: controller.dateTimelineController,
                               headerOptions: HeaderOptions(
                                 headerBuilder: (_, context, date) => const SizedBox.shrink(),
                               ),
@@ -339,10 +340,41 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Select Date",
-                    style: Get.textTheme.labelLarge!
-                        .copyWith(fontWeight: FontWeight.w600),
+                  Row(
+                    children: [
+                      Text(
+                        "Select Date",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          controller.openDatePicker(context);
+                        },
+                        child: Container(
+                          height: 25,
+                          width: 25,
+                          decoration: BoxDecoration(
+                            color: AppColors.textFieldColor,
+                            borderRadius: BorderRadius.circular(5),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 8,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.calendar_month_outlined,
+                              color: AppColors.primaryColor,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ).paddingOnly(left: 10)
+                    ],
                   ),
 
                   Obx(() {
@@ -965,6 +997,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           .join(' ');
       final countryCode = p.userId?.countryCode;
       final phoneNumber = p.userId?.phoneNumber;
+      final xpPoints = p.userId?.xpPoints;
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 14),
@@ -1020,12 +1053,26 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      Container(
+                        // height: 25,
+                        // width: 55,
+                        padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryColor,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '⭐${formatAmount(xpPoints??"")} XP',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
                       Text(
-                        '⭐ 0 XP Points ',
-                        style: Get.textTheme.bodySmall
-                            ?.copyWith(color: Colors.orange),
-                      ),Text(
-                        '| $countryCode-$phoneNumber',
+                        ' | $countryCode-$phoneNumber',
                         style: Get.textTheme.bodySmall
                             ?.copyWith(fontWeight: FontWeight.w500),
                       ),
@@ -1221,7 +1268,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                 Text(
                   '⭐ ${request['xp']??"0"} XP Points | ${request['gender'] ?? 'Male'}',
                   style: Get.textTheme.labelSmall!.copyWith(
-                    color: Colors.orange,
+                    color: AppColors.secondaryColor,
                   ),
                 ),
               ],
@@ -1827,20 +1874,26 @@ class AppPlayersBottomSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _header(),
-              PrimaryTextField(
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value),
-                  hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                  suffixIcon: Icon(Icons.search,color: AppColors.textColor),
-                  hintText: 'Search by Name / Phone number'),
-              const SizedBox(height: 8),
-              Text(
-                'Nearby & match your level',
-                style: Get.textTheme.labelLarge,
+              SizedBox(
+                height: 45,
+                child: PrimaryTextField(
+                    contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                    onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                    hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                    suffixIcon: Icon(Icons.search,color: AppColors.textColor),
+                    hintText: 'Search by Name / Phone number'),
               ),
+              // const SizedBox(height: 8),
+              // Text(
+              //   'Nearby & match your level',
+              //   style: Get.textTheme.labelLarge,
+              // ),
               const SizedBox(height: 12),
               _playersList(),
               const SizedBox(height: 12),
               _actionButtons(context),
+              const SizedBox(height: 20),
+
             ],
           ),
         ),
@@ -1905,6 +1958,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
           itemBuilder: (_, i) {
             final player = controller.nearbyPlayers[i];
             final isRequested = false;
+            final initials = getInitials(player['name']);
 
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1921,17 +1975,17 @@ class AppPlayersBottomSheet extends StatelessWidget {
                         width: 44,
                         height: 44,
                         placeholder: (context, url) => Text(
-                          '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                          initials,
                           style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
                         ),
                         errorWidget: (context, url, error) => Text(
-                          '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                          initials,
                           style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
                         ),
                       ),
                     )
                         : Text(
-                      '${player['name']?[0] ?? ''}${player['lastName']?[0] ?? ''}',
+                      initials,
                       style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
                     ),
                   ),
@@ -1943,8 +1997,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${(player['name'] ?? '').toString().capitalizeFirst} '
-                              '${(player['lastName'] ?? '').toString().capitalizeFirst}',
+                          (player['name'] ?? '').toString().capitalizeFirstChar(),
                           style: Get.textTheme.labelLarge!
                               .copyWith(fontWeight: FontWeight.w500),
                         ),
@@ -1952,26 +2005,45 @@ class AppPlayersBottomSheet extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              '${player['level'] ?? 'Beginner'}',
+                              '${player['level'] ?? 'Beginner'} • ',
                               style: Get.textTheme.bodySmall!
                                   .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
                             ),
-                            Text(
-                              ' • ${player['xpPoints'] ?? 0} XP',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, color: Colors.orange),
+                            Container(
+                              // height: 25,
+                              // width: 55,
+                              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppColors.secondaryColor,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                '${formatAmount(player['xpPoints'] ?? 0)} XP',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                             Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0} matches',
+                              ' • ${player['totalMatchesPlayed'] ?? 0} Played',
                               style: Get.textTheme.bodySmall!
                                   .copyWith(fontSize: 10, color: Colors.grey),
                             ),
                           ],
                         ),
-                        Text(
-                          player['city'] ?? '',
-                          style: Get.textTheme.bodyLarge!
-                              .copyWith(fontSize: 11),
+                        Row(
+                          children: [
+                            Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              player['city'] ?? '',
+                              style: Get.textTheme.bodyLarge!
+                                  .copyWith(fontSize: 11),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -2058,10 +2130,10 @@ class AppPlayersBottomSheet extends StatelessWidget {
         OutlinedButton(
           onPressed: () {},
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40), // ↓ height
+            minimumSize: const Size.fromHeight(45), // ↓ height
             side: const BorderSide(color: Colors.green),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
           child: Text(
@@ -2110,15 +2182,26 @@ class AppPlayersBottomSheet extends StatelessWidget {
             // );
           },
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40),
+            minimumSize: const Size.fromHeight(45),
             backgroundColor: const Color(0xff2D3EBE),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
           child: Text('Add Guest  →',style: style,),
         ),
       ],
     );
+  }
+  String getInitials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '';
+
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
   }
 }
