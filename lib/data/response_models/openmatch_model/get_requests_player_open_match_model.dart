@@ -38,7 +38,7 @@ class Requests {
   final String? createdAt;
   final String? updatedAt;
   final int? totalAmount;
-  final int? perShare;
+  final dynamic? perShare;
   final int? v;
 
   Requests({
