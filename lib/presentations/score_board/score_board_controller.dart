@@ -356,6 +356,15 @@ class ScoreBoardController extends GetxController {
         teamBWins.value = item.totalScore?.teamB ?? 0;
         winner.value = item.winner?.toString() ?? "";
         isCompleted.value = item.isCompleted ?? false;
+        
+        // Set game started status based on existing sets
+        isGameStarted.value = sets.isNotEmpty;
+        
+        // Start timer if game is started and within match time
+        if (isGameStarted.value && _isWithinMatchTimeWindow()) {
+          remainingSeconds.value = _calculateRemainingMatchTime();
+          _startGameTimer();
+        }
 
         CustomLogger.logMessage(msg: "=== FINAL TEAMS ===", level: LogLevel.info);
         for (int i = 0; i < teams.length; i++) {
@@ -697,6 +706,12 @@ class ScoreBoardController extends GetxController {
       return;
     }
     
+    // Validate scores don't exceed 20
+    if (teamAScore > 20 || teamBScore > 20) {
+      SnackBarUtils.showErrorSnackBar("Score cannot exceed 20");
+      return;
+    }
+    
     CustomLogger.logMessage(msg: 'addScore API call - set: $setNumber, scores: $teamAScore-$teamBScore', level: LogLevel.info);
     if (teamAScore == 0 && teamBScore == 0) {
       SnackBarUtils.showErrorSnackBar("Both team scores cannot be zero.");
@@ -874,16 +889,8 @@ class ScoreBoardController extends GetxController {
       if (response?.success == true) {
         SnackBarUtils.showInfoSnackBar("Player removed successfully");
         
-        // Immediately update local teams data to reflect removal
-        final teamIndex = normalizedTeamName == 'teamA' ? 0 : 1;
-        if (teamIndex < teams.length) {
-          final teamPlayers = teams[teamIndex]['players'] as List;
-          teamPlayers.removeWhere((player) => player['playerId'] == playerId);
-          teams.refresh();
-        }
-        
-        // Refresh the scoreboard to get updated team data from server
-        await fetchScoreBoard(showLoader: false);
+        // Force immediate full refresh from server
+        await fetchScoreBoard(showLoader: true);
         
         CustomLogger.logMessage(msg: 'Player removed successfully, UI refreshed', level: LogLevel.info);
       } else {
