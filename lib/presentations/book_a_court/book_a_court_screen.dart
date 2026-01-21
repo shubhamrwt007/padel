@@ -373,10 +373,10 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                         Column(
                           children: [
-                            Text("Up  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),),
+                            Text("UP  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey,fontSize: 10),),
                             Transform.translate(
                                 offset: Offset(0, -2),
-                                child: Text("to  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey),)),
+                                child: Text("TO  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey,fontSize: 10),)),
                           ],
                         ),
                         Text(
@@ -1071,7 +1071,7 @@ class BookACourtScreen extends StatelessWidget {
               ),
 
             /// LEFT BLUE STRIP (ONLY WHEN NOT SELECTED)
-            if (!isSelected && !supports30Min)
+            if (!isSelected )
               Align(
                 alignment: Alignment.centerLeft,
                 child: Container(

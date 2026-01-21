@@ -45,6 +45,7 @@ class LeaderboardController extends GetxController {
   var selectedYear = ''.obs;
   var showStateFilters = false.obs;
   var selectedCity = 'All Location'.obs;
+  var selectedGenderFilter = 'all'.obs;
 
   final List<String> indianCities = [
     'All Location',
@@ -91,9 +92,10 @@ class LeaderboardController extends GetxController {
       }
       
       final userId = storage.read("userId");
-      print('🔍 Fetching leaderboard for userId: $userId, page: $currentPage');
+      final type = selectedGenderFilter.value;
+      print('🔍 Fetching leaderboard for userId: $userId, page: $currentPage, type: $type');
       
-      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10);
+      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10, type: type);
       print('🔍 API Response success: ${response.success}');
       
       if (response.success == true && response.data != null) {
@@ -119,7 +121,8 @@ class LeaderboardController extends GetxController {
       currentPage++;
       
       final userId = storage.read("userId");
-      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10);
+      final type = selectedGenderFilter.value;
+      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10, type: type);
       
       if (response.success == true && response.data != null) {
         _convertApiDataToFormat(response.data!, isLoadMore: true);
@@ -196,6 +199,11 @@ class LeaderboardController extends GetxController {
   void onInit() {
     super.onInit();
     fetchLeaderboardData();
+    
+    // Listen to gender filter changes
+    ever(selectedGenderFilter, (_) {
+      fetchLeaderboardData(isRefresh: true);
+    });
   }
 
   void toggleExpand(int index) {

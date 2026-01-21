@@ -47,7 +47,7 @@ class User {
   int? currentWinStreak;
   int? currentLoseStreak;
   List<dynamic>? recentMatches;
-  int? winRatio;
+  dynamic? winRatio;
 
   String? id;
   String? countryCode;

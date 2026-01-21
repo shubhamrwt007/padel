@@ -62,55 +62,7 @@ var profileModel = Rxn<ProfileModel>();
               children: [
                 GestureDetector(
                   onTap: () async {
-                    log("🚪 LOGOUT: Starting logout process");
-                    
-                    // Complete cleanup of all socket connections and controllers
-                    try {
-                      // Disconnect shared socket first
-                      log("🔌 LOGOUT: Disconnecting shared socket");
-                      ChatController.disconnectSharedSocket();
-                      log("✅ LOGOUT: Shared socket disconnected");
-                      
-                      // Clear static message cache
-                      log("🧹 LOGOUT: Clearing ChatController static message cache");
-                      ChatController.clearMessageCache();
-                      log("✅ LOGOUT: Message cache cleared");
-                      
-                      // Disconnect details controller socket if exists
-                      if (Get.isRegistered<DetailsController>()) {
-                        log("🔍 LOGOUT: DetailsController found, disconnecting socket");
-                        // final detailsCtrl = Get.find<DetailsController>();
-                        // detailsCtrl.disconnectSocket();
-                        log("✅ LOGOUT: Details socket disconnected");
-                      }
-                      
-                      // Delete all controller instances to force fresh creation
-                      if (Get.isRegistered<ChatController>()) {
-                        log("🗑️ LOGOUT: Deleting ChatController instance");
-                        Get.delete<ChatController>(force: true);
-                        log("✅ LOGOUT: ChatController deleted");
-                      }
-                      
-                      if (Get.isRegistered<DetailsController>()) {
-                        log("🗑️ LOGOUT: Deleting DetailsController instance");
-                        Get.delete<DetailsController>(force: true);
-                        log("✅ LOGOUT: DetailsController deleted");
-                      }
-                      
-                    } catch (e) {
-                      log("❌ LOGOUT: Error during cleanup: $e");
-                    }
-
-                    // Clear storage completely
-                    log("🔍 LOGOUT: BEFORE ERASE: ${storage.getKeys().map((k) => "$k: ${storage.read(k)}").join(", ")}");
-                    await storage.erase(); // clear all stored data
-                    log("🧹 LOGOUT: AFTER ERASE: Storage cleared");
-                    
-                    // Small delay to ensure cleanup is complete
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    log("🏁 LOGOUT: Navigating to login screen");
-
-                    Get.offAllNamed(RoutesName.login);
+                    onLogOut();
                   },
                   child: Container(
                     height: Get.height * 0.04,
@@ -200,25 +152,69 @@ var profileModel = Rxn<ProfileModel>();
         barrierDismissible: false,
       );
       final firebaseToken = storage.read('firebase_token');
-      final ownerId = storage.read('userId');
       isLoading.value = true;
 
       // Build request body conditionally excluding fcmToken if null or empty
       final Map<String, dynamic> body = {
-        "ownerId": ownerId ?? "",
-        "fcmToken":firebaseToken??""
+        "tokens":firebaseToken??""
       };
 
       // if (firebaseToken != null && firebaseToken.toString().isNotEmpty) {
       //   body["fcmToken"] = firebaseToken;
       // }
 
-      LogoutModel result = await loginRepository.logOutUser(body: body);
+      LogOutModel result = await loginRepository.logOutUser(body: body);
 
-      if (result.status == "200") {
-        await storage.erase();
+      if (result.status == 200) {
+        log("🚪 LOGOUT: Starting logout process");
+
+        // Complete cleanup of all socket connections and controllers
+        try {
+          // Disconnect shared socket first
+          log("🔌 LOGOUT: Disconnecting shared socket");
+          ChatController.disconnectSharedSocket();
+          log("✅ LOGOUT: Shared socket disconnected");
+
+          // Clear static message cache
+          log("🧹 LOGOUT: Clearing ChatController static message cache");
+          ChatController.clearMessageCache();
+          log("✅ LOGOUT: Message cache cleared");
+
+          // Disconnect details controller socket if exists
+          if (Get.isRegistered<DetailsController>()) {
+            log("🔍 LOGOUT: DetailsController found, disconnecting socket");
+            // final detailsCtrl = Get.find<DetailsController>();
+            // detailsCtrl.disconnectSocket();
+            log("✅ LOGOUT: Details socket disconnected");
+          }
+
+          // Delete all controller instances to force fresh creation
+          if (Get.isRegistered<ChatController>()) {
+            log("🗑️ LOGOUT: Deleting ChatController instance");
+            Get.delete<ChatController>(force: true);
+            log("✅ LOGOUT: ChatController deleted");
+          }
+
+          if (Get.isRegistered<DetailsController>()) {
+            log("🗑️ LOGOUT: Deleting DetailsController instance");
+            Get.delete<DetailsController>(force: true);
+            log("✅ LOGOUT: DetailsController deleted");
+          }
+
+        } catch (e) {
+          log("❌ LOGOUT: Error during cleanup: $e");
+        }
+
+        // Clear storage completely
+        log("🔍 LOGOUT: BEFORE ERASE: ${storage.getKeys().map((k) => "$k: ${storage.read(k)}").join(", ")}");
+        await storage.erase(); // clear all stored data
+        log("🧹 LOGOUT: AFTER ERASE: Storage cleared");
+
+        // Small delay to ensure cleanup is complete
+        await Future.delayed(const Duration(milliseconds: 500));
+        log("🏁 LOGOUT: Navigating to login screen");
+
         Get.offAllNamed(RoutesName.login);
-        CustomLogger.logMessage(msg: "${result.message ?? 'LogOut SuccessFull'}", level: LogLevel.debug);
       } else {
         SnackBarUtils.showErrorSnackBar(result.message!);
       }

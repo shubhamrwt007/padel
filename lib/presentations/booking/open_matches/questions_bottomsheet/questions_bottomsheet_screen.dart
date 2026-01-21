@@ -127,26 +127,26 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                   //     Get.snackbar('Info', 'Wallet payment coming soon!');
                   //   },
                   // ),
-                    CustomButton(
-                      width: Get.width*0.9,
-                      height: 55,
-                      circleColor: AppColors.primaryColor,
-                      gradientColors: [Colors.white,Colors.white,Colors.white],
-                        onTap: () {
-                        if(Get.isSnackbarOpen)return;
-                          if (!controller.validateSelections()) {
-                            return;
-                          }
-                          SnackBarUtils.showInfoSnackBar("Wallet payment coming soon!");
-                        },
-                      child:Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Wallet",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.primaryColor,fontSize: 16)),
-                          Text("Current Balance: ₹0",style:Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor,fontSize: 11)),
-                        ],
-                      ).paddingOnly(right: 40),
-                    ),
+                  //   CustomButton(
+                  //     width: Get.width*0.9,
+                  //     height: 55,
+                  //     circleColor: AppColors.primaryColor,
+                  //     gradientColors: [Colors.white,Colors.white,Colors.white],
+                  //       onTap: () {
+                  //       if(Get.isSnackbarOpen)return;
+                  //         if (!controller.validateSelections()) {
+                  //           return;
+                  //         }
+                  //         SnackBarUtils.showInfoSnackBar("Wallet payment coming soon!");
+                  //       },
+                  //     child:Column(
+                  //       mainAxisAlignment: MainAxisAlignment.center,
+                  //       children: [
+                  //         Text("Wallet",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.primaryColor,fontSize: 16)),
+                  //         Text("Current Balance: ₹0",style:Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor,fontSize: 11)),
+                  //       ],
+                  //     ).paddingOnly(right: 40),
+                  //   ),
                   const SizedBox(height: 12),
 
                   // Direct Payment
@@ -175,7 +175,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                       ).paddingOnly(right: 40)
                           : Obx(() => Text(
                         controller.requiresPayment.value
-                            ? (Platform.isIOS ? "Direct Payment" : "Create Match")
+                            ? "Pay Now"
                             : "Confirm Match",
                         style: Get.textTheme.headlineLarge!.copyWith(
                           color: AppColors.secondaryColor,

@@ -16,6 +16,9 @@ class ScoreBoardScreen extends StatelessWidget {
   ScoreBoardScreen({super.key});
 
   @override
+  final RxBool isDragging = false.obs;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -167,91 +170,31 @@ class ScoreBoardScreen extends StatelessWidget {
                     }),
 
                     // Add bottom padding when in shuffle mode to prevent content from being hidden behind remove zone
-                    Obx(() => controller.isShuffleMode.value 
-                        ? const SizedBox(height: 100) 
+                    Obx(() => controller.isShuffleMode.value
+                        ? const SizedBox(height: 100)
                         : const SizedBox.shrink()),
                   ],
                 );
               },
             ),
           ),
-          // Remove button positioned above find players button
-          Obx(() => controller.isShuffleMode.value 
+
+          // Remove Zones - Top Layer
+          Obx(() => isDragging.value
               ? Positioned(
-            bottom: 30,
-            left: Get.width * 0.25,
-            right: Get.width * 0.25,
-                  child: DragTarget<Map<String, dynamic>>(
-                    onAccept: (data) {
-                      final playerId = data['player']['playerId'];
-                      final playerName = controller.capitalizeFirstWord(
-                        data['player']['name'].toString().split(' ').first.trim()
-                      );
-                      final team = data['team'];
-                      
-                      Get.dialog(
-                        AlertDialog(
-                          title: const Text('Remove Player'),
-                          content: Text('Remove $playerName from the match?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Get.back(),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                Get.back();
-                                await controller.removePlayer(playerId, team);
-                              },
-                              child: const Text('Remove', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      final isActive = candidateData.isNotEmpty;
-                      return AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: isActive ? 1.0 : 0.0,
-                        child: IgnorePointer(
-                          ignoring: !isActive,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: isActive ? [
-                                BoxShadow(
-                                  color: Colors.red.withOpacity(0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ] : [],
-                            ),
-                            child: Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.delete_forever, color: Colors.white, size: 18),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'Remove',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  top: 0,
+                  left: Get.width * 0.15,
+                  right: Get.width * 0.15,
+                  child: _buildRemoveZone(isTop: true),
+                )
+              : const SizedBox.shrink()),
+
+          Obx(() => isDragging.value
+              ? Positioned(
+                  bottom: 20,
+                  left: Get.width * 0.15,
+                  right: Get.width * 0.15,
+                  child: _buildRemoveZone(isTop: false),
                 )
               : const SizedBox.shrink()),
         ],
@@ -1053,12 +996,89 @@ class ScoreBoardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildRemoveZone({required bool isTop}) {
+    return DragTarget<Map<String, dynamic>>(
+      onAccept: (data) {
+        final playerId = data['player']['playerId'];
+        final playerName = controller.capitalizeFirstWord(
+          data['player']['name'].toString().split(' ').first.trim()
+        );
+        final team = data['team'];
+        
+        Get.dialog(
+          AlertDialog(
+            title: const Text('Remove Player'),
+            content: Text('Remove $playerName from the match?'),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Get.back();
+                  await controller.removePlayer(playerId, team);
+                },
+                child: const Text('Remove', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isActive = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: isActive ? 70 : 50,
+          decoration: BoxDecoration(
+            color: isActive ? Colors.red.withOpacity(0.9) : Colors.red.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: isActive ? [
+              BoxShadow(
+                color: Colors.red.withOpacity(0.5),
+                blurRadius: 15,
+                spreadRadius: 3,
+              ),
+            ] : [],
+          ),
+          child: Center(
+            child: AnimatedScale(
+              duration: const Duration(milliseconds: 200),
+              scale: isActive ? 1.2 : 1.0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.delete_forever,
+                    color: Colors.white,
+                    size: isActive ? 28 : 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isActive ? 'Drop to Remove' : 'Drag here to remove',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isActive ? 16 : 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildShufflePlayerItem(Map<String, dynamic> player, int index, String team) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Draggable<Map<String, dynamic>>(
           data: {'player': player, 'team': team, 'index': index},
+          onDragStarted: () => isDragging.value = true,
+          onDragEnd: (_) => isDragging.value = false,
           feedback: Material(
             color: Colors.transparent,
             child: Container(
@@ -1458,6 +1478,8 @@ class ScoreBoardScreen extends StatelessWidget {
     return Obx(() => controller.isShuffleMode.value && controller.canSwapPlayers
         ? Draggable<Map<String, dynamic>>(
       data: {'player': player, 'team': team, 'index': index},
+      onDragStarted: () => isDragging.value = true,
+      onDragEnd: (_) => isDragging.value = false,
       feedback: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 65,
@@ -1671,6 +1693,8 @@ class ScoreBoardScreen extends StatelessWidget {
           Obx(() => controller.isShuffleMode.value && hasPlayer && controller.canSwapPlayers
               ? Draggable<Map<String, dynamic>>(
             data: {'player': players[index], 'team': teamName, 'index': index},
+            onDragStarted: () => isDragging.value = true,
+            onDragEnd: (_) => isDragging.value = false,
             feedback: Container(
               height: 65,
               width: 65,

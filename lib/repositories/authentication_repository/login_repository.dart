@@ -72,20 +72,20 @@ class LoginRepository {
     }
   }
   ///LogOut---------------------------------------------------------------------
-  Future<LogoutModel> logOutUser({required Map<String,dynamic> body}) async {
+  Future<LogOutModel> logOutUser({required Map<String,dynamic> body}) async {
     try {
       CustomLogger.logMessage(
         msg: "LOGOUT BODY:-> $body",
         level: LogLevel.info,
       );
-      final response = await dioClient.post(AppEndpoints.logout, data: body);
+      final response = await dioClient.put(AppEndpoints.logout, data: body);
 
       if (response.statusCode == 200) {
         CustomLogger.logMessage(
           msg: "LogOut successful: ${response.data}",
           level: LogLevel.info,
         );
-        return LogoutModel.fromJson(response.data);
+        return LogOutModel.fromJson(response.data);
       } else {
         throw Exception("LogOut failed with status code: ${response.statusCode}");
       }
