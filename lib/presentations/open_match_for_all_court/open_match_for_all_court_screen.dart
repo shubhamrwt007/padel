@@ -99,7 +99,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
+                      "₹${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -385,19 +385,23 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         !controller.isMyBooking.value,
                       ],
                       borderRadius: BorderRadius.circular(5),
-                      constraints: const BoxConstraints(minHeight: 25, minWidth: 90),
+                      constraints: const BoxConstraints(minHeight: 25, minWidth: 60),
+                      fillColor: AppColors.primaryColor,
+                      selectedColor: Colors.white,
+                      color: Colors.black,
+                      textStyle: TextStyle(fontSize: 12),
                       onPressed: (index) {
                         controller.isMyBooking.value = index == 0;
                         controller.fetchMatchesForSelection();
                       },
                       children: [
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text("My Booking",style: Get.textTheme.labelMedium,),
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text("My"),
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text("All Bookings",style: Get.textTheme.labelMedium,),
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text("All"),
                         ),
                       ],
                     );
@@ -516,7 +520,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final slotTimes = data.slot?.expand((slot) =>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
-    final timeStr = controller.formatTimeRange(data.matchTime ?? []);
+    // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
+    final timeStr = "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
 
     final clubName = data.clubId?.clubName ?? '-';
     final address = "${data.clubId?.city ?? ""} ${data.clubId?.zipCode??""}";
@@ -540,7 +545,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     while (teamAPlayers.length < 2) {
       teamAPlayers.add(
-        _buildAvailableCircle("teamA", data.bookingId ?? "", data.skillLevel, index, data),
+        _buildAvailableCircle("teamA", data.bookingId?.sId ?? "", data.skillLevel, index, data),
       );
     }
 
@@ -558,7 +563,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     while (teamBPlayers.length < 2) {
       teamBPlayers.add(
-        _buildAvailableCircle("teamB", data.bookingId ?? "", data.skillLevel, index, data),
+        _buildAvailableCircle("teamB", data.bookingId?.sId ?? "", data.skillLevel, index, data),
       );
     }
 
@@ -577,7 +582,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         children: [
           Align(
               alignment: AlignmentGeometry.centerRight,
-              child: SvgPicture.asset(index % 2 == 0?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height:_isLoginUserInMatch(data)?190: 150,width: 150,).paddingOnly(right: 20)),
+              child: SvgPicture.asset(index % 2 == 0?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height:_isLoginUserInMatch(data)?160: 150,width: 150,).paddingOnly(right: 20)),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -605,7 +610,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                                 TextSpan(
                                   text: '$dateOnlyStr | $timeStr',
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 13,
                                     color: Colors.black87,
                                   ),
                                 ),
@@ -647,35 +652,70 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                       ),
                     ],
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                          offset: Offset(0, 3),
+                  Row(
+                    children: [
+                      if (_isLoginUserInMatch(data))
+                        GestureDetector(
+                          onTap: (){
+                            final teamAData = (data.teamA ?? []).map((p) => {
+                              'userId': p.userId?.sId ?? '',
+                              'name': p.userId?.name ?? '',
+                              'lastName': p.userId?.lastName ?? '',
+                            }).toList();
+                            final teamBData = (data.teamB ?? []).map((p) => {
+                              'userId': p.userId?.sId ?? '',
+                              'name': p.userId?.name ?? '',
+                              'lastName': p.userId?.lastName ?? '',
+                            }).toList();
+
+                            Get.toNamed(RoutesName.chat, arguments: {
+                              "matchID": data.sId ?? "",
+                              "teamA": teamAData,
+                              "teamB": teamBData,
+                            });
+                          },
+                          child:Container(
+                              height: 36,
+                              width: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                // borderRadius: BorderRadius.circular(10),
+                                color:AppColors.primaryColor,
+                              ),
+                              child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
+                          )
+                        ).paddingOnly(right: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _expandedStates[index] = !_expandedStates[index];
-                        });
-                      },
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          _expandedStates.length > index && _expandedStates[index]
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.black,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _expandedStates[index] = !_expandedStates[index];
+                            });
+                          },
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              _expandedStates.length > index && _expandedStates[index]
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   )
                 ],
               ),
@@ -699,54 +739,47 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '?';
 
-    return GestureDetector(
-      onTap: () {
-        if (matchData != null && (_isLoginUserInMatch(matchData) || _isMatchCreator(matchData))) {
-          _showPlayerDetailsDialog(matchData);
-        }
-      },
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: Colors.white,
       child: CircleAvatar(
-        radius: 22,
-        backgroundColor: Colors.white,
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor:const Color(0xffeaf0ff),
-          child: ClipOval(
-            child: (imageUrl != null && imageUrl.isNotEmpty)
-                ? CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              placeholder: (context, url) => Center(
-                child: Text(
-                  firstLetter,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.primaryColor.withOpacity(0.5),
-                    fontWeight: FontWeight.bold,
-                  ),
+        radius: 20,
+        backgroundColor:const Color(0xffeaf0ff),
+        child: ClipOval(
+          child: (imageUrl != null && imageUrl.isNotEmpty)
+              ? CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) => Center(
+              child: Text(
+                firstLetter,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.primaryColor.withOpacity(0.5),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              errorWidget: (context, url, error) => Center(
-                child: Text(
-                  firstLetter,
-                  style:  TextStyle(
-                    fontSize: 18,
-                    color:  AppColors.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            )
-                : Center(
+            ),
+            errorWidget: (context, url, error) => Center(
               child: Text(
                 firstLetter,
                 style:  TextStyle(
                   fontSize: 18,
-                  color: AppColors.primaryColor,
+                  color:  AppColors.primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+            ),
+          )
+              : Center(
+            child: Text(
+              firstLetter,
+              style:  TextStyle(
+                fontSize: 18,
+                color: AppColors.primaryColor,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -764,10 +797,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
-          Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId??"",), isScrollControlled: true);
+          Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",), isScrollControlled: true);
         } else {
           // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId ?? '');
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '');
         }
       },
       child: CircleAvatar(
@@ -886,6 +919,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       // Call the request API directly
       final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId);
       if (success) {
+    
+        
         Get.dialog(
           Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -931,7 +966,13 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
               ),
             ),
           ),
+          
         );
+            // Refresh matches without showing loader
+        final currentLoading = controller.isLoading.value;
+        controller.isLoading.value = false;
+        await controller.fetchMatchesForSelection();
+        controller.isLoading.value = currentLoading;
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error requesting to join match: $e", level: LogLevel.error);
@@ -1483,38 +1524,95 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              width: (teamAPlayers.length + teamBPlayers.length) * 28 + 28,
-              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, -2),
+            Row(
+              children: [
+                Container(
+                  width: (teamAPlayers.length + teamBPlayers.length) * 28 + 28,
+                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, -2),
+                        ),
+                      ]
+                  ),
+                  child: SizedBox(
+                    height: 44,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        for (int i = 0; i < teamAPlayers.length; i++)
+                          Positioned(
+                            left: i * 30,
+                            child: teamAPlayers[i],
+                          ),
+                        for (int i = 0; i < teamBPlayers.length; i++)
+                          Positioned(
+                            left: (teamAPlayers.length * 30) + (i * 30),
+                            child: teamBPlayers[i],
+                          ),
+                      ],
                     ),
-                  ]
-              ),
-              child: SizedBox(
-                height: 44,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    for (int i = 0; i < teamAPlayers.length; i++)
-                      Positioned(
-                        left: i * 30,
-                        child: teamAPlayers[i],
-                      ),
-                    for (int i = 0; i < teamBPlayers.length; i++)
-                      Positioned(
-                        left: (teamAPlayers.length * 30) + (i * 30),
-                        child: teamBPlayers[i],
-                      ),
-                  ],
+                  ),
                 ),
-              ),
+                // if(data.teamA!.isNotEmpty && data.teamB!.isNotEmpty)
+                // IconButton(onPressed: (){
+                //   if (data != null && (_isLoginUserInMatch(data) || _isMatchCreator(data))) {
+                //     _showPlayerDetailsDialog(data);
+                //   }
+                // }, icon: Icon(Icons.remove_red_eye),color: AppColors.primaryColor,)
+              ],
+            ),
+            if (!_isLoginUserInMatch(data)) const SizedBox.shrink(),
+            Row(
+              children: [
+                if (_isMatchCreator(data)) ...[
+                  GestureDetector(
+                    onTap: () => _showRequestsBottomSheet(context, data.sId ?? ''),
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.notifications, color: AppColors.primaryColor,size: 18,),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Requests ',
+                              style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
+                              children: [
+                                TextSpan(
+                                  text: '(',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: "$pendingRequestsCount",
+                                  style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
+                                ),
+                                TextSpan(
+                                  text: ')',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (_isLoginUserInMatch(data))
+                  const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
+              ],
             ),
             // if (_isLoginUserInMatch(data))
             //   Container(
@@ -1567,107 +1665,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
             //     ),
             //   ).paddingOnly(bottom: 12),
           ],
-        ),
-        // Play Now button row (similar to booking card)
-        if (_isLoginUserInMatch(data)) const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (_isLoginUserInMatch(data))
-              GestureDetector(
-                onTap: (){
-                  final teamAData = (data.teamA ?? []).map((p) => {
-                    'userId': p.userId?.sId ?? '',
-                    'name': p.userId?.name ?? '',
-                    'lastName': p.userId?.lastName ?? '',
-                  }).toList();
-                  final teamBData = (data.teamB ?? []).map((p) => {
-                    'userId': p.userId?.sId ?? '',
-                    'name': p.userId?.name ?? '',
-                    'lastName': p.userId?.lastName ?? '',
-                  }).toList();
-
-                  Get.toNamed(RoutesName.chat, arguments: {
-                    "matchID": data.sId ?? "",
-                    "teamA": teamAData,
-                    "teamB": teamBData,
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.only(left: 5,right: 1,top: 2,bottom: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Start Chat with Players",
-                        style: TextStyle(color: Colors.grey,fontSize: 10),
-                      ).paddingOnly(right: 10,left: 5),
-                      Container(
-                          height: 28,
-                          width: 28,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color:AppColors.primaryColor,
-                          ),
-                          child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            if (!_isLoginUserInMatch(data)) const SizedBox.shrink(),
-            Row(
-              children: [
-                if (_isMatchCreator(data)) ...[
-                  GestureDetector(
-                    onTap: () => _showRequestsBottomSheet(context, data.sId ?? ''),
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.notifications, color: AppColors.primaryColor,size: 18,),
-                          RichText(
-                            text: TextSpan(
-                              text: 'Requests ',
-                              style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
-                              children: [
-                                TextSpan(
-                                  text: '(',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: "$pendingRequestsCount",
-                                  style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
-                                ),
-                                TextSpan(
-                                  text: ')',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                ],
-                if (_isLoginUserInMatch(data))
-                  const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
-              ],
-            ),
-          ],
-        ).paddingOnly(bottom: Get.height*0.005),
+        ).paddingOnly(bottom: 10),
         Divider(color: Colors.grey,thickness: 0.1,),
         Row(
           children: [
@@ -1731,27 +1729,27 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "${controller.getDate(data.matchDate)} | ${controller.formatTimeRange(data.matchTime ?? [])}",
-                    style: Get.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Row(
+          //       children: [
+          //         Icon(Icons.access_time, size: 18),
+          //         SizedBox(width: 8),
+          //         Text(
+          //           "${controller.getDate(data.matchDate)} | ${controller.formatTimeRange(data.matchTime ?? [])}",
+          //           style: Get.textTheme.bodySmall,
+          //         ),
+          //       ],
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
           Row(
             children: [
               Icon(Icons.group, size: 18),
               SizedBox(width: 8),
-              Text("${(data.teamA?.length ?? 0) + (data.teamB?.length ?? 0)} attendee (${(data.teamA?.length ?? 0) + (data.teamB?.length ?? 0)} confirmed)", style: Get.textTheme.bodySmall),
+              Text("${(data.teamA?.length ?? 0) + (data.teamB?.length ?? 0)} attendee", style: Get.textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 8),
@@ -2161,7 +2159,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
               arguments: {
                 "bookingId": bookingId,
                 "team": selectedTeam ?? "teamA",
-                "matchId": matchId,
+                "matchId": bookingId,
                 "needOpenMatchesForAllCourts": true,
                 "matchLevel": "",
                 "isLoginUser": false,

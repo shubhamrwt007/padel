@@ -257,7 +257,7 @@ class RequestsController extends GetxController {
               const SizedBox(height: 12),
               TextField(
                 controller: amountController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   hintText: "Enter amount",
                   filled: true,
@@ -297,7 +297,7 @@ class RequestsController extends GetxController {
                         onPressed: walletController.isAddingBalance.value
                             ? null
                             : () {
-                                final amount = int.tryParse(amountController.text) ?? 0;
+                                final amount = double.tryParse(amountController.text) ?? 0.0;
                                 if (amount > 0) {
                                   walletController.createBalance(amount);
                                 }

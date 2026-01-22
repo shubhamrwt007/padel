@@ -717,7 +717,7 @@ class AddPlayerController extends GetxController {
               // Amount Input
               TextField(
                 controller: amountController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: "Enter amount",
@@ -762,7 +762,7 @@ class AddPlayerController extends GetxController {
                         onPressed: walletController.isAddingBalance.value
                             ? null
                             : () {
-                          final amount = int.tryParse(amountController.text) ?? 0;
+                          final amount = double.tryParse(amountController.text) ?? 0;
                           if (amount > 0) {
                             walletController.createBalance(amount);
                           }

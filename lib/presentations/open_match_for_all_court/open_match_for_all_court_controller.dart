@@ -14,7 +14,7 @@ import 'package:padel_mobile/repositories/score_board_repo/score_board_repositor
 import 'package:flutter/material.dart';
 
 class OpenMatchForAllCourtController extends GetxController {
-  final isMyBooking = true.obs;
+  final isMyBooking = false.obs;
   Rx<bool> viewUnavailableSlots = false.obs;
   RxList<String> selectedSlots = <String>[].obs;
   RxString selectedTimeFilter = 'morning'.obs; // New: for tab selection
@@ -72,7 +72,7 @@ class OpenMatchForAllCourtController extends GetxController {
     if (ymd == null || ymd.isEmpty) return '';
     try {
       final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
-      return DateFormat('EEE').format(parsed);
+      return DateFormat('EEEE').format(parsed);
     } catch (_) {
       return ymd;
     }

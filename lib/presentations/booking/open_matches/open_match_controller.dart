@@ -55,7 +55,7 @@ class OpenMatchesController extends GetxController {
     if (ymd == null || ymd.isEmpty) return '';
     try {
       final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
-      return DateFormat('EEE').format(parsed);
+      return DateFormat('EEEE').format(parsed);
     } catch (_) {
       return ymd;
     }

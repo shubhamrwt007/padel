@@ -70,7 +70,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         context: context,
         action: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: ()=>Get.toNamed(RoutesName.wallet),
               child: Container(
@@ -88,7 +88,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
+                      "₹${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -111,6 +111,40 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _buildDatePicker(context),
               fadeDivider().paddingOnly(bottom: 15),
+              Center(
+                child: Obx(() {
+                  final is30 = controller.is30Slots.value;
+
+                  return Transform.scale(
+                    scale: 0.7,
+                    child: ToggleButtons(
+                      isSelected: [is30, !is30],
+                      borderRadius: BorderRadius.circular(5),
+                      constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
+                      fillColor: Colors.transparent, // important
+                      selectedColor: Colors.white,
+                      color: Colors.black,
+                      textStyle: const TextStyle(fontSize: 12),
+                      onPressed: (index) {
+                        controller.is30Slots.value = index == 0;
+                        controller.updateDurationFromToggle();
+                        // Clear selections when duration changes
+                        controller.clearAllSelections();
+                      },
+                      children: [
+                        _buildGradientToggleChild(
+                          text: "30m",
+                          isSelected: is30,
+                        ),
+                        _buildGradientToggleChild(
+                          text: "60m",
+                          isSelected: !is30,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
               Obx(() => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -845,10 +879,54 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         );
       }
 
-      // Convert selected slots to grid format
-      final selectedSlots = controller.multiDateSelections.entries
-          .map((entry) => entry.value['slot'] as Slots)
-          .toList();
+      // Group selections by slot ID to consolidate half slots
+      final Map<String, List<Map<String, dynamic>>> slotGroups = {};
+      
+      controller.multiDateSelections.forEach((key, selection) {
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final selectionCourtId = selection['courtId'] as String? ?? '';
+        final selectionDate = selection['date'] as String? ?? '';
+        
+        // Create a unique key for grouping: date_courtId_slotId (without half suffix)
+        // This groups all selections for the same slot together
+        final groupKey = '${selectionDate}_${selectionCourtId}_$slotId';
+        
+        if (!slotGroups.containsKey(groupKey)) {
+          slotGroups[groupKey] = [];
+        }
+        slotGroups[groupKey]!.add(selection);
+      });
+
+      // Consolidate slots: if both halves selected, show as one slot
+      final consolidatedSlots = <Slots>[];
+      slotGroups.forEach((key, selections) {
+        final is30Min = controller.is30Slots.value;
+        
+        // Check if both halves are selected
+        final hasFirstHalf = selections.any((s) => 
+          s['isHalfSlot'] == true && s['isFirstHalf'] == true);
+        final hasSecondHalf = selections.any((s) => 
+          s['isHalfSlot'] == true && s['isFirstHalf'] == false);
+        final hasBothHalves = is30Min && hasFirstHalf && hasSecondHalf;
+        
+        if (hasBothHalves) {
+          // Both halves selected - show as one slot (use the slot from first half)
+          final firstHalfSelection = selections.firstWhere((s) => 
+            s['isHalfSlot'] == true && s['isFirstHalf'] == true);
+          consolidatedSlots.add(firstHalfSelection['slot'] as Slots);
+        } else {
+          // Single selection (full slot or single half) - add unique slots
+          for (var selection in selections) {
+            final slot = selection['slot'] as Slots;
+            // Only add if not already added (avoid duplicates)
+            if (!consolidatedSlots.any((s) => s.sId == slot.sId && 
+                s.time == slot.time)) {
+              consolidatedSlots.add(slot);
+            }
+          }
+        }
+      });
 
       return GridView.builder(
         padding: EdgeInsets.zero,
@@ -860,13 +938,34 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           mainAxisSpacing: 10,
           childAspectRatio: 3.0,
         ),
-        itemCount: selectedSlots.length,
+        itemCount: consolidatedSlots.length,
         itemBuilder: (context, index) {
-          final slot = selectedSlots[index];
+          final slot = consolidatedSlots[index];
           return _buildSelectedSlotTile(slot);
         },
       );
     });
+  }
+  
+  Widget _buildGradientToggleChild({
+    required String text,
+    required bool isSelected,
+  }) {
+    return Container(
+      width: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: isSelected
+            ? const LinearGradient(
+          colors: [
+            Color(0xff1F41BB), Color(0xff0E1E55)
+          ],
+        )
+            : null,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(text,style: TextStyle(fontSize: 18),),
+    );
   }
 
   Widget _buildSelectedSlotTile(dynamic slot) {
@@ -1147,6 +1246,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
   Widget _buildSlotTile(dynamic slot, String courtId) {
     final isSelected = controller.isSlotSelected(slot, courtId);
+    final supports30Min = controller.is30Slots.value;
+    final isBothHalvesSelected = supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId);
+    final isFullySelected = isBothHalvesSelected || (isSelected && !supports30Min);
 
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
         (slot.status?.toLowerCase() == 'booked') ||
@@ -1157,87 +1259,216 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
 
-    return GestureDetector(
-      onTap: isUnavailable
-          ? null
-          : () {
-        controller.toggleSlotSelection(
-          slot,
-          courtId: courtId,
-          courtName: '',
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            color: isUnavailable ? Colors.grey.shade100 : Colors.white,
-            border: Border.all(
-              color: isUnavailable
-                  ? Colors.grey.shade300
-                  : isSelected
-                  ? Colors.transparent
-                  : Colors.grey.shade300,
-              width: 1,
-            ),
-          ),
-          child: Stack(
-            children: [
-              /// FULL GRADIENT FOR SELECTED SLOTS
-              if (isSelected)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(radius),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ),
+    return Builder(
+      builder: (BuildContext builderContext) {
+        return GestureDetector(
+          onTapDown: supports30Min ? (details) {
+            // For 30-minute support, detect left/right half tap
+            final RenderBox? box = builderContext.findRenderObject() as RenderBox?;
+            if (box != null) {
+              final localPosition = box.globalToLocal(details.globalPosition);
+              final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
-              if (!isSelected)
-                Positioned.fill(
-                  left: 0,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: 4,
-                      decoration: BoxDecoration(
-                        color: blueColor,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(radius),
-                          bottomLeft: Radius.circular(radius),
+              controller.toggleSlotSelection(
+                slot,
+                courtId: courtId,
+                courtName: '',
+                isHalfSlot: true,
+                isFirstHalf: isLeftHalf,
+              );
+            }
+          } : null,
+          onTap: !supports30Min && !isUnavailable ? () {
+            controller.toggleSlotSelection(
+              slot,
+              courtId: courtId,
+              courtName: '',
+            );
+          } : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                color: isUnavailable ? Colors.grey.shade100 : Colors.white,
+                border: Border.all(
+                  color: isUnavailable
+                      ? Colors.grey.shade300
+                      : isFullySelected
+                      ? Colors.transparent
+                      : Colors.grey.shade300,
+                  width: 1,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN)
+                  if (supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-              /// TEXT
-              Center(
-                child: Text(
-                  controller.formatTimeForDisplay(slot.time),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isUnavailable
-                        ? Colors.grey.shade500
-                        : isSelected
-                        ? Colors.white
-                        : Colors.black87,
+                  /// FULL GRADIENT FOR NON-30MIN SELECTIONS
+                  if (isSelected && !supports30Min)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  /// LEFT HALF GRADIENT FOR 30MIN LEFT SELECTION
+                  if (supports30Min && controller.isLeftHalfSelectedInMainGrid(slot, courtId) && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 44, // Fixed width for simplicity
+                        height: 34,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(radius),
+                            bottomLeft: Radius.circular(radius),
+                          ),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION
+                  if (supports30Min && controller.isRightHalfSelectedInMainGrid(slot, courtId) && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        width: 44, // Fixed width for simplicity
+                        height: 34,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(radius),
+                            bottomRight: Radius.circular(radius),
+                          ),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  /// VERTICAL DIVIDER FOR 30MIN SLOTS
+                  if (supports30Min && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    Center(
+                      child: Container(
+                        width: 2,
+                        height: 35,
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+
+                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
+                  if (!isSelected)
+                    Positioned.fill(
+                      left: 0,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 4,
+                          decoration: BoxDecoration(
+                            color: blueColor,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(radius),
+                              bottomLeft: Radius.circular(radius),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  /// TEXT - Single text with half-color support using Stack
+                  Center(
+                    child: Stack(
+                      children: [
+                        // Base text (black for unselected parts)
+                        Text(
+                          controller.formatTimeForDisplay(slot.time),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isUnavailable
+                                ? Colors.grey.shade500
+                                : Colors.black87,
+                          ),
+                        ),
+
+                        // Left half white text overlay
+                        if (supports30Min && controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                          ClipRect(
+                            clipper: LeftHalfClipper(),
+                            child: Text(
+                              controller.formatTimeForDisplay(slot.time),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                        // Right half white text overlay
+                        if (supports30Min && controller.isRightHalfSelectedInMainGrid(slot, courtId))
+                          ClipRect(
+                            clipper: RightHalfClipper(),
+                            child: Text(
+                              controller.formatTimeForDisplay(slot.time),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                        // Full white text for non-30min selections or both halves selected
+                        if ((!supports30Min && isSelected) || (supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId)))
+                          Text(
+                            controller.formatTimeForDisplay(slot.time),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: isUnavailable
+                                  ? Colors.grey.shade500
+                                  : Colors.white,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

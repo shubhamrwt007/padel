@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/request_models/test_create_wallet_balance_model.dart';
 import 'package:padel_mobile/data/response_models/wallet/get_wallet_model.dart';
 import 'package:padel_mobile/data/response_models/wallet/transaction_history_model.dart';
+import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/wallet_repository/wallet_repository.dart';
 import 'package:padel_mobile/services/payment_services/razorpay.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
-class WalletController extends GetxController{
+class WalletController extends GetxController {
   final WalletRepository repository = Get.put(WalletRepository());
   RazorpayPaymentService? _paymentService;
   ProfileController profileController = Get.put(ProfileController());
-  
+
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
   var isWalletLoading = false.obs;
   var isAddingBalance = false.obs;
   var transactionList = <Transaction>[].obs;
-  var walletBalance = 0.obs;
-  var totalSpendingBalance = 0.obs;
-  var totalDebitedBalance = 0.obs;
-  var pendingAmount = 0.obs;
+  RxDouble walletBalance = 0.0.obs;
+  RxDouble totalSpendingBalance = 0.0.obs;
+  RxDouble totalDebitedBalance = 0.0.obs;
+  RxDouble pendingAmount = 0.0.obs;
   var currentPage = 1;
   var hasMoreTransactions = true.obs;
-  
+
   Future<void> fetchTransaction({bool isRefresh = false}) async {
     try {
       if (isRefresh) {
@@ -36,8 +38,8 @@ class WalletController extends GetxController{
       }
       isLoading.value = true;
       final response = await repository.getTransaction(
-        page: currentPage.toString(),
-        limit: 10
+          page: currentPage.toString(),
+          limit: 10
       );
       if (response.status == 200) {
         if (isRefresh) {
@@ -60,8 +62,8 @@ class WalletController extends GetxController{
       isLoadingMore.value = true;
       currentPage++;
       final response = await repository.getTransaction(
-        page: currentPage.toString(),
-        limit: 10
+          page: currentPage.toString(),
+          limit: 10
       );
       if (response.status == 200) {
         transactionList.addAll(response.transactions ?? []);
@@ -78,8 +80,9 @@ class WalletController extends GetxController{
     try {
       isWalletLoading.value = true;
       final response = await repository.getWallet();
-      walletBalance.value = response.balance ?? 0;
-      totalDebitedBalance.value = response.totalDebitedBalance ?? 0;
+      walletBalance.value = response.balance?.toDouble() ?? 0;
+      totalDebitedBalance.value =
+          response.totalDebitedBalance?.toDouble() ?? 0.0;
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
     } finally {
@@ -87,7 +90,7 @@ class WalletController extends GetxController{
     }
   }
 
-  Future<void> createBalance(int amount) async {
+  Future<void> createBalance(double amount) async {
     try {
       isAddingBalance.value = true;
       pendingAmount.value = amount;
@@ -114,6 +117,7 @@ class WalletController extends GetxController{
   Future<void> _initiateRazorpayPayment(String orderId, int amount) async {
     try {
       await _paymentService!.initiatePayment(
+
         // keyId: 'rzp_test_1DP5mmOlF5G5ag',
         ///Live Key-----------------------------
         keyId: 'rzp_live_RtOIWe2johK6H7',
@@ -121,24 +125,28 @@ class WalletController extends GetxController{
         currency: 'INR',
         name: 'Swoot',
         description: 'Add balance to wallet',
+        image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         orderId: orderId,
-        userEmail: profileController.profileModel.value?.response?.email ?? 'test@example.com',
+        userEmail: profileController.profileModel.value?.response?.email ??
+            'test@example.com',
         userContact: '9999999999',
         notes: {
           'user_id': profileController.profileModel.value?.response?.sId ?? '',
           'type': 'wallet_recharge',
         },
-        theme: '#F37254',
+        // theme: '#F37254',
         paymentMethods: ['card', 'netbanking', 'upi', 'wallet'],
       );
     } catch (e) {
-      CustomLogger.logMessage(msg: "Payment initiation error: $e", level: LogLevel.error);
+      CustomLogger.logMessage(
+          msg: "Payment initiation error: $e", level: LogLevel.error);
       // SnackBarUtils.showErrorSnackBar("Failed to initiate payment");
       isAddingBalance.value = false;
     }
   }
 
-  Future<void> _onPaymentSuccess(String paymentId, String orderId, String signature) async {
+  Future<void> _onPaymentSuccess(String paymentId, String orderId,
+      String signature) async {
     try {
       // SnackBarUtils.showSuccessSnackBar("Balance added successfully");
       await fetchWallet();
@@ -152,7 +160,8 @@ class WalletController extends GetxController{
 
   void _onPaymentError(String error) {
     // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
-    CustomLogger.logMessage(msg: "Payment failed: $error", level: LogLevel.error);
+    CustomLogger.logMessage(
+        msg: "Payment failed: $error", level: LogLevel.error);
     isAddingBalance.value = false;
   }
 
@@ -211,7 +220,7 @@ class WalletController extends GetxController{
               // Amount Input
               TextField(
                 controller: amountController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: "Enter amount",
@@ -252,38 +261,39 @@ class WalletController extends GetxController{
                   const SizedBox(width: 12),
                   Expanded(
                     child: Obx(
-                          () => ElevatedButton(
-                        onPressed: isAddingBalance.value
-                            ? null
-                            : () {
-                          final amount =
-                              int.tryParse(amountController.text) ?? 0;
-                          if (amount > 0) {
-                            createBalance(amount);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          () =>
+                          ElevatedButton(
+                            onPressed: isAddingBalance.value
+                                ? null
+                                : () {
+                              final amount =
+                                  double.tryParse(amountController.text) ?? 0.0;
+                              if (amount > 0) {
+                                createBalance(amount);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: isAddingBalance.value
+                                ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: LoadingWidget(
+                                color: Colors.white,
+                              ),
+                            )
+                                : Text(
+                              "Add",
+                              style: Get.textTheme.labelLarge!
+                                  .copyWith(color: Colors.white),
+                            ),
                           ),
-                          elevation: 0,
-                        ),
-                        child: isAddingBalance.value
-                            ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: LoadingWidget(
-                            color: Colors.white,
-                          ),
-                        )
-                            : Text(
-                          "Add",
-                          style: Get.textTheme.labelLarge!
-                              .copyWith(color: Colors.white),
-                        ),
-                      ),
                     ),
                   ),
                 ],
@@ -315,7 +325,8 @@ class WalletController extends GetxController{
     };
 
     _paymentService!.onExternalWallet = (response) {
-      CustomLogger.logMessage(msg: 'External wallet: ${response.walletName}', level: LogLevel.debug);
+      CustomLogger.logMessage(msg: 'External wallet: ${response.walletName}',
+          level: LogLevel.debug);
     };
 
     profileController.fetchUserProfile();
@@ -326,4 +337,5 @@ class WalletController extends GetxController{
     _paymentService?.dispose();
     super.onClose();
   }
+
 }

@@ -72,7 +72,7 @@ class OpenMatchBookingData {
   bool? isDeleted;
   String? createdAt;
   String? updatedAt;
-  String? bookingId;
+  BookingId? bookingId;
   int? iV;
 
   OpenMatchBookingData({
@@ -136,7 +136,10 @@ class OpenMatchBookingData {
     isDeleted = json['isDeleted'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
-    bookingId = json['bookingId'];
+    bookingId = json['bookingId'] != null
+        ? BookingId.fromJson(json['bookingId'])
+        : null;
+
     iV = json['__v'];
   }
 
@@ -168,9 +171,39 @@ class OpenMatchBookingData {
         'isDeleted': isDeleted,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
-        'bookingId': bookingId,
-        '__v': iV,
+        'bookingId': bookingId?.toJson(),
+
+    '__v': iV,
       };
+}
+class BookingId {
+  String? sId;
+  String? bookingStatus;
+  String? bookingTime;
+  String? startTime;
+  String? endTime;
+  int? totalAmount;
+  String? paymentStatus;
+
+  BookingId.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    bookingStatus = json['bookingStatus'];
+    bookingTime = json['bookingTime'];
+    startTime = json['startTime'];
+    endTime = json['endTime'];
+    totalAmount = json['totalAmount'];
+    paymentStatus = json['paymentStatus'];
+  }
+
+  Map<String, dynamic> toJson() => {
+    '_id': sId,
+    'bookingStatus': bookingStatus,
+    'bookingTime': bookingTime,
+    'startTime': startTime,
+    'endTime': endTime,
+    'totalAmount': totalAmount,
+    'paymentStatus': paymentStatus,
+  };
 }
 
 class ClubId {
