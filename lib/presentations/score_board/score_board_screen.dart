@@ -179,22 +179,13 @@ class ScoreBoardScreen extends StatelessWidget {
             ),
           ),
 
-          // Remove Zones - Top Layer
+          // Remove Zone - Top Only
           Obx(() => isDragging.value
               ? Positioned(
                   top: 0,
-                  left: Get.width * 0.15,
-                  right: Get.width * 0.15,
+                  left: Get.width * 0.25,
+                  right: Get.width * 0.25,
                   child: _buildRemoveZone(isTop: true),
-                )
-              : const SizedBox.shrink()),
-
-          Obx(() => isDragging.value
-              ? Positioned(
-                  bottom: 20,
-                  left: Get.width * 0.15,
-                  right: Get.width * 0.15,
-                  child: _buildRemoveZone(isTop: false),
                 )
               : const SizedBox.shrink()),
         ],
@@ -352,6 +343,11 @@ class ScoreBoardScreen extends StatelessWidget {
 
   Widget _buildAddSetButton() {
     return Obx(() {
+      // Hide button completely if match is completed
+      if (controller.isCompleted.value) {
+        return const SizedBox.shrink();
+      }
+
       final teamAPlayers = controller.teams.isNotEmpty
           ? controller.teams[0]["players"] as List
           : [];
@@ -363,10 +359,9 @@ class ScoreBoardScreen extends StatelessWidget {
       bool inShuffleMode = controller.isShuffleMode.value;
       bool isGameStarted = controller.isGameStarted.value;
       bool isWithinMatchTime = controller.isWithinMatchTime.value;
-      bool isCompleted = controller.isCompleted.value;
 
-      bool isStartGameDisabled = !allPlayersAdded || !isWithinMatchTime || isCompleted;
-      bool isAddSetDisabled = !isGameStarted || controller.sets.length >= 10 || isCompleted;
+      bool isStartGameDisabled = !allPlayersAdded || !isWithinMatchTime;
+      bool isAddSetDisabled = !isGameStarted || controller.sets.length >= 10;
 
       bool isDisabled = inShuffleMode || isGameStarted
           ? isAddSetDisabled
@@ -380,9 +375,7 @@ class ScoreBoardScreen extends StatelessWidget {
       }
 
       String? disabledReason;
-      if (isCompleted) {
-        disabledReason = "Game completed";
-      } else if (!allPlayersAdded) {
+      if (!allPlayersAdded) {
         disabledReason = "Add all 4 players";
       } else if (!isWithinMatchTime && !isGameStarted) {
         disabledReason = "Match has not started yet";
@@ -404,11 +397,6 @@ class ScoreBoardScreen extends StatelessWidget {
               onPressed: isDisabled
                   ? null
                   : () async {
-                if (isCompleted) {
-                  SnackBarUtils.showErrorSnackBar("Game is already completed");
-                  return;
-                }
-
                 if (inShuffleMode) {
                   await controller.savePlayerSwaps();
                 } else if (!isGameStarted) {
@@ -1027,9 +1015,8 @@ class ScoreBoardScreen extends StatelessWidget {
       },
       builder: (context, candidateData, rejectedData) {
         final isActive = candidateData.isNotEmpty;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: isActive ? 70 : 50,
+        return Container(
+          height: 60,
           decoration: BoxDecoration(
             color: isActive ? Colors.red.withOpacity(0.9) : Colors.red.withOpacity(0.7),
             borderRadius: BorderRadius.circular(25),
@@ -1042,28 +1029,24 @@ class ScoreBoardScreen extends StatelessWidget {
             ] : [],
           ),
           child: Center(
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 200),
-              scale: isActive ? 1.2 : 1.0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.delete_forever,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.delete_forever,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isActive ? 'Drop to Remove' : 'Drag here to remove',
+                  style: TextStyle(
                     color: Colors.white,
-                    size: isActive ? 28 : 20,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isActive ? 'Drop to Remove' : 'Drag here to remove',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isActive ? 16 : 12,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -2384,6 +2367,23 @@ class ScoreBoardScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Show "Match Completed" when game is ended
+              if (controller.isCompleted.value)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Match Completed",
+                      style: Get.textTheme.titleLarge!.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ).paddingOnly(top: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Column(
@@ -2407,16 +2407,42 @@ class ScoreBoardScreen extends StatelessWidget {
                               width: 60,
                               child: () {
                                 final teamAScore = set["teamAScore"] ?? 0;
+                                final winner = set["winner"]?.toString() ?? "";
+                                final isWinner = winner.toLowerCase() == "team a";
 
                                 return teamAScore > 0
-                                    ? Text(
-                                  "$teamAScore",
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                    fontSize: 16,
-                                  ),
+                                    ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "$teamAScore",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: controller.isCompleted.value && isWinner ? Colors.green : Colors.black87,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const SizedBox(width: 4),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const Text(
+                                        "W",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const SizedBox(width: 2),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const Icon(
+                                        Icons.emoji_events,
+                                        color: Colors.green,
+                                        size: 16,
+                                      ),
+                                  ],
                                 )
                                     : _buildTeamAddScoreButton('Team A', setNumber);
                               }(),
@@ -2469,19 +2495,41 @@ class ScoreBoardScreen extends StatelessWidget {
                               width: 60,
                               child: () {
                                 final teamBScore = set["teamBScore"] ?? 0;
+                                final winner = set["winner"]?.toString() ?? "";
+                                final isWinner = winner.toLowerCase() == "team b";
 
                                 return teamBScore > 0
                                     ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       "$teamBScore",
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
+                                        color: controller.isCompleted.value && isWinner ? Colors.green : Colors.black87,
                                         fontSize: 16,
                                       ),
                                     ),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const SizedBox(width: 4),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const Text(
+                                        "W",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const SizedBox(width: 2),
+                                    if (controller.isCompleted.value && isWinner)
+                                      const Icon(
+                                        Icons.emoji_events,
+                                        color: Colors.green,
+                                        size: 16,
+                                      ),
                                   ],
                                 )
                                     : _buildTeamAddScoreButton('Team B', setNumber);

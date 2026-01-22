@@ -37,9 +37,7 @@ void showWinnerDialog(ScoreBoardController controller) {
   ProfileController? profileController;
   try {
     profileController = Get.find<ProfileController>();
-  } catch (e) {
-    // ProfileController not found, use default value
-  }
+  } catch (e) {}
   
   final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
   
@@ -56,7 +54,6 @@ void showWinnerDialog(ScoreBoardController controller) {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Green WIN Banner
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -82,14 +79,11 @@ void showWinnerDialog(ScoreBoardController controller) {
                     ),
                   ),
                 ),
-                
-                // Main content
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Congratulations text
                       const Text(
                         "Congratulations!",
                         style: TextStyle(
@@ -99,8 +93,6 @@ void showWinnerDialog(ScoreBoardController controller) {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
-                      // Your XP Points label
                       const Text(
                         "Your XP Points",
                         style: TextStyle(
@@ -110,8 +102,6 @@ void showWinnerDialog(ScoreBoardController controller) {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
-                      // XP Score (reactive if profileController exists)
                       profileController != null
                           ? Obx(() {
                               final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
@@ -133,8 +123,6 @@ void showWinnerDialog(ScoreBoardController controller) {
                               ),
                             ),
                       const SizedBox(height: 16),
-                      
-                      // XP Bonus badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
@@ -156,7 +144,6 @@ void showWinnerDialog(ScoreBoardController controller) {
               ],
             ),
           ),
-          // Close button
           Positioned(
             top: 8,
             right: 8,
@@ -176,9 +163,7 @@ void showLoserDialog(ScoreBoardController controller) {
   ProfileController? profileController;
   try {
     profileController = Get.find<ProfileController>();
-  } catch (e) {
-    // ProfileController not found, use default value
-  }
+  } catch (e) {}
   
   final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
   
@@ -195,7 +180,6 @@ void showLoserDialog(ScoreBoardController controller) {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Red LOST Banner
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -217,16 +201,13 @@ void showLoserDialog(ScoreBoardController controller) {
                     ),
                   ),
                 ),
-                
-                // Main content
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Bad Luck text
                       const Text(
-                        "Bad Luck!",
+                        "Better luck next time!",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -234,8 +215,6 @@ void showLoserDialog(ScoreBoardController controller) {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
-                      // Your XP Points label
                       const Text(
                         "Your XP Points",
                         style: TextStyle(
@@ -245,8 +224,6 @@ void showLoserDialog(ScoreBoardController controller) {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
-                      // XP Score (reactive if profileController exists)
                       profileController != null
                           ? Obx(() {
                               final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
@@ -268,8 +245,6 @@ void showLoserDialog(ScoreBoardController controller) {
                               ),
                             ),
                       const SizedBox(height: 16),
-                      
-                      // XP Deduction badge
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
@@ -291,7 +266,6 @@ void showLoserDialog(ScoreBoardController controller) {
               ],
             ),
           ),
-          // Close button
           Positioned(
             top: 8,
             right: 8,
