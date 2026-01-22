@@ -43,7 +43,7 @@ class User {
   int? openMatchCount;
   int? americanMatchCount;
   int? rank;
-  int? xpPoints;
+  dynamic? xpPoints;
   int? currentWinStreak;
   int? currentLoseStreak;
   List<dynamic>? recentMatches;
