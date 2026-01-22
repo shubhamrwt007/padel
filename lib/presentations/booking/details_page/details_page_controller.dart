@@ -475,6 +475,7 @@ class DetailsController extends GetxController {
       // Immediately open Razorpay payment sheet using your service structure
       await _paymentService.initiatePayment(
         keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        image: '',
         amount: price,
         currency: 'INR',
         name: 'Swoot',

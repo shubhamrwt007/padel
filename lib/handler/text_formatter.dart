@@ -125,3 +125,22 @@ String formatAmount(dynamic amount, {String? currency}) {
 
   return currency != null ? '$currency $formatted' : formatted;
 }
+
+///Wallet Balance Format---------------------------------------------------------
+String formatWalletAmount(dynamic amount, {String? currency}) {
+  final raw = (amount ?? '').toString();
+  final cleaned = raw.replaceAll(RegExp(r'[^\d\.-]'), '');
+  final value = num.tryParse(cleaned);
+  if (value == null) return raw;
+
+  String formatted;
+  if (value >= 100000) {
+    // Compact (e.g. 100K, 1M) - preserves up to 1 decimal
+    formatted = NumberFormat.compact(locale: 'en_IN').format(value);
+  } else {
+    // Normal with commas and up to 2 decimal places
+    formatted = NumberFormat('#,##0.##', 'en_IN').format(value);
+  }
+
+  return currency != null ? '$currency $formatted' : formatted;
+}

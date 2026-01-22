@@ -509,6 +509,7 @@ class PaymentMethodController extends GetxController {
         currency: 'INR',
         name: 'Swoot',
         description: 'Paying for court booking',
+        image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         userEmail: 'test@example.com',
         userContact: '9999999999',
       );

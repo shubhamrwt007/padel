@@ -236,12 +236,12 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                                   ? formatDate(booking.bookingDate).split(',')[1].trim()
                                   : '',
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: Colors.black87,
                               ),
                             ),
                             Text(
-                              " | ${_getTimeString(booking)}",
+                              " | ${booking.startTime.split(':').first??""}-${booking.endTime??""}",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black87,
@@ -278,13 +278,16 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                       ],
                     ),
                     Container(
+                      height: 36,
+                      width: 36,
                       decoration: BoxDecoration(
                         color: const Color(0xff1c46a0),
-                        borderRadius: BorderRadius.circular(8),
+                        shape: BoxShape.circle
+                        // borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: const EdgeInsets.all(4),
+                      // padding: const EdgeInsets.all(6),
                       child: const Icon(
-                        Icons.message,
+                        Icons.chat_outlined,
                         color: Colors.white,
                         size: 17,
                       ),
@@ -643,7 +646,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         children: [
           Align(
               alignment: AlignmentGeometry.centerRight,
-              child: SvgPicture.asset(!isBlueTheme?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height: 190,width: 150,).paddingOnly(right: 20)),
+              child: SvgPicture.asset(!isBlueTheme?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height: 160,width: 150,).paddingOnly(right: 20)),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -694,35 +697,54 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         ),
                     ],
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 4,
-                          spreadRadius: 1,
-                          offset: Offset(0, 3),
+                  Row(
+                    children: [
+                      if (isUpcoming)
+                        GestureDetector(
+                          onTap: () {
+                            _navigateToChat(booking);
+                          },
+                          child: Container(
+                              height: 36,
+                              width: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor,
+                              ),
+                              child: Icon(Icons.chat_outlined, color: Colors.white, size: 18)
+                          ),
+                        ).paddingOnly(right: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _expandedStates[index] = !_expandedStates[index];
-                        });
-                      },
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          _expandedStates.length > index && _expandedStates[index]
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.black,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _expandedStates[index] = !_expandedStates[index];
+                            });
+                          },
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              _expandedStates.length > index && _expandedStates[index]
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   )
                 ],
               ),
@@ -742,7 +764,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _buildDateTimeInfo(BuildContext context, dynamic booking) {
     try {
       final dateStr = formatDate(booking.bookingDate);
-      final timeStr = _getTimeString(booking);
+      // final timeStr = _getTimeString(booking);
+      final timeStr = '${booking.startTime.split(':').first??""}-${booking.endTime??""}';
 
       return RichText(
         text: TextSpan(
@@ -758,7 +781,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
             TextSpan(
               text: '${dateStr.contains(',') ? dateStr.split(',')[1].trim() : ''}${timeStr.isNotEmpty ? ' | $timeStr' : ''}',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: Colors.black87,
               ),
             ),
@@ -1061,70 +1084,6 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 ),
               ),
             ),
-            // if (isUpcoming)
-            //   GestureDetector(
-            //     onTap: () {
-            //       _navigateToScoreboard(booking);
-            //     },
-            //     child: Container(
-            //       color: Colors.transparent,
-            //       child: Transform.translate(
-            //         offset: const Offset(0, -3),
-            //         child: Container(
-            //           height: 23,
-            //           width: 55,
-            //           alignment: Alignment.center,
-            //           decoration: BoxDecoration(
-            //             borderRadius: BorderRadius.circular(8),
-            //             color: AppColors.secondaryColor,
-            //           ),
-            //           child: Text(
-            //             "Play Now",
-            //             style: Get.textTheme.headlineSmall!
-            //                 .copyWith(color: Colors.white, fontSize: 10),
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ).paddingOnly(bottom: 12),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (isUpcoming)
-              GestureDetector(
-                onTap: () {
-                  _navigateToChat(booking);
-                },
-                child: Container(
-                  padding: const EdgeInsets.only(left: 5, right: 1,top: 2,bottom: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Start Chat with Players",
-                        style: TextStyle(color: Colors.grey, fontSize: 10),
-                      ).paddingOnly(right: 10,left: 5),
-                      Container(
-                          height: 28,
-                          width: 28,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor,
-                          ),
-                          child: Icon(Icons.chat_outlined, color: Colors.white, size: 18)
-                      )
-                    ],
-                  ),
-                ),
-              ),
             if (!isUpcoming) const SizedBox.shrink(),
             Row(
               children: [
@@ -1175,7 +1134,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               ],
             ),
           ],
-        ).paddingOnly(bottom: Get.height * 0.01),
+        ).paddingOnly(bottom: 10),
+        Divider(color: Colors.grey,thickness: 0.1,),
 
         Row(
           children: [
@@ -1249,27 +1209,27 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "${formatDate(booking.bookingDate)}${timeStr.isNotEmpty ? ' | $timeStr' : ''}",
-                    style: Get.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Row(
+          //       children: [
+          //         Icon(Icons.access_time, size: 18),
+          //         SizedBox(width: 8),
+          //         Text(
+          //           "${formatDate(booking.bookingDate)}${timeStr.isNotEmpty ? ' | $timeStr' : ''}",
+          //           style: Get.textTheme.bodySmall,
+          //         ),
+          //       ],
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 12),
           Row(
             children: [
               Icon(Icons.group, size: 18),
               SizedBox(width: 8),
-              Text("4 atten@dee ($totalPlayers confirmed)", style: Get.textTheme.bodySmall),
+              Text("${playerAvatars.length} attendee", style: Get.textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 8),
@@ -1351,7 +1311,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   void _navigateToChat(dynamic booking) {
     final scoreboard = booking.scoreboard;
     if (scoreboard?.teams == null) {
-      Get.snackbar("Error", "No team data available");
+      // Get.snackbar("Error", "No team data available");
       return;
     }
 
@@ -1600,7 +1560,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     if (dateStr == null || dateStr.isEmpty) return '';
     try {
       final date = DateTime.parse(dateStr);
-      return DateFormat('EEE, dd MMM').format(date);
+      return DateFormat('EEEE, dd MMM').format(date);
     } catch (e) {
       if (kDebugMode) {
         print("Error parsing date: $e");

@@ -252,6 +252,7 @@ class ChatScreen extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: controller.messageController,
               onTap: controller.onTextFieldFocus,
               decoration: InputDecoration(
