@@ -41,32 +41,38 @@ class LeaderboardScreen extends StatelessWidget {
           title: const Text("Leaderboard"),
           context: context,
           action: [
-            Obx(() => Container(
-              height: 30,
-              width: Get.width*.25,
-
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: controller.selectedGenderFilter.value,
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  dropdownColor: AppColors.primaryColor,
-                  items: [
-                    DropdownMenuItem(value: 'all', child: Text('All', style: const TextStyle(color: Colors.white,fontSize: 16))),
-                    DropdownMenuItem(value: 'Male', child: Text('Male', style: const TextStyle(color: Colors.white,fontSize: 16))),
-                    DropdownMenuItem(value: 'Female', child: Text('Female', style: const TextStyle(color: Colors.white,fontSize: 16))),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      controller.selectedGenderFilter.value = value;
-                    }
-                  },
-                ).paddingOnly(left: 5,right: 5),
-              ),
-            )),
+            Obx(() {
+              final options = controller.genderFilterOptions;
+              return Container(
+                height: 30,
+                width: Get.width*.25,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: controller.selectedGenderFilter.value,
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                    dropdownColor: AppColors.primaryColor,
+                    items: options.map((option) {
+                      return DropdownMenuItem(
+                        value: option,
+                        child: Text(
+                          option == 'all' ? 'All' : option,
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        controller.selectedGenderFilter.value = value;
+                      }
+                    },
+                  ).paddingOnly(left: 5, right: 5),
+                ),
+              );
+            }),
           ],
         ),
         body: Stack(
@@ -75,13 +81,6 @@ class LeaderboardScreen extends StatelessWidget {
               children: [
                 TopTabBar(),
                 const SizedBox(height: 16),
-                // Obx(() {
-                //   if (controller.selectedCategory.value == 'Tournaments') {
-                //     return _buildTournamentFilters();
-                //   } else {
-                //     return _buildTabBar();
-                //   }
-                // }),
                 const SizedBox(height: 20),
 
                 // ✅ Directly reactive podium
@@ -118,8 +117,7 @@ class LeaderboardScreen extends StatelessWidget {
                 );
               }
               
-              final data = controller.leaderboardData;
-              return _buildLeaderboardSheet(context, data,buttonType??"");
+              return _buildLeaderboardSheet(context, buttonType??"");
             }),
           ],
         ),
@@ -514,7 +512,7 @@ class LeaderboardScreen extends StatelessWidget {
   }
 
 
-  Widget _buildLeaderboardSheet(BuildContext context, List<Map<String, dynamic>> data, String buttonType) {
+  Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
     final double minSize = buttonType == "drawer" ? 0.56 : 0.50;
     const double maxSize = 1.0;
 
@@ -530,139 +528,148 @@ class LeaderboardScreen extends StatelessWidget {
         initialChildSize: minSize,
         minChildSize: minSize,
         maxChildSize: maxSize,
-        builder: (context, scroll) {
-          scroll.addListener(() {
-            if (scroll.position.pixels >= scroll.position.maxScrollExtent - 200) {
-              controller.loadMoreData();
-            }
-          });
-
-          return CustomPaint(
-            painter: UpwardCurvePainter(),
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+        snap: true,
+        snapSizes: [minSize, maxSize],
+        builder: (context, scrollController) {
+          return Stack(
+            children: [
+              // Main content with curved background
+              CustomPaint(
+                painter: UpwardCurvePainter(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Main content
-                  Positioned.fill(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 35), // Space for curved top
-                        Expanded(
-                          child: SingleChildScrollView(
-                            controller: scroll,
-                            physics: const ClampingScrollPhysics(),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-                              child: Column(
-                                children: [
-                                  Obx(() {
-                                    if (!controller.showStateFilters.value) return const SizedBox.shrink();
-                                    return Column(
-                                      children: [
-                                        const SizedBox(height: 10),
-                                        _buildStateLevelFilters(),
-                                      ],
-                                    );
-                                  }),
+                  child: Column(
+                    children: [
+                      // Empty space for drag handle (non-scrollable)
+                      SizedBox(height: 35),
 
-                                  if (!controller.isHandleVisible.value) SizedBox(height: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xffF9FAFF),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(width: 24, child: Text('#', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))).paddingOnly(right: 30),
-                                        Expanded(child: Text('Player', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))),
-                                        Text('XP Points', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700)).paddingOnly(right: 10),
-                                      ],
-                                    ),
-                                  ),
-                                  Obx(() {
-                                    if (controller.myRankData.value != null) {
-                                      return Column(
-                                        children: [
-                                          const SizedBox(height: 10),
-                                          _buildMyRankCard(controller.myRankData.value!),
-                                          const SizedBox(height: 10),
-                                        ],
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  }),
-                                  Column(
-                                    children: [
-                                      ...List.generate(
-                                        data.length,
-                                            (index) => LeaderboardCard(
-                                          item: data[index],
-                                          index: index,
-                                        ),
-                                      ),
-                                      Obx(() {
-                                        if (controller.isLoadingMore.value) {
-                                          return const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
-                                          );
-                                        }
-                                        return const SizedBox.shrink();
-                                      }),
-                                      Obx(() {
-                                        if (!controller.hasMoreData.value && data.isNotEmpty) {
-                                          return const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Text(
-                                              'No more data to load',
-                                              style: TextStyle(color: Colors.grey),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          );
-                                        }
-                                        return const SizedBox.shrink();
-                                      }),
-                                    ],
-                                  ),
+                      // Fixed header (non-scrollable)
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+                        child: Column(
+                          children: [
+                            Obx(() {
+                              if (!controller.showStateFilters.value) return const SizedBox.shrink();
+                              return Column(
+                                children: [
+                                  const SizedBox(height: 10),
+                                  _buildStateLevelFilters(),
+                                ],
+                              );
+                            }),
+                            Obx(() => !controller.isHandleVisible.value ? SizedBox(height: 10) : SizedBox.shrink()),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Color(0xffF9FAFF),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(width: 24, child: Text('#', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))).paddingOnly(right: 30),
+                                  Expanded(child: Text('Player', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))),
+                                  Text('XP Points', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700)).paddingOnly(right: 10),
                                 ],
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Centered dot indicator on top of the curve
-                  Positioned(
-                    top: 12,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        width: 40,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
+                            Obx(() {
+                              if (controller.myRankData.value != null) {
+                                return Column(
+                                  children: [
+                                    const SizedBox(height: 10),
+                                    _buildMyRankCard(controller.myRankData.value!),
+                                    const SizedBox(height: 10),
+                                  ],
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                          ],
                         ),
                       ),
+
+                      // Scrollable content
+                      Expanded(
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: (ScrollNotification scrollInfo) {
+                            if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200 &&
+                                !controller.isLoadingMore.value &&
+                                controller.hasMoreData.value) {
+                              controller.loadMoreData();
+                            }
+                            return false;
+                          },
+                          child: Obx(() {
+                            final data = controller.leaderboardData;
+                            return ListView.builder(
+                              controller: scrollController,
+                              padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+                              physics: const ClampingScrollPhysics(),
+                              itemCount: data.length + 1,
+                              itemBuilder: (context, index) {
+
+                            if (index < data.length) {
+                              return LeaderboardCard(
+                                item: data[index],
+                                index: index,
+                              );
+                            }
+
+                            return Obx(() {
+                              if (controller.isLoadingMore.value) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                                );
+                              }
+                              if (!controller.hasMoreData.value && data.isNotEmpty) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 20, top: 16),
+                                  child: Text(
+                                    'No more data to load',
+                                    style: TextStyle(color: Colors.grey),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              }
+                              return const SizedBox(height: 20);
+                            });
+                              },
+                            );
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Drag handle indicator positioned on the curve
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -1128,6 +1135,7 @@ class LeaderboardCard extends GetView<LeaderboardController> {
     );
   }
 }
+
 // Custom painter for upward arch/curve
 class UpwardCurvePainter extends CustomPainter {
   @override
@@ -1147,8 +1155,8 @@ class UpwardCurvePainter extends CustomPainter {
 
     // Top-left rounded corner (radius ~30)
     path.quadraticBezierTo(
-      0, 0,           // Control point for corner
-      30, 0,          // End point of corner
+      0, 0,
+      30, 0,
     );
 
     // Straight line to where upward curve starts
@@ -1156,20 +1164,20 @@ class UpwardCurvePainter extends CustomPainter {
 
     // Left side of upward peak - curve going UP
     path.quadraticBezierTo(
-      size.width * 0.46, 0,       // Control point at top edge
-      size.width * 0.48, -10,     // Going UP (negative Y)
+      size.width * 0.46, 0,
+      size.width * 0.48, -10,
     );
 
     // Peak point - highest point of the curve (center)
     path.quadraticBezierTo(
-      size.width * 0.5, -18,      // Highest peak point (negative Y means UP)
-      size.width * 0.52, -10,     // Coming back down
+      size.width * 0.5, -18,
+      size.width * 0.52, -10,
     );
 
     // Right side of upward peak - curve coming back to edge
     path.quadraticBezierTo(
-      size.width * 0.54, 0,       // Control point at top edge
-      size.width * 0.58, 0,       // Back to top edge
+      size.width * 0.54, 0,
+      size.width * 0.58, 0,
     );
 
     // Straight line to top-right corner
@@ -1177,8 +1185,8 @@ class UpwardCurvePainter extends CustomPainter {
 
     // Top-right rounded corner (radius ~30)
     path.quadraticBezierTo(
-      size.width, 0,         // Control point for corner
-      size.width, 30,        // End point of corner
+      size.width, 0,
+      size.width, 30,
     );
 
     // Right edge going down

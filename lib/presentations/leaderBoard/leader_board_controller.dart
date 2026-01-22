@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/repositories/leaderBoard_repo/leaderBoard_repository.dart';
 import 'package:padel_mobile/data/response_models/leaderBoard/get_leaderBoard_model.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 class Player {
   final String name;
@@ -150,18 +151,28 @@ class LeaderboardController extends GetxController {
       }
 
       if (data.myRank != null) {
-        myRankData.value = {
-          'rank': data.myRank!.rank ?? 0,
-          'name': data.myRank!.name ?? '',
-          'score': data.myRank!.xpPoints ?? 0,
-          'change': 0,
-          'image': data.myRank!.profilePic ?? '',
-          'streak': data.myRank!.currentWinStreak ?? 0,
-          'matches': data.myRank!.matches ?? 0,
-          'wins': data.myRank!.wins ?? 0,
-          'losses': data.myRank!.losses ?? 0,
-        };
+        final currentGender = userGender?.toLowerCase();
+        final filterGender = selectedGenderFilter.value.toLowerCase();
+        
+        // Hide myRank if player's gender doesn't match the selected filter
+        if (filterGender != 'all' && currentGender != filterGender && currentGender != 'other') {
+          myRankData.value = null;
+        } else {
+          myRankData.value = {
+            'rank': data.myRank!.rank ?? 0,
+            'name': data.myRank!.name ?? '',
+            'score': data.myRank!.xpPoints ?? 0,
+            'change': 0,
+            'image': data.myRank!.profilePic ?? '',
+            'streak': data.myRank!.currentWinStreak ?? 0,
+            'matches': data.myRank!.matches ?? 0,
+            'wins': data.myRank!.wins ?? 0,
+            'losses': data.myRank!.losses ?? 0,
+          };
+        }
         print('🔍 MyRank converted: ${myRankData.value}');
+      } else {
+        myRankData.value = null;
       }
     }
 
@@ -193,6 +204,18 @@ class LeaderboardController extends GetxController {
     } else {
       hasMoreData.value = false;
     }
+  }
+
+  String? get userGender {
+    final profileCtrl = Get.find<ProfileController>();
+    return profileCtrl.profileModel.value?.response?.gender;
+  }
+
+  List<String> get genderFilterOptions {
+    if (userGender?.toLowerCase() == 'other') {
+      return ['all', 'Male', 'Female', 'Other'];
+    }
+    return ['all', 'Male', 'Female'];
   }
 
   @override

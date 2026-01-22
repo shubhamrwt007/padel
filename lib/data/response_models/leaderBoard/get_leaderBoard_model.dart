@@ -78,15 +78,15 @@ class LeaderboardPlayer {
 
   factory LeaderboardPlayer.fromJson(Map<String, dynamic> json) {
     return LeaderboardPlayer(
-      rank: json['rank'],
+      rank: (json['rank'] as num?)?.toInt(),
       playerId: json['playerId'],
       name: json['name'],
       profilePic: json['profilePic'],
-      xpPoints: json['xpPoints'],
-      wins: json['wins'],
-      matches: json['matches'],
-      losses: json['losses'],
-      currentWinStreak: json['currentWinStreak'],
+      xpPoints: (json['xpPoints'] as num?)?.toInt(),
+      wins: (json['wins'] as num?)?.toInt(),
+      matches: (json['matches'] as num?)?.toInt(),
+      losses: (json['losses'] as num?)?.toInt(),
+      currentWinStreak: (json['currentWinStreak'] as num?)?.toInt(),
       winRatio: (json['winRatio'] as num?)?.toDouble(),
       isYou: json['isYou'],
     );
@@ -110,10 +110,10 @@ class Pagination {
 
   factory Pagination.fromJson(Map<String, dynamic> json) {
     return Pagination(
-      page: json['page'],
-      limit: json['limit'],
-      totalPlayers: json['totalPlayers'],
-      totalPages: json['totalPages'],
+      page: (json['page'] as num?)?.toInt(),
+      limit: (json['limit'] as num?)?.toInt(),
+      totalPlayers: (json['totalPlayers'] as num?)?.toInt(),
+      totalPages: (json['totalPages'] as num?)?.toInt(),
     );
   }
 }
