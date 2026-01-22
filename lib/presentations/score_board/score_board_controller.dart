@@ -390,6 +390,11 @@ class ScoreBoardController extends GetxController {
 
   ///Start Game - Initializes first set and starts timer-----------------------------------
   Future<void> startGame() async {
+    if (isCompleted.value) {
+      SnackBarUtils.showErrorSnackBar("Cannot start game. Match is already completed.");
+      return;
+    }
+
     if (!allPlayersAdded) {
       SnackBarUtils.showErrorSnackBar("Please add all 4 players first");
       return;
@@ -431,19 +436,14 @@ class ScoreBoardController extends GetxController {
       _gameTimer.cancel();
     } catch (e) {}
     
-    // Calculate remaining time from end time each second for accuracy
-    // This ensures the timer continues from where it was, not restarting
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      int remaining = _calculateRemainingMatchTime();
-      
-      if (remaining > 0) {
-        remainingSeconds.value = remaining;
+      if (remainingSeconds.value > 0) {
+        remainingSeconds.value--;
       } else {
         remainingSeconds.value = 0;
         timer.cancel();
         isGameStarted.value = false;
         SnackBarUtils.showInfoSnackBar("Match time is up! Game ended automatically.");
-        endGame();
       }
     });
   }
@@ -482,6 +482,11 @@ class ScoreBoardController extends GetxController {
 
   ///Add Set--------------------------------------------------------------------
   Future<void> addSet() async {
+    if (isCompleted.value) {
+      SnackBarUtils.showErrorSnackBar("Cannot add set. Match is already completed.");
+      return;
+    }
+    
     if (sets.length < 10) {
       await createSets(_nextAvailableSetNumber());
     } else {
@@ -541,20 +546,17 @@ class ScoreBoardController extends GetxController {
           level: LogLevel.info
         );
         
-        if (isWithinMatchTime.value && !isCountdownActive.value) {
+        if (isWithinMatchTime.value && !isCountdownActive.value && !isGameStarted.value) {
           _startCountdownTimer();
         } else if (!isWithinMatchTime.value && isCountdownActive.value) {
           _stopCountdownTimer();
+          remainingSeconds.value = 0;
         }
       }
 
       // Only update timer if game hasn't started yet
-      if (!isGameStarted.value) {
-        if (isWithinMatchTime.value) {
-          remainingSeconds.value = _calculateRemainingMatchTime();
-        } else {
-          remainingSeconds.value = 0;
-        }
+      if (!isGameStarted.value && isWithinMatchTime.value) {
+        remainingSeconds.value = _calculateRemainingMatchTime();
       }
     });
   }
@@ -670,8 +672,11 @@ class ScoreBoardController extends GetxController {
         remainingSeconds.value = remaining;
         
         if (remaining <= 0) {
+          remainingSeconds.value = 0;
           _stopCountdownTimer();
         }
+      } else {
+        _stopCountdownTimer();
       }
     });
   }
@@ -873,10 +878,24 @@ class ScoreBoardController extends GetxController {
     CustomLogger.logMessage(msg: 'removePlayer called for $playerId from $teamName', level: LogLevel.info);
     
     isRemovingPlayer.value = true;
+    
+    // Stop periodic updates temporarily
+    _periodicTimer.cancel();
+    
     try {
-      // Normalize team name to API format (teamA or teamB)
+      // Immediately update local UI first
       final normalizedTeamName = _normalizeTeamName(teamName);
+      final teamIndex = normalizedTeamName == 'teamA' ? 0 : 1;
       
+      if (teamIndex < teams.length) {
+        final teamPlayers = List<Map<String, dynamic>>.from(teams[teamIndex]['players'] as List);
+        teamPlayers.removeWhere((player) => player['playerId'] == playerId);
+        teams[teamIndex]['players'] = teamPlayers;
+        teams.refresh();
+        CustomLogger.logMessage(msg: 'Local UI updated immediately', level: LogLevel.info);
+      }
+      
+      // Now make API call
       final body = {
         "matchId": matchBookingId.value,
         "playerId": playerId,
@@ -888,25 +907,27 @@ class ScoreBoardController extends GetxController {
 
       if (response?.success == true) {
         SnackBarUtils.showInfoSnackBar("Player removed successfully");
-        
-        // Force immediate full refresh from server
-        await fetchScoreBoard(showLoader: true);
-        
-        CustomLogger.logMessage(msg: 'Player removed successfully, UI refreshed', level: LogLevel.info);
+        CustomLogger.logMessage(msg: 'Player removed successfully from server', level: LogLevel.info);
       } else {
         SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to remove player");
+        // Revert local changes if API failed
+        await fetchScoreBoard(showLoader: false);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: 'Remove player error: $e', level: LogLevel.error);
       SnackBarUtils.showErrorSnackBar("Failed to remove player");
+      // Revert local changes on error
+      await fetchScoreBoard(showLoader: false);
     } finally {
       isRemovingPlayer.value = false;
+      // Restart periodic updates
+      _startPeriodicUpdates();
     }
   }
 
   ///Swap Players---------------------------------------------------------------
   void swapPlayers(String draggedPlayerId, String targetTeam, int targetIndex) {
-    CustomLogger.logMessage(msg: 'swapPlayers called - LOCAL UPDATE ONLY', level: LogLevel.info);
+    CustomLogger.logMessage(msg: 'swapPlayers called - draggedPlayerId: $draggedPlayerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
     try {
       // Find dragged player and remove from current position
       Map<String, dynamic>? draggedPlayer;
@@ -920,22 +941,28 @@ class ScoreBoardController extends GetxController {
             draggedPlayer = Map<String, dynamic>.from(teamPlayers[playerIndex]);
             draggedTeamIndex = teamIndex;
             draggedPlayerIndex = playerIndex;
+            CustomLogger.logMessage(msg: 'Found dragged player in team $teamIndex at index $playerIndex', level: LogLevel.info);
             break;
           }
         }
         if (draggedPlayer != null) break;
       }
 
-      if (draggedPlayer == null) return;
+      if (draggedPlayer == null) {
+        CustomLogger.logMessage(msg: 'Dragged player not found!', level: LogLevel.error);
+        return;
+      }
 
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
+      CustomLogger.logMessage(msg: 'Target team index: $targetTeamIndex', level: LogLevel.info);
 
       // Get target player if exists
       Map<String, dynamic>? targetPlayer;
       final targetTeamPlayers = teams[targetTeamIndex]['players'] as List;
       if (targetIndex < targetTeamPlayers.length) {
         targetPlayer = Map<String, dynamic>.from(targetTeamPlayers[targetIndex]);
+        CustomLogger.logMessage(msg: 'Found target player at index $targetIndex', level: LogLevel.info);
       }
 
       // Perform the swap in local data only - NO API CALL
@@ -943,10 +970,12 @@ class ScoreBoardController extends GetxController {
 
       if (targetPlayer != null) {
         // Swap players
+        CustomLogger.logMessage(msg: 'Swapping players between teams', level: LogLevel.info);
         draggedTeamPlayers[draggedPlayerIndex] = targetPlayer;
         targetTeamPlayers[targetIndex] = draggedPlayer;
       } else {
         // Move player to empty slot
+        CustomLogger.logMessage(msg: 'Moving player to empty slot', level: LogLevel.info);
         draggedTeamPlayers.removeAt(draggedPlayerIndex);
         if (targetIndex < targetTeamPlayers.length) {
           targetTeamPlayers[targetIndex] = draggedPlayer;
@@ -957,7 +986,7 @@ class ScoreBoardController extends GetxController {
 
       hasPlayerSwaps.value = true;
       teams.refresh();
-      CustomLogger.logMessage(msg: 'Local swap completed - NO API CALL MADE', level: LogLevel.info);
+      CustomLogger.logMessage(msg: 'Local swap completed successfully', level: LogLevel.info);
     } catch (e) {
       CustomLogger.logMessage(msg: 'Swap error: $e', level: LogLevel.error);
     }
