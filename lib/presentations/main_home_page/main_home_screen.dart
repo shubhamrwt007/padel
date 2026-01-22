@@ -141,7 +141,7 @@ class MainHomeScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet2,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${formatAmount(walletController.walletBalance.value ?? 0)}",
+                      "₹${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -184,7 +184,9 @@ class MainHomeScreen extends StatelessWidget {
               }),
               _courtCard(),
               const SizedBox(height: 15),
-              _sectionTitle("Top players near you", () {}),
+              _sectionTitle("Top players near you", () {
+                Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+              }),
               _players(),
               // const SizedBox(height: 24),
               // _sectionTitle("Upcoming Tournaments"),
@@ -1207,7 +1209,7 @@ class MainHomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           color: AppColors.secondaryColor),
-                      child: Text("${player.xpPoints ?? 0} XP",
+                      child: Text("${formatAmount(player.xpPoints ?? 0)} XP",
                           style: Get.textTheme.labelMedium!
                               .copyWith(color: Colors.white)),
                     ),

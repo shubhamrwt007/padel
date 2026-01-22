@@ -47,7 +47,7 @@ class MatchData {
   String? updatedAt;
   int? iV;
   int? pendingRequestsCount;
-  String? bookingId;
+  BookingId? bookingId;
 
   MatchData({
     this.sId,
@@ -124,7 +124,9 @@ class MatchData {
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     isRequest = json['isRequest'];
-    bookingId = json['bookingId'];
+    bookingId = json['bookingId'] != null
+        ? BookingId.fromJson(json['bookingId'])
+        : null;
     createdAt = _asJoinedString(json['createdAt']);
     updatedAt = _asJoinedString(json['updatedAt']);
     iV = json['__v'];
@@ -147,7 +149,7 @@ class MatchData {
     map['matchTime'] = matchTime;
     map['matchStatus'] = matchStatus;
     map['isRequest'] = isRequest;
-    map['bookingId'] = bookingId;
+    map['bookingId'] = bookingId?.toJson();
     if (teamA != null) {
       map['teamA'] = teamA!.map((v) => v.toJson()).toList();
     }
@@ -166,6 +168,53 @@ class MatchData {
     map['pendingRequestsCount'] = pendingRequestsCount;
     return map;
   }
+}
+class BookingId {
+  String? sId;
+  String? userId;
+  String? registerClubId;
+  int? totalAmount;
+  String? bookingDate;
+  String? bookingStatus;
+  String? bookingType;
+  String? bookingTime;
+  String? matchType;
+  String? paymentMethod;
+  String? paymentStatus;
+  String? startTime;
+  String? endTime;
+
+  BookingId.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    userId = json['userId'];
+    registerClubId = json['register_club_id'];
+    totalAmount = json['totalAmount'];
+    bookingDate = json['bookingDate'];
+    bookingStatus = json['bookingStatus'];
+    bookingType = json['bookingType'];
+    bookingTime = json['bookingTime'];
+    matchType = json['matchType'];
+    paymentMethod = json['paymentMethod'];
+    paymentStatus = json['paymentStatus'];
+    startTime = json['startTime'];
+    endTime = json['endTime'];
+  }
+
+  Map<String, dynamic> toJson() => {
+    '_id': sId,
+    'userId': userId,
+    'register_club_id': registerClubId,
+    'totalAmount': totalAmount,
+    'bookingDate': bookingDate,
+    'bookingStatus': bookingStatus,
+    'bookingType': bookingType,
+    'bookingTime': bookingTime,
+    'matchType': matchType,
+    'paymentMethod': paymentMethod,
+    'paymentStatus': paymentStatus,
+    'startTime': startTime,
+    'endTime': endTime,
+  };
 }
 
 class ClubId {

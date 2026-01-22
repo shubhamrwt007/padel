@@ -81,19 +81,30 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
           const SizedBox(height: 30),
 
-          Text(
-            'Current Balance',
-            style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Balance',
+                style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 14),
+              ),
+              Text(
+                _getCurrentDate(),
+                style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
+              )
+            ],
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children:  [
               Obx(() => RichText(
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: formatAmount(controller.walletBalance.value.toString()),
+                      text: formatWalletAmount(controller.walletBalance.value.toString()),
                       style: Get.textTheme.titleLarge!.copyWith(
+                        fontSize: 40,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -110,14 +121,6 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
               )),
 
-              SizedBox(width: 10),
-              Padding(
-                padding: EdgeInsets.only(bottom: 6),
-                child: Text(
-                  'Today ${_getCurrentDate()}',
-                  style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
-                ),
-              )
             ],
           ),
           const SizedBox(height: 6),
@@ -125,12 +128,12 @@ class _WalletScreenState extends State<WalletScreen> {
           Row(
             children: [
               Text(
-                'Total Spending:',
-                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white),
+                'Total Spending: ',
+                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14),
               ),
               Text(
-                '${formatAmount(controller.totalDebitedBalance.value.toString())} Cr',
-                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 13,fontWeight: FontWeight.w400),
+                '${formatAmount(controller.totalDebitedBalance.value.toString())} Credits',
+                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14,fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -340,10 +343,10 @@ class _WalletScreenState extends State<WalletScreen> {
   }
   
   String _getMonth(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'November'];
     return months[month - 1];
   }
-  
+
   String _getCurrentDate() {
     final now = DateTime.now();
     return '${now.day} ${_getMonth(now.month)}';

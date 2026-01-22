@@ -23,7 +23,6 @@ class BookACourtController extends GetxController {
   RxBool isLoadingLocations = false.obs;
   
   ///Available Slots------------------------------------------------------------
-  // Remove duration selection - always use 60 min
   final selectedDuration = '60 min'.obs;
   final matchType = "competitive".obs;
 
@@ -44,6 +43,12 @@ class BookACourtController extends GetxController {
     
     // Don't reset available courts - keep them visible
     // User can modify selections and re-fetch if needed
+  }
+  final is30Slots = false.obs;
+  
+  // Sync selectedDuration with is30Slots toggle
+  void updateDurationFromToggle() {
+    selectedDuration.value = is30Slots.value ? '30 min' : '60 min';
   }
 
   void fetchClubs() {
@@ -261,6 +266,7 @@ class BookACourtController extends GetxController {
   void onInit()async {
     super.onInit();
     selectedDate.value = DateTime.now();
+    updateDurationFromToggle(); // Initialize duration based on is30Slots
     _initializeMockData();
     await fetchLocations();
     // Fetch wallet balance when controller initializes
@@ -504,7 +510,7 @@ class BookACourtController extends GetxController {
 
     recalculateRealCourtTotalAmount();
   }
-  void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isLeftHalf}) {
+  void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
     if(Get.isSnackbarOpen) return;
 
     final slotId = slot.sId ?? '';
@@ -515,20 +521,98 @@ class BookACourtController extends GetxController {
     // Only set selected time slot, don't fetch courts yet
     selectedTimeSlot.value = slot.time ?? '';
 
-    // Handle only full slot selection for 60 minutes
-    final multiDateKey = '${dateString}_${resolvedCourtId}_$slotId';
-    
-    if (multiDateSelections.containsKey(multiDateKey)) {
-      multiDateSelections.remove(multiDateKey);
+    // Handle half slot selection for 30 minutes
+    if (is30Slots.value && isHalfSlot == true) {
+      final firstHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
+      final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
+      final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
+      final clickedHalfKey = isFirstHalf == true ? firstHalfKey : secondHalfKey;
+      
+      // Check if the clicked half is already selected - if so, unselect it
+      if (multiDateSelections.containsKey(clickedHalfKey)) {
+        multiDateSelections.remove(clickedHalfKey);
+      }
+      // Check if we're selecting the second half and first half is already selected
+      else if (isFirstHalf == false && multiDateSelections.containsKey(firstHalfKey)) {
+        // Both halves will be selected - convert to full slot
+        multiDateSelections.remove(firstHalfKey);
+        multiDateSelections[fullSlotKey] = {
+          'slot': slot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': slot.amount ?? 0,
+        };
+      }
+      // Check if we're selecting the first half and second half is already selected
+      else if (isFirstHalf == true && multiDateSelections.containsKey(secondHalfKey)) {
+        // Both halves will be selected - convert to full slot
+        multiDateSelections.remove(secondHalfKey);
+        multiDateSelections[fullSlotKey] = {
+          'slot': slot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': slot.amount ?? 0,
+        };
+      }
+      // Check if full slot is already selected (both halves were previously selected)
+      else if (multiDateSelections.containsKey(fullSlotKey)) {
+        // Remove full slot and add the half that was clicked
+        multiDateSelections.remove(fullSlotKey);
+        final halfSlot = Slots(
+          sId: slotId,
+          time: slot.time,
+          amount: (slot.amount ?? 0) ~/ 2,
+        );
+        multiDateSelections[clickedHalfKey] = {
+          'slot': halfSlot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': (slot.amount ?? 0) ~/ 2,
+          'isHalfSlot': true,
+          'isFirstHalf': isFirstHalf,
+        };
+      }
+      // Normal half slot selection (only one half)
+      else {
+        final halfSlot = Slots(
+          sId: slotId,
+          time: slot.time,
+          amount: (slot.amount ?? 0) ~/ 2,
+        );
+        
+        multiDateSelections[clickedHalfKey] = {
+          'slot': halfSlot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': (slot.amount ?? 0) ~/ 2,
+          'isHalfSlot': true,
+          'isFirstHalf': isFirstHalf,
+        };
+      }
     } else {
-      multiDateSelections[multiDateKey] = {
-        'slot': slot,
-        'courtId': resolvedCourtId,
-        'courtName': courtName ?? '',
-        'date': dateString,
-        'dateTime': currentDate,
-        'amount': slot.amount ?? 0,
-      };
+      // Handle full slot selection for 60 minutes
+      final multiDateKey = '${dateString}_${resolvedCourtId}_$slotId';
+      
+      if (multiDateSelections.containsKey(multiDateKey)) {
+        multiDateSelections.remove(multiDateKey);
+      } else {
+        multiDateSelections[multiDateKey] = {
+          'slot': slot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': slot.amount ?? 0,
+        };
+      }
     }
 
     _recalculateTotalAmount();
@@ -660,9 +744,62 @@ class BookACourtController extends GetxController {
   bool isSlotSelected(Slots slot, String courtId) {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    
+    // Check for full slot selection
     final multiDateKey = '${dateString}_${courtId}_${slot.sId}';
+    if (multiDateSelections.containsKey(multiDateKey)) {
+      return true;
+    }
+    
+    // Check for half-slot selections if 30 minutes is selected
+    if (is30Slots.value) {
+      final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
+      final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
+      return multiDateSelections.containsKey(firstHalfKey) || multiDateSelections.containsKey(secondHalfKey);
+    }
+    
+    return false;
+  }
+  
+  // Check if both halves are selected for a main grid slot
+  bool isBothHalvesSelectedInMainGrid(Slots slot, String courtId) {
+    if (!is30Slots.value) return false;
+    
+    final currentDate = selectedDate.value ?? DateTime.now();
+    final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
+    final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
+    final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
+    
+    // Check if full slot exists (both halves consolidated) OR both halves exist separately
+    return multiDateSelections.containsKey(fullSlotKey) || 
+           (multiDateSelections.containsKey(firstHalfKey) && multiDateSelections.containsKey(secondHalfKey));
+  }
 
-    return multiDateSelections.containsKey(multiDateKey);
+  // Check if left half is selected for a main grid slot
+  bool isLeftHalfSelectedInMainGrid(Slots slot, String courtId) {
+    if (!is30Slots.value) return false;
+    
+    final currentDate = selectedDate.value ?? DateTime.now();
+    final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
+    final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
+    
+    // Full slot means both halves are selected, so left half is selected
+    return multiDateSelections.containsKey(fullSlotKey) || multiDateSelections.containsKey(firstHalfKey);
+  }
+
+  // Check if right half is selected for a main grid slot
+  bool isRightHalfSelectedInMainGrid(Slots slot, String courtId) {
+    if (!is30Slots.value) return false;
+    
+    final currentDate = selectedDate.value ?? DateTime.now();
+    final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
+    final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
+    
+    // Full slot means both halves are selected, so right half is selected
+    return multiDateSelections.containsKey(fullSlotKey) || multiDateSelections.containsKey(secondHalfKey);
   }
   
   bool isRealCourtSlotSelected(Slots slot, String courtId) {
@@ -1101,8 +1238,11 @@ class BookACourtController extends GetxController {
         formattedTime = selectedSlotTimes.join(',');
       }
       
+      // Get duration from is30Slots: 30 for 30m, 60 for 60m
+      final durationValue = is30Slots.value ? '30' : '60';
+      
       final response = await _homeRepository.getCourtsByDuration(
-        duration: "",
+        duration: durationValue,
         date: dateString,
         time: formattedTime,
       );

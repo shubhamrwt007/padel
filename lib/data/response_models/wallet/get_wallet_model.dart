@@ -1,7 +1,7 @@
 class GetWalletModel {
   final String? id;
   final String? userId;
-  final int? balance;
+  final double? balance;
   final int? totalDebitedBalance;
   final bool? isActive;
 
@@ -18,7 +18,7 @@ class GetWalletModel {
       id: json['_id'],
       userId: json['userId'],
       balance: json['balance'] != null
-          ? (json['balance'] as num).toInt()
+          ? (json['balance'] as num).toDouble()
           : null,
       totalDebitedBalance: json['totalDebitedBalance'] != null
           ? (json['totalDebitedBalance'] as num).toInt()

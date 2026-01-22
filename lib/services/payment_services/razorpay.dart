@@ -26,6 +26,7 @@ class RazorpayPaymentService {
     required String currency,
     required String name,
     required String description,
+    required String image,
     String? orderId,
     String? userEmail,
     String? userContact,
@@ -40,6 +41,7 @@ class RazorpayPaymentService {
       'currency': currency,
       'name': name,
       'description': description,
+      'image':image,
       'prefill': {'contact': userContact ?? '', 'email': userEmail ?? ''},
       'external': {
         'wallets': ['paytm'],

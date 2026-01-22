@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
+import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/booking/successful_screens/booking_successful_screen.dart';
 import 'package:padel_mobile/presentations/openmatchbooking/openmatch_booking_controller.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
@@ -311,6 +312,7 @@ class QuestionsBottomsheetController extends GetxController {
         currency: 'INR',
         name: 'Swoot',
         description: 'Payment for court booking and match creation',
+        image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         userEmail: profileController.profileModel.value?.response?.email ?? 'test@example.com',
         userContact: '9999999999',
       );
