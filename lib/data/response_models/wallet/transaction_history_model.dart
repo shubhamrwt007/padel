@@ -115,7 +115,7 @@ class UserId {
   final int? openMatchCount;
   final int? americanMatchCount;
   final int? rank;
-  final double? xpPoints;
+  final dynamic? xpPoints;
   final int? currentWinStreak;
   final int? currentLoseStreak;
   final String? createdAt;

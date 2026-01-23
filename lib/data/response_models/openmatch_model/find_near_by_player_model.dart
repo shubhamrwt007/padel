@@ -33,7 +33,7 @@ class Player {
   final String? level;
   final String? profilePic;
   final int? totalMatchesPlayed;
-  final int? xpPoints;
+  final dynamic? xpPoints;
 
   const Player({
     this.id,

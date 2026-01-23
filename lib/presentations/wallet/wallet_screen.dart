@@ -57,7 +57,7 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _header() {
     return Container(
       width: Get.width,
-      padding: const EdgeInsets.fromLTRB(16, 50, 16, 24),
+      padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
       decoration: BoxDecoration(
         gradient: walletGradient,
       ),
@@ -67,8 +67,11 @@ class _WalletScreenState extends State<WalletScreen> {
           /// AppBar Row
           const SizedBox(height: 20),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(onPressed: (){Get.back();},icon: const Icon(Icons.arrow_back, color: Colors.white)),
+              Transform.translate(
+                  offset: Offset(-10, 0),
+                  child: IconButton(onPressed: (){Get.back();},icon: const Icon(Icons.arrow_back, color: Colors.white))),
               const Text(
                 'Wallet',
                 style: TextStyle(
@@ -77,6 +80,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              SizedBox(
+                height: 20,width: 50,
+              )
             ],
           ),
           const SizedBox(height: 30),
@@ -197,7 +203,7 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _transactionList() {
     return Container(
       // margin: const EdgeInsets.only(top: -20),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -259,7 +265,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   separatorBuilder: (_, index) => index < controller.transactionList.length ? const Divider(height: 1) : SizedBox.shrink(),
                   itemBuilder: (_, index) {
                     if (index >= controller.transactionList.length) {
-                      return Obx(() => controller.isLoadingMore.value 
+                      return Obx(() => controller.isLoadingMore.value
                         ? Padding(
                             padding: EdgeInsets.all(16),
                             child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
@@ -331,7 +337,7 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
-  
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return '';
     try {
@@ -341,7 +347,7 @@ class _WalletScreenState extends State<WalletScreen> {
       return dateStr;
     }
   }
-  
+
   String _getMonth(int month) {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'November'];
     return months[month - 1];
@@ -351,7 +357,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final now = DateTime.now();
     return '${now.day} ${_getMonth(now.month)}';
   }
-  
+
   void _showDatePicker() async {
     final DateTime? picked = await showDatePicker(
       context: context,

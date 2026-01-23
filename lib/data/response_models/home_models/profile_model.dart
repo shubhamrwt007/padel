@@ -56,7 +56,7 @@ class Response {
 
   int? currentLoseStreak;
   int? currentWinStreak;
-  double? xpPoints;
+  dynamic? xpPoints;
 
   int? americanMatchCount;
   int? openMatchCount;
