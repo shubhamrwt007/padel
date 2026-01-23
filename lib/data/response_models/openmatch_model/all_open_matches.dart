@@ -362,7 +362,7 @@ class UserId {
   String? createdAt;
   String? updatedAt;
   int? iV;
-  int? xpPoints;
+  dynamic? xpPoints;
   String? dob;
   String? gender;
   String? profilePic;

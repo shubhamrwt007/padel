@@ -53,7 +53,7 @@ class Leaderboard {
   final String? playerId;
   final String? name;
   final String? profilePic;
-  final int? xpPoints;
+  final dynamic? xpPoints;
   final int? wins;
   final int? matches;
   final int? losses;
@@ -111,7 +111,7 @@ class MyRank {
   final String? playerId;
   final String? name;
   final String? profilePic;
-  final int? xpPoints;
+  final dynamic? xpPoints;
   final int? wins;
   final int? matches;
   final int? losses;

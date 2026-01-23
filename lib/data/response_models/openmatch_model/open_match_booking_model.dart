@@ -182,7 +182,7 @@ class BookingId {
   String? bookingTime;
   String? startTime;
   String? endTime;
-  int? totalAmount;
+  dynamic? totalAmount;
   String? paymentStatus;
 
   BookingId.fromJson(Map<String, dynamic> json) {
@@ -409,7 +409,7 @@ class UserId {
   String? email;
   String? countryCode;
   int? phoneNumber;
-  int? xpPoints;
+  dynamic? xpPoints;
   String? name;
   String? lastName;
   String? gender;

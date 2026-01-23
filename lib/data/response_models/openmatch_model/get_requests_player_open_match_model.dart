@@ -268,7 +268,7 @@ class RequesterId {
   final String? profilePic;
   final String? level;
   final String? gender;
-  final int? xpPoints;
+  final dynamic? xpPoints;
 
   RequesterId({
     this.id,
