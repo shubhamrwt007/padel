@@ -18,7 +18,8 @@ class BottomNavigationController extends GetxController {
   MainHomeController mainHomeController = Get.put(MainHomeController());
   BookingHistoryController bookingHistoryController= Get.put(BookingHistoryController());
   // OpenMatchBookingController openMatchBookingController= Get.put(OpenMatchBookingController());
-  EditProfileController editProfileController = Get.put(EditProfileController());
+  // EditProfileController editProfileController = Get.put(EditProfileController());
+  HomeController homeController = Get.put(HomeController());
   LeaderboardController leaderboardController = Get.put(LeaderboardController());
   final List<Map<String, dynamic>> tabs = [
     {'icon': Assets.imagesIcHomeBottomBar, 'label': 'Home','isSvg': true, 'size': 22.0},
@@ -39,7 +40,8 @@ class BottomNavigationController extends GetxController {
     BookingHistoryUi(),
     // OpenMatchBookingScreen(),
     LeaderboardScreen(),
-    EditProfileUi()
+    HomeScreen()
+    // EditProfileUi()
     // SizedBox(
     //   height: Get.height,
     //   width: Get.width,

@@ -53,6 +53,7 @@ class AppEndpoints {
   static const String findNearByPlayer = "${baseUrl}court/openmatch/findNearByPLayers";
   static const String getCustomerNameByPhoneNumber = "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
   static const String withdrawRequest = "${baseUrl}court/openmatch/withDrawMatchRequest/";
+  static const String getPendingRequestCount = "${baseUrl}court/openmatch/getPendingInvitationCount";
   // static const String getParticularMatch = "${BASE_URL}court/openmatch/findByOpenMatchId?_id=68d2300a723257df65e574ab";
   static const String getOpenMatches = "${baseUrl}court/openmatch/getOpenMatches";
   static const String createUserForOpenMatch = "${baseUrl}customerSignupWithOutPassword";
@@ -86,4 +87,5 @@ class AppEndpoints {
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
   static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
+  static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
 }

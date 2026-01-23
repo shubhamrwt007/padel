@@ -154,6 +154,7 @@ class _WalletScreenState extends State<WalletScreen> {
               // _actionButton(Icons.arrow_downward, 'Withdraw'),
             ],
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -173,7 +174,7 @@ class _WalletScreenState extends State<WalletScreen> {
         if (text == 'Add') {
           controller.showAddBalanceDialog();
         }else if (text=="Withdraw"){
-          SnackBarUtils.showInfoSnackBar("Withdraw option coming soon!");
+          // SnackBarUtils.showInfoSnackBar("Withdraw option coming soon!");
         }
       },
       child: Container(
@@ -201,91 +202,112 @@ class _WalletScreenState extends State<WalletScreen> {
 
   /// ================= TRANSACTIONS =================
   Widget _transactionList() {
-    return Container(
-      // margin: const EdgeInsets.only(top: -20),
-      padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      child: Column(
-        children: [
-          /// Title
-          Row(
-            children: [
-              Text(
-                'Transaction',
-                style:Get.textTheme.headlineMedium
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => _showDatePicker(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.calendar_month,
-                    color: Colors.white,
-                  ),
-                ),
-              )
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.4),
-                        spreadRadius: 1.5,
-                        blurRadius: 5.0
-                    )
-                  ]
-              ),
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return Center(child: LoadingWidget(color: AppColors.primaryColor,));
-                }
-                if (controller.transactionList.isEmpty) {
-                  return Center(child: Text('No transactions found'));
-                }
-                return ListView.separated(
-                  physics: ClampingScrollPhysics(),
-                  controller: _scrollController,
-                  itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
-                  padding: EdgeInsets.zero,
-                  separatorBuilder: (_, index) => index < controller.transactionList.length ? const Divider(height: 1) : SizedBox.shrink(),
-                  itemBuilder: (_, index) {
-                    if (index >= controller.transactionList.length) {
-                      return Obx(() => controller.isLoadingMore.value
-                        ? Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
-                          )
-                        : SizedBox.shrink());
-                    }
-                    final transaction = controller.transactionList[index];
-                    final isCredit = transaction.type == 'credit';
-                    return _transactionTile(
-                      title: transaction.description ?? 'Transaction',
-                      amount: '${formatAmount(transaction.amount ?? 0)} Cr',
-                      isCredit: isCredit,
-                      date: transaction.createdAt ?? '',
-                    );
-                  },
-                );
-              }),
+    return Transform.translate(
+      offset: Offset(0, -25),
+      child: Container(
+        // margin: const EdgeInsets.only(top: -20),
+        padding: const EdgeInsets.symmetric(vertical: 10,horizontal: 20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          children: [
+            /// Title
+            SizedBox(
+              height: 8,
             ),
-          ),
-        ],
+            Row(
+              children: [
+                Text(
+                  'Transaction',
+                  style:Get.textTheme.headlineMedium
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => openDateRangePicker(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_month,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Obx(() => Text(
+                          controller.selectedDateRangeText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+            const SizedBox(height: 15),
+
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.grey.withValues(alpha: 0.4),
+                          spreadRadius: 1.5,
+                          blurRadius: 5.0
+                      )
+                    ]
+                ),
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return Center(child: LoadingWidget(color: AppColors.primaryColor,));
+                  }
+                  if (controller.transactionList.isEmpty) {
+                    return Center(child: Text('No transactions found'));
+                  }
+                  return ListView.separated(
+                    physics: ClampingScrollPhysics(),
+                    controller: _scrollController,
+                    itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
+                    padding: EdgeInsets.zero,
+                    separatorBuilder: (_, index) => index < controller.transactionList.length ? const Divider(height: 1) : SizedBox.shrink(),
+                    itemBuilder: (_, index) {
+                      if (index >= controller.transactionList.length) {
+                        return Obx(() => controller.isLoadingMore.value
+                          ? Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+                            )
+                          : SizedBox.shrink());
+                      }
+                      final transaction = controller.transactionList[index];
+                      final isCredit = transaction.type == 'credit';
+                      return _transactionTile(
+                        title: transaction.description ?? 'Transaction',
+                        amount: '${formatAmount(transaction.amount ?? 0)} Cr',
+                        isCredit: isCredit,
+                        date: transaction.createdAt ?? '',
+                      );
+                    },
+                  );
+                }),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -358,15 +380,41 @@ class _WalletScreenState extends State<WalletScreen> {
     return '${now.day} ${_getMonth(now.month)}';
   }
 
-  void _showDatePicker() async {
-    final DateTime? picked = await showDatePicker(
+  ///Date Range Picker----------------------------------------------------------------
+  Future<void> openDateRangePicker(BuildContext context) async {
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      initialDateRange: controller.selectedStartDate.value != null &&
+          controller.selectedEndDate.value != null
+          ? DateTimeRange(
+        start: controller.selectedStartDate.value!,
+        end: controller.selectedEndDate.value!,
+      )
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primaryColor, // Start & End date color
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              rangeSelectionBackgroundColor: AppColors.secondaryColor.withValues(alpha: 0.2),
+              rangeSelectionOverlayColor:
+              MaterialStatePropertyAll(Colors.green.withOpacity(0.2)),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null) {
-      // Filter transactions by selected date if needed
+      controller.setDateRange(picked.start, picked.end);
     }
   }
+
 }

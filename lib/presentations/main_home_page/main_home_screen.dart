@@ -173,7 +173,6 @@ class MainHomeScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _quickActions(),
 
-              const SizedBox(height: 20),
               _bookingSection(),
 
               const SizedBox(height: 15),
@@ -311,7 +310,7 @@ class MainHomeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _clubTicketList(),
           ],
-        );
+        ).paddingOnly(top: 10);
       }
     });
   }
@@ -1398,8 +1397,6 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _leaderboardCard() {
     return Obx(() {
-      final profile = controller.profileController.profileModel.value;
-      final rank = profile?.response?.rank ?? 0;
 
       return GestureDetector(
         onTap: () => Get.to(LeaderboardScreen(
@@ -1428,7 +1425,7 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                   Align(
                     alignment: Alignment.bottomRight,
-                    child: Text('$rank',
+                    child: Text(controller.customerRank.value.toString(),
                         style: Get.textTheme.titleLarge!
                             .copyWith(color: Color(0xff0E1E55))),
                   ),
