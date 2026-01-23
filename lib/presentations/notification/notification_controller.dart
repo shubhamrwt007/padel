@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/get_notification_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/repositories/notification_repo/notification_repository.dart';
 
 import '../../services/notification_service/firebase_notification.dart';
@@ -280,6 +281,7 @@ class NotificationController extends GetxController {
   }
 
 
+  final ProfileController profileController = Get.put(ProfileController());
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) async{
     if (kDebugMode) {
@@ -292,6 +294,7 @@ class NotificationController extends GetxController {
     if (message.notification != null) {
       await fetchUnreadNotificationCount();
       await fetchNotifications();
+      await profileController.fetCustomerLeaderBoardRank();
       // Get.snackbar(
       //   message.notification!.title ?? 'New Message',
       //   message.notification!.body ?? '',

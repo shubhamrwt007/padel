@@ -18,6 +18,7 @@ class MainHomeController extends GetxController{
     super.onInit();
     homeController.fetchBookings();
     await fetchNearCityPlayers();
+    await fetCustomerLeaderBoardRank();
   }
   
   Future<void> fetchNearCityPlayers() async {
@@ -30,6 +31,25 @@ class MainHomeController extends GetxController{
       }
     } catch (e) {
       print('Error fetching near city players: $e');
+    } finally {
+      isLoadingPlayers.value = false;
+    }
+  }
+
+  var customerRank = 0.obs;
+  Future<void> fetCustomerLeaderBoardRank() async {
+    try {
+      isLoadingPlayers.value = true;
+      final userId = storage.read('userId')??"";
+      if (userId != null) {
+        final response = await _homeRepository.getCustomerLeaderBoardRank(id: userId);
+        if(response.success == true){
+          customerRank.value = response.rank??0;
+          print(response);
+        }
+      }
+    } catch (e) {
+      print('Error fetching Customer Rank: $e');
     } finally {
       isLoadingPlayers.value = false;
     }

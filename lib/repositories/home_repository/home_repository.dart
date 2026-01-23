@@ -6,8 +6,11 @@ import 'package:padel_mobile/data/request_models/slot_history_models/delete_bulk
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_location_maps_model.dart';
+import 'package:padel_mobile/data/response_models/get_pending_request_count_model.dart';
 import 'package:padel_mobile/data/response_models/get_register_club_model.dart';
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
+import 'package:padel_mobile/data/response_models/leaderBoard/get_customer_leader_board_rank_model.dart';
+import 'package:padel_mobile/data/response_models/openmatch_model/get_customer_data_by_phone_number_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import '../../core/endpoitns.dart';
 import '../../core/network/dio_client.dart';
@@ -261,6 +264,54 @@ class HomeRepository {
         return GetNearCityPlayers.fromJson(response.data);
       } else {
         throw Exception("Failed to load Get Near City Players - status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("Dio Error: ${e.response?.statusMessage}");
+        throw Exception("Server error: ${e.response?.statusCode}");
+      } else {
+        debugPrint("Dio Error: ${e.message}");
+        throw Exception("Network error: ${e.message}");
+      }
+    }
+  }
+
+  ///Get Customer LeaderBord Rank-----------------------------------------------
+  Future<GetCustomerLeaderBoardRankModel> getCustomerLeaderBoardRank({required id}) async {
+    try {
+      final url = "${AppEndpoints.getMyRankGenderWise}?_id=$id";
+
+      final response = await dioClient.get(url);
+
+      if (response.statusCode == 200) {
+        log("Get Customer LeaderBord Rank: ${response.data}");
+        return GetCustomerLeaderBoardRankModel.fromJson(response.data);
+      } else {
+        throw Exception("Failed to load Get Customer LeaderBord Rank - status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("Dio Error: ${e.response?.statusMessage}");
+        throw Exception("Server error: ${e.response?.statusCode}");
+      } else {
+        debugPrint("Dio Error: ${e.message}");
+        throw Exception("Network error: ${e.message}");
+      }
+    }
+  }
+
+  ///Get Pending Request Count--------------------------------------------------
+  Future<GetPendingRequestCountModel> getPendingRequestCount() async {
+    try {
+      final url = AppEndpoints.getPendingRequestCount;
+
+      final response = await dioClient.get(url);
+
+      if (response.statusCode == 200) {
+        log("Get Pending Request Count: ${response.data}");
+        return GetPendingRequestCountModel.fromJson(response.data);
+      } else {
+        throw Exception("Failed to load Get Pending Request Count - status code: ${response.statusCode}");
       }
     } on DioException catch (e) {
       if (e.response != null) {

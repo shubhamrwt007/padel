@@ -29,6 +29,8 @@ class WalletController extends GetxController {
   RxDouble pendingAmount = 0.0.obs;
   var currentPage = 1;
   var hasMoreTransactions = true.obs;
+  var selectedStartDate = Rxn<DateTime>();
+  var selectedEndDate = Rxn<DateTime>();
 
   Future<void> fetchTransaction({bool isRefresh = false}) async {
     try {
@@ -39,7 +41,9 @@ class WalletController extends GetxController {
       isLoading.value = true;
       final response = await repository.getTransaction(
           page: currentPage.toString(),
-          limit: 10
+          limit: 10,
+          startDate: selectedStartDate.value != null ? DateFormat('yyyy-MM-dd').format(selectedStartDate.value!) : '',
+          endDate: selectedEndDate.value != null ? DateFormat('yyyy-MM-dd').format(selectedEndDate.value!) : ''
       );
       if (response.status == 200) {
         if (isRefresh) {
@@ -63,7 +67,9 @@ class WalletController extends GetxController {
       currentPage++;
       final response = await repository.getTransaction(
           page: currentPage.toString(),
-          limit: 10
+          limit: 10,
+          startDate: selectedStartDate.value != null ? DateFormat('yyyy-MM-dd').format(selectedStartDate.value!) : '',
+          endDate: selectedEndDate.value != null ? DateFormat('yyyy-MM-dd').format(selectedEndDate.value!) : ''
       );
       if (response.status == 200) {
         transactionList.addAll(response.transactions ?? []);
@@ -330,6 +336,20 @@ class WalletController extends GetxController {
     };
 
     profileController.fetchUserProfile();
+  }
+
+  void setDateRange(DateTime? startDate, DateTime? endDate) {
+    selectedStartDate.value = startDate;
+    selectedEndDate.value = endDate;
+    fetchTransaction(isRefresh: true);
+  }
+
+  String get selectedDateRangeText {
+    if (selectedStartDate.value != null && selectedEndDate.value != null) {
+      final formatter = DateFormat('dd MMM');
+      return '${formatter.format(selectedStartDate.value!)} - ${formatter.format(selectedEndDate.value!)}';
+    }
+    return 'Select Date Range';
   }
 
   @override
