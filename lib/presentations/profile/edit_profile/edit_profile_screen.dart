@@ -33,6 +33,7 @@ class EditProfileUi extends StatelessWidget {
                 _profileImage(context),
                 _textFieldWithLabel(
                   "Name",
+                  textCapitalization: TextCapitalization.words,
                   controller.nameController,
                   context,
                 ),
@@ -194,6 +195,7 @@ class EditProfileUi extends StatelessWidget {
     BuildContext context, {
     bool readOnly = false,
     TextInputType? keyboardType,
+        TextCapitalization? textCapitalization
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,6 +212,7 @@ class EditProfileUi extends StatelessWidget {
           controller: controller,
           readOnly: readOnly,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
           // scrollPadding: EdgeInsets.only(bottom: Get.height*0.3),
           contentPadding: EdgeInsets.symmetric(
             horizontal: Get.width * 0.04,
@@ -235,25 +238,25 @@ class EditProfileUi extends StatelessWidget {
           () => Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: ["Female", "Male", "Other"].map((gender) {
-              return GestureDetector(
-                onTap: () => controller.selectedGender.value = gender,
-                child: Row(
-                  children: [
-                    Icon(
-                      controller.selectedGender.value == gender
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      size: 15,
-                      color: AppColors.labelBlackColor,
+              return Row(
+                children: [
+                  Icon(
+                    controller.selectedGender.value == gender
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 15,
+                    color: Colors.grey,
+                  ),
+                  Text(
+                    gender,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineSmall!.copyWith(
+                      fontSize: 14,
+                      color: Colors.grey,
                     ),
-                    Text(
-                      gender,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall!.copyWith(fontSize: 14),
-                    ).paddingOnly(left: 5),
-                  ],
-                ),
+                  ).paddingOnly(left: 5),
+                ],
               );
             }).toList(),
           ),
@@ -364,7 +367,7 @@ class EditProfileUi extends StatelessWidget {
                     value: controller.selectedLocation.value.isEmpty
                         ? null
                         : controller.selectedLocation.value,
-                    hint: Text("Pefered Location", style: style),
+                    hint: Text("Preferred Location", style: style),
                     dropdownColor: Colors.white,
                     isExpanded: true,
                     items: controller.locations

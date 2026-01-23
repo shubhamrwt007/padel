@@ -430,7 +430,6 @@ class OpenMatchId {
   String? skillLevel;
   List<dynamic>? skillDetails;
   String? matchDate;
-  List<String>? matchTime;
   String? matchStatus;
   List<TeamPlayer>? teamA;
   List<TeamPlayer>? teamB;
@@ -452,7 +451,6 @@ class OpenMatchId {
     this.skillLevel,
     this.skillDetails,
     this.matchDate,
-    this.matchTime,
     this.matchStatus,
     this.teamA,
     this.teamB,
@@ -482,10 +480,6 @@ class OpenMatchId {
     skillLevel = json['skillLevel']?.toString();
     skillDetails = json['skillDetails'] ?? [];
     matchDate = json['matchDate']?.toString();
-    matchTime = json['matchTime'] != null
-        ? List<String>.from(json['matchTime'].map((e) => e.toString()))
-        : [];
-
     matchStatus = json['matchStatus']?.toString();
 
     teamA = json['teamA'] != null
@@ -520,7 +514,6 @@ class OpenMatchId {
     data['skillLevel'] = skillLevel;
     data['skillDetails'] = skillDetails;
     data['matchDate'] = matchDate;
-    data['matchTime'] = matchTime;
     data['matchStatus'] = matchStatus;
     data['teamA'] = teamA?.map((v) => v.toJson()).toList();
     data['teamB'] = teamB?.map((v) => v.toJson()).toList();

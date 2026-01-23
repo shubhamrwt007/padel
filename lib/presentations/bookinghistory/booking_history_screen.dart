@@ -72,7 +72,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         tabs: const [
           Tab(text: "Upcoming"),
-          Tab(text: "Ongoing"),
+          Tab(text: "Live"),
           Tab(text: "Completed"),
         ],
       ),
@@ -152,21 +152,22 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               }
 
               return GestureDetector(
-                onTap: (booking.bookingType ?? "").toLowerCase() == "normal" ? () {
-                  final bookingId = booking.sId;
-                  if (bookingId != null && bookingId.isNotEmpty) {
-                    Get.toNamed(
-                      RoutesName.bookingConfirmAndCancel,
-                      arguments: {
-                        "id": bookingId,
-                        "fromCompleted": type == "completed",
-                        "fromCancelled": type == "cancelled",
-                      },
-                    );
-                  } else {
-                    Get.snackbar("Error", "Booking ID not available");
-                  }
-                } : null,
+                onTap: (){},
+                // onTap: (booking.bookingType ?? "").toLowerCase() == "normal" ? () {
+                //   final bookingId = booking.sId;
+                //   if (bookingId != null && bookingId.isNotEmpty) {
+                //     Get.toNamed(
+                //       RoutesName.bookingConfirmAndCancel,
+                //       arguments: {
+                //         "id": bookingId,
+                //         "fromCompleted": type == "completed",
+                //         "fromCancelled": type == "cancelled",
+                //       },
+                //     );
+                //   } else {
+                //     Get.snackbar("Error", "Booking ID not available");
+                //   }
+                // } : null,
                 child: type == "completed"
                     ? _buildCompletedBookingCard(context, booking, club, index)
                     : _buildUpcomingBookingCard(context, booking, club, index, type),

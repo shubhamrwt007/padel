@@ -7,6 +7,7 @@ import 'package:padel_mobile/presentations/booking/details_page/details_page_con
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 import 'package:padel_mobile/presentations/chat/chat_controller.dart';
 import 'package:padel_mobile/repositories/authentication_repository/login_repository.dart';
+import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 
 class ProfileController extends GetxController {
   // Repositories
@@ -20,6 +21,7 @@ class ProfileController extends GetxController {
     super.onInit();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchUserProfile();
+      await fetCustomerLeaderBoardRank();
     });
   }
 var profileModel = Rxn<ProfileModel>();
@@ -223,6 +225,19 @@ var profileModel = Rxn<ProfileModel>();
     } finally {
       isLoading.value = false;
       Get.back(); // Close the dialog
+    }
+  }
+
+  ///Pending Request Count------------------------------------------------------
+  var pendingRequestCount = 0.obs;
+  final HomeRepository homeRepository = Get.put(HomeRepository());
+  Future<void> fetCustomerLeaderBoardRank() async {
+    try {
+      final response = await homeRepository.getPendingRequestCount();
+      pendingRequestCount.value = response.count??0;
+      print(response);
+    } catch (e) {
+      print('Error fetching Customer Rank: $e');
     }
   }
 }

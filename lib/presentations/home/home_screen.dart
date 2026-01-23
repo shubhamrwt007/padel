@@ -29,79 +29,6 @@ class HomeScreen extends GetView<HomeController> {
       child: PopScope(
         canPop: false,
         child: Scaffold(
-          // appBar: primaryAppBar(
-          //   showLeading: false,
-          //   title: Row(
-          //     children: [
-          //       // Drawer menu icon
-          //       IconButton(
-          //         icon: const Icon(Icons.menu),
-          //         onPressed: () {
-          //           final drawerController = Get.find<CustomZoomDrawerController>();
-          //           drawerController.toggleDrawer();
-          //         },
-          //       ),
-          //
-          //
-          //       // Space between icon and title
-          //       const SizedBox(width: 0),
-          //
-          //       // Existing title widget
-          //       Expanded(child: _buildAppBarTitle(context)),
-          //     ],
-          //   ),
-          //   action: [
-          //     GestureDetector(
-          //       onTap: () {
-          //         Get.toNamed(RoutesName.notification);
-          //       },
-          //       child: Stack(
-          //         clipBehavior: Clip.none,
-          //         children: [
-          //           Container(
-          //             height: 35,
-          //             width: 35,
-          //             decoration: BoxDecoration(
-          //               color: AppColors.textFieldColor,
-          //               borderRadius: BorderRadius.circular(10),
-          //             ),
-          //             child: Icon(
-          //               Icons.notifications_none_rounded,
-          //               color: AppColors.blackColor,
-          //             ),
-          //           ),
-          //           Positioned(
-          //             top: -2,
-          //             right: -2,
-          //             child: Obx(() {
-          //               final count = Get.find<NotificationController>().unreadNotificationCount.value;
-          //               if (count == 0) return const SizedBox.shrink();
-          //
-          //               return Container(
-          //                 height: 16,
-          //                 width: 16,
-          //                 alignment: Alignment.center,
-          //                 decoration: const BoxDecoration(
-          //                   color: Colors.red,
-          //                   shape: BoxShape.circle,
-          //                 ),
-          //                 child: Text(
-          //                   count > 99 ? '99+' : '$count',
-          //                   style: const TextStyle(
-          //                     color: Colors.white,
-          //                     fontSize: 8,
-          //                     fontWeight: FontWeight.bold,
-          //                   ),
-          //                 ),
-          //               );
-          //             }),
-          //           ),
-          //         ],
-          //       ),
-          //     ).paddingOnly(right: 5),
-          //   ],
-          //   context: context,
-          // ),
           appBar: primaryAppBar(
               centerTitle: true,
               title: Text("Courts"), context: context),
@@ -212,7 +139,7 @@ class HomeScreen extends GetView<HomeController> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         SearchField(
-          width: Get.width * 0.8,
+          width: Get.width * 0.9,
           suffixIcon: Image.asset(
             Assets.imagesIcSearch,
             scale: 4,
@@ -223,31 +150,31 @@ class HomeScreen extends GetView<HomeController> {
             color: AppColors.textColor,
           ),
           onChanged: controller.searchClubs,
-        ),
-        Obx(() {
-          final isOpen = controller.showLocationAndDate.value;
-
-          return GestureDetector(
-            onTap: () => controller.showLocationAndDate.toggle(),
-            child: Container(
-              height: 40,
-              width: 40,
-              decoration: BoxDecoration(
-                color: AppColors.searchBarColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: AnimatedRotation(
-                turns: isOpen ? 0.5 : 0,     // 0.5 turn = 180° rotation
-                duration: const Duration(milliseconds: 300),
-                child: Image.asset(
-                  Assets.imagesIcFilter,
-                  color: Colors.black,
-                  scale: 4.5,
-                ),
-              ),
-            ),
-          );
-        })
+        ).paddingOnly(left: 5),
+        // Obx(() {
+        //   final isOpen = controller.showLocationAndDate.value;
+        //
+        //   return GestureDetector(
+        //     onTap: () => controller.showLocationAndDate.toggle(),
+        //     child: Container(
+        //       height: 40,
+        //       width: 40,
+        //       decoration: BoxDecoration(
+        //         color: AppColors.searchBarColor,
+        //         borderRadius: BorderRadius.circular(10),
+        //       ),
+        //       child: AnimatedRotation(
+        //         turns: isOpen ? 0.5 : 0,     // 0.5 turn = 180° rotation
+        //         duration: const Duration(milliseconds: 300),
+        //         child: Image.asset(
+        //           Assets.imagesIcFilter,
+        //           color: Colors.black,
+        //           scale: 4.5,
+        //         ),
+        //       ),
+        //     ),
+        //   );
+        // })
       ],
     ).paddingOnly(
       bottom: Get.height * 0.01,
@@ -487,7 +414,7 @@ class HomeScreen extends GetView<HomeController> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          "${club.address}, ${club.city}",
+                          "${club.city?.capitalizeFirst}, ${club.zipCode}",
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 10, fontWeight: FontWeight.w500),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -497,7 +424,7 @@ class HomeScreen extends GetView<HomeController> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${club.courtCount ?? 0} Courts | ${club.features?.join(' | ') ?? ''}",
+                    "${club.courtCount ?? 0} Courts ",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 10, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),

@@ -31,7 +31,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildProfileHeader(),
-          Expanded(child: _buildMenuItems()),
+          Expanded(child: _buildMenuItems(context)),
         ],
       ),
     );
@@ -144,202 +144,229 @@ class CustomDrawerUi extends GetView<ProfileController> {
       ),
     ).paddingOnly(top: 30);
   }
-  Widget _buildMenuItems() {
+  Widget _buildMenuItems(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Column(
+            children: [
 
-          Obx(
-                () => ProfileRow(
-              icon: Image.asset(Assets.imagesIcBalanceWallet, scale: 5, color: controller.selectedIndex.value == 3 ? AppColors.primaryColor : AppColors.labelBlackColor),
-              title: AppStrings.payments,
-              isSelected: controller.selectedIndex.value == 3,
-              onTap: () {
-                controller.selectedIndex.value = 3;
-                Get.toNamed(RoutesName.paymentWallet);
-              },
-            ),
-          ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Image.asset(Assets.imagesIcBalanceWallet, scale: 5, color: controller.selectedIndex.value == 3 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  title: AppStrings.payments,
+                  isSelected: controller.selectedIndex.value == 3,
+                  onTap: () {
+                    controller.selectedIndex.value = 3;
+                    Get.toNamed(RoutesName.paymentWallet);
+                  },
+                ),
+              ),
 
-          Obx(
-                () => ProfileRow(
-              icon: Icon(Icons.person_add_alt_1, size: 20, color: controller.selectedIndex.value == 5 ? AppColors.primaryColor : AppColors.labelBlackColor),
-              title: "Requests",
-              isSelected: controller.selectedIndex.value == 5,
-              onTap: () {
-                controller.selectedIndex.value = 5;
-                Get.toNamed(RoutesName.requests);
-              },
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(Icons.person_add_alt_1, size: 20, color: controller.selectedIndex.value == 5 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  title: "Requests",
+                  isSelected: controller.selectedIndex.value == 5,
+                  onTap: () {
+                    controller.selectedIndex.value = 5;
+                    Get.toNamed(RoutesName.requests);
+                  },
+                  count: controller.pendingRequestCount.value,
+                ),
+              ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(Icons.bar_chart, size: 20, color: controller.selectedIndex.value == 6 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  title: "LeaderBoard",
+                  isSelected: controller.selectedIndex.value == 6,
+                  onTap: () {
+                    controller.selectedIndex.value = 6;
+                    Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+                  },
 
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-              icon: Icon(Icons.bar_chart, size: 20, color: controller.selectedIndex.value == 6 ? AppColors.primaryColor : AppColors.labelBlackColor),
-              title: "LeaderBoard",
-              isSelected: controller.selectedIndex.value == 6,
-              onTap: () {
-                controller.selectedIndex.value = 6;
-                Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
-              },
+                ),
+              ),
+              Obx(
+                    () => ProfileRow(
+                  icon: SvgPicture.asset(
+                      Assets.imagesIcBookings,
+                      height: 22,
+                      width: 22,
+                      colorFilter: ColorFilter.mode(
+                        controller.selectedIndex.value == 7
+                            ? AppColors.primaryColor
+                            : AppColors.labelBlackColor,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  title: "Bookings",
+                  isSelected: controller.selectedIndex.value == 7,
+                  onTap: () {
+                    controller.selectedIndex.value = 7;
+                    Get.to(()=>BookingHistoryUi(buttonType: "drawer",));
+                  },
+                ),
+              ),
+              // Obx(
+              //   () => ProfileRow(
+              //     icon: SvgPicture.asset(
+              //       Assets.imagesIcPackages,
+              //       height: 17,
+              //       width: 17,
+              //       colorFilter: ColorFilter.mode(
+              //         controller.selectedIndex.value == 8
+              //             ? AppColors.primaryColor
+              //             : AppColors.labelBlackColor,
+              //         BlendMode.srcIn,
+              //       ),
+              //     ),
+              //     title: "Packages",
+              //     isSelected: controller.selectedIndex.value == 8,
+              //     onTap: () {
+              //       controller.selectedIndex.value = 8;
+              //       Get.toNamed(RoutesName.packages);
+              //     },
+              //   ),
+              // ),
+              // Obx(
+              //       () => ProfileRow(
+              //     icon: Icon(Icons.group_outlined,
+              //         size: 20,
+              //         color: controller.selectedIndex.value == 9
+              //             ? AppColors.primaryColor
+              //             : AppColors.labelBlackColor),
+              //     title: "Community",
+              //     isSelected: controller.selectedIndex.value == 9,
+              //     onTap: () {
+              //       controller.selectedIndex.value = 9;
+              //       // Get.toNamed(RoutesName.community);
+              //       if(Get.isSnackbarOpen)return;
+              //      SnackBarUtils.showInfoSnackBar("Community coming soon!");
+              //     },
+              //   ),
+              // ),
 
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-              icon: SvgPicture.asset(
-                  Assets.imagesIcBookings,
-                  height: 22,
-                  width: 22,
-                  colorFilter: ColorFilter.mode(
-                    controller.selectedIndex.value == 7
+              Obx(
+                    () => ProfileRow(
+                  icon: Image.asset(
+                    Assets.imagesIcPrivacy,
+                    scale: 5,
+                    color: controller.selectedIndex.value == 12
                         ? AppColors.primaryColor
                         : AppColors.labelBlackColor,
-                    BlendMode.srcIn,
                   ),
-                ),
-              title: "Bookings",
-              isSelected: controller.selectedIndex.value == 7,
-              onTap: () {
-                controller.selectedIndex.value = 7;
-                Get.to(()=>BookingHistoryUi(buttonType: "drawer",));
-              },
-            ),
-          ),
-          Obx(
-            () => ProfileRow(
-              icon: SvgPicture.asset(
-                Assets.imagesIcPackages,
-                height: 17,
-                width: 17,
-                colorFilter: ColorFilter.mode(
-                  controller.selectedIndex.value == 8
-                      ? AppColors.primaryColor
-                      : AppColors.labelBlackColor,
-                  BlendMode.srcIn,
+                  title: AppStrings.privacy,
+                  isSelected: controller.selectedIndex.value == 12,
+                  onTap: () async {
+                    controller.selectedIndex.value = 12;
+
+                    final url = Uri.parse("https://swootapp.com/privacy-policy");
+
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication, // opens in browser
+                      );
+                    }
+                  },
                 ),
               ),
-              title: "Packages",
-              isSelected: controller.selectedIndex.value == 8,
-              onTap: () {
-                controller.selectedIndex.value = 8;
-                Get.toNamed(RoutesName.packages);
-              },
-            ),
+
+
+
+          //     Obx(
+          //       () => ProfileRow(
+          //         icon: Icon(Icons.wallet,color: controller.selectedIndex.value == 13
+          // ? AppColors.primaryColor
+          //     : AppColors.labelBlackColor,
+          // ).paddingOnly(left: 3),
+          //         title: "Wallet",
+          //         isSelected: controller.selectedIndex.value == 13,
+          //         onTap: (){
+          //           controller.selectedIndex.value = 13;
+          //           Get.toNamed(RoutesName.wallet);
+          //         },
+          //       ),
+          //     ),
+              ProfileRow(
+                icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
+                title: AppStrings.logout,
+                textColor: Colors.red,
+                onTap: () => controller.showLogoutDialog(Get.context!),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
-          Obx(
-                () => ProfileRow(
-              icon: Icon(Icons.group_outlined,
-                  size: 20,
-                  color: controller.selectedIndex.value == 9
-                      ? AppColors.primaryColor
-                      : AppColors.labelBlackColor),
-              title: "Community",
-              isSelected: controller.selectedIndex.value == 9,
-              onTap: () {
-                controller.selectedIndex.value = 9;
-                // Get.toNamed(RoutesName.community);
-                if(Get.isSnackbarOpen)return;
-               SnackBarUtils.showInfoSnackBar("Community coming soon!");
-              },
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-              icon: Icon(Icons.headset_mic_outlined, size: 20, color: controller.selectedIndex.value == 10 ? AppColors.primaryColor : AppColors.labelBlackColor),
-              title: AppStrings.helpSupport,
-              isSelected: controller.selectedIndex.value == 10,
-              onTap: () {
-                controller.selectedIndex.value = 10;
-                Get.toNamed(RoutesName.support);
-              },
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-                  icon: Icon(Icons.copyright, size: 20, color: controller.selectedIndex.value == 11 ? AppColors.primaryColor : AppColors.labelBlackColor),
+          Column(
+            children: [
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(
+                    Icons.delete_forever_outlined,
+                    size: 20,
+                    color: controller.selectedIndex.value == 13
+                        ? AppColors.primaryColor
+                        : AppColors.labelBlackColor,
+                  ),
+                  title: "Delete Account",
+                      fontSize: 12,
+                      height: 30,
+                  isSelected: controller.selectedIndex.value == 13,
+                  onTap: () {
+                    controller.selectedIndex.value = 13;
+                    controller.showDeleteAccountDialog(Get.context!);
+                  },
+                ),
+              ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(Icons.headset_mic_outlined, size: 15, color: controller.selectedIndex.value == 10 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  title: AppStrings.helpSupport,
+                  isSelected: controller.selectedIndex.value == 10,
+                  fontSize: 12,
+                  height: 30,
+                  onTap: () {
+                    controller.selectedIndex.value = 10;
+                    Get.toNamed(RoutesName.support);
+                  },
+                ),
+              ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(Icons.copyright, size: 15, color: controller.selectedIndex.value == 11 ? AppColors.primaryColor : AppColors.labelBlackColor),
                   title: "Terms and Conditions",
-              isSelected: controller.selectedIndex.value == 11,
-              onTap: () async {
-                controller.selectedIndex.value = 11;
+                  isSelected: controller.selectedIndex.value == 11,
+                  fontSize: 12,
+                  height: 30,
+                  onTap: () async {
+                    controller.selectedIndex.value = 11;
 
-                final url = Uri.parse("https://swootapp.com/term-&-conditions");
+                    final url = Uri.parse("https://swootapp.com/term-&-conditions");
 
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(
-                    url,
-                    mode: LaunchMode.externalApplication, // opens in browser
-                  );
-                }
-              },
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-              icon: Image.asset(
-                Assets.imagesIcPrivacy,
-                scale: 5,
-                color: controller.selectedIndex.value == 12
-                    ? AppColors.primaryColor
-                    : AppColors.labelBlackColor,
-              ),
-              title: AppStrings.privacy,
-              isSelected: controller.selectedIndex.value == 12,
-              onTap: () async {
-                controller.selectedIndex.value = 12;
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication, // opens in browser
+                      );
+                    }
+                  },
+                ),
+              ).paddingOnly(bottom: 20),
 
-                final url = Uri.parse("https://swootapp.com/privacy-policy");
-
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(
-                    url,
-                    mode: LaunchMode.externalApplication, // opens in browser
-                  );
-                }
-              },
-            ),
-          ),
-          Obx(
-                () => ProfileRow(
-              icon: Icon(
-                Icons.delete_forever_outlined,
-                size: 20,
-                color: controller.selectedIndex.value == 13
-                    ? AppColors.primaryColor
-                    : AppColors.labelBlackColor,
-              ),
-              title: "Delete Account",
-              isSelected: controller.selectedIndex.value == 13,
-              onTap: () {
-                controller.selectedIndex.value = 13;
-                controller.showDeleteAccountDialog(Get.context!);
-              },
-            ),
-          ),
+              Text(
+                "Powered By RowthTech",
+                style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                  color: AppColors.blackColor.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w400,fontSize: 12,
+                ),
+              )
+            ],
+          ).paddingOnly(bottom: 50),
 
 
-      //     Obx(
-      //       () => ProfileRow(
-      //         icon: Icon(Icons.wallet,color: controller.selectedIndex.value == 13
-      // ? AppColors.primaryColor
-      //     : AppColors.labelBlackColor,
-      // ).paddingOnly(left: 3),
-      //         title: "Wallet",
-      //         isSelected: controller.selectedIndex.value == 13,
-      //         onTap: (){
-      //           controller.selectedIndex.value = 13;
-      //           Get.toNamed(RoutesName.wallet);
-      //         },
-      //       ),
-      //     ),
-          ProfileRow(
-            icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
-            title: AppStrings.logout,
-            textColor: Colors.red,
-            onTap: () => controller.showLogoutDialog(Get.context!),
-          ),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -353,6 +380,9 @@ class ProfileRow extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? textColor;
   final bool isSelected;
+  final double? fontSize;
+  final double? height;
+  final int? count;
 
   const ProfileRow({
     super.key,
@@ -361,6 +391,9 @@ class ProfileRow extends StatelessWidget {
     this.onTap,
     this.textColor,
     this.isSelected = false,
+    this.fontSize,
+    this.height,
+    this.count,
   });
 
   @override
@@ -371,7 +404,7 @@ class ProfileRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 48,
+        height: height ?? 48,
         color: Colors.transparent,
         child: Row(
           children: [
@@ -384,15 +417,36 @@ class ProfileRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16), // consistent spacing between icon and text
-            Expanded(
-              child: Text(
-                title,
-                style: Get.textTheme.headlineSmall!.copyWith(
-                  color: isSelected ? highlightColor : (textColor ?? defaultColor),
-                  fontWeight: FontWeight.w600,
+            Text(
+              title,
+              style: Get.textTheme.headlineSmall!.copyWith(
+                color: isSelected ? highlightColor : (textColor ?? defaultColor),
+                fontWeight: FontWeight.w600,
+                fontSize: fontSize,
+              ),
+            ).paddingOnly(right: 5),
+            if (count != null && count! > 0)
+              Container(
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.redColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  count.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    height: 1.0, // 👈 removes extra bottom space
+                    decoration: TextDecoration.none, // 👈 ensures no underline artifact
+                  ),
                 ),
               ),
-            ),
+
           ],
         ),
       ),
