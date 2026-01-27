@@ -25,7 +25,7 @@ class BottomNavigationController extends GetxController {
     {'icon': Assets.imagesIcHomeBottomBar, 'label': 'Home','isSvg': true, 'size': 22.0},
     {'icon': Assets.imagesIcBookings, 'label': 'Bookings','isSvg': true, 'size': 26.0},
     {'icon':  Icons.bar_chart, 'label': 'LeaderBoard', 'isSvg': false, 'size': 28.0},
-    {'icon': CupertinoIcons.person_circle, 'label': 'Profile', 'isSvg': false, 'size': 32.0},
+    {'icon': Assets.imagesIcBookACourtNew, 'label': 'Courts', 'isSvg': true, 'size': 28.0},
 
   ];
 

@@ -1408,9 +1408,11 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   void _showPlayerDetailsDialog(dynamic booking) {
-    final scoreboard = booking.scoreboard;
-    if (scoreboard?.teams == null) {
-      Get.snackbar("Error", "No player data available");
+    final teamAPlayers = booking.teamA ?? [];
+    final teamBPlayers = booking.teamB ?? [];
+    
+    if (teamAPlayers.isEmpty && teamBPlayers.isEmpty) {
+      // Get.snackbar("Error", "No player data available");
       return;
     }
 
@@ -1438,7 +1440,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 ],
               ),
               const Divider(thickness: 0.6),
-              ..._buildPlayersFromScoreboard(scoreboard.teams),
+              ..._buildPlayersFromTeams(teamAPlayers, teamBPlayers),
             ],
           ),
         ),
@@ -1446,76 +1448,143 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     );
   }
 
-  List<Widget> _buildPlayersFromScoreboard(List<dynamic> teams) {
+  List<Widget> _buildPlayersFromTeams(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
     List<Widget> playerWidgets = [];
-    for (var team in teams) {
-      if (team.players != null) {
-        for (var player in team.players) {
-          final name = player.playerId?.name ?? player.name ?? '';
-          final phoneNumber = player.playerId?.phoneNumber?.toString() ?? '';
-          final countryCode ='+91';
-          final profilePic = player.playerId?.profilePic ?? '';
+    
+    // Add Team A players
+    for (var teamPlayer in teamAPlayers) {
+      final userId = teamPlayer.userId;
+      final name = userId?.name ?? '';
+      final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      final countryCode = '+91';
+      final profilePic = userId?.profilePic ?? '';
 
-          playerWidgets.add(
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppColors.secondaryColor,
-                    radius: 28,
-                    child: CircleAvatar(
-                      radius: 26,
-                      backgroundImage: (profilePic.isNotEmpty)
-                          ? CachedNetworkImageProvider(profilePic)
-                          : null,
-                      child: (profilePic.isEmpty)
-                          ? Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : '',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      )
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      playerWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.secondaryColor,
+                radius: 28,
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundImage: (profilePic.isNotEmpty)
+                      ? CachedNetworkImageProvider(profilePic)
+                      : null,
+                  child: (profilePic.isEmpty)
+                      ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  )
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: Get.textTheme.labelLarge),
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
-                        Text(name, style: Get.textTheme.labelLarge),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              '⭐ 0 XP Points ',
-                              style: Get.textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.secondaryColor),
-                            ),
-                            Text(
-                              '| $countryCode-$phoneNumber',
-                              style: Get.textTheme.bodySmall
-                                  ?.copyWith(fontWeight: FontWeight.w500),
-                            ),
-                          ],
+                        Text(
+                          '⭐ 0 XP Points ',
+                          style: Get.textTheme.bodySmall
+                              ?.copyWith(color: AppColors.secondaryColor),
+                        ),
+                        Text(
+                          '| $countryCode-$phoneNumber',
+                          style: Get.textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: CircleAvatar(
-                      radius: 22,
-                      backgroundColor: AppColors.primaryColor,
-                      child: const Icon(Icons.call, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        }
-      }
+              GestureDetector(
+                onTap: () {},
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primaryColor,
+                  child: const Icon(Icons.call, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
+    
+    // Add Team B players
+    for (var teamPlayer in teamBPlayers) {
+      final userId = teamPlayer.userId;
+      final name = userId?.name ?? '';
+      final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      final countryCode = '+91';
+      final profilePic = userId?.profilePic ?? '';
+
+      playerWidgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.secondaryColor,
+                radius: 28,
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundImage: (profilePic.isNotEmpty)
+                      ? CachedNetworkImageProvider(profilePic)
+                      : null,
+                  child: (profilePic.isEmpty)
+                      ? Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  )
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: Get.textTheme.labelLarge),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          '⭐ 0 XP Points ',
+                          style: Get.textTheme.bodySmall
+                              ?.copyWith(color: AppColors.secondaryColor),
+                        ),
+                        Text(
+                          '| $countryCode-$phoneNumber',
+                          style: Get.textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () {},
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primaryColor,
+                  child: const Icon(Icons.call, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return playerWidgets;
   }
 

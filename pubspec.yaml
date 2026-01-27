@@ -50,6 +50,7 @@ dependencies:
   carousel_slider:
   dashed_circular_progress_bar:
   fluttertoast:
+  rolling_number_text:
 
 dev_dependencies:
   flutter_test:

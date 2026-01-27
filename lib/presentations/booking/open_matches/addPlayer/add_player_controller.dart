@@ -275,6 +275,7 @@ class AddPlayerController extends GetxController {
 
         // Return success to caller so it can refresh immediately
         Get.back(result: true);
+        Get.back();
         // SnackBarUtils.showSuccessSnackBar(
         //     response?.message ?? "Player added successfully");
         CustomLogger.logMessage(

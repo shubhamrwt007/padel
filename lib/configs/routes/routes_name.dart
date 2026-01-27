@@ -70,4 +70,7 @@ class RoutesName {
 
   //Wallet----------------------------------------------------------------------
   static const String wallet = '/wallet';
+
+  //Xp Points----------------------------------------------------------------------
+  static const String xpPoints = '/xpPoints';
 }
