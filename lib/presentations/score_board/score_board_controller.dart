@@ -51,7 +51,6 @@ class ScoreBoardController extends GetxController {
       return "";
     }
   }
-
   // Timer-related variables
   RxInt remainingSeconds = 0.obs;
   late Timer _gameTimer;
@@ -526,7 +525,6 @@ class ScoreBoardController extends GetxController {
       msg: "Initial match time check: ${isWithinMatchTime.value}, matchTime: ${matchTime.value}",
       level: LogLevel.info
     );
-    
     if (isWithinMatchTime.value) {
       remainingSeconds.value = _calculateRemainingMatchTime();
       _startCountdownTimer();
