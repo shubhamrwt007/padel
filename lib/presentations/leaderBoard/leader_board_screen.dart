@@ -85,13 +85,6 @@ class LeaderboardScreen extends StatelessWidget {
 
                 // ✅ Directly reactive podium
                 Obx(() {
-                  if (controller.isLoading.value) {
-                    return const SizedBox(
-                      height: 300,
-                      child: Center(child: LoadingWidget(color: Colors.white,)),
-                    );
-                  }
-                  
                   final top3 = controller.topThreePlayers;
                   return _buildPodiumSectionFor(top3);
                 }),
@@ -99,26 +92,7 @@ class LeaderboardScreen extends StatelessWidget {
             ),
 
             // ✅ Directly reactive leaderboard sheet
-            Obx(() {
-              if (controller.isLoading.value) {
-                return DraggableScrollableSheet(
-                  initialChildSize: 0.48,
-                  minChildSize: 0.48,
-                  maxChildSize: 1.0,
-                  builder: (context, scroll) {
-                    return Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                      ),
-                      child: const Center(child: CircularProgressIndicator()),
-                    );
-                  },
-                );
-              }
-              
-              return _buildLeaderboardSheet(context, buttonType??"");
-            }),
+            _buildLeaderboardSheet(context, buttonType??""),
           ],
         ),
       ),
@@ -481,17 +455,18 @@ class LeaderboardScreen extends StatelessWidget {
             // Score box
             Container(
               height: 16,
-              width: 40,
+              width: 55,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.secondaryColor,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                "${player.points} XP", // ✅ dynamic score
+                "${player.points}", // ✅ dynamic score
                 style: Get.textTheme.bodyMedium!.copyWith(
                   color: Colors.white,
-                  fontSize: 11,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500
                 ),
               ),
             ).paddingOnly(bottom: Get.height * 0.03),
@@ -510,8 +485,6 @@ class LeaderboardScreen extends StatelessWidget {
       ),
     );
   }
-
-
   Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
     final double minSize = buttonType == "drawer" ? 0.56 : 0.50;
     const double maxSize = 1.0;
@@ -532,6 +505,7 @@ class LeaderboardScreen extends StatelessWidget {
         snapSizes: [minSize, maxSize],
         builder: (context, scrollController) {
           return Stack(
+            clipBehavior: Clip.none, // Allow overflow for the circle indicator
             children: [
               // Main content with curved background
               CustomPaint(
@@ -575,7 +549,7 @@ class LeaderboardScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  SizedBox(width: 24, child: Text('#', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))).paddingOnly(right: 30),
+                                  SizedBox(width: 35, child: Text('#', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))).paddingOnly(right: 19),
                                   Expanded(child: Text('Player', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700))),
                                   Text('XP Points', style: Get.textTheme.labelLarge!.copyWith(fontSize: 13, fontWeight: FontWeight.w700)).paddingOnly(right: 10),
                                 ],
@@ -610,39 +584,44 @@ class LeaderboardScreen extends StatelessWidget {
                           },
                           child: Obx(() {
                             final data = controller.leaderboardData;
+                            final isLoading = controller.isLoading.value;
+
                             return ListView.builder(
                               controller: scrollController,
                               padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
                               physics: const ClampingScrollPhysics(),
-                              itemCount: data.length + 1,
+                              itemCount: isLoading && data.isEmpty ? 5 : data.length + 1,
                               itemBuilder: (context, index) {
+                                if (isLoading && data.isEmpty) {
+                                  return _buildShimmerCard();
+                                }
 
-                            if (index < data.length) {
-                              return LeaderboardCard(
-                                item: data[index],
-                                index: index,
-                              );
-                            }
+                                if (index < data.length) {
+                                  return LeaderboardCard(
+                                    item: data[index],
+                                    index: index,
+                                  );
+                                }
 
-                            return Obx(() {
-                              if (controller.isLoadingMore.value) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
-                                );
-                              }
-                              if (!controller.hasMoreData.value && data.isNotEmpty) {
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 20, top: 16),
-                                  child: Text(
-                                    'No more data to load',
-                                    style: TextStyle(color: Colors.grey),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                );
-                              }
-                              return const SizedBox(height: 20);
-                            });
+                                return Obx(() {
+                                  if (controller.isLoadingMore.value) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                                    );
+                                  }
+                                  if (!controller.hasMoreData.value && data.isNotEmpty) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(bottom: 20, top: 16),
+                                      child: Text(
+                                        'No more data to load',
+                                        style: TextStyle(color: Colors.grey),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox(height: 20);
+                                });
                               },
                             );
                           }),
@@ -653,29 +632,44 @@ class LeaderboardScreen extends StatelessWidget {
                 ),
               ),
 
-              // Drag handle indicator positioned on the curve
+              // ✅ Circle indicator at the top of the curve (like in the image)
               Positioned(
-                top: 12,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+                top: -8, // Position it at the peak of the curve
+                left: Get.width * 0.5 - 12, // Center it horizontally
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.transparent,
+                      width: 2,
+                    ),
+                    boxShadow: [
+
+                    ],
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.starUnselectedColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
               ),
+
+              // Drag handle indicator bar (optional - can remove if only circle is needed)
             ],
           );
         },
       ),
     );
-  }
-  Widget _buildStateLevelFilters() {
+  }  Widget _buildStateLevelFilters() {
     return Row(
       children: [
         // All Location Dropdown
@@ -773,7 +767,7 @@ class LeaderboardScreen extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 25,
+                    width: 35,
                     color: Colors.transparent,
                     child: Text(
                       '${myRank['rank']}',
@@ -927,6 +921,58 @@ class LeaderboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildShimmerCard() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primaryColor.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 25,
+            height: 14,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          SizedBox(width: 10),
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          SizedBox(width: 10),
+          Container(
+            width: 55,
+            height: 25,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
 class LeaderboardCard extends GetView<LeaderboardController> {
   final Map<String, dynamic> item;
@@ -965,7 +1011,7 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                       children: [
                         Container(
                           color: Colors.transparent,
-                          width: 25,
+                          width: 35,
                           child: Text(
                             '${item['rank']}',
                             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -1200,9 +1246,7 @@ class UpwardCurvePainter extends CustomPainter {
     // Draw the path
     canvas.drawPath(path, paint);
 
-    // Add subtle shadow for depth
-    final shadowPath = Path.from(path);
-    canvas.drawShadow(shadowPath, Colors.black.withOpacity(0.1), 3, false);
+    // ✅ Removed the shadow drawing that created the line effect
   }
 
   @override

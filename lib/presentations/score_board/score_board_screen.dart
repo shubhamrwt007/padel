@@ -645,21 +645,74 @@ class ScoreBoardScreen extends StatelessWidget {
       if (allPlayersAdded) {
         return _buildAllPlayersView(teamAPlayers, teamBPlayers);
       }
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildPlayerSlot(teamAPlayers, 0, "teamA"),
-            _buildPlayerSlot(teamAPlayers, 1, "teamA"),
-            Container(
-              width: 1,
-              color: AppColors.blackColor.withAlpha(50),
-            ).paddingOnly(bottom: 25),
-            _buildPlayerSlot(teamBPlayers, 0, "teamB"),
-            _buildPlayerSlot(teamBPlayers, 1, "teamB"),
-          ],
-        ),
+      
+      // New horizontal layout with team labels
+      return Column(
+        children: [
+          const SizedBox(height: 4),
+          // Team labels
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Team A",
+                  textAlign: TextAlign.center,
+                  style: Get.textTheme.labelMedium!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 1),
+              Expanded(
+                child: Text(
+                  "Team B",
+                  textAlign: TextAlign.center,
+                  style: Get.textTheme.labelMedium!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Players with single centered divider
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Team A Players
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildPlayerSlot(teamAPlayers, 0, "teamA"),
+                    const SizedBox(height: 8),
+                    _buildPlayerSlot(teamAPlayers, 1, "teamA"),
+                  ],
+                ),
+              ),
+              // Single centered divider
+              Container(
+                width: 1,
+                height: 180,
+                color: AppColors.blackColor.withAlpha(50),
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              // Team B Players
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildPlayerSlot(teamBPlayers, 0, "teamB"),
+                    const SizedBox(height: 8),
+                    _buildPlayerSlot(teamBPlayers, 1, "teamB"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       );
     });
   }
@@ -1746,7 +1799,7 @@ class ScoreBoardScreen extends StatelessWidget {
               style: Get.textTheme.labelMedium!.copyWith(color: AppColors.secondaryColor),
             ),
           ).paddingOnly(top: 4)
-              : SizedBox.shrink()
+              : SizedBox(height: 21)
         ],
       ),
     );

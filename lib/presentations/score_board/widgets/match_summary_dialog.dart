@@ -4,151 +4,159 @@ import 'package:padel_mobile/presentations/score_board/score_board_controller.da
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 void showMatchSummaryDialog(ScoreBoardController controller) {
-  // Determine if user is winner or loser
   final isUserWinner = _isUserWinner(controller);
-  
-  if (isUserWinner) {
-    showWinnerDialog(controller);
-  } else {
-    showLoserDialog(controller);
-  }
+
+  _showResultDialog(
+    isWinner: isUserWinner,
+    controller: controller,
+  );
 }
 
 bool _isUserWinner(ScoreBoardController controller) {
   final winner = controller.winner.value;
-  if (winner.isEmpty || winner.toLowerCase() == 'none' || winner == '-') {
+  if (winner.isEmpty || winner == '-' || winner.toLowerCase() == 'none') {
     return false;
   }
-  
-  final isUserInTeamA = controller.isUserInTeamA;
-  final isUserInTeamB = controller.isUserInTeamB;
-  
-  if (winner.toLowerCase() == 'team a' && isUserInTeamA) {
+
+  if (winner.toLowerCase() == 'team a' && controller.isUserInTeamA) {
     return true;
   }
-  if (winner.toLowerCase() == 'team b' && isUserInTeamB) {
+
+  if (winner.toLowerCase() == 'team b' && controller.isUserInTeamB) {
     return true;
   }
-  
   return false;
 }
 
-void showWinnerDialog(ScoreBoardController controller) {
+/// ------------------------------------------------------------
+/// RESULT DIALOG (WIN / LOST)
+/// ------------------------------------------------------------
+void _showResultDialog({
+  required bool isWinner,
+  required ScoreBoardController controller,
+}) {
   ProfileController? profileController;
   try {
     profileController = Get.find<ProfileController>();
-  } catch (e) {}
-  
-  final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
-  
+  } catch (_) {}
+
+  final initialXp =
+      profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
+
+  final Color primaryColor =
+  isWinner ? const Color(0xFF4CAF50) : const Color(0xFFD32F2F);
+
+  final String statusText = isWinner ? "WIN!" : "LOST";
+  final String titleText =
+  isWinner ? "Congratulations!" : "Better Luck Next Time!";
+  final String badgeText = isWinner ? "+100 XP" : "-100 XP";
+
   Get.dialog(
     Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+      ),
       child: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  child: const Text(
-                    "WIN!",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
+          /// MAIN CARD
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              /// TOP STATUS CONTAINER (INSIDE POPUP)
+              Container(
+                width: double.infinity,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(22),
+                    topRight: Radius.circular(22),
+                    bottomLeft: Radius.circular(14),
+                    bottomRight: Radius.circular(14),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Congratulations!",
-                        style: TextStyle(
-                          fontSize: 24,
+                child: Text(
+                  statusText,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ),
+
+              /// BODY
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      titleText,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Text(
+                      "Your XP Points",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    /// XP VALUE
+                    profileController != null
+                        ? Obx(() {
+                      final xp = profileController!
+                          .profileModel.value?.response?.xpPoints
+                          ?.toInt() ??
+                          0;
+                      return _xpText(xp);
+                    })
+                        : _xpText(initialXp),
+
+                    const SizedBox(height: 18),
+
+                    /// XP CHANGE BADGE
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: const TextStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Your XP Points",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      profileController != null
-                          ? Obx(() {
-                              final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
-                              return Text(
-                                "$xpPoints",
-                                style: const TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              );
-                            })
-                          : Text(
-                              "$initialXpPoints",
-                              style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          "+100 XP",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+
+          /// CLOSE BUTTON (INSIDE)
           Positioned(
-            top: 8,
-            right: 8,
+            top: 6,
+            right: 6,
             child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.black87),
+              icon: const Icon(Icons.close, size: 22),
               onPressed: () => Get.back(),
             ),
           ),
@@ -159,124 +167,14 @@ void showWinnerDialog(ScoreBoardController controller) {
   );
 }
 
-void showLoserDialog(ScoreBoardController controller) {
-  ProfileController? profileController;
-  try {
-    profileController = Get.find<ProfileController>();
-  } catch (e) {}
-  
-  final initialXpPoints = profileController?.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
-  
-  Get.dialog(
-    Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD32F2F),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  child: const Text(
-                    "LOST",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Better luck next time!",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Your XP Points",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      profileController != null
-                          ? Obx(() {
-                              final xpPoints = profileController!.profileModel.value?.response?.xpPoints?.toInt() ?? 0;
-                              return Text(
-                                "$xpPoints",
-                                style: const TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              );
-                            })
-                          : Text(
-                              "$initialXpPoints",
-                              style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD32F2F),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          "-100 XP",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.black87),
-              onPressed: () => Get.back(),
-            ),
-          ),
-        ],
-      ),
+/// XP TEXT
+Widget _xpText(int xp) {
+  return Text(
+    "$xp",
+    style: const TextStyle(
+      fontSize: 44,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
     ),
-    barrierDismissible: false,
   );
 }
