@@ -225,7 +225,13 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () => openDateRangePicker(context),
+                  onTap: () {
+                    if (controller.selectedStartDate.value != null || controller.selectedEndDate.value != null) {
+                      controller.setDateRange(null, null);
+                    } else {
+                      openDateRangePicker(context);
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -235,12 +241,6 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.calendar_month,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
                         Obx(() => Text(
                           controller.selectedDateRangeText,
                           style: const TextStyle(
@@ -248,6 +248,14 @@ class _WalletScreenState extends State<WalletScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
+                        )),
+                        const SizedBox(width: 4),
+                        Obx(() => Icon(
+                          controller.selectedStartDate.value != null || controller.selectedEndDate.value != null
+                              ? Icons.close
+                              : Icons.calendar_month,
+                          color: Colors.white,
+                          size: 16,
                         )),
                       ],
                     ),

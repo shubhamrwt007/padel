@@ -861,6 +861,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  rolling_number_text:
+    dependency: "direct main"
+    description:
+      name: rolling_number_text
+      sha256: "0646e9e50f747524c189b0f0e30ca7bcc3915224fdef24a545719ea4391161a3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.6"
   rxdart:
     dependency: transitive
     description:

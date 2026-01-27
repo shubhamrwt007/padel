@@ -349,7 +349,7 @@ class WalletController extends GetxController {
       final formatter = DateFormat('dd MMM');
       return '${formatter.format(selectedStartDate.value!)} - ${formatter.format(selectedEndDate.value!)}';
     }
-    return 'Select Date Range';
+    return 'Select Dates';
   }
 
   @override

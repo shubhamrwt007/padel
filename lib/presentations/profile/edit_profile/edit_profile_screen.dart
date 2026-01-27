@@ -51,18 +51,13 @@ class EditProfileUi extends StatelessWidget {
                   "Phone",
                   controller.phoneController,
                   context,
+                   readOnly: true,
                    keyboardType: TextInputType.phone,
+                  color: Colors.grey.shade100
                 ),
                 _genderSelection(context),
                 _dobField(context),
-                   Text(
-            "Location / City",
-            style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.labelBlackColor,
-            ),
-          ).paddingOnly(top: Get.height * .02,bottom: Get.height*0.01),
-                locationField(),
+                locationField().paddingOnly(top: Get.height * .02),
                 _statisticsContainer(context)
               ],
             ).paddingOnly(top: 10, left: Get.width * 0.05, right: Get.width * 0.05),
@@ -195,19 +190,22 @@ class EditProfileUi extends StatelessWidget {
     BuildContext context, {
     bool readOnly = false,
     TextInputType? keyboardType,
-        TextCapitalization? textCapitalization
+        TextCapitalization? textCapitalization,
+        Color? color
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.labelBlackColor,
-          ),
-        ).paddingOnly(top: Get.height * .02),
+        // Text(
+        //   label,
+        //   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+        //     fontWeight: FontWeight.w600,
+        //     color: AppColors.labelBlackColor,
+        //   ),
+        // ).paddingOnly(top: Get.height * .02),
         PrimaryTextField(
+          color: color,
+          labelText: label,
           hintText: "Enter $label",
           controller: controller,
           readOnly: readOnly,
@@ -218,7 +216,7 @@ class EditProfileUi extends StatelessWidget {
             horizontal: Get.width * 0.04,
             vertical: (57) * 0.22,
           ),
-        ).paddingOnly(top: 10),
+        ).paddingOnly(top: Get.height * .02),
       ],
     );
   }
@@ -266,53 +264,40 @@ class EditProfileUi extends StatelessWidget {
   }
 
   Widget _dobField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Date of Birth",
-          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.labelBlackColor,
+    return Obx(
+      () => TextFormField(
+        controller: TextEditingController(text: controller.selectedDate.value),
+        readOnly: true,
+        onTap: () => controller.selectDate(context),
+        style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          labelStyle: Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500),
+          labelText: "Date of Birth",
+          hintText: "Select Date of Birth",
+          suffixIcon: Icon(
+            Icons.calendar_month_outlined,
+            color: AppColors.iconColor,
           ),
-        ).paddingOnly(top: Get.height * .02),
-        Obx(
-              () => GestureDetector(
-               onTap: ()=>controller.selectDate(context),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: Get.width * 0.04,
-                vertical: 57 * 0.22,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.textFieldColor,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: Colors.grey,width: 1),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    controller.selectedDate.value.isEmpty
-                        ? "Select Date of Birth"
-                        : controller.selectedDate.value,
-                    style: TextStyle(
-                      color: controller.selectedDate.value.isEmpty
-                          ? AppColors.textHintColor
-                          : AppColors.textColor,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Icon(
-                    Icons.calendar_month_outlined,
-                    color: AppColors.iconColor,
-                  ),
-                ],
-              ),
-            ).paddingOnly(top: 10),
+          filled: true,
+          fillColor: AppColors.textFieldColor,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(5),
+            borderSide: BorderSide(color: Colors.grey, width: 1),
           ),
-        )
-      ],
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(5),
+            borderSide: BorderSide(color: Colors.grey, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(5),
+            borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: Get.width * 0.04,
+            vertical: 57 * 0.22,
+          ),
+        ),
+      ).paddingOnly(top: Get.height * .03),
     );
   }
 
@@ -320,72 +305,89 @@ class EditProfileUi extends StatelessWidget {
     final style = Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500);
     return  Obx(() {
             if (controller.isLocationLoading.value) {
-              return Container(
-                height: 52,
-                width: Get.width,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.textFieldColor,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: Colors.grey,width: 1),
-                ),
-                child: Row(
-                  children: [
-                    CupertinoActivityIndicator(color: AppColors.primaryColor,radius: 14,).paddingOnly(right: 5,left: 10),
-                    Text("Loading Locations...",style: style,),
-                  ], 
+              return TextFormField(
+                enabled: false,
+                decoration: InputDecoration(
+                  labelText: "Location / City",
+                  prefixIcon: CupertinoActivityIndicator(color: AppColors.primaryColor,radius: 14,),
+                  hintText: "Loading Locations...",
+                  filled: true,
+                  fillColor: AppColors.textFieldColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: Get.width * 0.04,
+                    vertical: 57 * 0.22,
+                  ),
                 ),
               );
             }
 
             if (controller.locations.isEmpty) {
-              return Container(
-                height: 52,
-                width: Get.width,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.textFieldColor,
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: Colors.grey,width: 1),
+              return TextFormField(
+                enabled: false,
+                decoration: InputDecoration(
+                  labelText: "Location / City",
+                  hintText: "No Location found",
+                  filled: true,
+                  fillColor: AppColors.textFieldColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: Get.width * 0.04,
+                    vertical: 57 * 0.22,
+                  ),
                 ),
-                child: Text("No Location found",style: style,),
               );
             }
 
-            return Container(
-              height: 52,
-              width: Get.width,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.textFieldColor,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: Colors.grey,width: 1),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: Obx(
-                      () => DropdownButton<String>(
-                    value: controller.selectedLocation.value.isEmpty
-                        ? null
-                        : controller.selectedLocation.value,
-                    hint: Text("Preferred Location", style: style),
-                    dropdownColor: Colors.white,
-                    isExpanded: true,
-                    items: controller.locations
-                        .map((state) => DropdownMenuItem<String>(
-                      value: state.name ?? '',
-                      child: Text(
-                        state.name ?? '',
-                        style: style,
-                      ),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      controller.selectedLocation.value = value ?? "";
-                      CustomLogger.logMessage(msg: "Selected Location -> ${controller.selectedLocation.value}",level: LogLevel.info);
-                    },
-                  ),
+            return DropdownButtonFormField<String>(
+              value: controller.selectedLocation.value.isEmpty
+                  ? null
+                  : controller.selectedLocation.value,
+              style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                labelText: "Location / City",
+                labelStyle: Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500),
+                filled: true,
+                fillColor: AppColors.textFieldColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide(color: Colors.grey, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide(color: Colors.grey, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  borderSide: BorderSide(color: AppColors.primaryColor, width: 2),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: Get.width * 0.04,
+                  vertical: 57 * 0.22,
                 ),
               ),
+              hint: Text("Select Location", style: style),
+              dropdownColor: Colors.white,
+              isExpanded: true,
+              items: controller.locations
+                  .map((state) => DropdownMenuItem<String>(
+                value: state.name ?? '',
+                child: Text(
+                  state.name ?? '',
+                  style: style,
+                ),
+              ))
+                  .toList(),
+              onChanged: (value) {
+                controller.selectedLocation.value = value ?? "";
+                CustomLogger.logMessage(msg: "Selected Location -> ${controller.selectedLocation.value}",level: LogLevel.info);
+              },
             );
 
           }).paddingOnly(bottom: Get.height * 0.01);

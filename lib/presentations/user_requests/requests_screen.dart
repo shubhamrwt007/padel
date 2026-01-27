@@ -78,11 +78,20 @@ class RequestsScreen extends StatelessWidget {
       body: Column(
         children: [
           requestTabs(controller),
-          Text(
-            textAlign: TextAlign.center,
-            "You have new match requests! Accept the requests from the players you want to play with. Once accepted, you’ll be paired for the match and can start competing right away.",
-            style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),).paddingOnly(left: 16,right: 16),
-          Expanded(
+        Obx(() =>
+        controller.selectedTab.value == 0
+            ? Text(
+          "You have new match requests! Accept the requests from the players you want to play with. Once accepted, you’ll be paired for the match and can start competing right away.",
+          textAlign: TextAlign.center,
+          style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),
+        ).paddingOnly(left: 16, right: 16)
+            : Text(
+          "If your open match request isn’t accepted, you can swipe left the card to cancel the booking and get an instant refund in your wallet.",
+          textAlign: TextAlign.center,
+          style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),
+        ).paddingOnly(left: 16, right: 16),
+        ),
+        Expanded(
             child: Obx(() {
               final list = controller.selectedTab.value == 0
                   ? controller.joinRequests

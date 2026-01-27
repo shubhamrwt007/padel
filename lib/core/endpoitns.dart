@@ -88,4 +88,7 @@ class AppEndpoints {
   static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
   static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
+
+  ///XP Points------------------------------------------------------------------
+  static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";
 }

@@ -267,7 +267,7 @@ class MainHomeScreen extends StatelessWidget {
 
       if (homeController.isLoadingBookings.value && !homeController.isCreatingScoreboard.value) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
           child: bookingShimmer(),
         );
       }
@@ -1448,9 +1448,7 @@ class MainHomeScreen extends StatelessWidget {
       final xpPoints = profile?.response?.xpPoints?.toInt() ?? 0;
 
       return GestureDetector(
-        onTap: () => Get.to(LeaderboardScreen(
-          buttonType: "drawer",
-        )),
+        onTap: () => Get.toNamed(RoutesName.xpPoints),
         child: Container(
           // height: 90,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

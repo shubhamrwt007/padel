@@ -64,6 +64,8 @@ import 'package:padel_mobile/presentations/user_requests/requests_binding.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_binding.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_screen.dart';
+import 'package:padel_mobile/presentations/xp_points/xp_points_binding.dart';
+import 'package:padel_mobile/presentations/xp_points/xp_points_screen.dart';
 import '../../presentations/auth/login/login_binding.dart';
 import '../../presentations/auth/login/login_screen.dart';
 import '../../presentations/booking/open_matches/open_match_screen.dart';
@@ -358,6 +360,15 @@ class Routes {
       name: RoutesName.wallet,
       page: () => WalletScreen(),
       binding: WalletBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///XP Points----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.xpPoints,
+      page: () => XpPointsScreen(),
+      binding: XpPointsBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
