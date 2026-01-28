@@ -108,7 +108,7 @@ class Response {
     sId = json['_id'];
     email = json['email'];
     countryCode = json['countryCode'];
-    phoneNumber = json['phoneNumber'];
+    phoneNumber = json['phoneNumber'] is String ? int.tryParse(json['phoneNumber']) : json['phoneNumber'];
     name = json['name'];
     lastName = json['lastName'];
     password = json['password'];

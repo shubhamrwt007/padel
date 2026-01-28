@@ -649,7 +649,12 @@ class ScoreBoardController extends GetxController {
         teamAWins.value = item.totalScore?.teamA ?? 0;
         teamBWins.value = item.totalScore?.teamB ?? 0;
         winner.value = item.winner?.toString() ?? "";
-        isCompleted.value = item.isCompleted ?? false;
+        
+        // Update isCompleted from API response
+        final apiCompleted = item.isCompleted ?? false;
+        if (apiCompleted && !isCompleted.value) {
+          isCompleted.value = true;
+        }
 
         if (!_scoreboardStreamController.isClosed) {
           _scoreboardStreamController.add({'updated': true});
@@ -821,8 +826,9 @@ class ScoreBoardController extends GetxController {
       final response = await repository.updateScoreBoard(data: body);
 
       if (response.success == true) {
-        await fetchScoreBoard(showLoader: false);
+        isCompleted.value = true;
         await profileController.fetchUserProfile();
+        await fetchScoreBoard(showLoader: false);
         showMatchSummaryDialog(this);
       } else {
         SnackBarUtils.showErrorSnackBar(response.message ?? "");

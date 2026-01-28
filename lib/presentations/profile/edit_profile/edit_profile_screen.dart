@@ -236,25 +236,28 @@ class EditProfileUi extends StatelessWidget {
           () => Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: ["Female", "Male", "Other"].map((gender) {
-              return Row(
-                children: [
-                  Icon(
-                    controller.selectedGender.value == gender
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    size: 15,
-                    color: Colors.grey,
-                  ),
-                  Text(
-                    gender,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineSmall!.copyWith(
-                      fontSize: 14,
+              return GestureDetector(
+                onTap: () => controller.selectedGender.value = gender,
+                child: Row(
+                  children: [
+                    Icon(
+                      controller.selectedGender.value == gender
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      size: 15,
                       color: Colors.grey,
                     ),
-                  ).paddingOnly(left: 5),
-                ],
+                    Text(
+                      gender,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall!.copyWith(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ).paddingOnly(left: 5),
+                  ],
+                ),
               );
             }).toList(),
           ),
@@ -344,7 +347,6 @@ class EditProfileUi extends StatelessWidget {
                 ),
               );
             }
-
             return DropdownButtonFormField<String>(
               value: controller.selectedLocation.value.isEmpty
                   ? null
@@ -421,7 +423,6 @@ class EditProfileUi extends StatelessWidget {
                     Expanded(child: _statItem("XP Points", "${response?.xpPoints ?? 0}")),
                     // Expanded(child: _statItem("Rank", "${response?.rank ?? 0}")),
                     Expanded(child: _statItem("Win Streak", "${response?.currentWinStreak ?? 0}")),
-
                   ],
                 ),
                 SizedBox(height: 12),

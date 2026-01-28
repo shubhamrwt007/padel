@@ -26,6 +26,20 @@ class LeaderboardScreen extends StatelessWidget {
     return '${words[0]} ${words[1][0]}.';
   }
 
+  String _getFirstName(String name) {
+    return name.split(' ').first;
+  }
+
+  String _getLastName(String name) {
+    final words = name.split(' ');
+    return words.length > 1 ? words.sublist(1).join(' ') : '';
+  }
+
+  String _truncateName(String name, int maxLength) {
+    if (name.length <= maxLength) return name;
+    return '${name.substring(0, maxLength)}...';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -440,17 +454,21 @@ class LeaderboardScreen extends StatelessWidget {
                 width: 100,
                 color: Colors.transparent,
                 child: Text(
-                  _formatName(player.name), // ✅ formatted name for overflow
+                  _truncateName(player.name, 15),
                   textAlign: TextAlign.center,
+                  maxLines: 2,
                   style: Get.textTheme.headlineSmall!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 13,
+                    height: 1.2,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
+
+            const SizedBox(height: 4),
 
             // Score box
             Container(
@@ -469,7 +487,9 @@ class LeaderboardScreen extends StatelessWidget {
                   fontWeight: FontWeight.w500
                 ),
               ),
-            ).paddingOnly(bottom: Get.height * 0.03),
+            ),
+
+            SizedBox(height: Get.height * 0.015),
 
             // Position text (1, 2, 3)
             Text(
