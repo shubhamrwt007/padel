@@ -642,8 +642,14 @@ class ScoreBoardScreen extends StatelessWidget {
       }
 
       bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
+      
+      // Show shuffle view if in shuffle mode, regardless of player count
+      if (controller.isShuffleMode.value) {
+        return _buildShuffleView(teamAPlayers, teamBPlayers);
+      }
+      
       if (allPlayersAdded) {
-        return _buildAllPlayersView(teamAPlayers, teamBPlayers);
+        return _buildNormalView(teamAPlayers, teamBPlayers);
       }
       
       // New horizontal layout with team labels
@@ -687,9 +693,9 @@ class ScoreBoardScreen extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    _buildPlayerSlot(teamAPlayers, 0, "teamA"),
+                    _buildPlayerSlot(teamAPlayers, 0, "Team A"),
                     const SizedBox(height: 8),
-                    _buildPlayerSlot(teamAPlayers, 1, "teamA"),
+                    _buildPlayerSlot(teamAPlayers, 1, "Team A"),
                   ],
                 ),
               ),
@@ -704,9 +710,9 @@ class ScoreBoardScreen extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    _buildPlayerSlot(teamBPlayers, 0, "teamB"),
+                    _buildPlayerSlot(teamBPlayers, 0, "Team B"),
                     const SizedBox(height: 8),
-                    _buildPlayerSlot(teamBPlayers, 1, "teamB"),
+                    _buildPlayerSlot(teamBPlayers, 1, "Team B"),
                   ],
                 ),
               ),
@@ -900,60 +906,67 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyShuffleSlot(String team, int index) {
-    return DragTarget<Map<String, dynamic>>(
-      onAccept: (data) {
-        controller.movePlayerToEmptySlot(data['player']['playerId'], team, index);
-      },
-      builder: (context, candidateData, rejectedData) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: candidateData.isNotEmpty
-              ? (Matrix4.identity()..scale(1.1))
-              : Matrix4.identity(),
-          width: 60,
-          child: Column(
-            children: [
-              Container(
-                height: 60,
-                width: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: candidateData.isNotEmpty
-                      ? AppColors.primaryColor.withOpacity(0.3)
-                      : AppColors.textFieldColor,
-                  border: Border.all(
-                    color: AppColors.primaryColor,
-                    width: 2,
-                    style: BorderStyle.solid,
-                  ),
-                  boxShadow: candidateData.isNotEmpty
-                      ? [
-                    BoxShadow(
-                      color: AppColors.primaryColor.withOpacity(0.5),
-                      blurRadius: 7,
-                      spreadRadius: 0.4,
-                    ),
-                  ]
-                      : [],
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: AppColors.primaryColor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Available",
-                style: Get.textTheme.bodySmall!.copyWith(
-                  color: AppColors.primaryColor,
-                  fontSize: 10,
-                ),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        log("Opening bottomsheet from shuffle slot - team: $team");
+        Get.bottomSheet(
+          AppPlayersBottomSheetScore(
+            matchId: controller.bookingId.value,
+            teamName: team,
+            openMatchId: controller.openMatchId.value,
+            bookingId: controller.bookingId.value,
+            bookingType: controller.bookingType.value,
+            currentPlayerIds: controller.currentPlayerIds,
           ),
+          isScrollControlled: true,
         );
       },
+      child: DragTarget<Map<String, dynamic>>(
+        onAccept: (data) {
+          controller.movePlayerToEmptySlot(data['player']['playerId'], team, index);
+        },
+        builder: (context, candidateData, rejectedData) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            transform: candidateData.isNotEmpty
+                ? (Matrix4.identity()..scale(1.1))
+                : Matrix4.identity(),
+            width: 60,
+            child: Column(
+              children: [
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: candidateData.isNotEmpty
+                        ? AppColors.primaryColor.withOpacity(0.3)
+                        : Colors.white,
+                    border: Border.all(
+                      color: AppColors.primaryColor,
+                      width: 1,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: AppColors.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Available",
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    color: AppColors.primaryColor,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1707,102 +1720,163 @@ class ScoreBoardScreen extends StatelessWidget {
   Widget _buildPlayerSlot(List players, int index, String teamName) {
     bool hasPlayer = index < players.length;
 
-    return GestureDetector(
-      onTap: () {
-        if (!hasPlayer) {
-          log("Opening bottomsheet - scoreboardId: ${controller.scoreboardId.value}, openMatchId: ${controller.openMatchId.value}, bookingId: ${controller.bookingId.value}, bookingType: ${controller.bookingType.value}");
-          Get.bottomSheet(
-            AppPlayersBottomSheetScore(
-              matchId: controller.bookingId.value,
-              teamName: teamName,
-              openMatchId: controller.openMatchId.value,
-              bookingId: controller.bookingId.value,
-              bookingType: controller.bookingType.value,
-              currentPlayerIds: controller.currentPlayerIds,
-            ),
-            isScrollControlled: true,
-          );
-        }
-      },
-      child: Column(
-        children: [
-          Obx(() => controller.isShuffleMode.value && hasPlayer && controller.canSwapPlayers
-              ? Draggable<Map<String, dynamic>>(
-            data: {'player': players[index], 'team': teamName, 'index': index},
-            onDragStarted: () => isDragging.value = true,
-            onDragEnd: (_) => isDragging.value = false,
-            feedback: Container(
-              height: 65,
-              width: 65,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.textFieldColor,
-                border: Border.all(color: AppColors.primaryColor),
+    return Obx(() {
+      // In shuffle mode with empty slot, wrap with DragTarget but keep tap functionality
+      if (controller.isShuffleMode.value && !hasPlayer && controller.canSwapPlayers) {
+        return GestureDetector(
+          onTap: () {
+            log("Opening bottomsheet - scoreboardId: ${controller.scoreboardId.value}, openMatchId: ${controller.openMatchId.value}, bookingId: ${controller.bookingId.value}, bookingType: ${controller.bookingType.value}");
+            Get.bottomSheet(
+              AppPlayersBottomSheetScore(
+                matchId: controller.bookingId.value,
+                teamName: teamName,
+                openMatchId: controller.openMatchId.value,
+                bookingId: controller.bookingId.value,
+                bookingType: controller.bookingType.value,
+                currentPlayerIds: controller.currentPlayerIds,
               ),
-              child: const Icon(Icons.shuffle, color: AppColors.primaryColor, size: 20),
-            ),
-            childWhenDragging: Container(
-              height: 65,
-              width: 65,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey.withOpacity(0.3),
-                border: Border.all(color: AppColors.primaryColor),
+              isScrollControlled: true,
+            );
+          },
+          child: Column(
+            children: [
+              DragTarget<Map<String, dynamic>>(
+                onAccept: (data) {
+                  controller.movePlayerToEmptySlot(data['player']['playerId'], teamName, index);
+                },
+                builder: (context, candidateData, rejectedData) {
+                  return Container(
+                    height: 65,
+                    width: 65,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: candidateData.isNotEmpty
+                          ? AppColors.primaryColor.withOpacity(0.3)
+                          : Colors.white,
+                      border: Border.all(
+                        color: AppColors.primaryColor,
+                        width: 1,
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      size: 24,
+                      color: AppColors.primaryColor,
+                    ),
+                  );
+                },
               ),
-            ),
-            child: DragTarget<Map<String, dynamic>>(
-              onAccept: (data) {
-                if (data['player']['playerId'] != players[index]['playerId']) {
-                  controller.swapPlayers(data['player']['playerId'], teamName, index);
-                }
-              },
-              builder: (context, candidateData, rejectedData) {
-                return _buildPlayerSlotContainer(players, index, hasPlayer, candidateData.isNotEmpty);
-              },
-            ),
-          )
-              : controller.isShuffleMode.value && !hasPlayer && controller.canSwapPlayers
-              ? DragTarget<Map<String, dynamic>>(
-            onAccept: (data) {
-              controller.movePlayerToEmptySlot(data['player']['playerId'], teamName, index);
-            },
-            builder: (context, candidateData, rejectedData) {
-              return _buildPlayerSlotContainer(players, index, hasPlayer, candidateData.isNotEmpty);
-            },
-          )
-              : _buildPlayerSlotContainer(players, index, hasPlayer, false)),
-          SizedBox(
-            width: Get.width * 0.13,
-            child: Text(
-              hasPlayer
-                  ? controller.capitalizeFirstWord(players[index]["name"].toString().split(' ').first.trim())
-                  : "Available",
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: Get.textTheme.bodySmall!.copyWith(
-                color: AppColors.primaryColor,
-                fontSize: 11,
+              SizedBox(
+                width: Get.width * 0.13,
+                child: Text(
+                  "Available",
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    color: AppColors.primaryColor,
+                    fontSize: 11,
+                  ),
+                ).paddingOnly(top: Get.height * 0.003),
               ),
-            ).paddingOnly(top: Get.height * 0.003),
+              SizedBox(height: 21),
+            ],
           ),
-          hasPlayer
-              ? Container(
-            height: 17,
-            width: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: AppColors.secondaryColor.withAlpha(20),
+        );
+      }
+      
+      // Regular non-shuffle mode or has player
+      return GestureDetector(
+        onTap: () {
+          if (!hasPlayer) {
+            log("Opening bottomsheet - scoreboardId: ${controller.scoreboardId.value}, openMatchId: ${controller.openMatchId.value}, bookingId: ${controller.bookingId.value}, bookingType: ${controller.bookingType.value}");
+            Get.bottomSheet(
+              AppPlayersBottomSheetScore(
+                matchId: controller.bookingId.value,
+                teamName: teamName,
+                openMatchId: controller.openMatchId.value,
+                bookingId: controller.bookingId.value,
+                bookingType: controller.bookingType.value,
+                currentPlayerIds: controller.currentPlayerIds,
+              ),
+              isScrollControlled: true,
+            );
+          }
+        },
+        child: Column(
+          children: [
+            controller.isShuffleMode.value && hasPlayer && controller.canSwapPlayers
+                ? Draggable<Map<String, dynamic>>(
+              data: {'player': players[index], 'team': teamName, 'index': index},
+              onDragStarted: () => isDragging.value = true,
+              onDragEnd: (_) => isDragging.value = false,
+              feedback: Container(
+                height: 65,
+                width: 65,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.textFieldColor,
+                  border: Border.all(color: AppColors.primaryColor),
+                ),
+                child: const Icon(Icons.shuffle, color: AppColors.primaryColor, size: 20),
+              ),
+              childWhenDragging: Container(
+                height: 65,
+                width: 65,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey.withOpacity(0.3),
+                  border: Border.all(color: AppColors.primaryColor),
+                ),
+              ),
+              child: DragTarget<Map<String, dynamic>>(
+                onWillAccept: (data) {
+                  return data?['player']['playerId'] != players[index]['playerId'];
+                },
+                onAccept: (data) {
+                  if (data['player']['playerId'] != players[index]['playerId']) {
+                    controller.swapPlayers(data['player']['playerId'], teamName, index);
+                  }
+                },
+                builder: (context, candidateData, rejectedData) {
+                  return _buildPlayerSlotContainer(players, index, hasPlayer, candidateData.isNotEmpty);
+                },
+              ),
+            )
+                : _buildPlayerSlotContainer(players, index, hasPlayer, false),
+            SizedBox(
+              width: Get.width * 0.13,
+              child: Text(
+                hasPlayer
+                    ? controller.capitalizeFirstWord(players[index]["name"].toString().split(' ').first.trim())
+                    : "Available",
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: Get.textTheme.bodySmall!.copyWith(
+                  color: AppColors.primaryColor,
+                  fontSize: 11,
+                ),
+              ).paddingOnly(top: Get.height * 0.003),
             ),
-            child: Text(
-              players[index]["level"] ?? "-",
-              style: Get.textTheme.labelMedium!.copyWith(color: AppColors.secondaryColor),
-            ),
-          ).paddingOnly(top: 4)
-              : SizedBox(height: 21)
-        ],
-      ),
-    );
+            hasPlayer
+                ? Container(
+              height: 17,
+              width: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: AppColors.secondaryColor.withAlpha(20),
+              ),
+              child: Text(
+                players[index]["level"] ?? "-",
+                style: Get.textTheme.labelMedium!.copyWith(color: AppColors.secondaryColor),
+              ),
+            ).paddingOnly(top: 4)
+                : SizedBox(height: 21)
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildPlayerSlotContainer(List players, int index, bool hasPlayer, bool isHovered) {
@@ -1815,18 +1889,11 @@ class ScoreBoardScreen extends StatelessWidget {
             ? AppColors.primaryColor.withOpacity(0.3)
             : hasPlayer
             ? AppColors.primaryColor.withValues(alpha: 0.1)
-            : controller.isShuffleMode.value
-            ? AppColors.secondaryColor.withOpacity(0.1)
             : Colors.white,
         border: Border.all(
-          color: hasPlayer
-              ? Colors.transparent
-              : controller.isShuffleMode.value
-              ? AppColors.secondaryColor
-              : AppColors.primaryColor,
-          style: controller.isShuffleMode.value && !hasPlayer
-              ? BorderStyle.solid
-              : BorderStyle.solid,
+          color: hasPlayer ? Colors.transparent : AppColors.primaryColor,
+          width: 1,
+          style: BorderStyle.solid,
         ),
       ),
       child: hasPlayer
@@ -1923,37 +1990,11 @@ class ScoreBoardScreen extends StatelessWidget {
           ),
         ),
       ))
-          : Obx(() => controller.isShuffleMode.value
-          ? Stack(
-        children: [
-          Center(
-            child: const Icon(
-              Icons.add,
-              size: 24,
-              color: AppColors.primaryColor,
-            ),
-          ),
-          if (isHovered)
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.secondaryColor.withOpacity(0.3),
-              ),
-              child: const Icon(
-                Icons.move_down,
-                color: AppColors.secondaryColor,
-                size: 20,
-              ),
-            ),
-        ],
-      )
           : const Icon(
         Icons.add,
         size: 24,
         color: AppColors.primaryColor,
-      )),
+      ),
     );
   }
 
@@ -2059,6 +2100,18 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 
   void _showShuffleDialog() {
+    final playerCount = controller.currentPlayerIds.length;
+    
+    if (playerCount == 0) {
+      SnackBarUtils.showErrorSnackBar("Add at least one player to shuffle");
+      return;
+    }
+    
+    if (controller.isGameStarted.value) {
+      SnackBarUtils.showErrorSnackBar("Cannot shuffle after game has started");
+      return;
+    }
+    
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
