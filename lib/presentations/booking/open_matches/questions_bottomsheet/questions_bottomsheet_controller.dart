@@ -47,8 +47,15 @@ class QuestionsBottomsheetController extends GetxController {
   
   // Calculate total amount from selected slots
   int get totalAmount {
-    final slots = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
-    return slots.fold(0, (sum, slot) => sum + (slot.amount ?? 0));
+    final slots = (localMatchData["slot"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    int total = 0;
+    for (var slotEntry in slots) {
+      final slotTimes = (slotEntry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      for (var slotTime in slotTimes) {
+        total += (slotTime["amount"] as int?) ?? 0;
+      }
+    }
+    return total;
   }
   
   // Get slot count
@@ -479,21 +486,35 @@ class QuestionsBottomsheetController extends GetxController {
     final formattedMatchDate = DateFormat('yyyy-MM-dd').format(parsedMatchDate);
     final formattedBookingDate = DateTime.utc(parsedMatchDate.year, parsedMatchDate.month, parsedMatchDate.day).toIso8601String();
     
-    final slotData = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
+    final slotData = (localMatchData["slot"] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final courtId = localMatchData["courtId"]?.toString() ?? "";
     final courtIds = (localMatchData["courtIds"] as List?)?.map((e) => e.toString()).toList() ?? [];
     final courtName = localMatchData["courtName"]?.toString() ?? "";
 
+    // Group consecutive slots and calculate total time range
+    final groupedSlots = getGroupedSlots();
+    String overallTimeRange = "";
+    
+    if (groupedSlots.isNotEmpty) {
+      if (groupedSlots.length == 1) {
+        overallTimeRange = groupedSlots.first['timeRange'];
+      } else {
+        final firstTime = groupedSlots.first['timeRange'];
+        final lastTime = groupedSlots.last['timeRange'];
+        overallTimeRange = "$firstTime-${lastTime.split('-').last}";
+      }
+    }
+
     final slotsJson = slotData.asMap().entries.map((entry) {
       final index = entry.key;
-      final slot = entry.value;
+      final slotEntry = entry.value;
 
-      String slotCourtId = courtId;
+      String slotCourtId = slotEntry["courtId"]?.toString() ?? courtId;
       if (courtIds.isNotEmpty && index < courtIds.length) {
         slotCourtId = courtIds[index];
       }
 
-      final businessHours = (localMatchData["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final businessHours = (slotEntry["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
       final selectedDayName = DateFormat('EEEE').format(parsedMatchDate!);
       
       final cleanBusinessHours = businessHours
@@ -503,28 +524,33 @@ class QuestionsBottomsheetController extends GetxController {
             "day": bh["day"] ?? "",
           }).toList();
 
-      String cleanSlotId = slot.sId ?? "";
+      String cleanSlotId = slotEntry["slotId"]?.toString() ?? "";
       if (cleanSlotId.contains('_')) {
         cleanSlotId = cleanSlotId.split('_')[0];
       }
       
-      int duration = slot.duration ?? 60;
-      int totalTime = slot.duration ?? 60;
-      String bookingTime = slot.bookingTime ?? slot.time ?? "";
+      final slotTimes = (slotEntry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final firstSlotTime = slotTimes.isNotEmpty ? slotTimes.first : {};
+      final slotTime = firstSlotTime["time"]?.toString() ?? "";
+      final slotAmount = (firstSlotTime["amount"] as int?) ?? 0;
+      
+      int duration = 60; // Default duration
+      int totalTime = slotData.length * duration; // Total time for all slots
+      String bookingTime = slotTime;
 
       return {
         "slotId": cleanSlotId,
         "businessHours": cleanBusinessHours,
         "slotTimes": [
           {
-            "time": slot.time ?? "",
-            "amount": slot.amount ?? 0,
+            "time": slotTime,
+            "amount": slotAmount,
           }
         ],
         "matchType": selectedMatchType.value,
-        "courtName": courtName,
+        "courtName": slotEntry["courtName"]?.toString() ?? courtName,
         "courtId": slotCourtId,
-        "bookingDate": formattedBookingDate,
+        "bookingDate": slotEntry["bookingDate"]?.toString() ?? formattedBookingDate,
         "duration": duration,
         "totalTime": totalTime,
         "bookingTime": bookingTime
@@ -536,7 +562,7 @@ class QuestionsBottomsheetController extends GetxController {
       "clubId": localMatchData["clubId"] ?? "",
       "matchDate": formattedMatchDate,
       "skillLevel": selectedGameLevel.value,
-      "matchTime": localMatchData["matchTime"] ?? "",
+      "matchTime": overallTimeRange.isNotEmpty ? overallTimeRange : (localMatchData["matchTime"] ?? ""),
       "gender":selectedGameType.value,
       "teamA": teamA
           .where((p) =>
@@ -634,59 +660,24 @@ class QuestionsBottomsheetController extends GetxController {
   
   // Group consecutive slots
   List<Map<String, dynamic>> getGroupedSlots() {
-    final slots = (localMatchData["slot"] as List?)?.cast<Slots>() ?? [];
+    final slots = (localMatchData["slot"] as List?)?.cast<Map<String, dynamic>>() ?? [];
     if (slots.isEmpty) return [];
 
-    // Sort slots by time
-    final sortedSlots = slots.toList()
-      ..sort((a, b) => _getSlotHour(a.time).compareTo(_getSlotHour(b.time)));
-
     final List<Map<String, dynamic>> groups = [];
-    var i = 0;
-
-    while (i < sortedSlots.length) {
-      final consecutiveSlots = [sortedSlots[i]];
-      var totalAmount = sortedSlots[i].amount ?? 0;
-
-      // Find consecutive slots
-      for (var j = i + 1; j < sortedSlots.length; j++) {
-        final currentHour = _getSlotHour(sortedSlots[j - 1].time);
-        final nextHour = _getSlotHour(sortedSlots[j].time);
-
-        if (nextHour - currentHour == 1) {
-          consecutiveSlots.add(sortedSlots[j]);
-          totalAmount += sortedSlots[j].amount ?? 0;
-        } else {
-          break;
-        }
-      }
-
-      // Create time range
-      String timeRange;
-      if (consecutiveSlots.length == 1) {
-        timeRange = _formatTimeSlot(consecutiveSlots.first.time ?? '');
-      } else {
-        final startTime = _formatTimeSlot(consecutiveSlots.first.time ?? '');
-        final endTime = _formatTimeSlot(consecutiveSlots.last.time ?? '');
-        final startPeriod = startTime.contains('AM') ? 'AM' : 'PM';
-        final endPeriod = endTime.contains('AM') ? 'AM' : 'PM';
-        final startHour = startTime.replaceAll(RegExp(r'\s*(AM|PM)', caseSensitive: false), '');
-        final endHour = endTime.replaceAll(RegExp(r'\s*(AM|PM)', caseSensitive: false), '');
+    
+    for (var slotEntry in slots) {
+      final slotTimes = (slotEntry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (slotTimes.isNotEmpty) {
+        final slotTime = slotTimes.first;
+        final time = slotTime["time"]?.toString() ?? '';
+        final amount = (slotTime["amount"] as int?) ?? 0;
         
-        if (startPeriod == endPeriod) {
-          timeRange = '$startHour-$endHour$endPeriod';
-        } else {
-          timeRange = '$startTime-$endTime';
-        }
+        groups.add({
+          'timeRange': _formatTimeSlot(time),
+          'totalAmount': amount,
+          'slots': [slotEntry], // Keep original structure for compatibility
+        });
       }
-
-      groups.add({
-        'timeRange': timeRange,
-        'totalAmount': totalAmount,
-        'slots': consecutiveSlots,
-      });
-
-      i += consecutiveSlots.length;
     }
 
     return groups;

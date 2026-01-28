@@ -1516,83 +1516,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       }
     }
 
-    final Map<String, Slots> consolidatedSlots = {};
-    final Map<String, int> slotAmounts = {};
-    
-    realCourtSelections.forEach((key, value) {
-      final slot = value['slot'] as Slots;
-      final slotId = slot.sId ?? '';
-      final amount = value['amount'] as int? ?? 0;
-      
-      if (consolidatedSlots.containsKey(slotId)) {
-        slotAmounts[slotId] = (slotAmounts[slotId] ?? 0) + amount;
-      } else {
-        consolidatedSlots[slotId] = slot;
-        slotAmounts[slotId] = amount;
-      }
-    });
-    
-    final sortedSlots = consolidatedSlots.values.toList()
-      ..sort((a, b) => _getSlotHour(a.time).compareTo(_getSlotHour(b.time)));
-    
-    final List<Map<String, dynamic>> consecutiveGroups = [];
-    var i = 0;
-    
-    while (i < sortedSlots.length) {
-      final consecutiveSlots = [sortedSlots[i]];
-      var totalAmount = slotAmounts[sortedSlots[i].sId] ?? 0;
-      
-      for (var j = i + 1; j < sortedSlots.length; j++) {
-        final currentHour = _getSlotHour(sortedSlots[j - 1].time);
-        final nextHour = _getSlotHour(sortedSlots[j].time);
-        
-        if (nextHour - currentHour == 1) {
-          consecutiveSlots.add(sortedSlots[j]);
-          totalAmount += slotAmounts[sortedSlots[j].sId] ?? 0;
-        } else {
-          break;
-        }
-      }
-      
-      // Create time range
-      String timeRange;
-      if (consecutiveSlots.length == 1) {
-        timeRange = formatTimeForDisplay(consecutiveSlots.first.time ?? '');
-      } else {
-        final startTime = formatTimeForDisplay(consecutiveSlots.first.time ?? '');
-        final endHour = _getSlotHour(consecutiveSlots.last.time) + 1;
-        final endPeriod = endHour >= 12 ? 'PM' : 'AM';
-        final displayEndHour = endHour == 0 ? 12 : (endHour > 12 ? endHour - 12 : endHour);
-        timeRange = '${startTime.replaceAll(RegExp(r'\s*(AM|PM)', caseSensitive: false), '')}-${displayEndHour}:00 $endPeriod';
-      }
-      
-      consecutiveGroups.add({
-        'slots': consecutiveSlots,
-        'timeRange': timeRange,
-        'totalAmount': totalAmount,
-      });
-      
-      i += consecutiveSlots.length;
-    }
-    
-    // Create consolidated slots for bottomsheet
-    final selectedSlotsFromCourts = <Slots>[];
-    for (var group in consecutiveGroups) {
-      final slots = group['slots'] as List<Slots>;
-      final consolidatedSlot = Slots(
-        sId: slots.map((s) => s.sId).join('_'),
-        time: group['timeRange'] as String,
-        amount: group['totalAmount'] as int,
-        status: slots.first.status,
-      );
-      selectedSlotsFromCourts.add(consolidatedSlot);
-    }
-    
-    String matchTimeFromCourts = '';
-    if (selectedSlotsFromCourts.isNotEmpty && selectedSlotsFromCourts.first.time != null) {
-      matchTimeFromCourts = selectedSlotsFromCourts.first.time!;
-    }
-
     // Get business hours from courtsByDuration API response
     List<dynamic> businessHours = [];
     print("Debug - Extracting businessHours from API response");
@@ -1615,22 +1538,64 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     }
     print("Debug - Extracted businessHours from API: $businessHours");
 
+    // Create separate slot entries for each selected slot
+    final List<Map<String, dynamic>> slotEntries = [];
+    final Map<String, Slots> processedSlots = {};
+    
+    // Sort selections by time to maintain order
+    final sortedSelections = realCourtSelections.entries.toList()
+      ..sort((a, b) {
+        final slotA = a.value['slot'] as Slots;
+        final slotB = b.value['slot'] as Slots;
+        return _getSlotHour(slotA.time).compareTo(_getSlotHour(slotB.time));
+      });
+    
+    for (var entry in sortedSelections) {
+      final selection = entry.value;
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final amount = selection['amount'] as int? ?? 0;
+      final dateString = selection['date'] as String;
+      
+      // Skip if we've already processed this slot (for half slots)
+      if (processedSlots.containsKey(slotId)) continue;
+      
+      processedSlots[slotId] = slot;
+      
+      slotEntries.add({
+        "slotId": slotId,
+        "businessHours": businessHours,
+        "slotTimes": [{"time": slot.time, "amount": amount}],
+        "courtId": selectedCourtId,
+        "courtName": selectedCourtName,
+        "bookingDate": dateString,
+      });
+    }
+    
+    String matchTimeFromCourts = '';
+    if (slotEntries.isNotEmpty) {
+      final firstSlotTimes = slotEntries.first['slotTimes'] as List;
+      if (firstSlotTimes.isNotEmpty) {
+        matchTimeFromCourts = firstSlotTimes.first['time'] ?? '';
+      }
+    }
+
     final matchData = {
-      "slot": selectedSlotsFromCourts,
+      "slot": slotEntries,
       "matchDate": selectedDate.value,
       "courtName": selectedCourtName,
       "clubId": selectedClubId,
       "courtId": selectedCourtId,
       "matchTime": matchTimeFromCourts,
-      "businessHours": businessHours.isNotEmpty ? businessHours : null, // Only include if not empty
-      "selectedDuration": selectedDuration.value, // Pass selected duration
+      "businessHours": businessHours.isNotEmpty ? businessHours : null,
+      "selectedDuration": selectedDuration.value,
     };
 
     // Debug: Print what we're sending
     print("Debug - Final matchData businessHours: ${matchData['businessHours']}");
-    print("Debug - Sending ${selectedSlotsFromCourts.length} slots from available courts to bottomsheet");
-    for (var slot in selectedSlotsFromCourts) {
-      print("Sending slot: ${slot.sId} - ${slot.time} - ${slot.amount}");
+    print("Debug - Sending ${slotEntries.length} slot entries to bottomsheet");
+    for (var slotEntry in slotEntries) {
+      print("Sending slot entry: ${slotEntry['slotId']} - ${slotEntry['slotTimes']}");
     }
 
     // Show QuestionsBottomsheetScreen as bottom sheet with match data
