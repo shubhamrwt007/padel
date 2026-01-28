@@ -22,10 +22,9 @@ class EditProfileController extends GetxController{
     nameController.text = model?.response?.name ?? '';
     lastNameController.text = model?.response?.lastName ??'';
     emailController.text = model?.response?.email ?? '';
-    phoneController.text = model?.response?.phoneNumber.toString() ?? '';
+    phoneController.text = model?.response?.phoneNumber?.toString() ?? '';
     selectedGender.value = model?.response?.gender ?? "";
     profileImageUrl.value = model?.response?.profilePic?.toString() ?? '';
-
     // Format DOB
     final dob = model?.response?.dob;
     if (dob != null && dob.isNotEmpty) {
@@ -38,7 +37,6 @@ class EditProfileController extends GetxController{
     } else {
       selectedDate.value = "";
     }
-
     selectedLocation.value = model?.response?.city ?? '';
   }
 
@@ -49,12 +47,10 @@ class EditProfileController extends GetxController{
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
     if (pickedDate != null) {
       selectedDate.value = DateFormat('dd-MM-yyyy').format(pickedDate); // use dash
     }
   }
-
   Future<void> showImageSourceActionSheet(BuildContext context) async {
     showModalBottomSheet(
       context: context,
@@ -103,7 +99,6 @@ class EditProfileController extends GetxController{
 
                 // Divider
                 Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-
                 // Options
                 Padding(
                   padding: EdgeInsets.all(16),
@@ -140,14 +135,22 @@ class EditProfileController extends GetxController{
                       // Cancel button
  
                       SizedBox(
+
                          width: double.infinity,
+
                         child: OutlinedButton(
                           onPressed: () => Get.back(),
+
                           style: OutlinedButton.styleFrom(
+
                             padding: EdgeInsets.symmetric(vertical: 16),
+
                             side: BorderSide(color: Colors.grey[300]!),
+
                             shape: RoundedRectangleBorder(
+
                               borderRadius: BorderRadius.circular(12),
+
                             ),
                           ),
                           child: Text(
