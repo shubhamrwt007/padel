@@ -41,7 +41,7 @@ class XpData {
   final String? id;
   final String? userId;
   final ScoreboardId? scoreboardId;
-  final double? xpChange;
+  final dynamic? xpChange;
   final String? result;
   final String? createdAt;
   final int? version;
@@ -63,7 +63,7 @@ class XpData {
       scoreboardId: json['scoreboardId'] != null
           ? ScoreboardId.fromJson(json['scoreboardId'])
           : null,
-      xpChange: (json['xpChange'] as num?)?.toDouble(),
+      xpChange: json['xpChange'],
       result: json['result'],
       createdAt: json['createdAt'],
       version: json['__v'],
@@ -143,8 +143,8 @@ class Pagination {
 
 class Summary {
   final String? id;
-  final int? totalXpGained;
-  final double? totalXpLost;
+  final dynamic? totalXpGained;
+  final dynamic? totalXpLost;
 
   Summary({
     this.id,
@@ -156,7 +156,7 @@ class Summary {
     return Summary(
       id: json['_id'],
       totalXpGained: json['totalXpGained'],
-      totalXpLost: (json['totalXpLost'] as num?)?.toDouble(),
+      totalXpLost: json['totalXpLost'],
     );
   }
 

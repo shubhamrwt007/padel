@@ -1,13 +1,11 @@
 import 'dart:developer';
-import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import '../../../data/request_models/home_models/get_available_court.dart';
 import '../../../data/request_models/home_models/get_club_name_model.dart';
-import '../../../repositories/cart/cart_repository.dart';
 import '../../../repositories/home_repository/home_repository.dart';
-import '../../cart/cart_controller.dart';
+import '../../payment/payment_method_controller.dart';
 
 class BookSessionController extends GetxController {
   // Booking limits
@@ -124,13 +122,13 @@ class BookSessionController extends GetxController {
     
     final now = DateTime.now();
     final hour = now.hour;
+    final timeRanges = _getTimeRanges();
 
-
-    if (hour >= 6 && hour <= 11 && morningCount.value > 0) {
+    if (hour >= timeRanges['morningStart']! && hour <= timeRanges['morningEnd']! && morningCount.value > 0) {
       selectedTimeOfDay.value = 0; // Morning
-    } else if (hour >= 12 && hour <= 17 && noonCount.value > 0) {
+    } else if (hour >= timeRanges['noonStart']! && hour <= timeRanges['noonEnd']! && noonCount.value > 0) {
       selectedTimeOfDay.value = 1; // Noon
-    } else if (hour >= 18 && hour <= 23 && nightCount.value > 0) {
+    } else if (hour >= timeRanges['nightStart']! && hour <= timeRanges['nightEnd']! && nightCount.value > 0) {
       selectedTimeOfDay.value = 2; // Night
     } else {
       // Fallback: pick first tab that has slots
@@ -151,34 +149,77 @@ class BookSessionController extends GetxController {
   void filterSlotsByTimeOfDay() {
     final tab = selectedTimeOfDay.value;
     final courts = slots.value?.data ?? [];
+    final timeRanges = _getTimeRanges();
+    
     for (final court in courts) {
       final courtId = court.sId ?? '';
       final baseList = _originalSlotsCache[courtId] ?? List<Slots>.from(court.slots ?? []);
       court.slots = baseList.where((s) {
         final hour = _parseHour24(s.time);
         if (hour == null) return false;
-        if (tab == 0) return hour >= 6 && hour <= 11; // Morning 6-11 am
-        if (tab == 1) return hour >= 12 && hour <= 17; // Noon 12-5 pm
-        return hour >= 18 && hour <= 23; // Night 6-11 pm
+        if (tab == 0) return hour >= timeRanges['morningStart']! && hour <= timeRanges['morningEnd']!;
+        if (tab == 1) return hour >= timeRanges['noonStart']! && hour <= timeRanges['noonEnd']!;
+        return hour >= timeRanges['nightStart']! && hour <= timeRanges['nightEnd']!;
       }).toList();
     }
     _recalculateTimeOfDayCounts();
     slots.refresh();
   }
 
+  Map<String, int> _getTimeRanges() {
+    final allHours = <int>[];
+    _originalSlotsCache.forEach((_, list) {
+      for (final s in list) {
+        final hour = _parseHour24(s.time);
+        if (hour != null) allHours.add(hour);
+      }
+    });
+    
+    if (allHours.isEmpty) {
+      return {
+        'morningStart': 5, 'morningEnd': 11,
+        'noonStart': 12, 'noonEnd': 17,
+        'nightStart': 18, 'nightEnd': 23,
+      };
+    }
+    
+    allHours.sort();
+    final minHour = allHours.first;
+    final maxHour = allHours.last;
+    
+    // Dynamic ranges based on available slots
+    final morningStart = minHour;
+    final morningEnd = minHour < 12 ? 11 : minHour;
+    final noonStart = 12;
+    final noonEnd = maxHour > 17 ? 17 : maxHour;
+    final nightStart = 18;
+    final nightEnd = maxHour;
+    
+    return {
+      'morningStart': morningStart,
+      'morningEnd': morningEnd,
+      'noonStart': noonStart,
+      'noonEnd': noonEnd,
+      'nightStart': nightStart,
+      'nightEnd': nightEnd,
+    };
+  }
+
   void _recalculateTimeOfDayCounts() {
     morningCount.value = 0;
     noonCount.value = 0;
     nightCount.value = 0;
+    final timeRanges = _getTimeRanges();
+    
     _originalSlotsCache.forEach((_, list) {
       for (final s in list) {
         final hour = _parseHour24(s.time);
         if (hour == null) continue;
-        if (hour >= 6 && hour <= 11) {
+        if (hour >= timeRanges['morningStart']! && hour <= timeRanges['morningEnd']!) {
           morningCount.value++;
-        } else if (hour >= 12 && hour <= 17) {
+        } else if (hour >= timeRanges['noonStart']! && hour <= timeRanges['noonEnd']!) {
           noonCount.value++;
-        } else if (hour >= 18 && hour <= 23) {
+        } else if (hour >= timeRanges['nightStart']! && hour <= timeRanges['nightEnd']!) {
           nightCount.value++;
         }
       }
@@ -219,7 +260,6 @@ class BookSessionController extends GetxController {
   final HomeRepository repository = HomeRepository();
   Rx<GetAllActiveCourtsForSlotWiseModel?> slots = Rx<GetAllActiveCourtsForSlotWiseModel?>(null);
   RxBool isLoadingCourts = false.obs;
-  CartRepository cartRepository = CartRepository();
 
   RxMap<String, Map<String, dynamic>> selectedSlotsWithCourtInfo = <String, Map<String, dynamic>>{}.obs;
   RxBool isBottomSheetOpen = false.obs;
@@ -931,6 +971,194 @@ class BookSessionController extends GetxController {
   }
 
   var cartLoader = false.obs;
+
+  /// Build booking payload from multiDateSelections (same structure as CartController.buildBookingPayload).
+  /// Used when skipping cart and going directly to payment.
+  List<Map<String, dynamic>>? buildBookingPayloadFromSelections() {
+    if (multiDateSelections.isEmpty) return null;
+
+    final clubId = argument.id ?? '';
+    if (clubId.isEmpty) return null;
+
+    final registerClub = slots.value?.data?.firstOrNull?.registerClubId;
+    final ownerIdStr = registerClub?.ownerId?.sId?.toString() ??
+        argument.ownerId ??
+        '';
+
+    final List<Map<String, dynamic>> slotData = [];
+    final Map<String, Map<String, dynamic>> consolidatedSlots = {};
+
+    // First pass: identify slots that need consolidation (both halves selected)
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final supports30Min = slotSupports30Min(slot);
+
+      if (supports30Min && (key.endsWith('_L') || key.endsWith('_R'))) {
+        if (!consolidatedSlots.containsKey(slotId)) {
+          consolidatedSlots[slotId] = {
+            'leftHalf': null,
+            'rightHalf': null,
+            'slot': slot,
+            'courtId': selection['courtId'],
+            'courtName': selection['courtName'],
+            'dateString': selection['date'],
+          };
+        }
+        if (key.endsWith('_L')) {
+          consolidatedSlots[slotId]!['leftHalf'] = selection;
+        } else {
+          consolidatedSlots[slotId]!['rightHalf'] = selection;
+        }
+      }
+    });
+
+    String bookingDayFor(String dateString) {
+      try {
+        final d = DateTime.parse(dateString);
+        return _getWeekday(d.weekday);
+      } catch (_) {
+        return '';
+      }
+    }
+
+    void addSlotEntry({
+      required Slots slot,
+      required String courtId,
+      required String courtName,
+      required String dateString,
+      required String bookingTime,
+      required int amount,
+      required int duration,
+    }) {
+      final bookingDay = bookingDayFor(dateString);
+      final selectedBusinessHour = slot.businessHours
+          ?.where((bh) => bh.day == bookingDay)
+          .map((bh) => {'time': bh.time ?? '', 'day': bh.day ?? ''})
+          .toList() ?? [];
+      slotData.add({
+        'slotId': slot.sId ?? '',
+        'businessHours': selectedBusinessHour,
+        'slotTimes': [
+          {'time': slot.time ?? '', 'amount': amount}
+        ],
+        'courtId': courtId,
+        'courtName': courtName,
+        'bookingDate': dateString,
+        'duration': duration,
+        'totalTime': duration,
+        'bookingTime': bookingTime,
+      });
+    }
+
+    // Track processed consolidated slots to avoid duplicates
+    final processedConsolidatedSlots = <String>{};
+
+    // Second pass: build slotData
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final courtId = selection['courtId'] as String;
+      final courtName = selection['courtName'] as String;
+      final dateString = selection['date'] as String;
+      final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+      final adjustedAmount = selection['adjustedAmount'] as int? ?? slot.amount ?? 0;
+      final slotId = slot.sId ?? '';
+      final supports30Min = slotSupports30Min(slot);
+
+      if (supports30Min && (key.endsWith('_L') || key.endsWith('_R'))) {
+        final consolidated = consolidatedSlots[slotId];
+        if (consolidated != null &&
+            consolidated['leftHalf'] != null &&
+            consolidated['rightHalf'] != null) {
+          // Both halves selected - create one consolidated entry
+          if (!processedConsolidatedSlots.contains(slotId)) {
+            final fullPrice = slot.amount ?? 0;
+            addSlotEntry(
+              slot: slot,
+              courtId: courtId,
+              courtName: courtName,
+              dateString: dateString,
+              bookingTime: slot.time ?? '', // Use original slot time for full booking
+              amount: fullPrice,
+              duration: 60,
+            );
+            processedConsolidatedSlots.add(slotId);
+          }
+          return;
+        }
+        // Only one half selected
+        addSlotEntry(
+          slot: slot,
+          courtId: courtId,
+          courtName: courtName,
+          dateString: dateString,
+          bookingTime: bookingTime,
+          amount: adjustedAmount,
+          duration: 30,
+        );
+        return;
+      }
+
+      // Regular full slot selection
+      addSlotEntry(
+        slot: slot,
+        courtId: courtId,
+        courtName: courtName,
+        dateString: dateString,
+        bookingTime: bookingTime,
+        amount: adjustedAmount,
+        duration: 60,
+      );
+    });
+
+    if (slotData.isEmpty) return null;
+
+    return [
+      {
+        'slot': slotData,
+        'register_club_id': clubId,
+        'ownerId': ownerIdStr,
+      },
+    ];
+  }
+
+  /// Skip cart: process slot history, build payload, create initial booking, then navigate to payment.
+  Future<void> proceedToPayment() async {
+    try {
+      if (cartLoader.value) return;
+      if (multiDateSelections.isEmpty) return;
+
+      cartLoader.value = true;
+
+      final success = await processSlotHistoryForBooking();
+      if (!success) {
+        cartLoader.value = false;
+        return;
+      }
+
+      final payload = buildBookingPayloadFromSelections();
+      if (payload == null || payload.isEmpty) {
+        cartLoader.value = false;
+        return;
+      }
+
+      final paymentController = Get.put(PaymentMethodController());
+      paymentController.setDirectBookingPayload(payload);
+      await paymentController.createInitialBooking();
+    } catch (e) {
+      log('proceedToPayment error: $e');
+      Get.snackbar(
+        'Error',
+        'Something went wrong. Please try again.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      cartLoader.value = false;
+    }
+  }
+
   Future<bool> processSlotHistoryForBooking() async {
     if (multiDateSelections.isEmpty) return false;
 
@@ -966,226 +1194,6 @@ class BookSessionController extends GetxController {
     } catch (e) {
       log('Error processing slot history: $e');
       return false;
-    }
-  }
-
-  void addToCart() async {
-    try {
-      if (cartLoader.value) return;
-      cartLoader.value = true;
-
-      if (multiDateSelections.isEmpty) {
-        // Get.snackbar(
-        //   "No Slots Selected",
-        //   "Please select at least one slot before adding to cart.",
-        //   backgroundColor: Colors.redAccent,
-        //   colorText: Colors.white,
-        //   snackPosition: SnackPosition.TOP,
-        // );
-        return;
-      }
-
-      // Call API to process slot history
-      final success = await processSlotHistoryForBooking();
-      if (!success) {
-        cartLoader.value = false;
-        return;
-      }
-
-      final clubId = argument.id!;
-      final List<Map<String, dynamic>> allSlots = [];
-      final Map<String, Map<String, dynamic>> consolidatedSlots = {};
-      final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
-
-      // First pass: identify slots that need consolidation (only for slots that support 30-minute pricing)
-      multiDateSelections.forEach((key, selection) {
-        final slot = selection['slot'] as Slots;
-        final slotId = slot.sId ?? '';
-        final supports30Min = slotSupports30Min(slot);
-        
-        if (supports30Min && selectedDurationMinutes == 30) {
-          if (key.endsWith('_L') || key.endsWith('_R')) {
-            // This is a half-slot selection for a slot that supports 30-minute pricing
-            if (!consolidatedSlots.containsKey(slotId)) {
-              consolidatedSlots[slotId] = {
-                'leftHalf': null,
-                'rightHalf': null,
-                'slot': slot,
-                'courtId': selection['courtId'],
-                'courtName': selection['courtName'],
-                'dateString': selection['date'],
-              };
-            }
-            
-            if (key.endsWith('_L')) {
-              consolidatedSlots[slotId]!['leftHalf'] = selection;
-            } else {
-              consolidatedSlots[slotId]!['rightHalf'] = selection;
-            }
-          }
-        }
-      });
-
-      // Second pass: process all selections
-      multiDateSelections.forEach((key, selection) {
-        final slot = selection['slot'] as Slots;
-        final courtId = selection['courtId'] as String;
-        final courtName = selection['courtName'] as String;
-        final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final adjustedAmount = selection['adjustedAmount'] as int? ?? slot.amount ?? 0;
-        final slotId = slot.sId ?? '';
-        final supports30Min = slotSupports30Min(slot);
-        
-        // Skip if this is a half-slot that will be consolidated
-        if (supports30Min && selectedDurationMinutes == 30 && (key.endsWith('_L') || key.endsWith('_R'))) {
-          final consolidatedSlot = consolidatedSlots[slotId];
-          if (consolidatedSlot != null && 
-              consolidatedSlot['leftHalf'] != null && 
-              consolidatedSlot['rightHalf'] != null) {
-            // Both halves exist - only process once (for left half)
-            if (key.endsWith('_L')) {
-              // Get the full slot price (60-minute price) from the original slot
-              final fullSlotPrice = slot.amount ?? 0; // This should be the 60-minute price from API
-              final slotEntry = {
-                "businessHours": slot.businessHours
-                    ?.map((bh) => {
-                  "time": bh.time,
-                  "day": bh.day,
-                })
-                    .toList(),
-                "slotTimes": [
-                  {
-                    "time": slot.time,
-                    "amount": fullSlotPrice, // Use full slot price instead of adjustedAmount
-                    "slotId": slot.sId,
-                  },
-                  {
-                    "bookingDate": dateString,
-                  },
-                  {
-                    "courtId": courtId,
-                  },
-                  {
-                    "courtName": courtName,
-                  }
-                ],
-                "duration": 60, // Full slot duration when both halves selected
-                "totalTime": 60,
-                "bookingTime": slot.time ?? '' // Use original time for full slot
-              };
-              allSlots.add(slotEntry);
-            }
-            return; // Skip right half processing
-          } else {
-            // Only one half selected - process as 30min slot
-            final slotEntry = {
-              "businessHours": slot.businessHours
-                  ?.map((bh) => {
-                "time": bh.time,
-                "day": bh.day,
-              })
-                  .toList(),
-              "slotTimes": [
-                {
-                  "time": slot.time,
-                  "amount": adjustedAmount,
-                  "slotId": slot.sId,
-                },
-                {
-                  "bookingDate": dateString,
-                },
-                {
-                  "courtId": courtId,
-                },
-                {
-                  "courtName": courtName,
-                }
-              ],
-              "duration": 30,
-              "totalTime": 30,
-              "bookingTime": bookingTime
-            };
-            allSlots.add(slotEntry);
-          }
-          return;
-        }
-        
-        // Process full slot selections (60 minutes)
-        final slotEntry = {
-          "businessHours": slot.businessHours
-              ?.map((bh) => {
-            "time": bh.time,
-            "day": bh.day,
-          })
-              .toList(),
-          "slotTimes": [
-            {
-              "time": slot.time,
-              "amount": adjustedAmount,
-              "slotId": slot.sId,
-            },
-            {
-              "bookingDate": dateString,
-            },
-            {
-              "courtId": courtId,
-            },
-            {
-              "courtName": courtName,
-            }
-          ],
-          "duration": 60,
-          "totalTime": 60,
-          "bookingTime": bookingTime
-        };
-
-        allSlots.add(slotEntry);
-      });
-
-      final List<Map<String, dynamic>> cartPayload = [{
-        "slot": allSlots,
-        "register_club_id": clubId,
-      }];
-
-      log("Multi-Date Cart Payload: $cartPayload");
-
-      await cartRepository.addCartItems(data: cartPayload).then((v) async {
-        final CartController controller = Get.find<CartController>();
-        await controller.getCartItems();
-
-        Get.to(() => CartScreen(buttonType: "true"))?.then((_) async {
-          multiDateSelections.clear();
-          selectedSlots.clear();
-          selectedSlotsWithCourtInfo.clear();
-          totalAmount.value = 0;
-          await getAvailableCourtsById(argument.id!);
-        });
-      });
-    } on DioException catch (e) {
-      final dynamic data = e.response?.data;
-      final serverMessage =
-      (data is Map && data['message'] is String) ? data['message'] as String : null;
-      final detailed = serverMessage ?? e.message ?? 'Something went wrong.';
-      log("Add to cart failed (Dio): status=${e.response?.statusCode}, data=${e.response?.data}");
-      Get.snackbar(
-        "Error",
-        detailed,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } catch (e) {
-      log("Error adding to cart: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to add slots to cart. Please try again.",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      cartLoader.value = false;
     }
   }
 

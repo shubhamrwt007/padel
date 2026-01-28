@@ -11,8 +11,10 @@ import '../../data/response_models/cart/carte_booking_model.dart';
 import '../../services/payment_services/razorpay.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import '../booking/successful_screens/booking_successful_screen.dart';
+import '../../repositories/cart/cart_repository.dart';
 import '../cart/cart_controller.dart';
 import '../book_a_court/book_a_court_controller.dart';
+import '../booking/book_session/book_session_controller.dart';
 
 class PaymentMethodController extends GetxController {
   var option = ''.obs;
@@ -24,8 +26,17 @@ class PaymentMethodController extends GetxController {
   RxDouble walletAmountUsed = 0.0.obs;
   RxDouble razorpayAmountUsed = 0.0.obs;
 
-  
-  final CartController cartController = Get.find<CartController>();
+  /// When set, use this payload instead of cart/bookACourt (book session → payment direct flow).
+  List<Map<String, dynamic>>? directBookingPayload;
+
+  void setDirectBookingPayload(List<Map<String, dynamic>> payload) {
+    directBookingPayload = payload;
+  }
+
+  static final _cartRepository = CartRepository();
+
+  CartController? get _cartController =>
+      Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
   
   BookACourtController? get bookACourtController {
     try {
@@ -39,6 +50,9 @@ class PaymentMethodController extends GetxController {
     final controller = bookACourtController;
     return controller != null && controller.realCourtSelections.isNotEmpty;
   }
+
+  bool get isFromBookSession =>
+      directBookingPayload != null && directBookingPayload!.isNotEmpty;
 
   @override
   void onInit() {
@@ -142,22 +156,21 @@ class PaymentMethodController extends GetxController {
   }) async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
-      
-      // Check if booking is from BookACourtController
-      if (isFromBookACourt && bookACourtController != null) {
+
+      if (isFromBookSession && directBookingPayload != null) {
+        bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
+      } else if (isFromBookACourt && bookACourtController != null) {
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else {
-        // Use CartController's payload
-        bookingPayload = cartController.buildBookingPayload();
+        final cart = _cartController;
+        bookingPayload = cart != null ? cart.buildBookingPayload() : null;
       }
 
-      if (bookingPayload == null) {
+      if (bookingPayload == null || bookingPayload.isEmpty) {
         Get.back();
-        // Get.snackbar("Error", "No selected items available for booking");
         return;
       }
 
-      // Add payment details if provided
       if (razorpayPaymentId != null && razorpayOrderId != null) {
         for (var payload in bookingPayload) {
           payload['razorpay_payment_id'] = razorpayPaymentId;
@@ -168,29 +181,31 @@ class PaymentMethodController extends GetxController {
 
       print("Booking payload after payment: $bookingPayload");
 
-      // Call API directly to handle response properly
-      final response = await cartController.cartRepository.dioClient.post(
+      final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
         data: bookingPayload,
       );
 
       if (response.statusCode == 200) {
         print("Booking confirmed: ${response.data}");
-        
-        // Refresh cart
-        await cartController.getCartItems();
-        
-        // Success
-        // SnackBarUtils.showSuccessSnackBar("Booking completed successfully");
-        
-        // Clear selections if from BookACourtController
+
+        if (!isFromBookSession) {
+          final cart = _cartController;
+          if (cart != null) await cart.getCartItems();
+        } else {
+          directBookingPayload = null;
+          if (Get.isRegistered<BookSessionController>()) {
+            final c = Get.find<BookSessionController>();
+            c.clearAllSelections();
+          }
+        }
+
         if (isFromBookACourt && bookACourtController != null) {
           bookACourtController!.clearAllSelections();
         }
-        
+
         Get.to(() => BookingSuccessfulScreen());
       } else {
-        // API returned error
         Get.close(2);
         showBookingErrorDialog();
       }
@@ -339,13 +354,16 @@ class PaymentMethodController extends GetxController {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
-      if (isFromBookACourt && bookACourtController != null) {
+      if (isFromBookSession && directBookingPayload != null) {
+        bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
+      } else if (isFromBookACourt && bookACourtController != null) {
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else {
-        bookingPayload = cartController.buildBookingPayload();
+        final cart = _cartController;
+        bookingPayload = cart?.buildBookingPayload();
       }
 
-      if (bookingPayload == null) {
+      if (bookingPayload == null || bookingPayload.isEmpty) {
         print("No booking payload available");
         return;
       }
@@ -356,7 +374,7 @@ class PaymentMethodController extends GetxController {
 
       print("Initial booking payload: $bookingPayload");
 
-      final response = await cartController.cartRepository.dioClient.post(
+      final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
         data: bookingPayload,
       );
@@ -366,35 +384,28 @@ class PaymentMethodController extends GetxController {
         print("Booking API response: $responseData");
 
         _razorpayOrderId = responseData['orderId'];
-// If the key is present → use its value (assumed to be true)
-// If the key is absent → payment is NOT required
         initiatePayment = responseData.containsKey('requiresPayment')
             ? (responseData['requiresPayment'] as bool)
             : false;
         walletAmountUsed.value =
             (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 0.0;
-
         razorpayAmountUsed.value =
             (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
         print(
           "Booking created with order ID: $_razorpayOrderId\n"
-              "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
+          "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
         );
 
-        // ✅ If payment is NOT required, go directly to success screen
         if (initiatePayment == false) {
           showBookingSuccessDialog();
-        }else{
+        } else {
           await Get.toNamed(RoutesName.paymentMethod);
-
         }
       }
     } catch (e, st) {
       print("Error creating initial booking: $e");
       print(st);
-      // Optionally show error snackbar
-      // SnackBarUtils.showErrorSnackBar("Failed to create booking. Please try again.");
     }
   }
 
@@ -456,14 +467,20 @@ class PaymentMethodController extends GetxController {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Refresh cart
-                    cartController.getCartItems();
-                    // Clear selections if from Book A Court
+                    if (!isFromBookSession) {
+                      final cart = _cartController;
+                      if (cart != null) cart.getCartItems();
+                    } else {
+                      directBookingPayload = null;
+                      if (Get.isRegistered<BookSessionController>()) {
+                        Get.find<BookSessionController>().clearAllSelections();
+                      }
+                    }
                     if (isFromBookACourt && bookACourtController != null) {
                       bookACourtController!.clearAllSelections();
                     }
-                    Get.back(); // Close dialog
-                    Get.offAllNamed(RoutesName.bottomNav); // Go to home
+                    Get.back();
+                    Get.offAllNamed(RoutesName.bottomNav);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryColor,

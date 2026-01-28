@@ -158,6 +158,15 @@ class AddPlayerController extends GetxController {
             );
           }
         }
+   else if (bookingHistoryController != null) {
+          final added = await addPlayer();
+          if (added) {
+            CustomLogger.logMessage(
+              msg: "Guest User Created & Added $body",
+              level: LogLevel.info,
+            );
+          }
+        }
 
         return;
       }
@@ -275,6 +284,18 @@ class AddPlayerController extends GetxController {
         await openMatchBookingController?.fetchOpenMatchesBooking(type: "upcoming");
         await openMatchForAllCourtController?.fetchMatchesForSelection();
         await scoreBoardController?.fetchScoreBoard();
+        if (bookingHistoryController != null) {
+          bookingHistoryController!.fetchBookings("upcoming");
+          CustomLogger.logMessage(
+            msg: "BookingHistoryController fetchBookings called",
+            level: LogLevel.info,
+          );
+        } else {
+          CustomLogger.logMessage(
+            msg: "BookingHistoryController is null",
+            level: LogLevel.warning,
+          );
+        }
 
         // Return success to caller so it can refresh immediately
         Get.back(result: true);
@@ -627,8 +648,8 @@ class AddPlayerController extends GetxController {
     }
 
     if (args["needBookingHistory"] == true &&
-        Get.isRegistered<BookingHistoryController>()) {
-      bookingHistoryController = Get.find<BookingHistoryController>();
+        Get.isRegistered<BookingHistoryController>(tag: 'booking_history')) {
+      bookingHistoryController = Get.find<BookingHistoryController>(tag: 'booking_history');
     }
 
     // Check if login user wants to add themselves

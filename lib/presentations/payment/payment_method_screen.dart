@@ -16,7 +16,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
 
   @override
   Widget build(BuildContext context) {
-    final CartController cartController = Get.find<CartController>();
+    final CartController? cartController =
+        Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
 
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
@@ -76,7 +77,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     );
   }
 
-  Widget _buildPaymentSummary(BuildContext context, CartController cartController) {
+  Widget _buildPaymentSummary(BuildContext context, CartController? cartController) {
     final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>() 
         ? Get.find<BookACourtController>() 
         : null;
@@ -372,11 +373,12 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     ));
   }
 
-  Widget _buildPaymentButton(BuildContext context, CartController cartController) {
+  Widget _buildPaymentButton(BuildContext context, CartController? cartController) {
     final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>() 
         ? Get.find<BookACourtController>() 
         : null;
     final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
+    final bool isFromBookSession = controller.isFromBookSession;
     
     return Container(
       padding: EdgeInsets.all(Get.width * 0.05),
@@ -392,8 +394,10 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
       ),
       child: Obx(() {
         final int totalAmount = isFromBookACourt
-            ? bookACourtController.totalAmount.value
-            : cartController.totalPrice.value;
+            ? (bookACourtController?.totalAmount.value ?? 0)
+            : isFromBookSession
+                ? (controller.walletAmountUsed.value + controller.razorpayAmountUsed.value).toInt()
+                : (cartController?.totalPrice.value ?? 0);
         
         return CustomButton(
           width: Get.width,
@@ -403,17 +407,13 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
               return;
             }
 
-          if (!isFromBookACourt) {
-            if (cartController.cartItems.isEmpty) {
-              // SnackBarUtils.showWarningSnackBar("Cart is empty");
+            if (!isFromBookACourt && !isFromBookSession && (cartController?.cartItems.isEmpty ?? true)) {
               return;
             }
-          }
 
-            // Use Razorpay payment for both platforms
             await controller.startPayment();
           },
-          child: controller.isProcessing.value || cartController.isBooking.value
+          child: controller.isProcessing.value || (cartController?.isBooking.value ?? false)
               ? LoadingAnimationWidget.waveDots(
             color: AppColors.whiteColor,
             size: 45,

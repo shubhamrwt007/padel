@@ -966,40 +966,45 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   List<Widget> _buildAddButtonsFromScoreboard(dynamic booking, String bookingType) {
-    int totalPlayers = 0;
+    int teamAPlayers = 0;
+    int teamBPlayers = 0;
     
     // Count players from booking.teamA and booking.teamB directly
-    totalPlayers = (booking.teamA?.length ?? 0) + (booking.teamB?.length ?? 0);
+    teamAPlayers = booking.teamA?.length ?? 0;
+    teamBPlayers = booking.teamB?.length ?? 0;
     
     // Fallback to openMatchId if no players found
-    if (totalPlayers == 0) {
+    if (teamAPlayers == 0 && teamBPlayers == 0) {
       final openMatchId = booking.openMatchId;
       if (openMatchId != null) {
-        totalPlayers = (openMatchId.teamA?.length ?? 0) + (openMatchId.teamB?.length ?? 0);
+        teamAPlayers = openMatchId.teamA?.length ?? 0;
+        teamBPlayers = openMatchId.teamB?.length ?? 0;
       }
     }
     
     // Fallback to scoreboard if still no players found
-    if (totalPlayers == 0) {
+    if (teamAPlayers == 0 && teamBPlayers == 0) {
       final scoreboard = booking.scoreboard;
-      if (scoreboard?.teams != null) {
-        for (var team in scoreboard.teams) {
-          totalPlayers += (team.players?.length ?? 0) as int;
-        }
+      if (scoreboard?.teams != null && scoreboard.teams.length >= 2) {
+        teamAPlayers = scoreboard.teams[0].players?.length ?? 0;
+        teamBPlayers = scoreboard.teams[1].players?.length ?? 0;
       }
     }
 
-    // Ensure minimum 4 total avatars (players + add buttons)
-    int remainingSlots = 4 - totalPlayers;
-    if (remainingSlots < 0) remainingSlots = 0;
-    if (totalPlayers + remainingSlots < 4) {
-      remainingSlots = 4 - totalPlayers;
+    List<Widget> addButtons = [];
+    int totalPlayerIndex = teamAPlayers + teamBPlayers;
+    
+    // Add buttons for remaining slots (4 total slots)
+    for (int i = totalPlayerIndex; i < 4; i++) {
+      // First 2 slots (index 0,1) are Team A, next 2 slots (index 2,3) are Team B
+      String teamName = i < 2 ? "team a" : "team b";
+      addButtons.add(_buildAvailableCircleFromScoreboard(bookingType, booking: booking, slotIndex: i, teamName: teamName));
     }
 
-    return List.generate(remainingSlots, (index) => _buildAvailableCircleFromScoreboard(bookingType, booking: booking));
+    return addButtons;
   }
 
-  Widget _buildAvailableCircleFromScoreboard(String bookingType, {dynamic booking}) {
+  Widget _buildAvailableCircleFromScoreboard(String bookingType, {dynamic booking, int? slotIndex, String? teamName}) {
     final isBlueTheme = bookingType.toLowerCase() == "normal";
     return GestureDetector(
       onTap: () {
@@ -1009,14 +1014,15 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
           final bookingId = booking.sId ??"";
           final isMatchCreator = _isMatchCreator(booking);
           final isLoginUserInMatch = _isLoginUserInMatch(booking);
+          final selectedTeam = teamName ?? "team a";
 
           if (isMatchCreator) {
-            Get.bottomSheet(AppPlayersBottomSheetScore(matchId: matchId, teamName: "teamA",bookingId:bookingId ,), isScrollControlled: true);
+            Get.bottomSheet(AppPlayersBottomSheetScore(matchId: matchId, teamName: selectedTeam, bookingId: bookingId), isScrollControlled: true);
           } else {
             AddPlayerBottomSheet.show(
               context,
               arguments: {
-                "team": "teamA",
+                "team": selectedTeam == "team a" ? "teamA" : "teamB",
                 "matchId": matchId,
                 "scoreBoardId": scoreboardId,
                 "needOpenMatchesForAllCourts": true,
