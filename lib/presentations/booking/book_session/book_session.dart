@@ -1622,7 +1622,7 @@ class BookSession extends StatelessWidget {
                         "Please select at least one slot before booking.");
                     return;
                   }
-                  controller.addToCart();
+                  controller.proceedToPayment();
                 },
                 child: controller.cartLoader.value
                     ? LoadingAnimationWidget.waveDots(

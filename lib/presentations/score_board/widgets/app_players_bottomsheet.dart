@@ -412,6 +412,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                 "team": teamName,
                 "matchId": matchId,
                 "needAsGuest": true,
+                "needBookingHistory":true,
                 "scoreBoardId": matchId,
                 "openMatchId": openMatchId ?? "",
                 "bookingId": bookingId

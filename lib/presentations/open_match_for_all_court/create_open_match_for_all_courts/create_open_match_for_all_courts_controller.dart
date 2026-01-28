@@ -1,4 +1,5 @@
 import 'package:easy_date_timeline/easy_date_timeline.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'dart:developer';
 import 'package:intl/intl.dart';
@@ -283,24 +284,24 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           courtName: '',
           clubName: 'Sample Club',
           slots: [
-            Slots(sId: 'slot1', time: '6:00 AM', amount: 400, status: 'available'),
-            Slots(sId: 'slot2', time: '7:00 AM', amount: 400, status: 'available'),
-            Slots(sId: 'slot3', time: '8:00 AM', amount: 500, status: 'available'),
-            Slots(sId: 'slot4', time: '9:00 AM', amount: 500, status: 'available'),
-            Slots(sId: 'slot5', time: '10:00 AM', amount: 500, status: 'available'),
-            Slots(sId: 'slot6', time: '11:00 AM', amount: 500, status: 'available'),
-            Slots(sId: 'slot7', time: '12:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot8', time: '1:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot9', time: '2:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot10', time: '3:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot11', time: '4:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot12', time: '5:00 PM', amount: 600, status: 'available'),
-            Slots(sId: 'slot13', time: '6:00 PM', amount: 700, status: 'available'),
-            Slots(sId: 'slot14', time: '7:00 PM', amount: 700, status: 'available'),
-            Slots(sId: 'slot15', time: '8:00 PM', amount: 700, status: 'available'),
-            Slots(sId: 'slot16', time: '9:00 PM', amount: 700, status: 'available'),
-            Slots(sId: 'slot17', time: '10:00 PM', amount: 700, status: 'available'),
-            Slots(sId: 'slot18', time: '11:00 PM', amount: 700, status: 'available'),
+            Slots(sId: 'slot1', time: '5:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot2', time: '6:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot3', time: '7:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot4', time: '8:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot5', time: '9:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot6', time: '10:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot7', time: '11:00 AM', amount: 0, status: 'available'),
+            Slots(sId: 'slot8', time: '12:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot9', time: '1:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot10', time: '2:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot11', time: '3:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot12', time: '4:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot13', time: '5:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot14', time: '6:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot15', time: '7:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot16', time: '8:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot17', time: '9:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot18', time: '10:00 PM', amount: 0, status: 'available'),
           ],
         ),
       ],
@@ -359,10 +360,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       log('Error in bulk delete on back: $e');
     }
   }
-
-
-
-
 
   void refreshSlots({bool showUnavailable = false}) {
     isLoadingCourts.value = true;
@@ -1615,4 +1612,30 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       Get.delete<QuestionsBottomsheetController>(tag: 'questions');
     });
   }
+
+  ///New Options----------------------------------------------------------------
+  final selectedIndex = 0.obs; // 0 = Pay All, 1 = Pay Share
+  void select(int index) {
+    selectedIndex.value = index;
+  }
+  void onNextPressed() {
+    if (selectedIndex.value == 0) {
+      Get.back();
+      onNext();
+    } else if (selectedIndex.value == 1) {
+      Fluttertoast.showToast(
+        msg: "Coming Soon",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AppColors.primaryColor,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 3,
+      );
+
+    } else {
+      Get.snackbar('Error', 'Please select an option');
+    }
+  }
+
 }

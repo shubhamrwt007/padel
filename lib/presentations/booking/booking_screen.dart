@@ -241,69 +241,69 @@ class BookingScreen extends GetView<BookingController> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    GestureDetector(
-                                      onTap: () => Get.to(() => CartScreen(buttonType: "true")),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: isCollapsed
-                                              ? Colors.grey.withValues(alpha: 0.1)
-                                              : AppColors.whiteColor,
-                                          shape: BoxShape.circle,
-                                          boxShadow: isCollapsed
-                                              ? []
-                                              : [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(alpha: 0.1),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Stack(
-                                          clipBehavior: Clip.none,
-                                          children: [
-                                            Icon(
-                                              Icons.shopping_cart_outlined,
-                                              color: iconColor,
-                                              size: 22,
-                                            ),
-                                            Positioned(
-                                              right: -6,
-                                              top: -6,
-                                              child: Obx(() {
-                                                final slotCount = Get.find<CartController>()
-                                                    .totalSlot
-                                                    .value;
-                                                return slotCount > 0
-                                                    ? Container(
-                                                  padding: const EdgeInsets.all(4),
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.red,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  constraints: const BoxConstraints(
-                                                    minWidth: 18,
-                                                    minHeight: 18,
-                                                  ),
-                                                  child: Text(
-                                                    '$slotCount',
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                )
-                                                    : const SizedBox.shrink();
-                                              }),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                                    // const SizedBox(width: 12),
+                                    // GestureDetector(
+                                    //   onTap: () => Get.to(() => CartScreen(buttonType: "true")),
+                                    //   child: Container(
+                                    //     padding: const EdgeInsets.all(8),
+                                    //     decoration: BoxDecoration(
+                                    //       color: isCollapsed
+                                    //           ? Colors.grey.withValues(alpha: 0.1)
+                                    //           : AppColors.whiteColor,
+                                    //       shape: BoxShape.circle,
+                                    //       boxShadow: isCollapsed
+                                    //           ? []
+                                    //           : [
+                                    //         BoxShadow(
+                                    //           color: Colors.black.withValues(alpha: 0.1),
+                                    //           blurRadius: 4,
+                                    //           offset: const Offset(0, 2),
+                                    //         ),
+                                    //       ],
+                                    //     ),
+                                    //     child: Stack(
+                                    //       clipBehavior: Clip.none,
+                                    //       children: [
+                                    //         Icon(
+                                    //           Icons.shopping_cart_outlined,
+                                    //           color: iconColor,
+                                    //           size: 22,
+                                    //         ),
+                                    //         Positioned(
+                                    //           right: -6,
+                                    //           top: -6,
+                                    //           child: Obx(() {
+                                    //             final slotCount = Get.find<CartController>()
+                                    //                 .totalSlot
+                                    //                 .value;
+                                    //             return slotCount > 0
+                                    //                 ? Container(
+                                    //               padding: const EdgeInsets.all(4),
+                                    //               decoration: const BoxDecoration(
+                                    //                 color: Colors.red,
+                                    //                 shape: BoxShape.circle,
+                                    //               ),
+                                    //               constraints: const BoxConstraints(
+                                    //                 minWidth: 18,
+                                    //                 minHeight: 18,
+                                    //               ),
+                                    //               child: Text(
+                                    //                 '$slotCount',
+                                    //                 style: const TextStyle(
+                                    //                   color: Colors.white,
+                                    //                   fontSize: 10,
+                                    //                   fontWeight: FontWeight.bold,
+                                    //                 ),
+                                    //                 textAlign: TextAlign.center,
+                                    //               ),
+                                    //             )
+                                    //                 : const SizedBox.shrink();
+                                    //           }),
+                                    //         ),
+                                    //       ],
+                                    //     ),
+                                    //   ),
+                                    // ),
                                   ],
                                 ),
                               ],
