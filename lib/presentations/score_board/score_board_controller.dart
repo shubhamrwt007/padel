@@ -835,7 +835,7 @@ class ScoreBoardController extends GetxController {
   }
 
   ///Check if swapping is allowed----------------------------------------------
-  bool get canSwapPlayers => !isCompleted.value;
+  bool get canSwapPlayers => !isCompleted.value && !isGameStarted.value && currentPlayerIds.isNotEmpty;
 
   ///Check user's team and scoring permissions----------------------------------
   String get currentUserId => profileController.profileModel.value?.response?.sId ?? '';
@@ -862,7 +862,7 @@ class ScoreBoardController extends GetxController {
   var isRemovingPlayer = false.obs;
   
   /// Convert team name from "Team A"/"Team B" to "teamA"/"teamB" format
-  String _normalizeTeamName(String teamName) {
+  String normalizeTeamName(String teamName) {
     if (teamName.trim().toLowerCase() == 'team a') {
       return 'teamA';
     } else if (teamName.trim().toLowerCase() == 'team b') {
@@ -882,7 +882,7 @@ class ScoreBoardController extends GetxController {
     
     try {
       // Immediately update local UI first
-      final normalizedTeamName = _normalizeTeamName(teamName);
+      final normalizedTeamName = normalizeTeamName(teamName);
       final teamIndex = normalizedTeamName == 'teamA' ? 0 : 1;
       
       if (teamIndex < teams.length) {
@@ -992,7 +992,7 @@ class ScoreBoardController extends GetxController {
 
   ///Move Player to Empty Slot-------------------------------------------------
   void movePlayerToEmptySlot(String playerId, String targetTeam, int targetIndex) {
-    CustomLogger.logMessage(msg: 'movePlayerToEmptySlot called', level: LogLevel.info);
+    CustomLogger.logMessage(msg: 'movePlayerToEmptySlot called - playerId: $playerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
     try {
       // Find the player to move
       Map<String, dynamic>? playerToMove;
@@ -1012,25 +1012,36 @@ class ScoreBoardController extends GetxController {
         if (playerToMove != null) break;
       }
 
-      if (playerToMove == null) return;
+      if (playerToMove == null) {
+        CustomLogger.logMessage(msg: 'Player not found', level: LogLevel.error);
+        return;
+      }
 
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
+      
+      CustomLogger.logMessage(msg: 'Moving from team $sourceTeamIndex index $sourcePlayerIndex to team $targetTeamIndex index $targetIndex', level: LogLevel.info);
 
       // Remove player from source team
-      final sourceTeamPlayers = teams[sourceTeamIndex]['players'] as List;
+      final sourceTeamPlayers = List<Map<String, dynamic>>.from(teams[sourceTeamIndex]['players'] as List);
       sourceTeamPlayers.removeAt(sourcePlayerIndex);
+      teams[sourceTeamIndex]['players'] = sourceTeamPlayers;
 
       // Add player to target team at specific index
-      final targetTeamPlayers = teams[targetTeamIndex]['players'] as List;
-      if (targetIndex < targetTeamPlayers.length) {
-        targetTeamPlayers[targetIndex] = playerToMove;
-      } else {
+      final targetTeamPlayers = List<Map<String, dynamic>>.from(teams[targetTeamIndex]['players'] as List);
+      
+      // Insert at the correct position
+      if (targetIndex >= targetTeamPlayers.length) {
         targetTeamPlayers.add(playerToMove);
+      } else {
+        targetTeamPlayers.insert(targetIndex, playerToMove);
       }
+      
+      teams[targetTeamIndex]['players'] = targetTeamPlayers;
+      
       hasPlayerSwaps.value = true;
       teams.refresh();
-      CustomLogger.logMessage(msg: 'Player moved to empty slot successfully', level: LogLevel.info);
+      CustomLogger.logMessage(msg: 'Player moved to slot successfully', level: LogLevel.info);
     } catch (e) {
       CustomLogger.logMessage(msg: 'Move player error: $e', level: LogLevel.error);
     }
@@ -1069,6 +1080,7 @@ class ScoreBoardController extends GetxController {
       if (response.success == true) {
         hasPlayerSwaps.value = false;
         isShuffleMode.value = false;
+        SnackBarUtils.showInfoSnackBar("Players shuffled successfully");
         await fetchScoreBoard();
         CustomLogger.logMessage(msg: 'API call successful - shuffle mode disabled', level: LogLevel.info);
       } else {
