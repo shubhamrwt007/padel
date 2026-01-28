@@ -259,10 +259,13 @@ class AddPlayerController extends GetxController {
   ///Add Player In Open Match Api-----------------------------------------------
   Future<bool> addPlayer() async {
     try {
+      // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
+      String normalizedTeam = selectedTeam.value.trim().toLowerCase() == 'team a' ? 'teamA' : 'teamB';
+      
       final body = {
         "matchId": matchId.value,
         "playerId": playerId.value,
-        "team": selectedTeam.value
+        "team": normalizedTeam
       };
       final response = await repository.addPlayerForOpenMatch(body: body);
 
@@ -450,13 +453,16 @@ class AddPlayerController extends GetxController {
   var openMatchId = ''.obs;
   Future<bool> addGuestPlayer() async {
     try {
+      // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
+      String normalizedTeam = selectedTeam.value.trim().toLowerCase() == 'team a' ? 'teamA' : 'teamB';
+      
       final body = {
         "bookingId":bookingId.value,
         "scoreboardId": scoreboardId.value,
         if (openMatchId.value.isNotEmpty) "openMatchId": openMatchId.value,
         "teams": [
           {
-            "name": selectedTeam.value,
+            "name": normalizedTeam,
             "players": [
               {
                 "playerId": playerId.value

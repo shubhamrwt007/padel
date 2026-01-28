@@ -302,11 +302,15 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         onTap: (isRequested || isRequesting || isAlreadyInMatch) ? null : () async {
           controller.requestingPlayerId.value = playerId;
           
+          // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
+          String normalizedTeam = teamName.trim().toLowerCase() == 'team a' ? 'teamA' : 'teamB';
+          
           print("=== REQUEST BUTTON TAPPED ===");
           print("bookingType: ${controller.bookingType.value}");
           print("bookingId: $bookingId");
           print("playerId: $playerId");
-          print("team: $team");
+          print("original teamName: $teamName");
+          print("normalized team: $normalizedTeam");
           
           bool success = false;
           
@@ -315,14 +319,14 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             final addPlayerController = Get.put(AddPlayerController());
             addPlayerController.matchId.value = (openMatchId?.isEmpty ?? true) ? matchId : openMatchId!;
             addPlayerController.playerId.value = playerId;
-            addPlayerController.selectedTeam.value = team;
+            addPlayerController.selectedTeam.value = normalizedTeam;
             success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest', bookingId: bookingId);
           } else {
             print("Calling requestToJoinBookingModel API");
             final body = {
               "bookingId": bookingId,
               "playerId": playerId,
-              "preferredTeam": team,
+              "preferredTeam": normalizedTeam,
             };
             print("Request body: $body");
             try {
