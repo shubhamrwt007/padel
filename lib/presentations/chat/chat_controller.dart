@@ -1176,7 +1176,7 @@ class ChatController extends GetxController {
       );
     }
     
-    messageController.dispose();
+    // messageController.dispose();
     scrollController.dispose();
     super.onClose();
   }

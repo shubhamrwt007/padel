@@ -1316,34 +1316,42 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   void _navigateToChat(dynamic booking) {
-    final scoreboard = booking.scoreboard;
-    if (scoreboard?.teams == null) {
-      // Get.snackbar("Error", "No team data available");
+    // Get teamA and teamB data directly from booking response
+    final teamAPlayers = booking.teamA ?? [];
+    final teamBPlayers = booking.teamB ?? [];
+    
+    if (teamAPlayers.isEmpty && teamBPlayers.isEmpty) {
+      Get.snackbar("Error", "No team data available");
       return;
     }
 
     List<Map<String, dynamic>> teamAData = [];
     List<Map<String, dynamic>> teamBData = [];
 
-    for (var team in scoreboard.teams) {
-      if (team.players != null) {
-        for (var player in team.players) {
-          final playerData = {
-            'userId': player.playerId?.sId ?? '',
-            'name': player.playerId?.name ?? player.name ?? '',
-            'lastName': '',
-          };
-          if (teamAData.length <= teamBData.length) {
-            teamAData.add(playerData);
-          } else {
-            teamBData.add(playerData);
-          }
-        }
-      }
+    // Process Team A players
+    for (var teamPlayer in teamAPlayers) {
+      final userId = teamPlayer.userId;
+      final playerData = {
+        'userId': userId?.sId ?? '',
+        'name': userId?.name ?? '',
+        'lastName': '',
+      };
+      teamAData.add(playerData);
+    }
+
+    // Process Team B players
+    for (var teamPlayer in teamBPlayers) {
+      final userId = teamPlayer.userId;
+      final playerData = {
+        'userId': userId?.sId ?? '',
+        'name': userId?.name ?? '',
+        'lastName': '',
+      };
+      teamBData.add(playerData);
     }
 
     Get.toNamed(RoutesName.chat, arguments: {
-      "matchID": booking.sId ?? "",
+      "matchID": booking?.openMatchId?.sId ?? "",
       "teamA": teamAData,
       "teamB": teamBData,
     });
