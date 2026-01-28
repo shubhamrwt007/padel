@@ -104,7 +104,7 @@ class ScoreBoardScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ),
+          ).paddingOnly(bottom: 10 ),
         )
             : const SizedBox.shrink();
       }),
@@ -501,9 +501,7 @@ class ScoreBoardScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              color: Colors.transparent,
-              width: Get.width * 0.58,
+            Expanded(
               child: Obx(() {
                 String raw = controller.matchDate.value.toString().trim();
 
@@ -535,22 +533,20 @@ class ScoreBoardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 );
               }),
             ),
+            const SizedBox(width: 8),
             Obx(
-                  () => Container(
-                width: Get.width * 0.3,
-                alignment: AlignmentGeometry.centerRight,
-                color: Colors.transparent,
-                child: Text(
+                  () => Text(
                   overflow: TextOverflow.ellipsis,
                   controller.clubName.value,
                   style: Get.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
             )
           ],
         ),
@@ -1400,20 +1396,29 @@ class ScoreBoardScreen extends StatelessWidget {
                     }
                     return const SizedBox.shrink();
                   }),
-                  Text(
-                    controller.capitalizeFirstWord(teamAPlayers[0]["name"].toString().split(' ').first.trim()),
-                    textAlign: TextAlign.center,
-                    style: Get.textTheme.bodySmall!.copyWith(
-                      color: AppColors.textColor,
-                    ),
-                  ),
-                  Text(
-                    controller.capitalizeFirstWord(teamAPlayers[1]["name"].toString().split(' ').first.trim()),
-                    textAlign: TextAlign.center,
-                    style: Get.textTheme.bodySmall!.copyWith(
-                      color: AppColors.textColor,
-                    ),
-                  ),
+                  Obx(() {
+                    bool isLoser = controller.isCompleted.value &&
+                        controller.winner.value == "Team B";
+                    
+                    return Column(
+                      children: [
+                        Text(
+                          controller.capitalizeFirstWord(teamAPlayers[0]["name"].toString().split(' ').first.trim()),
+                          textAlign: TextAlign.center,
+                          style: Get.textTheme.bodySmall!.copyWith(
+                            color: isLoser ? Colors.grey : AppColors.textColor,
+                          ),
+                        ),
+                        Text(
+                          controller.capitalizeFirstWord(teamAPlayers[1]["name"].toString().split(' ').first.trim()),
+                          textAlign: TextAlign.center,
+                          style: Get.textTheme.bodySmall!.copyWith(
+                            color: isLoser ? Colors.grey : AppColors.textColor,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
@@ -1486,14 +1491,10 @@ class ScoreBoardScreen extends StatelessWidget {
                     }
                     return const SizedBox.shrink();
                   }),
-                  // Show player names only if not loser
+                  // Show player names
                   Obx(() {
                     bool isLoser = controller.isCompleted.value &&
                         controller.winner.value == "Team A";
-                    
-                    if (isLoser) {
-                      return const SizedBox.shrink();
-                    }
                     
                     return Column(
                       children: [
@@ -1501,14 +1502,14 @@ class ScoreBoardScreen extends StatelessWidget {
                           controller.capitalizeFirstWord(teamBPlayers[0]["name"].toString().split(' ').first.trim()),
                           textAlign: TextAlign.center,
                           style: Get.textTheme.bodySmall!.copyWith(
-                            color: AppColors.textColor,
+                            color: isLoser ? Colors.grey : AppColors.textColor,
                           ),
                         ),
                         Text(
                           controller.capitalizeFirstWord(teamBPlayers[1]["name"].toString().split(' ').first.trim()),
                           textAlign: TextAlign.center,
                           style: Get.textTheme.bodySmall!.copyWith(
-                            color: AppColors.textColor,
+                            color: isLoser ? Colors.grey : AppColors.textColor,
                           ),
                         ),
                       ],
