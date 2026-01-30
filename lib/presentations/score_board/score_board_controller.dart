@@ -275,64 +275,37 @@ class ScoreBoardController extends GetxController {
         courtName.value = item.courtName ?? "";
 
         teams.clear();
+        final teamAPlayers = <Map<String, dynamic>>[];
+        final teamBPlayers = <Map<String, dynamic>>[];
 
         if (item.teams != null && item.teams!.isNotEmpty) {
-          CustomLogger.logMessage(
-              msg: "Processing ${item.teams!.length} teams",
-              level: LogLevel.info);
-
-          for (int teamIndex = 0; teamIndex < item.teams!.length; teamIndex++) {
-            var t = item.teams![teamIndex];
-
-            CustomLogger.logMessage(
-                msg:
-                "Team ${teamIndex + 1}: ${t.name}, players: ${t.players?.length ?? 0}",
-                level: LogLevel.info);
-
+          for (var t in item.teams!) {
             final playersList = <Map<String, dynamic>>[];
-
             if (t.players != null) {
               for (var p in t.players!) {
-                String fullLevel =
-                    p.playerId?.level ?? p.playerId?.playerLevel ?? "";
-                String levelCode = fullLevel.contains(' – ')
-                    ? fullLevel.split(' – ')[0]
-                    : fullLevel;
-
-                final playerData = {
-                  "playerId": p.playerId?.sId ?? p.playerId?.sId ?? "",
+                String fullLevel = p.playerId?.level ?? p.playerId?.playerLevel ?? "";
+                String levelCode = fullLevel.contains(' – ') ? fullLevel.split(' – ')[0] : fullLevel;
+                playersList.add({
+                  "playerId": p.playerId?.sId ?? "",
                   "name": p.playerId?.name ?? "Unknown",
                   "lastName": p.playerId?.lastName ?? "",
                   "pic": p.playerId?.profilePic ?? "",
                   "level": levelCode,
-                };
-
-                playersList.add(playerData);
-
-                CustomLogger.logMessage(
-                    msg:
-                    "  Player: ${playerData['name']}, Level: ${playerData['level']}",
-                    level: LogLevel.info);
+                });
               }
             }
-
-            teams.add({
-              "name": t.name ?? "Team ${teamIndex + 1}",
-              "players": playersList,
-            });
+            // Check team name - case insensitive and handle both "Team A"/"teamA" formats
+            final teamNameLower = (t.name ?? '').toLowerCase().replaceAll(' ', '');
+            if (teamNameLower == 'teama') {
+              teamAPlayers.addAll(playersList);
+            } else if (teamNameLower == 'teamb') {
+              teamBPlayers.addAll(playersList);
+            }
           }
         }
 
-        if (teams.length < 2) {
-          CustomLogger.logMessage(
-              msg:
-              "Only ${teams.length} team(s) in response, adding empty Team B",
-              level: LogLevel.warning);
-          teams.add({
-            "name": "Team B",
-            "players": [],
-          });
-        }
+        teams.add({"name": "Team A", "players": teamAPlayers});
+        teams.add({"name": "Team B", "players": teamBPlayers});
 
         sets.clear();
 
