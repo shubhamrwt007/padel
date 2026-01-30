@@ -885,6 +885,12 @@ class BookACourtController extends GetxController {
     isSlotsCollapsed.value = false;
   }
 
+  void clearAvailableCourtsOnly() {
+    realCourtSelections.clear();
+    courtsByDuration.value = null;
+    recalculateRealCourtTotalAmount();
+  }
+
   // Fetch courts by duration when all required data is available
   void fetchCourtsIfReady() {
     if (selectedDate.value != null && selectedDuration.value.isNotEmpty && selectedTimeSlot.value.isNotEmpty) {
@@ -1509,7 +1515,8 @@ class BookACourtController extends GetxController {
           "slot": slotData,
           "register_club_id": clubId,
           "ownerId": specificCourtData.registerClub?.ownerId ?? "",
-          "matchType":matchType.value
+          "matchType":matchType.value,
+
         };
         
         log('Booking payload ownerId: ${specificCourtData.registerClub?.ownerId}');

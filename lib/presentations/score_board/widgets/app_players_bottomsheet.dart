@@ -64,8 +64,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   final String? bookingId;
   final String? bookingType;
   final List<String>? currentPlayerIds;
+  final bool showAddGuestButton;
   
-  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds});
+  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds, this.showAddGuestButton = true});
   
   final AppPlayersController controller = Get.put(AppPlayersController());
 
@@ -317,7 +318,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           if (controller.bookingType.value == 'openMatch') {
             print("Calling requestPlayerForOpenMatch API");
             final addPlayerController = Get.put(AddPlayerController());
-            addPlayerController.matchId.value = (openMatchId?.isEmpty ?? true) ? matchId : openMatchId!;
+            addPlayerController.matchId.value =  openMatchId??"";
             addPlayerController.playerId.value = playerId;
             addPlayerController.selectedTeam.value = normalizedTeam;
             success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest', bookingId: bookingId);
@@ -404,39 +405,40 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         //   child: Text('Invite Player through whatsapp', style: style),
         // ),
         // const SizedBox(height: 4),
-        ElevatedButton(
-          onPressed: () {
-            AddPlayerBottomSheet.show(
-              context,
-              arguments: {
-                "team": teamName,
-                "matchId": matchId,
-                "needAsGuest": true,
-                "needBookingHistory":true,
-                "scoreBoardId": matchId,
-                "openMatchId": openMatchId ?? "",
-                "bookingId": bookingId
-              },
-            );
-            // Get.toNamed(
-            //   RoutesName.addPlayer,
-            //   arguments: {
-            //     "team": teamName,
-            //     "matchId": matchId,
-            //     "needAsGuest": true,
-            //     "scoreBoardId": matchId,
-            //   },
-            // );
-          },
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(45),
-            backgroundColor: const Color(0xff2D3EBE),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
+        if (showAddGuestButton)
+          ElevatedButton(
+            onPressed: () {
+              AddPlayerBottomSheet.show(
+                context,
+                arguments: {
+                  "team": teamName,
+                  "matchId": matchId,
+                  "needAsGuest": true,
+                  "needBookingHistory":true,
+                  "scoreBoardId": matchId,
+                  "openMatchId": openMatchId ?? "",
+                  "bookingId": bookingId
+                },
+              );
+              // Get.toNamed(
+              //   RoutesName.addPlayer,
+              //   arguments: {
+              //     "team": teamName,
+              //     "matchId": matchId,
+              //     "needAsGuest": true,
+              //     "scoreBoardId": matchId,
+              //   },
+              // );
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(45),
+              backgroundColor: const Color(0xff2D3EBE),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
             ),
+            child: Text('Add Guest  →', style: style),
           ),
-          child: Text('Add Guest  →', style: style),
-        ),
       ],
     );
   }

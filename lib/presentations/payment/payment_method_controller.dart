@@ -176,6 +176,8 @@ class PaymentMethodController extends GetxController {
           payload['razorpay_payment_id'] = razorpayPaymentId;
           payload['razorpay_order_id'] = razorpayOrderId;
           payload['initiatePayment'] = true;
+          payload['type'] = 'booked';
+
         }
       }
 

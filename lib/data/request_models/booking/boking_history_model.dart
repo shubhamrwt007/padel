@@ -60,6 +60,7 @@ class BookingHistoryData {
   String? ownerId;
   String? matchType;
   String? updatedAt;
+  bool? isOpenMatch;
   int? iV;
   int? duration;
   dynamic customerReview;
@@ -84,6 +85,7 @@ class BookingHistoryData {
     this.ownerId,
     this.matchType,
     this.updatedAt,
+    this.isOpenMatch,
     this.iV,
     this.duration,
     this.customerReview,
@@ -120,6 +122,7 @@ class BookingHistoryData {
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
     duration = json['duration'];
+    isOpenMatch = json['isOpenMatch'];
     customerReview = json['customerReview'];
 
     openMatchId = json['openMatchId'] != null
@@ -175,6 +178,7 @@ class BookingHistoryData {
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
     data['duration'] = duration;
+    data['isOpenMatch'] = isOpenMatch;
     data['customerReview'] = customerReview;
 
     if (openMatchId != null) {
@@ -435,6 +439,7 @@ class OpenMatchId {
   List<TeamPlayer>? teamB;
   String? createdBy;
   String? gender;
+  String? openMatchStatus;
   bool? status;
   bool? adminStatus;
   bool? isActive;
@@ -460,6 +465,7 @@ class OpenMatchId {
     this.adminStatus,
     this.isActive,
     this.isDeleted,
+    this.openMatchStatus,
     this.createdAt,
     this.updatedAt,
     this.iV,
@@ -500,6 +506,7 @@ class OpenMatchId {
     adminStatus = json['adminStatus'];
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
+    openMatchStatus = json['openMatchStatus'];
     createdAt = json['createdAt']?.toString();
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
@@ -523,6 +530,7 @@ class OpenMatchId {
     data['adminStatus'] = adminStatus;
     data['isActive'] = isActive;
     data['isDeleted'] = isDeleted;
+    data['openMatchStatus'] = openMatchStatus;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;

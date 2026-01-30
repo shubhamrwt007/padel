@@ -317,7 +317,8 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _clubTicketList() {
     return Obx(() {
-      final booking = controller.homeController.bookings.value?.data ?? [];
+      final allBookings = controller.homeController.bookings.value?.data ?? [];
+      final booking = allBookings.where((b) => b.isOpenMatch != true).toList();
       return SizedBox(
         height: 80,
         child: ListView.builder(
@@ -333,6 +334,7 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildBookingCard(BuildContext context, BookingHistoryData b) {
     final club = b.registerClubId;
+    final isOpenMatch = b.isOpenMatch;
 
     // Use the controller's method to check if booking is ongoing
     final isOngoing = controller.homeController.isBookingOngoing(b);
