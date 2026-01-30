@@ -1,16 +1,16 @@
 class AppEndpoints {
   AppEndpoints._();
   /// -----------------------Staging URL-------------------------------------------
-  static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
-  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
+  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
 
   // /// -----------------------New Live URL-------------------------------------------
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
   // ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
-  // static const String socketUrl = "http://192.168.0.129:5070";
+  static const String baseUrl = "http://192.168.0.137:5070/api/customer/";
+  static const String socketUrl = "http://192.168.0.137:5070";
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
   static const String logout = "${baseUrl}logout";
@@ -42,11 +42,14 @@ class AppEndpoints {
   static const String createAndGetSlotHistory = "${baseUrl}court/booking/createOrGetSlotHistory";
   static const String deleteSlotHistory = "${baseUrl}court/booking/deleteSlotHistory";
   static const String deleteBulkSlotHistory = "${baseUrl}court/booking/deleteBluckSlotHistory";
+
   ///Review---------------------------------------------------------------------
   static const String getReview = "${baseUrl}court/review/getReviews";
   static const String createReview = "${baseUrl}court/review/saveCustomerReview";
+
   ///Open Matches---------------------------------------------------------------
   static const String createMatches = "${baseUrl}court/openmatch/createOpenMatch";
+  static const String createOpenMatchSlotBookOnly = "${baseUrl}court/openmatch/create-openMatchOnly";
   static const String findNearByPlayer = "${baseUrl}court/openmatch/findNearByPLayers";
   static const String getCustomerNameByPhoneNumber = "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
   static const String withdrawRequest = "${baseUrl}court/openmatch/withDrawMatchRequest/";

@@ -111,41 +111,7 @@ class BookACourtScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
               _buildDatePicker(context),
-              fadeDivider().paddingOnly(bottom: 15),
-              Center(
-                child: Obx(() {
-                  final is30 = controller.is30Slots.value;
-
-                  return Transform.scale(
-                    scale: 0.7,
-                    child: ToggleButtons(
-                      isSelected: [is30, !is30],
-                      borderRadius: BorderRadius.circular(5),
-                      constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
-                      fillColor: Colors.transparent, // important
-                      selectedColor: Colors.white,
-                      color: Colors.black,
-                      textStyle: const TextStyle(fontSize: 12),
-                      onPressed: (index) {
-                        controller.is30Slots.value = index == 0;
-                        controller.updateDurationFromToggle();
-                        // Clear selections when duration changes
-                        controller.clearAllSelections();
-                      },
-                      children: [
-                        _buildGradientToggleChild(
-                          text: "30m",
-                          isSelected: is30,
-                        ),
-                        _buildGradientToggleChild(
-                          text: "60m",
-                          isSelected: !is30,
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
+              fadeDivider().paddingOnly(bottom: 10),
               Obx(() => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -153,28 +119,62 @@ class BookACourtScreen extends StatelessWidget {
                       controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
                       style: Get.textTheme.labelLarge
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      controller.toggleSlotsCollapse();
-                    },
-                    child: AnimatedRotation(
-                      turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 250),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
-                            shape: BoxShape.circle
-                        ),
-                        child: Icon(
-                          Icons.keyboard_arrow_up,
-                          size: 22,
-                          color: AppColors.whiteColor,
+                  Row(
+                    children: [
+                      Obx(() {
+                        final is30 = controller.is30Slots.value;
+
+                        return Transform.scale(
+                          scale: 0.7,
+                          child: ToggleButtons(
+                            isSelected: [is30, !is30],
+                            borderRadius: BorderRadius.circular(5),
+                            constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
+                            fillColor: Colors.transparent, // important
+                            selectedColor: Colors.white,
+                            color: Colors.black,
+                            textStyle: const TextStyle(fontSize: 12),
+                            onPressed: (index) {
+                              controller.is30Slots.value = index == 0;
+                              controller.updateDurationFromToggle();
+                            },
+                            children: [
+                              _buildGradientToggleChild(
+                                text: "Half",
+                                isSelected: is30,
+                              ),
+                              _buildGradientToggleChild(
+                                text: "Full",
+                                isSelected: !is30,
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      GestureDetector(
+                        onTap: () {
+                          controller.toggleSlotsCollapse();
+                        },
+                        child: AnimatedRotation(
+                          turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 250),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                shape: BoxShape.circle
+                            ),
+                            child: Icon(
+                              Icons.keyboard_arrow_up,
+                              size: 22,
+                              color: AppColors.whiteColor,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
-              )).paddingOnly(bottom: 10),
+              )).paddingOnly(bottom: 0),
               Obx(() => AnimatedSwitcher(
                 duration: const Duration(milliseconds: 400),
                 transitionBuilder: (Widget child, Animation<double> animation) {

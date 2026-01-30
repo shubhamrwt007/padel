@@ -72,6 +72,9 @@ class OpenMatchBookingData {
   bool? isDeleted;
   String? createdAt;
   String? updatedAt;
+  String? startTime;
+  String? endTime;
+  String? openMatchStatus;
   BookingId? bookingId;
   int? iV;
 
@@ -103,6 +106,9 @@ class OpenMatchBookingData {
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
+    this.startTime,
+    this.endTime,
+    this.openMatchStatus,
     this.bookingId,
     this.iV,
   });
@@ -136,6 +142,9 @@ class OpenMatchBookingData {
     isDeleted = json['isDeleted'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
+    startTime = json['startTime'];
+    endTime = json['endTime'];
+    openMatchStatus = json['openMatchStatus'];
     bookingId = json['bookingId'] != null
         ? BookingId.fromJson(json['bookingId'])
         : null;
@@ -171,6 +180,9 @@ class OpenMatchBookingData {
         'isDeleted': isDeleted,
         'createdAt': createdAt,
         'updatedAt': updatedAt,
+        'startTime': startTime,
+        'endTime': endTime,
+        'openMatchStatus': openMatchStatus,
         'bookingId': bookingId?.toJson(),
 
     '__v': iV,
