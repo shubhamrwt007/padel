@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:padel_mobile/data/request_models/booking/update_new_court_booking_model.dart';
+import 'package:padel_mobile/data/request_models/booking/update_refund_amount_model.dart';
 import '../../core/endpoitns.dart';
 import '../../core/network/dio_client.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
@@ -131,6 +133,75 @@ class BookingHistoryRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Update Booking Status failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      return null;
+    }
+  }
+
+  ///Update New Court Booking Model---------------------------------------------
+  Future<UpdateNewCourtBookingModel?> updateNewCourtBookingModel({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Update New Court Booking Model request body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.put(
+        AppEndpoints.updateMultipleCourtIds,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Update New Court Booking Model Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return UpdateNewCourtBookingModel.fromJson(response.data);
+      } else {
+        throw Exception("Update New Court Booking Model Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Update New Court Booking Model failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      return null;
+    }
+  }
+
+
+  ///Update Refund Open Match Model---------------------------------------------
+  Future<UpdateRefundAmountModel?> updateRefundAmount({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Update Refund Open Match Model request body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.put(
+        AppEndpoints.refundOpenMatch,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Update Refund Open Match Model Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return UpdateRefundAmountModel.fromJson(response.data);
+      } else {
+        throw Exception("Update Refund Open Match Model Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Update Refund Open Match Model failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

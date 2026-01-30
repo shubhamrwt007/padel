@@ -141,7 +141,7 @@ class MainHomeScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet2,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
+                      formatWalletAmount(walletController.walletBalance.value ?? 0),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,

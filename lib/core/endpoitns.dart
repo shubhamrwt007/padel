@@ -8,9 +8,10 @@ class AppEndpoints {
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
 
-  // ///-----------------------Local URL-------------------------------------------
+  ///-----------------------Local URL-------------------------------------------
   // static const String baseUrl = "http://192.168.0.137:5070/api/customer/";
   // static const String socketUrl = "http://192.168.0.137:5070";
+
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
   static const String logout = "${baseUrl}logout";
@@ -32,8 +33,11 @@ class AppEndpoints {
   static const String getCartItems = "${baseUrl}court/cart/getCartForUser";
   static const String addCartItems = "${baseUrl}court/cart/createCarts";
   static const String removeCartItems = "${baseUrl}court/cart/removeUserCart";
+  ///Booking
   static const String cancelBooking = "${baseUrl}court/booking/updateBookingStatus";
   static const String carteBooking = "${baseUrl}court/booking/createBooking";
+  static const String updateMultipleCourtIds = "${baseUrl}court/openmatch/updateMultipleCourtIds";
+  static const String refundOpenMatch = "${baseUrl}court/openmatch/refundOpenMatch";
   static const String bookingUpdate = "${baseUrl}court/booking/bookingUpdate";
   static const String convertBookingToOpenMatch = "${baseUrl}court/booking/convertBookingToOpenMatch";
   static const String pushOpenMatchIdInScoreCard = "${baseUrl}court/scoreboard/pushOpenMatchIdInScoreCard";

@@ -354,6 +354,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         });
       }
       
+      // Always cleanup on back - this is for navigation cleanup
       await _homeRepository.deleteSlotHistory(data: {"slots": slots});
       log('Bulk delete slot history on back: $slots');
     } catch (e) {
@@ -423,11 +424,16 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   }
 
 
-  // API method for deleting slot history (batch)
-  Future<void> deleteSlotHistory({required List<Map<String, dynamic>> slots}) async {
+  // API method for deleting slot history (batch) - only for "Pay for All Players"
+  Future<void> deleteSlotHistory({required List<Map<String, dynamic>> slots, bool isPayForAll = false}) async {
+    if (!isPayForAll) {
+      log('deleteSlotHistory skipped - not Pay for All Players option');
+      return;
+    }
+    
     try {
       log('deleteSlotHistory called with body: $slots');
-      await _homeRepository.deleteSlotHistory(data: slots);
+      await _homeRepository.deleteSlotHistory(data: {"slots": slots});
     } catch (e) {
       log('Error in deleteSlotHistory: $e');
     }
@@ -1435,6 +1441,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   Future<bool> processSlotHistoryForNext() async {
     if (realCourtSelections.isEmpty) return false;
 
+    // Only call createAndGetSlotHistory for "Pay for All Players" option
+    if (!isPayForAllPlayersSelected) {
+      log('Skipping createAndGetSlotHistory - Pay your share only selected');
+      return true; // Return true to continue the flow without API call
+    }
+
     try {
       final slots = <Map<String, dynamic>>[];
       
@@ -1644,6 +1656,10 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   void select(int index) {
     selectedIndex.value = index;
   }
+  
+  // Helper method to check if "Pay for All Players" option is selected
+  bool get isPayForAllPlayersSelected => selectedIndex.value == 0;
+  
   void onNextPressed() {
     if (selectedIndex.value == 0) {
       // Pay for All Players - use createMatches endpoint
