@@ -38,6 +38,11 @@
             </intent-filter>
         </activity>
         
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        
         <!-- Razorpay Activity -->
         <activity
             android:name="com.razorpay.CheckoutActivity"
