@@ -1048,6 +1048,7 @@ class BookSessionController extends GetxController {
         'duration': duration,
         'totalTime': duration,
         'bookingTime': bookingTime,
+        'type':"booked"
       });
     }
 

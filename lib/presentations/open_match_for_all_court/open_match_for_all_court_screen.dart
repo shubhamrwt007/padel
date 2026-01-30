@@ -99,7 +99,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "₹${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
+                      "${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -521,7 +521,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
     // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
-    final timeStr = "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
+    final timeStr =data.openMatchStatus== "pending"?"${data.startTime?.split(' ').first??""}-${data.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
 
     final clubName = data.clubId?.clubName ?? '-';
     final address = "${data.clubId?.city ?? ""} ${data.clubId?.zipCode??""}";

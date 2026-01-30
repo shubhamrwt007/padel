@@ -153,20 +153,31 @@ class QuestionsBottomsheetController extends GetxController {
         return;
       }
 
+      // Choose endpoint based on payment option
+      final paymentOption = localMatchData["paymentOption"] as String? ?? "payForAll";
+      final endpoint = paymentOption == "payShareOnly" 
+          ? AppEndpoints.createOpenMatchSlotBookOnly 
+          : AppEndpoints.createMatches;
+
       if (razorpayPaymentId != null && razorpayOrderId != null) {
         matchBody['razorpay_payment_id'] = razorpayPaymentId;
         matchBody['razorpay_order_id'] = razorpayOrderId;
         matchBody['initiatePayment'] = true;
+        
+        // Only set type 'booked' when using createMatches endpoint
+        if (endpoint == AppEndpoints.createMatches) {
+          matchBody['type'] = 'booked';
+        }
       }
 
       log("Match payload after payment: $matchBody");
 
       final response = await repository.dioClient.post(
-        AppEndpoints.createMatches,
+        endpoint,
         data: matchBody,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         log("Match confirmed: ${response.data}");
         // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
         // Get.offAllNamed(RoutesName.bottomNav);
@@ -438,12 +449,18 @@ class QuestionsBottomsheetController extends GetxController {
 
       log("Initial match payload: $matchBody");
 
+      // Choose endpoint based on payment option
+      final paymentOption = localMatchData["paymentOption"] as String? ?? "payForAll";
+      final endpoint = paymentOption == "payShareOnly" 
+          ? AppEndpoints.createOpenMatchSlotBookOnly 
+          : AppEndpoints.createMatches;
+
       final response = await repository.dioClient.post(
-        AppEndpoints.createMatches,
+        endpoint,
         data: matchBody,
       );
 
-      if (response.statusCode == 200 && response.data != null) {
+      if (response.statusCode == 200 || response.statusCode == 201 && response.data != null) {
         final responseData = response.data;
         log("Match API response: $responseData");
         _razorpayOrderId = responseData['orderId'];
@@ -535,6 +552,13 @@ class QuestionsBottomsheetController extends GetxController {
       final slotAmount = (firstSlotTime["amount"] as int?) ?? 0;
       
       int duration = 60; // Default duration
+      
+      // Check if this specific slot is a half slot
+      final isHalfSlot = slotEntry["isHalfSlot"] as bool? ?? false;
+      if (isHalfSlot) {
+        duration = 30;
+      }
+      
       int totalTime = slotData.length * duration; // Total time for all slots
       String bookingTime = slotTime;
 

@@ -91,6 +91,16 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
           : (type == "cancelled")
           ? (controller.cancelledBookings.value?.data ?? [])
           : (controller.upcomingBookings.value?.data ?? []);
+      if (kDebugMode) {
+        print("=== DEBUG: $type bookings ===");
+        print("Total bookings received: ${bookings.length}");
+        for (var i = 0; i < bookings.length; i++) {
+          print("Booking $i: ID=${bookings[i].sId}, "
+              "bookingStatus=${bookings[i].bookingStatus}, "
+              "isOpenMatch=${bookings[i].isOpenMatch}, "
+              "openMatchStatus=${bookings[i].openMatchId?.openMatchStatus}");
+        }
+      }
 
       if (controller.isLoading.value) {
         return ListView.builder(
@@ -1010,6 +1020,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       onTap: () {
         if (booking != null) {
           final matchId = booking.sId ?? "";
+          final openMatchId = booking.openMatchId?.sId??"";
           final scoreboardId = booking.scoreboard?.sId ?? "";
           final bookingId = booking.sId ??"";
           final isMatchCreator = _isMatchCreator(booking);
@@ -1017,7 +1028,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
           final selectedTeam = teamName ?? "team a";
 
           if (isMatchCreator) {
-            Get.bottomSheet(AppPlayersBottomSheetScore(matchId: matchId, teamName: selectedTeam, bookingId: bookingId), isScrollControlled: true);
+            final isOpenMatch = booking?.isOpenMatch == true;
+            Get.bottomSheet(AppPlayersBottomSheetScore(bookingType: bookingType,matchId:isBlueTheme? matchId:openMatchId, teamName: selectedTeam, bookingId: bookingId, openMatchId: openMatchId, showAddGuestButton: !isOpenMatch), isScrollControlled: true);
           } else {
             AddPlayerBottomSheet.show(
               context,
@@ -1051,7 +1063,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final isUpcoming = type == "upcoming";
     final bookingType = booking.bookingType ?? "";
     final isBlueTheme = bookingType.toLowerCase() == "normal";
-
+    final isOpenMatch = booking?.isOpenMatch == true;
+    final openMatchStatus= booking?.openMatchId?.openMatchStatus =="cancelled";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1092,52 +1105,66 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               ),
             ),
             if (!isUpcoming) const SizedBox.shrink(),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (isUpcoming) ...[
-                  GestureDetector(
-                    onTap: () {
-                      _showPlayerRequestsBottomSheet(context, booking);
-                    },
-                    child: Container(
-                      color: Colors.transparent,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.notifications, color: AppColors.primaryColor, size: 18),
-                          RichText(
-                            text: TextSpan(
-                              text: 'Requests ',
-                              style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
-                              children: [
-                                TextSpan(
-                                  text: '(',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: "0",
-                                  style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
-                                ),
-                                TextSpan(
-                                  text: ')',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                if(isUpcoming)
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 4,horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 10),
-                ],
-                if (isUpcoming)
-                  const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
+                  child: Text(openMatchStatus ? "Slot Already Booked" : (isOpenMatch ? "Slot not Booked" : "Slot Booked"), style: Get.textTheme.labelMedium!.copyWith(color: openMatchStatus ? Colors.red : (isOpenMatch ? Colors.orange : AppColors.primaryColor)),),
+                ).paddingOnly(bottom: 10),
+                Row(
+                  children: [
+                    if (isUpcoming) ...[
+                      GestureDetector(
+                        onTap: () {
+                          _showPlayerRequestsBottomSheet(context, booking);
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.notifications, color: AppColors.primaryColor, size: 18),
+                              RichText(
+                                text: TextSpan(
+                                  text: 'Requests ',
+                                  style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
+                                  children: [
+                                    TextSpan(
+                                      text: '(',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "0",
+                                      style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
+                                    ),
+                                    TextSpan(
+                                      text: ')',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    if (isUpcoming)
+                      const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
+                  ],
+                ),
               ],
             ),
           ],
