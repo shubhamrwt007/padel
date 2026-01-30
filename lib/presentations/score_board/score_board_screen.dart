@@ -183,11 +183,11 @@ class ScoreBoardScreen extends StatelessWidget {
           // Remove Zone - Top Only
           Obx(() => isDragging.value
               ? Positioned(
-                  top: 0,
-                  left: Get.width * 0.25,
-                  right: Get.width * 0.25,
-                  child: _buildRemoveZone(isTop: true),
-                )
+            top: 0,
+            left: Get.width * 0.25,
+            right: Get.width * 0.25,
+            child: _buildRemoveZone(isTop: true),
+          )
               : const SizedBox.shrink()),
         ],
       ),
@@ -283,60 +283,60 @@ class ScoreBoardScreen extends StatelessWidget {
                               });
                             },
                             child: DragTarget<Map<String, dynamic>>(
-                            onAccept: (data) {
-                              final playerId = data['player']['playerId'];
-                              final playerName = controller.capitalizeFirstWord(
-                                data['player']['name'].toString().split(' ').first.trim()
-                              );
-                              final team = data['team'];
-                              
-                              Get.dialog(
-                                AlertDialog(
-                                  title: const Text('Remove Player'),
-                                  content: Text('Remove $playerName from the match?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Get.back(),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        Get.back();
-                                        await controller.removePlayer(playerId, team);
-                                      },
-                                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            builder: (context, candidateData, rejectedData) {
-                              final isActive = candidateData.isNotEmpty;
-                              return AnimatedOpacity(
-                                duration: const Duration(milliseconds: 200),
-                                opacity: isActive ? 1.0 : 0.0,
-                                child: IgnorePointer(
-                                  ignoring: !isActive,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        'Remove',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
+                              onAccept: (data) {
+                                final playerId = data['player']['playerId'];
+                                final playerName = controller.capitalizeFirstWord(
+                                    data['player']['name'].toString().split(' ').first.trim()
+                                );
+                                final team = data['team'];
+
+                                Get.dialog(
+                                  AlertDialog(
+                                    title: const Text('Remove Player'),
+                                    content: Text('Remove $playerName from the match?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Get.back(),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          Get.back();
+                                          await controller.removePlayer(playerId, team);
+                                        },
+                                        child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              builder: (context, candidateData, rejectedData) {
+                                final isActive = candidateData.isNotEmpty;
+                                return AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity: isActive ? 1.0 : 0.0,
+                                  child: IgnorePointer(
+                                    ignoring: !isActive,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Center(
+                                        child: Text(
+                                          'Remove',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                     ],
@@ -453,10 +453,10 @@ class ScoreBoardScreen extends StatelessWidget {
 
   /// Get formatted time range with proper end time fallback
   String _getFormattedTimeRange(ScoreBoardController controller) {
-    final startTimeStr = controller.startTime.value.isNotEmpty 
+    final startTimeStr = controller.startTime.value.isNotEmpty
         ? _formatTimeWithMinutes(controller.startTime.value)
         : '';
-    
+
     // Use endTime.value if available, otherwise fall back to matchEndTime
     String endTimeStr = '';
     if (controller.endTime.value.isNotEmpty) {
@@ -464,7 +464,7 @@ class ScoreBoardScreen extends StatelessWidget {
     } else if (controller.matchEndTime.isNotEmpty) {
       endTimeStr = _formatTimeWithMinutes(controller.matchEndTime);
     }
-    
+
     if (startTimeStr.isEmpty) return '';
     if (endTimeStr.isEmpty) return startTimeStr;
     return '$startTimeStr - $endTimeStr';
@@ -473,20 +473,20 @@ class ScoreBoardScreen extends StatelessWidget {
   /// Format time while preserving minutes (e.g., "1:30 pm" stays "1:30 PM", "1 pm" becomes "1:00 PM")
   String _formatTimeWithMinutes(String timeStr) {
     if (timeStr.isEmpty) return '';
-    
+
     try {
       final normalized = timeStr.trim();
       final lower = normalized.toLowerCase();
-      
+
       // Check if it already has minutes
       if (normalized.contains(':')) {
         // Already has minutes, just normalize AM/PM
         return normalized.replaceAllMapped(
           RegExp(r'(am|pm)', caseSensitive: false),
-          (match) => match.group(0)!.toUpperCase(),
+              (match) => match.group(0)!.toUpperCase(),
         );
       }
-      
+
       // No minutes, format to :00
       final parts = lower.split(' ');
       if (parts.length >= 2) {
@@ -496,7 +496,7 @@ class ScoreBoardScreen extends StatelessWidget {
           return '$hour:00 $period';
         }
       }
-      
+
       return normalized;
     } catch (e) {
       return timeStr;
@@ -550,12 +550,12 @@ class ScoreBoardScreen extends StatelessWidget {
             const SizedBox(width: 8),
             Obx(
                   () => Text(
-                  overflow: TextOverflow.ellipsis,
-                  controller.clubName.value,
-                  style: Get.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                overflow: TextOverflow.ellipsis,
+                controller.clubName.value,
+                style: Get.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
             )
           ],
         ),
@@ -647,17 +647,17 @@ class ScoreBoardScreen extends StatelessWidget {
       }
 
       bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
-      
+
       // Show shuffle view if in shuffle mode, regardless of player count
       if (controller.isShuffleMode.value) {
         return _buildShuffleView(teamAPlayers, teamBPlayers);
       }
-      
+
       // Show merged view when all players added, otherwise show individual slots
       if (allPlayersAdded) {
         return _buildMergedPlayersView(teamAPlayers, teamBPlayers);
       }
-      
+
       // Show individual slots when not all players added
       return Column(
         children: [
@@ -821,38 +821,38 @@ class ScoreBoardScreen extends StatelessWidget {
       ),
       child: (player["pic"] != null && player["pic"].toString().isNotEmpty)
           ? ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: player["pic"],
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const Icon(Icons.person, size: 30),
-                errorWidget: (context, url, error) => Center(
-                  child: Text(
-                    getNameInitials(player["name"], player["lastName"]),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-            )
-          : Center(
-              child: Text(
-                getNameInitials(player["name"], player["lastName"]),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryColor,
-                ),
+        child: CachedNetworkImage(
+          imageUrl: player["pic"],
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Icon(Icons.person, size: 30),
+          errorWidget: (context, url, error) => Center(
+            child: Text(
+              getNameInitials(player["name"], player["lastName"]),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
               ),
             ),
+          ),
+        ),
+      )
+          : Center(
+        child: Text(
+          getNameInitials(player["name"], player["lastName"]),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryColor,
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildCompactPlayerSlot(List players, int index, String teamName) {
     bool hasPlayer = index < players.length;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -885,24 +885,24 @@ class ScoreBoardScreen extends StatelessWidget {
               ),
               child: hasPlayer
                   ? (players[index]["pic"] != null && players[index]["pic"].toString().isNotEmpty)
-                      ? ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl: players[index]["pic"],
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Icon(Icons.person, size: 30),
-                            errorWidget: (context, url, error) => const Icon(Icons.person, size: 30),
-                          ),
-                        )
-                      : Center(
-                          child: Text(
-                            getNameInitials(players[index]["name"], players[index]["lastName"]),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        )
+                  ? ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: players[index]["pic"],
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const Icon(Icons.person, size: 30),
+                  errorWidget: (context, url, error) => const Icon(Icons.person, size: 30),
+                ),
+              )
+                  : Center(
+                child: Text(
+                  getNameInitials(players[index]["name"], players[index]["lastName"]),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              )
                   : const Icon(Icons.add, size: 24, color: AppColors.primaryColor),
             ),
             const SizedBox(height: 4),
@@ -1181,10 +1181,10 @@ class ScoreBoardScreen extends StatelessWidget {
         onAccept: (data) {
           final playerId = data['player']['playerId'];
           final playerName = controller.capitalizeFirstWord(
-            data['player']['name'].toString().split(' ').first.trim()
+              data['player']['name'].toString().split(' ').first.trim()
           );
           final team = data['team'];
-          
+
           Get.dialog(
             AlertDialog(
               title: const Text('Remove Player'),
@@ -1257,10 +1257,10 @@ class ScoreBoardScreen extends StatelessWidget {
       onAccept: (data) {
         final playerId = data['player']['playerId'];
         final playerName = controller.capitalizeFirstWord(
-          data['player']['name'].toString().split(' ').first.trim()
+            data['player']['name'].toString().split(' ').first.trim()
         );
         final team = data['team'];
-        
+
         Get.dialog(
           AlertDialog(
             title: const Text('Remove Player'),
@@ -1396,14 +1396,14 @@ class ScoreBoardScreen extends StatelessWidget {
               return Obx(() {
                 final shouldShake = controller.shouldShakeAvatars.value;
                 return shouldShake
-                  ? _ShakeWidget(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        transform: candidateData.isNotEmpty
-                            ? (Matrix4.identity()..scale(1.1))
-                            : Matrix4.identity(),
-                        width: 60,
-                        child: Column(
+                    ? _ShakeWidget(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    transform: candidateData.isNotEmpty
+                        ? (Matrix4.identity()..scale(1.1))
+                        : Matrix4.identity(),
+                    width: 60,
+                    child: Column(
                       children: [
                         Container(
                           height: 60,
@@ -1477,13 +1477,13 @@ class ScoreBoardScreen extends StatelessWidget {
                     ),
                   ),
                 )
-                : AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    transform: candidateData.isNotEmpty
-                        ? (Matrix4.identity()..scale(1.1))
-                        : Matrix4.identity(),
-                    width: 60,
-                    child: Column(
+                    : AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  transform: candidateData.isNotEmpty
+                      ? (Matrix4.identity()..scale(1.1))
+                      : Matrix4.identity(),
+                  width: 60,
+                  child: Column(
                     children: [
                       Container(
                         height: 60,
@@ -1674,7 +1674,7 @@ class ScoreBoardScreen extends StatelessWidget {
                         controller.winner.value == "Team A";
                     bool isLoser = controller.isCompleted.value &&
                         controller.winner.value == "Team B";
-                    
+
                     if (isWinner) {
                       return Text(
                         "Winner",
@@ -1696,7 +1696,7 @@ class ScoreBoardScreen extends StatelessWidget {
                   Obx(() {
                     bool isLoser = controller.isCompleted.value &&
                         controller.winner.value == "Team B";
-                    
+
                     return Column(
                       children: [
                         Text(
@@ -1769,7 +1769,7 @@ class ScoreBoardScreen extends StatelessWidget {
                         controller.winner.value == "Team B";
                     bool isLoser = controller.isCompleted.value &&
                         controller.winner.value == "Team A";
-                    
+
                     if (isWinner) {
                       return Text(
                         "Winner",
@@ -1792,7 +1792,7 @@ class ScoreBoardScreen extends StatelessWidget {
                   Obx(() {
                     bool isLoser = controller.isCompleted.value &&
                         controller.winner.value == "Team A";
-                    
+
                     return Column(
                       children: [
                         Text(
@@ -2082,7 +2082,7 @@ class ScoreBoardScreen extends StatelessWidget {
           ),
         );
       }
-      
+
       // Regular non-shuffle mode or has player
       return GestureDetector(
         onTap: () {
@@ -2399,17 +2399,17 @@ class ScoreBoardScreen extends StatelessWidget {
 
   void _showShuffleDialog() {
     final playerCount = controller.currentPlayerIds.length;
-    
+
     if (playerCount == 0) {
       SnackBarUtils.showErrorSnackBar("Add at least one player to shuffle");
       return;
     }
-    
+
     if (controller.isGameStarted.value) {
       SnackBarUtils.showErrorSnackBar("Cannot shuffle after game has started");
       return;
     }
-    
+
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -3066,9 +3066,9 @@ class ScoreBoardScreen extends StatelessWidget {
                     Text("Winner:"),
                     Obx(() {
                       final winnerText = controller.winner.value;
-                      final hasWinner = winnerText.isNotEmpty && 
-                                        winnerText.toLowerCase() != 'none' && 
-                                        winnerText != '-';
+                      final hasWinner = winnerText.isNotEmpty &&
+                          winnerText.toLowerCase() != 'none' &&
+                          winnerText != '-';
                       return Text(hasWinner ? winnerText : "-");
                     }),
                   ],
@@ -3086,10 +3086,10 @@ class ScoreBoardScreen extends StatelessWidget {
                 onAccept: (data) {
                   final playerId = data['player']['playerId'];
                   final playerName = controller.capitalizeFirstWord(
-                    data['player']['name'].toString().split(' ').first.trim()
+                      data['player']['name'].toString().split(' ').first.trim()
                   );
                   final team = data['team'];
-                  
+
                   Get.dialog(
                     AlertDialog(
                       title: const Text('Remove Player'),
