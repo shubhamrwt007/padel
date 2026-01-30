@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'dart:io';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 class EditProfileController extends GetxController{
   ProfileController profileController = Get.put(ProfileController());
@@ -235,7 +236,43 @@ class EditProfileController extends GetxController{
     final XFile? image = await picker.pickImage(source: source);
 
     if (image != null) {
-      profileImage.value = image;
+      await _cropImage(image.path);
+    }
+  }
+
+  Future<void> _cropImage(String imagePath) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+        compressQuality: 100,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        compressFormat: ImageCompressFormat.jpg,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: AppColors.primaryColor,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        profileImage.value = XFile(croppedFile.path);
+        CustomLogger.logMessage(msg: 'Image cropped: ${croppedFile.path}', level: LogLevel.info);
+      } else {
+        CustomLogger.logMessage(msg: 'Crop cancelled', level: LogLevel.info);
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: 'Crop error: $e', level: LogLevel.error);
+      profileImage.value = XFile(imagePath);
     }
   }
 

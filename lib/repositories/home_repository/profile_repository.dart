@@ -79,7 +79,6 @@ class ProfileRepository {
             ),
           ),
         );
-
         CustomLogger.logMessage(
           msg: "Profile image added to form data: $fileName",
           level: LogLevel.info,

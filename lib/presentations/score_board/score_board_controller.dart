@@ -238,6 +238,7 @@ class ScoreBoardController extends GetxController {
   final isShuffleMode = false.obs;
   final hasPlayerSwaps = false.obs;
   var matchBookingId = ''.obs;
+  final shouldShakeAvatars = false.obs;
 
   Future<void> fetchScoreBoard({bool showLoader = true}) async {
     if (showLoader) {
