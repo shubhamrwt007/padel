@@ -71,6 +71,8 @@ class BookingHistoryData {
   List<BookingTeamPlayer>? teamB;
   String? startTime;
   String? endTime;
+  List<AlternativeCourt>? alternativeCourts;
+
 
   BookingHistoryData({
     this.sId,
@@ -96,6 +98,7 @@ class BookingHistoryData {
     this.teamB,
     this.startTime,
     this.endTime,
+    this.alternativeCourts,
   });
 
   BookingHistoryData.fromJson(Map<String, dynamic> json) {
@@ -153,9 +156,17 @@ class BookingHistoryData {
         teamB!.add(BookingTeamPlayer.fromJson(v));
       });
     }
+    if (json['alternativeCourts'] != null) {
+      alternativeCourts = <AlternativeCourt>[];
+      json['alternativeCourts'].forEach((v) {
+        alternativeCourts!.add(AlternativeCourt.fromJson(v));
+      });
+    }
+
 
     startTime = json['startTime']?.toString();
     endTime = json['endTime']?.toString();
+
   }
 
   Map<String, dynamic> toJson() {
@@ -200,11 +211,38 @@ class BookingHistoryData {
     if (teamB != null) {
       data['teamB'] = teamB!.map((v) => v.toJson()).toList();
     }
+    if (alternativeCourts != null) {
+      data['alternativeCourts'] =
+          alternativeCourts!.map((v) => v.toJson()).toList();
+    }
 
     data['startTime'] = startTime;
     data['endTime'] = endTime;
 
     return data;
+  }
+}
+class AlternativeCourt {
+  String? courtId;
+  String? courtName;
+  List<String>? times;
+
+  AlternativeCourt({this.courtId, this.courtName, this.times});
+
+  AlternativeCourt.fromJson(Map<String, dynamic> json) {
+    courtId = json['courtId']?.toString();
+    courtName = json['courtName']?.toString();
+    times = json['times'] != null
+        ? List<String>.from(json['times'].map((e) => e.toString()))
+        : [];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'courtId': courtId,
+      'courtName': courtName,
+      'times': times,
+    };
   }
 }
 
@@ -816,15 +854,17 @@ class SlotTimes {
 
 class BookingTeamPlayer {
   PlayerId? userId;
+  dynamic amountPaid;
   String? joinedAt;
   String? sId;
 
-  BookingTeamPlayer({this.userId, this.joinedAt, this.sId});
+  BookingTeamPlayer({this.userId, this.joinedAt, this.sId,this.amountPaid});
 
   BookingTeamPlayer.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] != null ? PlayerId.fromJson(json['userId']) : null;
     joinedAt = json['joinedAt']?.toString();
     sId = json['_id']?.toString();
+    amountPaid = json['amountPaid'];
   }
 
   Map<String, dynamic> toJson() {
@@ -834,6 +874,7 @@ class BookingTeamPlayer {
     }
     data['joinedAt'] = joinedAt;
     data['_id'] = sId;
+    data['amountPaid'] = amountPaid;
     return data;
   }
 }

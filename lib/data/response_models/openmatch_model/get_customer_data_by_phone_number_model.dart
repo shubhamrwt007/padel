@@ -30,6 +30,7 @@ class Result {
   final String? name;
   final String? lastName;
   final String? category;
+  final String? gender;
   final bool? isActive;
   final bool? isDeleted;
   final String? role;
@@ -45,6 +46,7 @@ class Result {
     this.name,
     this.lastName,
     this.category,
+    this.gender,
     this.isActive,
     this.isDeleted,
     this.role,
@@ -62,6 +64,7 @@ class Result {
       name: json['name'],
       lastName: json['lastName'],
       category: json['category'],
+      gender: json['gender'],
       isActive: json['isActive'],
       isDeleted: json['isDeleted'],
       role: json['role'],
@@ -80,6 +83,7 @@ class Result {
       'name': name,
       'lastName': lastName,
       'category': category,
+      'gender': gender,
       'isActive': isActive,
       'isDeleted': isDeleted,
       'role': role,

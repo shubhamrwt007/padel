@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:padel_mobile/handler/logger.dart';
 
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../../repositories/bookinghisory/booking_history_repository.dart';
@@ -88,7 +89,7 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   }
 
   Future<void> _fetchBookingType(String type) async {
-    final data = await bookingRepo.getBookingHistory(type: type, page: 1, limit: 10);
+    final data = await bookingRepo.getBookingHistory(type: type, page: 1, limit: 30);
     data.data ??= [];
 
     switch (type) {
@@ -330,6 +331,62 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
   void refreshBookings() {
     fetchBookings();
+  }
+
+  Future<void> updateNewCourtBooking({
+    required String openMatchId,
+    required List<Map<String, String>> slots,
+  }) async {
+    try {
+      isLoading.value = true;
+      
+      final body = {
+        "openMatchId": openMatchId,
+        "slots": slots,
+      };
+      
+      final result = await bookingRepo.updateNewCourtBookingModel(body: body);
+      
+      if (result?.status == 200) {
+        // Get.snackbar('Success', 'Court booking updated successfully');
+        Get.back(); // Close the sheet
+        refreshBookings(); // Refresh the bookings list
+        CustomLogger.logMessage(msg: "MESSAGE-> ${result?.message??""}", level: LogLevel.debug);
+      } else {
+        // Get.snackbar('Error', 'Failed to update court booking');
+      }
+    } catch (e) {
+      // Get.snackbar('Error', 'Failed to update court booking: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> refund({
+    required String openMatchId,
+    required int refund,
+  }) async {
+    try {
+      isLoading.value = true;
+      
+      final body = {
+        "openMatchId": openMatchId,
+        "refund": refund,
+      };
+      
+      final result = await bookingRepo.updateRefundAmount(body: body);
+      
+      if (result?.status == 200) {
+        // Get.snackbar('Success', 'Refund processed successfully');
+        refreshBookings();
+      } else {
+        // Get.snackbar('Error', 'Failed to process refund');
+      }
+    } catch (e) {
+      // Get.snackbar('Error', 'Failed to process refund: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   @override

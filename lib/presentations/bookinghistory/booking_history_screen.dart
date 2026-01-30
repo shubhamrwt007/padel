@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,8 @@ import 'dart:math' as math;
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/bookinghistory/widgets/court_selection_sheet.dart';
+import 'package:padel_mobile/presentations/bookinghistory/widgets/no_court_available_view.dart';
 import 'package:padel_mobile/presentations/score_board/widgets/app_players_bottomsheet.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -161,23 +165,33 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 _expandedStates.addAll(List.filled(bookings.length, false));
               }
 
+
               return GestureDetector(
-                onTap: (){},
-                // onTap: (booking.bookingType ?? "").toLowerCase() == "normal" ? () {
-                //   final bookingId = booking.sId;
-                //   if (bookingId != null && bookingId.isNotEmpty) {
-                //     Get.toNamed(
-                //       RoutesName.bookingConfirmAndCancel,
-                //       arguments: {
-                //         "id": bookingId,
-                //         "fromCompleted": type == "completed",
-                //         "fromCancelled": type == "cancelled",
-                //       },
-                //     );
-                //   } else {
-                //     Get.snackbar("Error", "Booking ID not available");
-                //   }
-                // } : null,
+                onTap: (){
+                  final openMatchStatus= booking?.openMatchId?.openMatchStatus =="cancelled";
+                  if(openMatchStatus){
+                    final alternativeCourts = booking?.alternativeCourts ?? [];
+                    if(alternativeCourts.isEmpty){
+                      Get.bottomSheet(
+                        backgroundColor: Colors.transparent,
+                        SizedBox(
+                          height: Get.height,
+                          child: NoCourtAvailableView(booking: booking),
+                        ),
+                        isScrollControlled: true,
+                      );
+                    } else {
+                      Get.bottomSheet(
+                        backgroundColor: Colors.transparent,
+                        SizedBox(
+                          height: Get.height,
+                          child: CourtSelectionSheet(booking: booking),
+                        ),
+                        isScrollControlled: true,
+                      );
+                    }
+                  }
+                },
                 child: type == "completed"
                     ? _buildCompletedBookingCard(context, booking, club, index)
                     : _buildUpcomingBookingCard(context, booking, club, index, type),
@@ -252,7 +266,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                               ),
                             ),
                             Text(
-                              " | ${booking.startTime.split(':').first??""}-${booking.endTime??""}",
+                              " | ${booking.startTime.split(" ").first??""}-${booking.endTime??""}",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black87,
@@ -636,6 +650,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final price = (booking.totalAmount ?? 2000).toString();
     final bookingType = booking.bookingType ?? "";
     final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isSlotBooked =  booking?.openMatchId?.openMatchStatus =="cancelled";
 
     // Get real players from scoreboard
     final playerAvatars = _buildPlayerAvatarsFromScoreboard(booking);
@@ -712,7 +727,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                     children: [
                       if (isUpcoming)
                         GestureDetector(
-                          onTap: () {
+                          onTap: isSlotBooked ? null : () {
                             _navigateToChat(booking);
                           },
                           child: Container(
@@ -738,7 +753,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                           ],
                         ),
                         child: GestureDetector(
-                          onTap: () {
+                          onTap: isSlotBooked ? null : () {
                             setState(() {
                               _expandedStates[index] = !_expandedStates[index];
                             });
@@ -776,7 +791,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     try {
       final dateStr = formatDate(booking.bookingDate);
       // final timeStr = _getTimeString(booking);
-      final timeStr = '${booking.startTime.split(':').first??""}-${booking.endTime??""}';
+      final timeStr = '${booking.startTime.split(' ').first??""}-${booking.endTime??""}';
 
       return RichText(
         text: TextSpan(
@@ -918,9 +933,10 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final firstLetter = name.trim().isNotEmpty
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '??';
+    final isSlotBooked = booking?.openMatchId?.openMatchStatus =="cancelled";
 
     return GestureDetector(
-      onTap: () {
+      onTap: isSlotBooked ? null : () {
         if (booking != null) {
           _showPlayerDetailsDialog(booking);
         }
@@ -1016,8 +1032,10 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
   Widget _buildAvailableCircleFromScoreboard(String bookingType, {dynamic booking, int? slotIndex, String? teamName}) {
     final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isSlotBooked = booking?.openMatchId?.openMatchStatus =="cancelled";
+    
     return GestureDetector(
-      onTap: () {
+      onTap: isSlotBooked ? null : () {
         if (booking != null) {
           final matchId = booking.sId ?? "";
           final openMatchId = booking.openMatchId?.sId??"";
@@ -1065,6 +1083,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final isBlueTheme = bookingType.toLowerCase() == "normal";
     final isOpenMatch = booking?.isOpenMatch == true;
     final openMatchStatus= booking?.openMatchId?.openMatchStatus =="cancelled";
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1121,7 +1140,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   children: [
                     if (isUpcoming) ...[
                       GestureDetector(
-                        onTap: () {
+                        onTap:openMatchStatus?null: () {
                           _showPlayerRequestsBottomSheet(context, booking);
                         },
                         child: Container(

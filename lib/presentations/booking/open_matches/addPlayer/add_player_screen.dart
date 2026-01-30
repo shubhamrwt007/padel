@@ -31,7 +31,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
-          height: Get.height * 0.45,
+          height: Get.height * 0.55,
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -93,6 +93,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
                         readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
                         color:  controller.isLoginUserAdding.value || controller.isNameFromApi.value?Colors.grey.shade200:AppColors.textFieldColor
                       ),
+                      _genderSelection(context),
                       textFieldWithLabel(
                         "Enter Email",
                         labelText: "Email (Optional)",
@@ -142,7 +143,50 @@ class AddPlayerBottomSheet extends StatelessWidget {
       ),
     );
   }
-
+  Widget _genderSelection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Gender",
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.labelBlackColor,
+          ),
+        ).paddingOnly(top: Get.height * .02),
+        Obx(
+              () => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: ["Female", "Male", "Other"].map((gender) {
+              return GestureDetector(
+                onTap: controller.isGenderFromApi.value ? null : () => controller.gender.value = gender,
+                child: Row(
+                  children: [
+                    Icon(
+                      controller.gender.value == gender
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      size: 15,
+                      color: controller.isGenderFromApi.value ? Colors.grey : Colors.black,
+                    ),
+                    Text(
+                      gender,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall!.copyWith(
+                        fontSize: 14,
+                        color: controller.isGenderFromApi.value ? Colors.grey : Colors.black,
+                      ),
+                    ).paddingOnly(left: 5),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ).paddingOnly(top: 10),
+      ],
+    );
+  }
   Widget textFieldWithLabel(
       String label,
       TextEditingController? controller,
