@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 
 class RequestsController extends GetxController {
   RxInt expandedIndex = (-1).obs;
@@ -92,7 +93,7 @@ class RequestsController extends GetxController {
     }
   }
 
-  Future<void> acceptPlayerRequest(String requestId, String matchId, String team, String requestType) async {
+  Future<void> acceptPlayerRequest(String requestId, String matchId, String team, String requestType,Requests? request) async {
     try {
       acceptingRequests[requestId] = true;
       final body = {
@@ -115,9 +116,10 @@ class RequestsController extends GetxController {
       fetchJoinRequests();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        _showInsufficientBalanceDialog(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        Get.to(() => PaymentForWallet(
+          totalAmount: request?.perShare?.toDouble() ?? 0.0,
+          title: "Match Request",
+        ));
       } else if (e.response?.statusCode == 400) {
         Fluttertoast.showToast(
           msg: e.response?.data?['message']??"",

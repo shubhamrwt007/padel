@@ -525,10 +525,11 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     final clubName = data.clubId?.clubName ?? '-';
     final address = "${data.clubId?.city ?? ""} ${data.clubId?.zipCode??""}";
-    final price = (data.slot?.isNotEmpty == true &&
-        data.slot!.first.slotTimes?.isNotEmpty == true)
-        ? '${data.slot!.first.slotTimes!.first.amount ?? ''}'
-        : '-';
+    final price = "${data.bookingId?.totalAmount??0}";
+    // final price = (data.slot?.isNotEmpty == true &&
+    //     data.slot!.first.slotTimes?.isNotEmpty == true)
+    //     ? '${data.slot!.first.slotTimes!.first.amount ?? ''}'
+    //     : '-';
     final pendingRequestsCount = 0; // Update based on your API response
 
     // TEAM A
@@ -797,10 +798,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
-          Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",), isScrollControlled: true);
+          Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
         } else {
           // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '');
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.bookingId?.totalAmount/4);
         }
       },
       child: CircleAvatar(
@@ -846,7 +847,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   }
 
   // Direct request to join match for login user
-  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId) async {
+  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId,dynamic price) async {
     final userId = storage.read('userId');
     if (userId == null) return;
 
@@ -917,7 +918,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       addPlayerController.openMatchForAllCourtController = controller;
       
       // Call the request API directly
-      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId);
+      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId,price: price);
       if (success) {
     
         
@@ -1838,7 +1839,8 @@ class AppPlayersBottomSheet extends StatelessWidget {
   final String matchId;
   final String bookingId;
   final String? selectedTeam;
-  const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam,required this.bookingId});
+  final dynamic price;
+  const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam,required this.bookingId,required this.price});
 
   @override
   Widget build(BuildContext context) {
@@ -2164,6 +2166,8 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 "matchLevel": "",
                 "isLoginUser": false,
                 "isMatchCreator": true,
+                "matchPrice": price
+
               },
             );
 

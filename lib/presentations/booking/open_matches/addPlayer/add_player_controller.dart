@@ -5,6 +5,7 @@ import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches
 import 'package:padel_mobile/presentations/open_match_for_all_court/open_match_for_all_court_controller.dart';
 import 'package:padel_mobile/presentations/openmatchbooking/openmatch_booking_controller.dart';
 import 'package:padel_mobile/presentations/score_board/score_board_controller.dart';
+import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_controller.dart';
@@ -350,6 +351,7 @@ class AddPlayerController extends GetxController {
   Future<bool> requestPlayerForOpenMatch({
     String? type,
     String? bookingId,
+    dynamic? price
   }) async {
     try {
       final body = {
@@ -392,9 +394,13 @@ class AddPlayerController extends GetxController {
     } on DioException catch (e) {
       /// ✅ Handle 404 error
       if (e.response?.statusCode == 404) {
-        _showInsufficientBalanceDialog(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        Get.to(() => PaymentForWallet(
+          totalAmount: price??0,
+          title: "Match Request",
+        ));
+        // _showInsufficientBalanceDialog(
+        //   e.response?.data?['message'] ?? "Resource not found",
+        // );
       } else {
         // SnackBarUtils.showErrorSnackBar(
         //   e.response?.data?['message'] ?? "Something went wrong",
@@ -448,9 +454,9 @@ class AddPlayerController extends GetxController {
       return false;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
-        _showInsufficientBalanceDialog(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        // _showInsufficientBalanceDialog(
+        //   e.response?.data?['message'] ?? "Resource not found",
+        // );
       } else {
         // SnackBarUtils.showErrorSnackBar(
         //   "Something went wrong",
@@ -485,9 +491,9 @@ class AddPlayerController extends GetxController {
       return false;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 404) {
-        _showInsufficientBalanceDialog(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        // _showInsufficientBalanceDialog(
+        //   e.response?.data?['message'] ?? "Resource not found",
+        // );
       } else {
       }
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
@@ -504,7 +510,7 @@ class AddPlayerController extends GetxController {
     try {
       // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
       String normalizedTeam = selectedTeam.value.trim().toLowerCase() == 'team a' ? 'teamA' : 'teamB';
-      
+
       final body = {
         "bookingId":bookingId.value,
         "scoreboardId": scoreboardId.value,
@@ -548,7 +554,7 @@ class AddPlayerController extends GetxController {
     if (Get.isRegistered<ProfileController>()) {
       final profileController = Get.find<ProfileController>();
       final profile = profileController.profileModel.value;
-      
+
       if (profile?.response != null) {
         final user = profile!.response!;
         nameController.text = user.name?.capitalizeFirst ?? '';
@@ -556,12 +562,12 @@ class AddPlayerController extends GetxController {
         emailController.text = user.email ?? '';
         phoneController.text = "${user.phoneNumber ?? ''}";
         gender.value = user.gender ?? '';
-        
+
         // Extract level code from full level string
         final userLevel = user.playerLevel ?? user.level ?? '';
         final levelCode = _extractLevelCode(userLevel);
         playerLevel.value = levelCode;
-        
+
         isLoginUserAdding.value = true;
       }
     }
@@ -596,11 +602,11 @@ class AddPlayerController extends GetxController {
       numberLoader.value = true;
       final result = await repository.getCustomerNameByPhoneNumber(
           phoneNumber: phoneNumber);
-      
+
       if (result?.result?.name != null && result.result!.name!.isNotEmpty) {
         nameController.text = result.result?.name ??"";
         isNameFromApi.value = true;
-        
+
         if (result.result?.gender != null && result.result!.gender!.isNotEmpty) {
           gender.value = result.result?.gender ??"";
           isGenderFromApi.value = true;

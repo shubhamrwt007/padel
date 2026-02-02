@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 
 class YourMatchRequestsController extends GetxController {
   RxInt expandedIndex = (-1).obs;
@@ -42,7 +43,7 @@ class YourMatchRequestsController extends GetxController {
     }
   }
 
-  Future<void> acceptRequest(String requestId, String requestType) async {
+  Future<void> acceptRequest(String requestId, String requestType, Requests request) async {
     try {
       final body = {
         "requestId": requestId,
@@ -59,9 +60,13 @@ class YourMatchRequestsController extends GetxController {
       fetchJoinRequests();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        _showInsufficientBalanceDialog(
-          e.response?.data?['message'] ?? "Resource not found",
-        );
+        Get.to(() => PaymentForWallet(
+          totalAmount: request.perShare?.toDouble() ?? 0.0,
+          title: "Match Request",
+        ));
+        // _showInsufficientBalanceDialog(
+        //   e.response?.data?['message'] ?? "Resource not found",
+        // );
       } else {
         CustomLogger.logMessage(msg: "Error accepting request: $e", level: LogLevel.error);
         Get.snackbar("Error", "Failed to accept request");
