@@ -13,24 +13,27 @@ class MainHomeController extends GetxController{
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
   final HomeRepository _homeRepository = HomeRepository();
-  
+
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
-  
+
+  // Sport Tab Selection
+  final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
+
   // Banner functionality
   final RxInt currentBannerIndex = 0.obs;
   Timer? _bannerTimer;
   late PageController pageController;
-  
+
   final List<String> bannerImages = [
     Assets.imagesNewHomeBanner,
-    Assets.imagesNewHomeBanner2, // Add your actual banner images here
+    Assets.imagesNewHomeBanner2,
     Assets.imagesNewHomeBanner4,
     Assets.imagesNewHomeBanner5,
   ];
-  
+
   @override
-  void onInit()async {
+  void onInit() async {
     super.onInit();
     pageController = PageController();
     homeController.fetchBookings();
@@ -38,14 +41,14 @@ class MainHomeController extends GetxController{
     await fetCustomerLeaderBoardRank();
     _startBannerAutoSlide();
   }
-  
+
   @override
   void onClose() {
     _bannerTimer?.cancel();
     pageController.dispose();
     super.onClose();
   }
-  
+
   void _startBannerAutoSlide() {
     _bannerTimer = Timer.periodic(Duration(seconds: 2), (timer) {
       final nextIndex = (currentBannerIndex.value + 1) % bannerImages.length;
@@ -56,7 +59,31 @@ class MainHomeController extends GetxController{
       );
     });
   }
-  
+
+  /// Handle sport tab changes
+  void onSportTabChanged(int index) {
+    selectedSportTab.value = index;
+
+    if (index == 0) {
+      // Padel selected
+      print('Padel sport selected');
+      // You can add logic here to filter/load Padel-specific data
+      // For example: homeController.fetchPadelCourts();
+    } else {
+      // Pickleball selected
+      print('Pickleball sport selected');
+      // You can add logic here to filter/load Pickleball-specific data
+      // For example: homeController.fetchPickleballCourts();
+      // Or show a "Coming Soon" message
+      Get.snackbar(
+        'Coming Soon',
+        'Pickleball courts will be available soon!',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 2),
+      );
+    }
+  }
+
   Future<void> fetchNearCityPlayers() async {
     try {
       isLoadingPlayers.value = true;
@@ -90,7 +117,7 @@ class MainHomeController extends GetxController{
       isLoadingPlayers.value = false;
     }
   }
-  
+
   void onBannerTap(int index) {
     // Handle banner tap based on index
     switch (index) {

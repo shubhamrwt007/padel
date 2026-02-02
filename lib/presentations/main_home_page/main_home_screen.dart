@@ -128,12 +128,12 @@ class MainHomeScreen extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 7,vertical: 2),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.transparent,
 
                   border: Border.all(
                     color: AppColors.whiteColor,
-                    style: BorderStyle.solid, // dotted simulated below
+                    style: BorderStyle.solid,
                     width: 1.2,
                   ),
                 ),
@@ -156,44 +156,164 @@ class MainHomeScreen extends StatelessWidget {
         ],
         context: context,
       ),
-      body: RefreshIndicator(
-        color: Colors.white,
-        onRefresh: () async {
-          await controller.homeController.retryFetch();
-          await controller.profileController.fetchUserProfile();
-          await controller.fetchNearCityPlayers();
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              _banner(),
-              const SizedBox(height: 16),
-              _quickActions(),
+      body: Column(
+        children: [
+          // Sport Tab Selector
+          _buildSportTabSelector(),
 
-              _bookingSection(),
+          // Main Content
+          Expanded(
+            child: RefreshIndicator(
+              color: Colors.white,
+              onRefresh: () async {
+                await controller.homeController.retryFetch();
+                await controller.profileController.fetchUserProfile();
+                await controller.fetchNearCityPlayers();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _banner(),
+                    const SizedBox(height: 16),
+                    _quickActions(),
 
-              const SizedBox(height: 15),
-              statsDashboard(),
-              const SizedBox(height: 20),
-              _sectionTitle("Courts Near you", () {
-                Get.toNamed(RoutesName.home);
-              }),
-              _courtCard(),
-              const SizedBox(height: 15),
-              _sectionTitle("Top players near you", () {
-                Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
-              }),
-              _players(),
-              // const SizedBox(height: 24),
-              // _sectionTitle("Upcoming Tournaments"),
-              // _tournamentCard(),
-            ],
+                    _bookingSection(),
+
+                    const SizedBox(height: 15),
+                    statsDashboard(),
+                    const SizedBox(height: 20),
+                    _sectionTitle("Courts Near you", () {
+                      Get.toNamed(RoutesName.home);
+                    }),
+                    _courtCard(),
+                    const SizedBox(height: 15),
+                    _sectionTitle("Top players near you", () {
+                      Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+                    }),
+                    _players(),
+                  ],
+                ),
+              ),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// SPORT TAB SELECTOR
+  Widget _buildSportTabSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppColors.creamColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFE8E8E8),
+          width: 1,
         ),
       ),
+      child: Obx(() => Row(
+        children: [
+          // Padel Tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () => controller.onSportTabChanged(0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: controller.selectedSportTab.value == 0
+                      ? Colors.white
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: controller.selectedSportTab.value == 0
+                      ? Border.all(
+                    color: const Color(0xFF3B5BDB),
+                    width: 1.5,
+                  )
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.sports_tennis,
+                      color: controller.selectedSportTab.value == 0
+                          ? const Color(0xFF3B5BDB)
+                          : const Color(0xFF252525),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Padel',
+                      style: TextStyle(
+                        color: controller.selectedSportTab.value == 0
+                            ? const Color(0xFF3B5BDB)
+                            : const Color(0xFF252525),
+                        fontSize: 14,
+                        fontWeight: controller.selectedSportTab.value == 0
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Pickleball Tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () => controller.onSportTabChanged(1),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: controller.selectedSportTab.value == 1
+                      ? Colors.white
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: controller.selectedSportTab.value == 1
+                      ? Border.all(
+                    color: const Color(0xFF3B5BDB),
+                    width: 1.5,
+                  )
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.sports_baseball,
+                      color: controller.selectedSportTab.value == 1
+                          ? const Color(0xFF3B5BDB)
+                          : const Color(0xFF252525),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Pickleball',
+                      style: TextStyle(
+                        color: controller.selectedSportTab.value == 1
+                            ? const Color(0xFF3B5BDB)
+                            : const Color(0xFF252525),
+                        fontSize: 14,
+                        fontWeight: controller.selectedSportTab.value == 1
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      )),
     );
   }
 
@@ -831,14 +951,13 @@ class MainHomeScreen extends StatelessWidget {
         Get.toNamed(RoutesName.bookACourt);
         break;
       case 'match':
-      // SnackBarUtils.showInfoSnackBar("Open Match feature coming soon!");
         Get.toNamed(RoutesName.openMatchForAllCourts);
         break;
       case 'americano':
-        // SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
+      // SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
         break;
       case 'player':
-        // SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
+      // SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
         break;
     }
   }
@@ -1128,7 +1247,7 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       final players = controller.nearCityPlayers.value?.data?.leaderboard ?? [];
-      
+
       if (players.isEmpty) {
         return SizedBox(
           height: 160,
@@ -1171,48 +1290,48 @@ class MainHomeScreen extends StatelessWidget {
                     backgroundColor: AppColors.secondaryColor,
                     child: player.profilePic != null && player.profilePic!.isNotEmpty
                         ? CachedNetworkImage(
-                            imageUrl: player.profilePic!,
-                            imageBuilder: (context, imageProvider) => CircleAvatar(
-                              radius: 24,
-                              backgroundImage: imageProvider,
-                            ),
-                            placeholder: (context, url) => CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.secondaryColor,
-                              child: Text(
-                                _getInitials(player.name ?? ""),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.secondaryColor,
-                              child: Text(
-                                _getInitials(player.name ?? ""),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          )
-                        : CircleAvatar(
-                            radius: 24,
-                            backgroundColor: AppColors.primaryColor,
-                            child: Text(
-                              _getInitials(player.name ?? ""),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      imageUrl: player.profilePic!,
+                      imageBuilder: (context, imageProvider) => CircleAvatar(
+                        radius: 24,
+                        backgroundImage: imageProvider,
+                      ),
+                      placeholder: (context, url) => CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppColors.secondaryColor,
+                        child: Text(
+                          _getInitials(player.name ?? ""),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppColors.secondaryColor,
+                        child: Text(
+                          _getInitials(player.name ?? ""),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )
+                        : CircleAvatar(
+                      radius: 24,
+                      backgroundColor: AppColors.primaryColor,
+                      child: Text(
+                        _getInitials(player.name ?? ""),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
                   Transform.translate(
                     offset: Offset(0, -5),
@@ -1232,13 +1351,6 @@ class MainHomeScreen extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  // Text(
-                  //   "Rank #${player.rank ?? 0}",
-                  //   style: Get.textTheme.labelSmall?.copyWith(
-                  //     color: AppColors.primaryColor,
-                  //     fontWeight: FontWeight.w600,
-                  //   ),
-                  // ),
                 ],
               ),
             ).paddingOnly(top: 10,bottom: 10);
@@ -1248,36 +1360,17 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return "?";
 
-  /// TOURNAMENT CARD
-  // Widget _tournamentCard() {
-  //   return Padding(
-  //     padding: const EdgeInsets.all(16),
-  //     child: Container(
-  //       padding: const EdgeInsets.all(16),
-  //       decoration: BoxDecoration(
-  //         color: const Color(0xFFEFF4FF),
-  //         borderRadius: BorderRadius.circular(16),
-  //       ),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: const [
-  //           Text("Friday 21 June | 9:00 AM - 10:00 AM",
-  //               style: TextStyle(fontWeight: FontWeight.bold)),
-  //           SizedBox(height: 6),
-  //           Text("Professional | Mixed"),
-  //           SizedBox(height: 12),
-  //           Text("The Good Club"),
-  //           SizedBox(height: 8),
-  //           Text("₹ 2000",
-  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+    final words = name.trim().split(' ');
+    if (words.length == 1) {
+      return words[0][0].toUpperCase();
+    }
 
-  ///
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
   Widget statsDashboard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
@@ -1410,7 +1503,6 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _leaderboardCard() {
     return Obx(() {
-
       return GestureDetector(
         onTap: () => Get.to(LeaderboardScreen(
           buttonType: "drawer",
@@ -1463,7 +1555,6 @@ class MainHomeScreen extends StatelessWidget {
       return GestureDetector(
         onTap: () => Get.toNamed(RoutesName.xpPoints),
         child: Container(
-          // height: 90,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -1510,26 +1601,13 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
-  String _getInitials(String name) {
-    if (name.trim().isEmpty) return "?";
-    
-    final words = name.trim().split(' ');
-    if (words.length == 1) {
-      return words[0][0].toUpperCase();
-    }
-    
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
-
   Widget _recentMatches() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
       final recentMatches = profile?.response?.recentMatches ?? [];
 
-      // Use only API data, don't pad with extra results
       List<String> results = recentMatches.isNotEmpty ? recentMatches : [];
 
-      // Get only the last 5 items
       final displayResults = results.length > 5
           ? results.sublist(results.length - 5)
           : results;
