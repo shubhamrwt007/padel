@@ -79,6 +79,9 @@ class Assets {
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
   static const String imagesNewHomeBanner = 'assets/images/new_home_banner.jpg';
+  static const String imagesNewHomeBanner2 = 'assets/images/new_home_banner_2.jpg';
+  static const String imagesNewHomeBanner4 = 'assets/images/new_home_banner_4.jpg';
+  static const String imagesNewHomeBanner5 = 'assets/images/new_home_banner_5.jpg';
   static const String imagesPadelLogo = 'assets/images/Padel_logo.svg';
   static const String imagesPadelLogo11 = 'assets/images/Padel_logo_11.svg';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';
