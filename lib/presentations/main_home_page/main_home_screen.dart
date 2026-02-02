@@ -600,66 +600,77 @@ class MainHomeScreen extends StatelessWidget {
         width: Get.width,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          image: const DecorationImage(
-            image: AssetImage(Assets.imagesNewHomeBanner),
-            fit: BoxFit.cover,
-            alignment: Alignment(0, -0.3),
-          ),
         ),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.1), // light top
-                Colors.black.withValues(alpha: 0.4), // mid
-                Colors.black.withValues(alpha: 0.65), // dark bottom
-              ],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Transform.translate(
-                  offset: Offset(0, -5),
-                  child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-              Transform.translate(
-                  offset: Offset(0, -10),
-                  child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  Get.toNamed(RoutesName.home);
-                },
-                child: Container(
-                  width: Get.width * 0.35,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(40),
-                    color: Colors.white,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: PageView.builder(
+            controller: controller.pageController,
+            onPageChanged: (index) {
+              controller.currentBannerIndex.value = index;
+            },
+            itemCount: controller.bannerImages.length,
+            itemBuilder: (context, index) {
+              return Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(controller.bannerImages[index]),
+                    fit: BoxFit.cover,
+                    alignment: Alignment(0, -0.3),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(alpha: 0.4),
+                        Colors.black.withValues(alpha: 0.65),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "BOOK NOW!",
-                        style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
-                      ).paddingOnly(left: 10),
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: AppColors.primaryColor,
-                        child: const Icon(Icons.arrow_forward,
-                            color: Colors.white),
+                      Transform.translate(
+                          offset: Offset(0, -5),
+                          child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
+                      Transform.translate(
+                          offset: Offset(0, -10),
+                          child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => controller.onBannerTap(index),
+                        child: Container(
+                          width: Get.width * 0.35,
+                          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(40),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "BOOK NOW!",
+                                style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
+                              ).paddingOnly(left: 10),
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppColors.primaryColor,
+                                child: const Icon(Icons.arrow_forward, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
