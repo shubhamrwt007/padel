@@ -341,9 +341,9 @@ class RequestsScreen extends StatelessWidget {
                         OutlinedButton(
                           onPressed: () {
                             if (request.type == "request") {
-                              _showAcceptConfirmation(context, request.match?.id ?? "", request.preferredTeam ?? "", request.match?.skillLevel ?? "", request.id ?? "", request.type ?? "");
+                              _showAcceptConfirmation(context, request.match?.id ?? "", request.preferredTeam ?? "", request.match?.skillLevel ?? "", request.id ?? "", request.type ?? "",request);
                             } else {
-                              controller.acceptPlayerRequest(request.id ?? "", request.match?.id ?? "", request.preferredTeam ?? "", request.type ?? "");
+                              controller.acceptPlayerRequest(request.id ?? "", request.match?.id ?? "", request.preferredTeam ?? "", request.type ?? "",request);
                             }
                           },
                           style: OutlinedButton.styleFrom(
@@ -479,7 +479,7 @@ class RequestsScreen extends StatelessWidget {
         )
     );
   }
-  void _showAcceptConfirmation(BuildContext context, String matchId, String team, String skillLevel, String requestId, String requestType) {
+  void _showAcceptConfirmation(BuildContext context, String matchId, String team, String skillLevel, String requestId, String requestType,Requests request) {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -579,7 +579,7 @@ class RequestsScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         Get.back();
-                        controller.acceptPlayerRequest(requestId, matchId, team, requestType);
+                        controller.acceptPlayerRequest(requestId, matchId, team, requestType,request);
                       },
                       child: const Text(
                         'Accept',

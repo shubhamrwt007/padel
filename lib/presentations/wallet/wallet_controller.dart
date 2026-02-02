@@ -105,7 +105,7 @@ class WalletController extends GetxController {
       final LiveWalletAddBalanceModel response =
       await repository.testCreateWalletBalance(data: data);
 
-      Get.back();
+      // Get.back();
 
       if (response.orderId != null && response.amount != null) {
         await _initiateRazorpayPayment(response.orderId!, response.amount!);
@@ -272,6 +272,7 @@ class WalletController extends GetxController {
                             onPressed: isAddingBalance.value
                                 ? null
                                 : () {
+                              Get.back();
                               final amount =
                                   double.tryParse(amountController.text) ?? 0.0;
                               if (amount > 0) {

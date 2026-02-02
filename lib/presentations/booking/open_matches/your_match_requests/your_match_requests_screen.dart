@@ -280,7 +280,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
             ),
             OutlinedButton(
               onPressed: () {
-                controller.acceptRequest(request.id ?? "", request.type ?? "");
+                controller.acceptRequest(request.id ?? "", request.type ?? "", request);
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 15),
@@ -333,7 +333,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
             Transform.translate(
               offset: Offset(0, 2),
               child: Text(
-                "₹ ${formatAmount(request.totalAmount?.toString() ?? '0')}",
+                "₹ ${formatAmount(request.perShare?.toString() ?? '0')}",
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,

@@ -787,7 +787,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team), isScrollControlled: true);
         } else {
           // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '');
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',(match?.bookingId?.totalAmount ?? 0)/4);
         }
       },
       child: CircleAvatar(
@@ -833,7 +833,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   }
 
   // Direct request to join match for login user
-  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId) async {
+  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId,dynamic price) async {
     final userId = storage.read('userId');
     if (userId == null) return;
 
@@ -904,7 +904,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
       addPlayerController.openMatchesController = controller;
       
       // Call the request API directly
-      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId);
+      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId,price: price);
       if (success) {
         Get.dialog(
           Dialog(
