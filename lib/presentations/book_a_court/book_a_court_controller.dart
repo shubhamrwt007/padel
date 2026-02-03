@@ -342,7 +342,7 @@ class BookACourtController extends GetxController {
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
         
         final bookingTime = isHalfSlot 
-            ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+            ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         
@@ -447,7 +447,7 @@ class BookACourtController extends GetxController {
 
 
   // API method for deleting slot history (batch)
-  Future<void> deleteSlotHistory({required List<Map<String, dynamic>> slots}) async {
+  Future<void> deleteSlotHistory({required Map<String, dynamic> slots}) async {
     try {
       log('deleteSlotHistory called with body: $slots');
       await _homeRepository.deleteSlotHistory(data: slots);
@@ -491,7 +491,10 @@ class BookACourtController extends GetxController {
 
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
-        selectedSlots.removeWhere((s) => s.sId == slotId);
+        selectedSlots.removeWhere((s) => s.sId == slotId && 
+            realCourtSelections.values.any((selection) => 
+                (selection['slot'] as Slots).sId == s.sId && 
+                selection['courtId'] == resolvedCourtId));
       } else {
         realCourtSelections[realCourtKey] = {
           'slot': slot,
@@ -1108,7 +1111,7 @@ class BookACourtController extends GetxController {
   }
   
   // Get half slot time - for left half return original time, for right half add 30 minutes
-  String _getHalfSlotTime(String originalTime, bool isFirstHalf) {
+  String getHalfSlotTime(String originalTime, bool isFirstHalf) {
     if (isFirstHalf) {
       return originalTime; // Left half uses original time (e.g., "8:00 PM")
     } else {
@@ -1263,6 +1266,60 @@ class BookACourtController extends GetxController {
     }
   }
 
+  // Check if left half of a slot is booked based on API response
+  bool isLeftHalfBooked(Slots slot, String courtId) {
+    if (courtsByDuration.value?.data == null) return false;
+    
+    for (var clubData in courtsByDuration.value!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              // Check if this is a 30-minute booking for the left half
+              if (apiSlot.duration == 30 && apiSlot.bookingTime != null) {
+                final leftHalfTime = getHalfSlotTime(slot.time ?? '', true);
+                final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
+                final leftHalfTimeLower = leftHalfTime.toLowerCase().trim();
+                
+                if (apiBookingTime == leftHalfTimeLower) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Check if right half of a slot is booked based on API response
+  bool isRightHalfBooked(Slots slot, String courtId) {
+    if (courtsByDuration.value?.data == null) return false;
+    
+    for (var clubData in courtsByDuration.value!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              // Check if this is a 30-minute booking for the right half
+              if (apiSlot.duration == 30 && apiSlot.bookingTime != null) {
+                final rightHalfTime = getHalfSlotTime(slot.time ?? '', false);
+                final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
+                final rightHalfTimeLower = rightHalfTime.toLowerCase().trim();
+                
+                if (apiBookingTime == rightHalfTimeLower) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if a club supports 30-minute slots
   bool clubSupports30MinSlots(String courtId) {
     if (courtsByDuration.value?.data == null) return false;
@@ -1297,7 +1354,7 @@ class BookACourtController extends GetxController {
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
         
         final bookingTime = isHalfSlot 
-            ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+            ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         
@@ -1487,7 +1544,7 @@ class BookACourtController extends GetxController {
             final totalTimeMinutes = isHalfSlot ? 30 : 60;
             
             final bookingTime = isHalfSlot 
-                ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+                ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
                 : slot.time ?? '';
             
             slotData.add({

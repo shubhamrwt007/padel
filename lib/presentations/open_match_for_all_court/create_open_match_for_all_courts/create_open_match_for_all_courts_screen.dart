@@ -1050,6 +1050,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
+    final isLeftHalfBooked = supports30Min && controller.isLeftHalfBooked(slot, resolvedCourtId);
+    final isRightHalfBooked = supports30Min && controller.isRightHalfBooked(slot, resolvedCourtId);
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
@@ -1063,6 +1065,15 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
             if (box != null) {
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
+
+              // Prevent selection of left half if it's booked
+              if (isLeftHalf && isLeftHalfBooked) {
+                return;
+              }
+              // Prevent selection of right half if it's booked
+              if (!isLeftHalf && isRightHalfBooked) {
+                return;
+              }
 
               controller.toggleCourtRowSlotSelection(
                 slot,
@@ -1157,6 +1168,40 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     ),
                   ),
 
+                /// LEFT HALF BOOKED OVERLAY (FADED)
+                if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 44,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(radius),
+                          bottomLeft: Radius.circular(radius),
+                        ),
+                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                  
+                /// RIGHT HALF BOOKED OVERLAY (FADED)
+                if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      width: 44,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(radius),
+                          bottomRight: Radius.circular(radius),
+                        ),
+                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+
                 /// VERTICAL DIVIDER FOR 30MIN SLOTS
                 if (supports30Min && !isSelected)
                   Center(
@@ -1222,6 +1267,34 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                      // Left half grayed text for booked slots
+                      if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                        ClipRect(
+                          clipper: LeftHalfClipper(),
+                          child: Text(
+                            controller.formatTimeForDisplay(slot.time),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                        
+                      // Right half grayed text for booked slots
+                      if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                        ClipRect(
+                          clipper: RightHalfClipper(),
+                          child: Text(
+                            controller.formatTimeForDisplay(slot.time),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
                             ),
                           ),
                         ),

@@ -60,6 +60,13 @@ class CustomDrawerUi extends GetView<ProfileController> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.tabSelectedColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 10,
+                            offset: Offset(0, -2),
+                          ),
+                        ],
                       ),
                       child: ClipOval(
                         child: (controller.profileModel.value?.response?.profilePic?.isNotEmpty ?? false)

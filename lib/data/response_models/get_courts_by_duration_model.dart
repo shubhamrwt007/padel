@@ -141,7 +141,9 @@ class CourtSlot {
   String? id;
   String? time;
   int? amount;
+  int? duration;
   String? status;
+  String? bookingTime;
   int? bookingCount;
   bool? has30MinPrice;
 
@@ -149,7 +151,9 @@ class CourtSlot {
     this.id,
     this.time,
     this.amount,
+    this.duration,
     this.status,
+    this.bookingTime,
     this.bookingCount,
     this.has30MinPrice,
   });
@@ -158,7 +162,9 @@ class CourtSlot {
     id = json['_id'];
     time = json['time'];
     amount = json['amount'];
+    duration = json['duration'];
     status = json['status'];
+    bookingTime = json['bookingTime'];
     bookingCount = json['bookingCount'];
     has30MinPrice = json['has30MinPrice'];
   }
