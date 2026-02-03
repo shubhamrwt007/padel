@@ -655,7 +655,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   ),
                   Row(
                     children: [
-                      if (_isLoginUserInMatch(data))
+                      if (_isLoginUserInMatch(data) && controller.getTotalPlayersCount(data) > 1)
                         GestureDetector(
                           onTap: (){
                             final teamAData = (data.teamA ?? []).map((p) => {

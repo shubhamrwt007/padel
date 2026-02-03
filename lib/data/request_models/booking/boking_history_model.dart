@@ -417,6 +417,7 @@ class PlayerId {
   String? email;
   int? phoneNumber;
   String? name;
+  dynamic? xpPoints;
   String? profilePic;
 
   PlayerId({
@@ -424,6 +425,7 @@ class PlayerId {
     this.email,
     this.phoneNumber,
     this.name,
+    this.xpPoints,
     this.profilePic,
   });
 
@@ -431,6 +433,7 @@ class PlayerId {
     sId = json['_id']?.toString();
     email = json['email']?.toString();
     phoneNumber = json['phoneNumber'];
+    xpPoints = json['xpPoints'];
     name = json['name']?.toString();
     profilePic = json['profilePic']?.toString();
   }
@@ -440,6 +443,7 @@ class PlayerId {
     data['_id'] = sId;
     data['email'] = email;
     data['phoneNumber'] = phoneNumber;
+    data['xpPoints'] = xpPoints;
     data['name'] = name;
     data['profilePic'] = profilePic;
     return data;

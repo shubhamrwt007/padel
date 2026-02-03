@@ -340,7 +340,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
         
         final bookingTime = isHalfSlot 
-            ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+            ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         
@@ -513,7 +513,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     recalculateRealCourtTotalAmount();
   }
   // Get half slot time - for left half return original time, for right half add 30 minutes
-  String _getHalfSlotTime(String originalTime, bool isFirstHalf) {
+  String getHalfSlotTime(String originalTime, bool isFirstHalf) {
     if (isFirstHalf) {
       return originalTime; // Left half uses original time (e.g., "8:00 PM")
     } else {
@@ -559,6 +559,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       return originalTime.replaceFirst(':', ':30').replaceFirst(' ', ':30 ');
     }
   }
+
+
 
   void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
     if(Get.isSnackbarOpen) return;
@@ -1382,6 +1384,60 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     return time;
   }
 
+  // Check if left half of a slot is booked based on API response
+  bool isLeftHalfBooked(Slots slot, String courtId) {
+    if (courtsByDuration.value?.data == null) return false;
+    
+    for (var clubData in courtsByDuration.value!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              // Check if this is a 30-minute booking for the left half
+              if (apiSlot.duration == 30 && apiSlot.bookingTime != null) {
+                final leftHalfTime = getHalfSlotTime(slot.time ?? '', true);
+                final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
+                final leftHalfTimeLower = leftHalfTime.toLowerCase().trim();
+                
+                if (apiBookingTime == leftHalfTimeLower) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Check if right half of a slot is booked based on API response
+  bool isRightHalfBooked(Slots slot, String courtId) {
+    if (courtsByDuration.value?.data == null) return false;
+    
+    for (var clubData in courtsByDuration.value!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              // Check if this is a 30-minute booking for the right half
+              if (apiSlot.duration == 30 && apiSlot.bookingTime != null) {
+                final rightHalfTime = getHalfSlotTime(slot.time ?? '', false);
+                final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
+                final rightHalfTimeLower = rightHalfTime.toLowerCase().trim();
+                
+                if (apiBookingTime == rightHalfTimeLower) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   // Fetch courts by duration from API
   Future<void> fetchCourtsByDuration() async {
     try {
@@ -1461,7 +1517,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
         
         final bookingTime = isHalfSlot 
-            ? _getHalfSlotTime(slot.time ?? '', isFirstHalf)
+            ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         
@@ -1574,6 +1630,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       
       int duration;
       int totalAmount;
+      bool isFirstHalf = true;
       
       if (hasFirstHalf && hasSecondHalf) {
         // Both halves selected - duration 60, combine amounts
@@ -1581,26 +1638,32 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         final firstHalfAmount = realCourtSelections[firstHalfKey]?['amount'] as int? ?? 0;
         final secondHalfAmount = realCourtSelections[secondHalfKey]?['amount'] as int? ?? 0;
         totalAmount = firstHalfAmount + secondHalfAmount;
+        isFirstHalf = true; // Full slot, treat as first half for display
       } else if (isHalfSlot) {
         // Only one half selected - duration 30
         duration = 30;
         totalAmount = amount;
+        isFirstHalf = hasFirstHalf; // True if first half, false if second half
       } else {
         // Full slot selected - duration 60
         duration = 60;
         totalAmount = amount;
+        isFirstHalf = true;
       }
+      
+      final slotTime = isHalfSlot && !isFirstHalf ? getHalfSlotTime(slot.time ?? '', false) : slot.time;
       
       slotEntries.add({
         "slotId": slotId,
         "businessHours": businessHours,
-        "slotTimes": [{"time": slot.time, "amount": totalAmount}],
+        "slotTimes": [{"time": slotTime, "amount": totalAmount}],
         "courtId": selectedCourtId,
         "courtName": selectedCourtName,
         "bookingDate": dateString,
         "duration": duration,
         "totalTime": duration,
         "isHalfSlot": hasFirstHalf && hasSecondHalf ? false : isHalfSlot,
+        "isFirstHalf": isFirstHalf,
       });
       
       processedSlots.add(slotKey);
@@ -1763,6 +1826,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       
       int duration;
       int totalAmount;
+      bool isFirstHalf = true;
       
       if (hasFirstHalf && hasSecondHalf) {
         // Both halves selected - duration 60, combine amounts
@@ -1770,26 +1834,32 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         final firstHalfAmount = realCourtSelections[firstHalfKey]?['amount'] as int? ?? 0;
         final secondHalfAmount = realCourtSelections[secondHalfKey]?['amount'] as int? ?? 0;
         totalAmount = firstHalfAmount + secondHalfAmount;
+        isFirstHalf = true; // Full slot, treat as first half for display
       } else if (isHalfSlot) {
         // Only one half selected - duration 30
         duration = 30;
         totalAmount = amount;
+        isFirstHalf = hasFirstHalf; // True if first half, false if second half
       } else {
         // Full slot selected - duration 60
         duration = 60;
         totalAmount = amount;
+        isFirstHalf = true;
       }
+      
+      final slotTime = isHalfSlot && !isFirstHalf ? getHalfSlotTime(slot.time ?? '', false) : slot.time;
       
       slotEntries.add({
         "slotId": slotId,
         "businessHours": businessHours,
-        "slotTimes": [{"time": slot.time, "amount": totalAmount}],
+        "slotTimes": [{"time": slotTime, "amount": totalAmount}],
         "courtId": selectedCourtId,
         "courtName": selectedCourtName,
         "bookingDate": dateString,
         "duration": duration,
         "totalTime": duration,
         "isHalfSlot": hasFirstHalf && hasSecondHalf ? false : isHalfSlot,
+        "isFirstHalf": isFirstHalf,
       });
       
       processedSlots.add(slotKey);

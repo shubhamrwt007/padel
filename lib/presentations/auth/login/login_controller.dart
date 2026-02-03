@@ -137,7 +137,15 @@ class LoginController extends GetxController {
       final message = e.response?.data?['message'] ?? 'Login failed';
 
       if (code == 404) {
-        SnackBarUtils.showErrorSnackBar(message);
+        Fluttertoast.showToast(
+          msg: message,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+          timeInSecForIosWeb: 3,
+        );
         CustomLogger.logMessage(msg: message, level: LogLevel.error);
       }
     }  catch (e) {

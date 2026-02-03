@@ -68,19 +68,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Expandable slot details section
-                        AnimatedCrossFade(
+                        AnimatedSize(
                           duration: const Duration(milliseconds: 300),
-                          crossFadeState: isExpanded.value
-                              ? CrossFadeState.showSecond
-                              : CrossFadeState.showFirst,
-                          firstChild: const SizedBox.shrink(),
-                          secondChild: Column(
-                            children: [
-                              _buildSlotDetails(),
-                              // const SizedBox(height: 16),
-                            ],
-                          ),
+                          curve: Curves.easeInOut,
+                          child: isExpanded.value
+                              ? Column(children: [_buildSlotDetails()])
+                              : const SizedBox.shrink(),
                         ),
 
                         // Total row

@@ -36,6 +36,12 @@ class EditProfileUi extends StatelessWidget {
                   textCapitalization: TextCapitalization.words,
                   controller.nameController,
                   context,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return "Name is required";
+                    }
+                    return null;
+                  },
                 ),
                 // _textFieldWithLabel(
                 //   "Last Name",
@@ -46,6 +52,12 @@ class EditProfileUi extends StatelessWidget {
                   "Email",
                   controller.emailController,
                   context,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return "Email is not allowed to be empty";
+                    }
+                    return null;
+                  },
                  ),
                 _textFieldWithLabel(
                   "Phone",
@@ -131,6 +143,13 @@ class EditProfileUi extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.tabSelectedColor,
                   borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        spreadRadius: 1.5,
+                        blurRadius: 9.0
+                    )
+                  ]
                 ),
                 child: ClipOval(
                   child: imagePath != null
@@ -191,7 +210,8 @@ class EditProfileUi extends StatelessWidget {
     bool readOnly = false,
     TextInputType? keyboardType,
         TextCapitalization? textCapitalization,
-        Color? color
+        Color? color,
+        String? Function(String?)? validator
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,6 +231,7 @@ class EditProfileUi extends StatelessWidget {
           readOnly: readOnly,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
+          validator: validator,
           // scrollPadding: EdgeInsets.only(bottom: Get.height*0.3),
           contentPadding: EdgeInsets.symmetric(
             horizontal: Get.width * 0.04,

@@ -452,6 +452,14 @@ class OpenMatchForAllCourtController extends GetxController {
     }
   }
 
+  /// Count total players in match
+  int getTotalPlayersCount(OpenMatchBookingData? matchData) {
+    if (matchData == null) return 0;
+    final teamACount = matchData.teamA?.length ?? 0;
+    final teamBCount = matchData.teamB?.length ?? 0;
+    return teamACount + teamBCount;
+  }
+
   /// Create Scoreboard for Open Match--------------------------------------------------------
   Future<void> createScoreBoardForOpenMatch({required OpenMatchBookingData matchData}) async {
     try {
