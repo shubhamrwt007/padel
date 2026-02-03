@@ -16,7 +16,6 @@ import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
 import 'dart:developer';
-
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
   final WalletController walletController = Get.put(WalletController());
@@ -159,7 +158,7 @@ class MainHomeScreen extends StatelessWidget {
       body: Column(
         children: [
           // Sport Tab Selector
-          _buildSportTabSelector(),
+          // _buildSportTabSelector(),
 
           // Main Content
           Expanded(
@@ -205,117 +204,160 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   /// SPORT TAB SELECTOR
-  Widget _buildSportTabSelector() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: AppColors.creamColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: const Color(0xFFE8E8E8),
-          width: 1,
-        ),
-      ),
-      child: Obx(() => Row(
-        children: [
-          // Padel Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: controller.selectedSportTab.value == 0
-                      ? Colors.white
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 0
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.sports_tennis,
-                      color: controller.selectedSportTab.value == 0
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Padel',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 0
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: controller.selectedSportTab.value == 0
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Pickleball Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: controller.selectedSportTab.value == 1
-                      ? Colors.white
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 1
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.sports_baseball,
-                      color: controller.selectedSportTab.value == 1
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Pickleball',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 1
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: controller.selectedSportTab.value == 1
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      )),
-    );
-  }
+  // Widget _buildSportTabSelector() {
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  //     padding: const EdgeInsets.all(6),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.creamColor,
+  //       borderRadius: BorderRadius.circular(10),
+  //       border: Border.all(
+  //         color: const Color(0xFFE8E8E8),
+  //         width: 1,
+  //       ),
+  //     ),
+  //     child: Obx(() => Row(
+  //       children: [
+  //         // Padel Tab
+  //         Expanded(
+  //           child: GestureDetector(
+  //             onTap: () => controller.onSportTabChanged(0),
+  //             child: Container(
+  //               padding: const EdgeInsets.symmetric(vertical: 10),
+  //               decoration: BoxDecoration(
+  //                 gradient: controller.selectedSportTab.value == 0
+  //                     ? LinearGradient(
+  //                   begin: Alignment.topCenter,
+  //                   end: Alignment.bottomCenter,
+  //                   colors: [
+  //                     const Color(0xFFEEF2FF), // Light blue/lavender top
+  //                     const Color(0xFFE0E7FF), // Slightly darker blue bottom
+  //                   ],
+  //                 )
+  //                     : null,
+  //                 color: controller.selectedSportTab.value == 0
+  //                     ? null
+  //                     : Colors.transparent,
+  //                 borderRadius: BorderRadius.circular(10),
+  //                 border: controller.selectedSportTab.value == 0
+  //                     ? Border.all(
+  //                   color: const Color(0xFF3B5BDB),
+  //                   width: 1.5,
+  //                 )
+  //                     : null,
+  //                 boxShadow: controller.selectedSportTab.value == 0
+  //                     ? [
+  //
+  //                   BoxShadow(
+  //                     color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
+  //                     blurRadius: 6,
+  //                     offset: const Offset(0, 2),
+  //                     spreadRadius: -1,
+  //                   ),
+  //                 ]
+  //                     : null,
+  //               ),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   Icon(
+  //                     Icons.sports_tennis,
+  //                     color: controller.selectedSportTab.value == 0
+  //                         ? const Color(0xFF3B5BDB)
+  //                         : const Color(0xFF252525),
+  //                     size: 18,
+  //                   ),
+  //                   const SizedBox(width: 6),
+  //                   Text(
+  //                     'Padel',
+  //                     style: TextStyle(
+  //                       color: controller.selectedSportTab.value == 0
+  //                           ? const Color(0xFF3B5BDB)
+  //                           : const Color(0xFF252525),
+  //                       fontSize: 14,
+  //                       fontWeight: controller.selectedSportTab.value == 0
+  //                           ? FontWeight.w500
+  //                           : FontWeight.w500,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //
+  //         // Pickleball Tab
+  //         Expanded(
+  //           child: GestureDetector(
+  //             onTap: () => controller.onSportTabChanged(1),
+  //             child: Container(
+  //               padding: const EdgeInsets.symmetric(vertical: 10),
+  //               decoration: BoxDecoration(
+  //                 gradient: controller.selectedSportTab.value == 1
+  //                     ? LinearGradient(
+  //                   begin: Alignment.topCenter,
+  //                   end: Alignment.bottomCenter,
+  //                   colors: [
+  //                     const Color(0xFFEEF2FF), // Light blue/lavender top
+  //                     const Color(0xFFE0E7FF), // Slightly darker blue bottom
+  //                   ],
+  //                 )
+  //                     : null,
+  //                 color: controller.selectedSportTab.value == 1
+  //                     ? null
+  //                     : Colors.transparent,
+  //                 borderRadius: BorderRadius.circular(10),
+  //                 border: controller.selectedSportTab.value == 1
+  //                     ? Border.all(
+  //                   color: const Color(0xFF3B5BDB),
+  //                   width: 1.5,
+  //                 )
+  //                     : null,
+  //                 boxShadow: controller.selectedSportTab.value == 1
+  //                     ? [
+  //
+  //                   // Inner subtle shadow
+  //                   BoxShadow(
+  //                     color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
+  //                     blurRadius: 6,
+  //                     offset: const Offset(0, 2),
+  //                     spreadRadius: -1,
+  //                   ),
+  //                 ]
+  //                     : null,
+  //               ),
+  //               child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   Icon(
+  //                     Icons.sports_baseball,
+  //                     color: controller.selectedSportTab.value == 1
+  //                         ? const Color(0xFF3B5BDB)
+  //                         : const Color(0xFF252525),
+  //                     size: 18,
+  //                   ),
+  //                   const SizedBox(width: 6),
+  //                   Text(
+  //                     'Pickleball',
+  //                     style: TextStyle(
+  //                       color: controller.selectedSportTab.value == 1
+  //                           ? const Color(0xFF3B5BDB)
+  //                           : const Color(0xFF252525),
+  //                       fontSize: 14,
+  //                       fontWeight: controller.selectedSportTab.value == 1
+  //                           ? FontWeight.w500
+  //                           : FontWeight.w500,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     )),
+  //   );
+  // }
 
   Widget _buildAppBarTitle(BuildContext context) {
     return Obx(() {
