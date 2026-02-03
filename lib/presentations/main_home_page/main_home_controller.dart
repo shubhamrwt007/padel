@@ -8,7 +8,6 @@ import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
-
 class MainHomeController extends GetxController{
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
@@ -83,7 +82,6 @@ class MainHomeController extends GetxController{
       );
     }
   }
-
   Future<void> fetchNearCityPlayers() async {
     try {
       isLoadingPlayers.value = true;

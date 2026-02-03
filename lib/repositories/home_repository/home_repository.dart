@@ -20,13 +20,10 @@ import '../../presentations/auth/forgot_password/widgets/forgot_password_exports
 
 class HomeRepository {
   final DioClient dioClient = DioClient();
-
   Future<CourtsModel> fetchClubData({String limit = "10", required String page, String search = ""}) async {
      try {
       final url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
-
       final response = await dioClient.get(url);
-
       if (response.statusCode == 200) {
         log("Response Data: ${response.data}");
         return CourtsModel.fromJson(response.data);
@@ -102,9 +99,7 @@ class HomeRepository {
   Future<GetLocationMapsModel> getLocationMaps({required String address}) async {
     try {
       final url = "${AppEndpoints.getLocationMaps}address=$address";
-
       final response = await dioClient.get(url);
-
       if (response.statusCode == 200) {
         log("Response Maps Location Data: ${response.data}");
         return GetLocationMapsModel.fromJson(response.data);
@@ -203,7 +198,8 @@ class HomeRepository {
     }
   }
 
-  ///Delete Slot History------------------------------------------------
+  ///Delete Slot History--------------------------------------------------------
+
   Future<DeleteSlotHistoryModel> deleteSlotHistory({
     required dynamic data,
   }) async {
