@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/booking/boking_history_model.dart';
@@ -17,6 +16,7 @@ import '../../repositories/home_repository/home_repository.dart';
 import '../../repositories/authentication_repository/sign_up_repository.dart';
 
 class HomeController extends GetxController {
+
   ProfileController profileController = Get.put(ProfileController());
 
   // LOCATION ------------------------------------------------------------------
@@ -77,7 +77,6 @@ class HomeController extends GetxController {
   final int limit = 20;
   RxString searchQuery = ''.obs;
   RxBool hasMoreData = true.obs;
-
   RxBool isInitialized = false.obs;
   RxInt totalCourts = 0.obs;
 
@@ -198,7 +197,6 @@ class HomeController extends GetxController {
       isLoadingMore.value = false;
     }
   }
-
   /// Load more data for pagination with better error handling
   Future<void> loadMore() async {
     if (isLoadingMore.value || !hasMoreData.value || !isInitialized.value) {
