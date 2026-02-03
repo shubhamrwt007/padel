@@ -38,11 +38,13 @@ class Assets {
   static const String imagesIcMyClub = 'assets/images/ic_my_club.svg';
   static const String imagesIcOpenMatchNew = 'assets/images/ic_open_match_new.svg';
   static const String imagesIcPackages = 'assets/images/ic_packages.svg';
+  static const String imagesIcPadel = 'assets/images/ic_padel.svg';
   static const String imagesIcPadelBall = 'assets/images/ic_padel_ball.svg';
   static const String imagesIcPadelIcon = 'assets/images/ic_padel_icon.svg';
   static const String imagesIcPadelIconBottomNav = 'assets/images/ic_padel_icon_bottomNav.svg';
   static const String imagesIcPaypal = 'assets/images/ic_paypal.svg';
   static const String imagesIcPerson = 'assets/images/ic_person.svg';
+  static const String imagesIcPickleball = 'assets/images/ic_pickleball.svg';
   static const String imagesIcPrivacy = 'assets/images/ic_privacy.png';
   static const String imagesIcReview = 'assets/images/ic_review.svg';
   static const String imagesIcSearch = 'assets/images/ic_search.png';
@@ -82,6 +84,8 @@ class Assets {
   static const String imagesNewHomeBanner2 = 'assets/images/new_home_banner_2.jpg';
   static const String imagesNewHomeBanner4 = 'assets/images/new_home_banner_4.jpg';
   static const String imagesNewHomeBanner5 = 'assets/images/new_home_banner_5.jpg';
+  static const String imagesNewHomeBanner6 = 'assets/images/new_home_banner_6.jpg';
+  static const String imagesNewHomeBanner7 = 'assets/images/new_home_banner_7.jpg';
   static const String imagesPadelLogo = 'assets/images/Padel_logo.svg';
   static const String imagesPadelLogo11 = 'assets/images/Padel_logo_11.svg';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';
