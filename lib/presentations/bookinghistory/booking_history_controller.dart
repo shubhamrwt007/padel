@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../../repositories/bookinghisory/booking_history_repository.dart';
@@ -405,6 +410,81 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
     }
     
     return initials;
+  }
+
+  Future<void> downloadInvoice(String invoiceUrl) async {
+    try {
+      // Request storage permission
+      var status = await Permission.storage.status;
+      if (!status.isGranted) {
+        status = await Permission.storage.request();
+        if (!status.isGranted) {
+          Get.snackbar("Permission Denied", "Storage permission is required to download invoice");
+          return;
+        }
+      }
+
+      // Show loading
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      // Download the file
+      final response = await http.get(Uri.parse(invoiceUrl));
+      
+      if (response.statusCode == 200) {
+        // Get the downloads directory
+        Directory? directory;
+        if (Platform.isAndroid) {
+          directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            directory = await getExternalStorageDirectory();
+          }
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
+
+        if (directory != null) {
+          // Generate filename with timestamp
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = 'invoice_$timestamp.pdf';
+          final filePath = '${directory.path}/$fileName';
+
+          // Write the file
+          final file = File(filePath);
+          await file.writeAsBytes(response.bodyBytes);
+
+          // Close loading dialog
+          Get.back();
+
+          // Show success message
+          // Get.snackbar(
+          //   "Success",
+          //   "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
+          //   duration: const Duration(seconds: 3),
+          // );
+          Fluttertoast.showToast(
+            msg: "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            timeInSecForIosWeb: 3,
+          );
+        } else {
+          Get.back();
+          // Get.snackbar("Error", "Could not access storage directory");
+        }
+      } else {
+        Get.back();
+        // Get.snackbar("Error", "Failed to download invoice");
+      }
+    } catch (e) {
+      Get.back();
+      // Get.snackbar("Error", "Failed to download invoice: $e");
+    }
   }
 
   @override

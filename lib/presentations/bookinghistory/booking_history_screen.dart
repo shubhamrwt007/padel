@@ -1,7 +1,10 @@
 import 'dart:ui';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
@@ -15,6 +18,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../configs/routes/routes_name.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
@@ -460,6 +466,36 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    // Invoice download button - only show for booking owner
+                    if (booking.userId == storage.read('userId'))
+                      GestureDetector(
+                        onTap: () async {
+                          final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
+                          final invoiceUrlString = booking.invoiceUrl ?? '';
+                          
+                          if (invoiceUrlString.isNotEmpty) {
+                            await controller.downloadInvoice(invoiceUrlString);
+                          } else {
+                            Get.snackbar("Error", "Invoice URL not available");
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: AppColors.textFieldColor
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("Invoice", style: Get.textTheme.labelMedium),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.file_download, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1242,6 +1278,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _expandedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
     final isUpcoming = type == "upcoming";
     final timeStr = _getTimeString(booking);
+    final invoiceUrlString = booking.invoiceUrl??"";
 
     // Count actual players from scoreboard
     int totalPlayers = 0;
@@ -1286,32 +1323,82 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            width: math.max((playerAvatars.length + addButtons.length) * 28 + 28, 4 * 28 + 28),
-            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: AppColors.greyColor),
-            ),
-            child: SizedBox(
-              height: 44,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  for (int i = 0; i < playerAvatars.length; i++)
-                    Positioned(
-                      left: i * 30,
-                      child: playerAvatars[i],
-                    ),
-                  for (int i = 0; i < addButtons.length; i++)
-                    Positioned(
-                      left: (playerAvatars.length * 30) + (i * 30),
-                      child: addButtons[i],
-                    ),
-                ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: math.max((playerAvatars.length + addButtons.length) * 28 + 28, 4 * 28 + 28),
+                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: AppColors.greyColor),
+                ),
+                child: SizedBox(
+                  height: 44,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      for (int i = 0; i < playerAvatars.length; i++)
+                        Positioned(
+                          left: i * 30,
+                          child: playerAvatars[i],
+                        ),
+                      for (int i = 0; i < addButtons.length; i++)
+                        Positioned(
+                          left: (playerAvatars.length * 30) + (i * 30),
+                          child: addButtons[i],
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (booking.userId == storage.read('userId'))
+                GestureDetector(
+                onTap: () async {
+                  // Only allow download if user is the booking owner
+                  if (booking.userId == storage.read('userId')) {
+                    final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
+                    final invoiceUrl = invoiceUrlString;
+                    
+                    if (invoiceUrl.isNotEmpty) {
+                      await controller.downloadInvoice(invoiceUrl);
+                    } else {
+                      Fluttertoast.showToast(
+                        msg: "Invoice URL not available",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        fontSize: 16.0,
+                        timeInSecForIosWeb: 3,
+                      );
+                    }
+                  } else {
+                    // Get.snackbar("Access Denied", "You can only download invoices for your own bookings");
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: booking.userId == storage.read('userId') ? AppColors.textFieldColor : Colors.grey.shade300
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("Invoice", style: Get.textTheme.labelMedium?.copyWith(
+                        color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
+                      )),
+                      const SizedBox(width: 6),
+                      Icon(Icons.file_download, size: 18, 
+                        color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            ],
           ),
           const SizedBox(height: 16),
           Row(

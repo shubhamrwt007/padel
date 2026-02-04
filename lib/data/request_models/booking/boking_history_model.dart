@@ -61,6 +61,7 @@ class BookingHistoryData {
   String? matchType;
   String? updatedAt;
   bool? isOpenMatch;
+  String? invoiceUrl;
   int? iV;
   int? duration;
   dynamic customerReview;
@@ -88,6 +89,7 @@ class BookingHistoryData {
     this.matchType,
     this.updatedAt,
     this.isOpenMatch,
+    this.invoiceUrl,
     this.iV,
     this.duration,
     this.customerReview,
@@ -126,6 +128,7 @@ class BookingHistoryData {
     iV = json['__v'];
     duration = json['duration'];
     isOpenMatch = json['isOpenMatch'];
+    invoiceUrl = json['invoiceUrl'];
     customerReview = json['customerReview'];
 
     openMatchId = json['openMatchId'] != null
@@ -190,6 +193,7 @@ class BookingHistoryData {
     data['__v'] = iV;
     data['duration'] = duration;
     data['isOpenMatch'] = isOpenMatch;
+    data['invoiceUrl'] = invoiceUrl;
     data['customerReview'] = customerReview;
 
     if (openMatchId != null) {
