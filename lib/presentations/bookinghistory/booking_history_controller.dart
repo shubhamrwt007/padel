@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -458,22 +459,31 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
           Get.back();
 
           // Show success message
-          Get.snackbar(
-            "Success", 
-            "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
-            duration: const Duration(seconds: 3),
+          // Get.snackbar(
+          //   "Success",
+          //   "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
+          //   duration: const Duration(seconds: 3),
+          // );
+          Fluttertoast.showToast(
+            msg: "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
+            timeInSecForIosWeb: 3,
           );
         } else {
           Get.back();
-          Get.snackbar("Error", "Could not access storage directory");
+          // Get.snackbar("Error", "Could not access storage directory");
         }
       } else {
         Get.back();
-        Get.snackbar("Error", "Failed to download invoice");
+        // Get.snackbar("Error", "Failed to download invoice");
       }
     } catch (e) {
       Get.back();
-      Get.snackbar("Error", "Failed to download invoice: $e");
+      // Get.snackbar("Error", "Failed to download invoice: $e");
     }
   }
 
