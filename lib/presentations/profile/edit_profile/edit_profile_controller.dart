@@ -1,3 +1,4 @@
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
@@ -211,7 +212,15 @@ class EditProfileController extends GetxController{
       if (updatedProfile.status == "200") {
         await profileController.fetchUserProfile();
         Get.back();
-        SnackBarUtils.showSuccessSnackBar(updatedProfile.message??"");
+        Fluttertoast.showToast(
+          msg: "Profile Updated Successfully",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: AppColors.secondaryColor,
+          textColor: Colors.white,
+          fontSize: 16.0,
+          timeInSecForIosWeb: 3,
+        );
       } else {
         CustomLogger.logMessage(msg: "UPDATE PROFILE ERROR",level: LogLevel.error);
       }

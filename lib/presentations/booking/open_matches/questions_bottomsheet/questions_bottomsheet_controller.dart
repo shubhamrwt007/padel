@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -312,11 +313,27 @@ class QuestionsBottomsheetController extends GetxController {
     log("🚀 Starting match creation process with payment");
     if (!validateSelections()) return;
     if (!validateTeams()) {
-      SnackBarUtils.showWarningSnackBar("Please add required players to both teams");
+      Fluttertoast.showToast(
+        msg: "Please add required players to both teams",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 3,
+      );
       return;
     }
     if (_razorpayOrderId == null) {
-      SnackBarUtils.showErrorSnackBar("Match not initialized. Please try again.");
+      Fluttertoast.showToast(
+        msg: "Match not initialized. Please try again.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+        timeInSecForIosWeb: 3,
+      );
       return;
     }
 
@@ -555,19 +572,25 @@ class QuestionsBottomsheetController extends GetxController {
       
       // Check if this specific slot is a half slot
       final isHalfSlot = slotEntry["isHalfSlot"] as bool? ?? false;
+      final isFirstHalf = slotEntry["isFirstHalf"] as bool? ?? true;
       if (isHalfSlot) {
         duration = 30;
       }
       
       int totalTime = slotData.length * duration; // Total time for all slots
       String bookingTime = slotTime;
+      
+      // For half slots, adjust the booking time based on which half is selected
+      if (isHalfSlot && !isFirstHalf) {
+        bookingTime = _addMinutesToTime(slotTime, 30);
+      }
 
       return {
         "slotId": cleanSlotId,
         "businessHours": cleanBusinessHours,
         "slotTimes": [
           {
-            "time": slotTime,
+            "time": bookingTime,
             "amount": slotAmount,
           }
         ],
@@ -693,8 +716,17 @@ class QuestionsBottomsheetController extends GetxController {
       final slotTimes = (slotEntry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
       if (slotTimes.isNotEmpty) {
         final slotTime = slotTimes.first;
-        final time = slotTime["time"]?.toString() ?? '';
+        var time = slotTime["time"]?.toString() ?? '';
         final amount = (slotTime["amount"] as int?) ?? 0;
+        
+        // Check if this is a half slot and adjust time display
+        final isHalfSlot = slotEntry["isHalfSlot"] as bool? ?? false;
+        final isFirstHalf = slotEntry["isFirstHalf"] as bool? ?? true;
+        
+        if (isHalfSlot && !isFirstHalf) {
+          // For right half, add 30 minutes to the display time
+          time = _addMinutesToTime(time, 30);
+        }
         
         groups.add({
           'timeRange': _formatTimeSlot(time),

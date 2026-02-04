@@ -577,8 +577,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildCompletedAvatar(String? imageUrl, String name, {bool isPlaceholder = false}) {
-    final firstLetter = isPlaceholder ? "P" : (name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?');
-    final displayText = isPlaceholder ? name : firstLetter;
+    final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
+    final initials = isPlaceholder ? "P" : controller.getInitials(name);
+    final displayText = isPlaceholder ? name : initials;
 
     return Container(
       decoration: BoxDecoration(
@@ -929,10 +930,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildFilledPlayerFromScoreboard(String? imageUrl, String name, String lastName, String bookingType, int index, {dynamic booking}) {
+    final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
     final isBlueTheme = bookingType.toLowerCase() == "normal";
-    final firstLetter = name.trim().isNotEmpty
-        ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
-        : '??';
+    final initials = controller.getInitials(name);
     final isSlotBooked = booking?.openMatchId?.openMatchStatus =="cancelled";
 
     return GestureDetector(
@@ -956,7 +956,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               height: double.infinity,
               placeholder: (context, url) => Center(
                 child: Text(
-                  firstLetter,
+                  initials,
                   style: TextStyle(
                     fontSize: 16,
                     color: (!isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor).withOpacity(0.5),
@@ -966,7 +966,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               ),
               errorWidget: (context, url, error) => Center(
                 child: Text(
-                  firstLetter,
+                  initials,
                   style: TextStyle(
                     fontSize: 18,
                     color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor,
@@ -977,7 +977,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
             )
                 : Center(
               child: Text(
-                firstLetter,
+                initials,
                 style: TextStyle(
                   fontSize: 18,
                   color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor,
@@ -1047,7 +1047,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
           if (isMatchCreator) {
             final isOpenMatch = booking?.isOpenMatch == true;
-            Get.bottomSheet(AppPlayersBottomSheetScore(bookingType: bookingType,matchId:isBlueTheme? matchId:openMatchId, teamName: selectedTeam, bookingId: bookingId, openMatchId: openMatchId, showAddGuestButton: !isOpenMatch), isScrollControlled: true);
+            Get.bottomSheet(AppPlayersBottomSheetScore(bookingType: bookingType,matchId:isBlueTheme? matchId:matchId, teamName: selectedTeam, bookingId: bookingId, openMatchId: openMatchId, showAddGuestButton: !isOpenMatch), isScrollControlled: true);
           } else {
             AddPlayerBottomSheet.show(
               context,
@@ -1516,6 +1516,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       final userId = teamPlayer.userId;
       final name = userId?.name ?? '';
       final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      final xpPoints = userId?.xpPoints??0.0;
       final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
 
@@ -1550,12 +1551,30 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                     Row(
                       children: [
                         Text(
-                          '⭐ 0 XP Points ',
+                          '⭐',
                           style: Get.textTheme.bodySmall
-                              ?.copyWith(color: AppColors.secondaryColor),
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                        Container(
+                          // height: 25,
+                          // width: 55,
+                          padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryColor,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            '${formatAmount(xpPoints)} XP',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
                         ),
                         Text(
-                          '| $countryCode-$phoneNumber',
+                          ' | $countryCode-$phoneNumber',
                           style: Get.textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
@@ -1583,6 +1602,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       final userId = teamPlayer.userId;
       final name = userId?.name ?? '';
       final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      final xpPoints = userId?.xpPoints??0.0;
       final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
 
@@ -1617,12 +1637,30 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                     Row(
                       children: [
                         Text(
-                          '⭐ 0 XP Points ',
+                          '⭐',
                           style: Get.textTheme.bodySmall
-                              ?.copyWith(color: AppColors.secondaryColor),
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                        Container(
+                          // height: 25,
+                          // width: 55,
+                          padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryColor,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            '${formatAmount(xpPoints)} XP',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
                         ),
                         Text(
-                          '| $countryCode-$phoneNumber',
+                          ' | $countryCode-$phoneNumber',
                           style: Get.textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),

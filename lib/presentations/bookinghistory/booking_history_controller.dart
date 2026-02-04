@@ -389,6 +389,24 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
     }
   }
 
+  // Helper function to get initials from full name
+  String getInitials(String name) {
+    if (name.trim().isEmpty) return '';
+    
+    List<String> nameParts = name.trim().split(' ');
+    String initials = '';
+    
+    // Take first letter of first name and last name (max 2 initials)
+    if (nameParts.isNotEmpty) {
+      initials += nameParts[0][0].toUpperCase();
+      if (nameParts.length > 1) {
+        initials += nameParts[nameParts.length - 1][0].toUpperCase();
+      }
+    }
+    
+    return initials;
+  }
+
   @override
   void onClose() {
     tabController.dispose();
