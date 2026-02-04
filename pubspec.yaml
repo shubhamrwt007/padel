@@ -38,6 +38,7 @@ dependencies:
   firebase_messaging:
   timezone:
   permission_handler:
+  path_provider:
   firebase_core:
   flutter_dash:
   shimmer:
