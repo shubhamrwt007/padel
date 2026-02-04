@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
+import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
@@ -18,6 +19,11 @@ class MainHomeController extends GetxController{
 
   // Sport Tab Selection
   final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
+  
+  // Category data
+  final Rx<GetCategoryModel?> categoryModel = Rx<GetCategoryModel?>(null);
+  final RxBool isLoadingCategory = false.obs;
+  final RxString selectedCategoryId = ''.obs;
 
   // Banner functionality
   final RxInt currentBannerIndex = 0.obs;
@@ -35,6 +41,7 @@ class MainHomeController extends GetxController{
   void onInit() async {
     super.onInit();
     pageController = PageController();
+    await fetchCategories();
     homeController.fetchBookings();
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
@@ -62,25 +69,39 @@ class MainHomeController extends GetxController{
   /// Handle sport tab changes
   void onSportTabChanged(int index) {
     selectedSportTab.value = index;
-
-    if (index == 0) {
-      // Padel selected
-      print('Padel sport selected');
-      // You can add logic here to filter/load Padel-specific data
-      // For example: homeController.fetchPadelCourts();
-    } else {
-      // Pickleball selected
-      print('Pickleball sport selected');
-      // You can add logic here to filter/load Pickleball-specific data
-      // For example: homeController.fetchPickleballCourts();
-      // Or show a "Coming Soon" message
-      Get.snackbar(
-        'Coming Soon',
-        'Pickleball courts will be available soon!',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: Duration(seconds: 2),
+    
+    final categories = categoryModel.value?.data ?? [];
+    if (categories.isEmpty) return;
+    
+    String? categoryId;
+    if (index == 0 && categories.isNotEmpty) {
+      // Padel - find padel category
+      final padelCategory = categories.firstWhere(
+        (cat) => cat.name?.toLowerCase() == 'padel',
+        orElse: () => categories.first,
       );
+      categoryId = padelCategory.sId;
+    } else if (index == 1 && categories.length > 1) {
+      // Pickleball - find pickleball category
+      final pickleballCategory = categories.firstWhere(
+        (cat) => cat.name?.toLowerCase() == 'pickleball',
+        orElse: () => categories.last,
+      );
+      categoryId = pickleballCategory.sId;
     }
+    
+    selectedCategoryId.value = categoryId ?? '';
+    
+    // Get location ID from profile (using city or user ID)
+    final locationId = profileController.profileModel.value?.response?.city;
+    
+    // Fetch clubs with category and location
+    homeController.currentPage.value = 1;
+    homeController.fetchClubs(
+      isRefresh: true,
+      categoryId: selectedCategoryId.value,
+      locationId: "68c94a94d72a6f9769712ff0",
+    );
   }
   Future<void> fetchNearCityPlayers() async {
     try {
@@ -94,6 +115,36 @@ class MainHomeController extends GetxController{
       print('Error fetching near city players: $e');
     } finally {
       isLoadingPlayers.value = false;
+    }
+  }
+  
+  Future<void> fetchCategories() async {
+    try {
+      isLoadingCategory.value = true;
+      final response = await _homeRepository.getCategory();
+      categoryModel.value = response;
+      
+      // Set default to Padel category
+      final categories = response.data ?? [];
+      if (categories.isNotEmpty) {
+        final padelCategory = categories.firstWhere(
+          (cat) => cat.name?.toLowerCase() == 'padel',
+          orElse: () => categories.first,
+        );
+        selectedCategoryId.value = padelCategory.sId ?? '';
+        
+        // Fetch clubs with padel category by default
+        // final locationId = profileController.profileModel.value?.response?.city;
+        homeController.fetchClubs(
+          isRefresh: true,
+          categoryId: selectedCategoryId.value,
+          locationId: "68c94a94d72a6f9769712ff0",
+        );
+      }
+    } catch (e) {
+      print('Error fetching categories: $e');
+    } finally {
+      isLoadingCategory.value = false;
     }
   }
 

@@ -95,4 +95,7 @@ class AppEndpoints {
 
   ///XP Points------------------------------------------------------------------
   static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";
+
+  /// Get Category
+  static const String getCategory = "${baseUrl}court/category/list";
 }

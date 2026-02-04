@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:padel_mobile/data/request_models/createAndGetSlotHistoryModel.dart';
 import 'package:padel_mobile/data/request_models/deleteSlotHistoryModel.dart';
+import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
 import 'package:padel_mobile/data/request_models/slot_history_models/delete_bulk_slot_history_model.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
@@ -20,9 +21,18 @@ import '../../presentations/auth/forgot_password/widgets/forgot_password_exports
 
 class HomeRepository {
   final DioClient dioClient = DioClient();
-  Future<CourtsModel> fetchClubData({String limit = "10", required String page, String search = ""}) async {
+  Future<CourtsModel> fetchClubData({String limit = "10", required String page, String search = "", String? categoryId, String? locationId}) async {
      try {
-      final url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
+      String url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
+      
+      if (categoryId != null && categoryId.isNotEmpty) {
+        url += "&categoryId=$categoryId";
+      }
+      
+      if (locationId != null && locationId.isNotEmpty) {
+        url += "&locationId=$locationId";
+      }
+      
       final response = await dioClient.get(url);
       if (response.statusCode == 200) {
         log("Response Data: ${response.data}");
@@ -308,6 +318,28 @@ class HomeRepository {
         return GetPendingRequestCountModel.fromJson(response.data);
       } else {
         throw Exception("Failed to load Get Pending Request Count - status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("Dio Error: ${e.response?.statusMessage}");
+        throw Exception("Server error: ${e.response?.statusCode}");
+      } else {
+        debugPrint("Dio Error: ${e.message}");
+        throw Exception("Network error: ${e.message}");
+      }
+    }
+  }
+
+  ///Get Category---------------------------------------------------------------
+  Future<GetCategoryModel> getCategory() async {
+    try {
+      final url = AppEndpoints.getCategory;
+      final response = await dioClient.get(url);
+      if (response.statusCode == 200) {
+        log("Get Category: ${response.data}");
+        return GetCategoryModel.fromJson(response.data);
+      } else {
+        throw Exception("Failed to load Get Category - status code: ${response.statusCode}");
       }
     } on DioException catch (e) {
       if (e.response != null) {

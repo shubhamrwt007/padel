@@ -1083,6 +1083,14 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
+    final courtDetails = court.courts?.isNotEmpty == true ? court.courts![0] : null;
+    final courtImage = courtDetails?.courtImage?.isNotEmpty == true ? courtDetails!.courtImage![0] : null;
+    final courtCount = courtDetails?.courtCount ?? 0;
+    final features = courtDetails?.features ?? [];
+    final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
+    final city = locationDetails?.city ?? court.city ?? "N/A";
+    final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
+    
     return GestureDetector(
       onTap: () {
         log("CLUB ID -> ${court.id}");
@@ -1100,9 +1108,9 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               /// IMAGE
               Positioned.fill(
-                child: court.courtImage != null && court.courtImage!.isNotEmpty
+                child: courtImage != null
                     ? CachedNetworkImage(
-                  imageUrl: court.courtImage![0],
+                  imageUrl: courtImage,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(
                     color: Colors.grey[300],
@@ -1212,7 +1220,7 @@ class MainHomeScreen extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "${court.city},${court.zipCode}",
+                              city,
                               style: Get.textTheme.bodySmall!
                                   .copyWith(color: Colors.white70, fontSize: 9),
                               maxLines: 1,
@@ -1223,7 +1231,7 @@ class MainHomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "${court.courtCount ?? 0} Courts | ${court.features?.join(' | ') ?? 'Available'}",
+                        "$courtCount Courts | ${features.isNotEmpty ? features.join(' | ') : 'Available'}",
                         style: Get.textTheme.bodySmall!
                             .copyWith(color: Colors.white70, fontSize: 9),
                         maxLines: 1,
