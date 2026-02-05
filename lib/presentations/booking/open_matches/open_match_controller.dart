@@ -360,12 +360,12 @@ class OpenMatchesController extends GetxController {
     }
   }
   /// Find Near By Players Api--------------------------------------------------
-  Future<void> fetchNearByPlayers({String search = ''}) async {
+  Future<void> fetchNearByPlayers({String search = '', String? bookingId = ''}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
       
-      final response = await repository.findNearByPlayer(search: search);
+      final response = await repository.findNearByPlayer(search: search,bookingId:bookingId );
       if(response.status == 200 && response.players != null){
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
@@ -373,9 +373,11 @@ class OpenMatchesController extends GetxController {
           // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName': player.cityName ?? '',
           'level': player.level ?? '',
           'xpPoints': player.xpPoints ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+          'hasPendingRequest': player.hasPendingRequest??false
         }).toList();
       }
     } catch (e) {

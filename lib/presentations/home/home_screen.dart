@@ -365,12 +365,23 @@ class HomeScreen extends GetView<HomeController> {
   }
 
   Widget _buildCourtCard(BuildContext context, Courts club, int index) {
+    final courtDetails = club.courts?.isNotEmpty == true ? club.courts![0] : null;
+    final courtImage = courtDetails?.courtImage?.isNotEmpty == true ? courtDetails!.courtImage![0] : null;
+    final courtCount = courtDetails?.courtCount ?? 0;
+    final locationDetails = club.locations?.isNotEmpty == true ? club.locations![0] : null;
+    final city = locationDetails?.city ?? club.city ?? "N/A";
+    final zipCode = locationDetails?.zipCode ?? club.zipCode ?? "";
+    
     return GestureDetector(
       onTap: () {
         log("CLUB ID -> ${club.id}");
         if (club.id != null) {
           Get.delete<BookingController>();
-          Get.toNamed(RoutesName.booking, arguments: {"data": club,"clubId":club.id});
+          Get.toNamed(RoutesName.booking, arguments: {
+            "data": club,
+            "clubId": club.id,
+            "sID": courtDetails?.id ?? "",
+          });
           FocusManager.instance.primaryFocus?.unfocus();
         }
       },
@@ -387,9 +398,9 @@ class HomeScreen extends GetView<HomeController> {
               width: 118,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: club.courtImage != null && club.courtImage!.isNotEmpty
+                child: courtImage != null
                     ? CachedNetworkImage(
-                  imageUrl: club.courtImage![0],
+                  imageUrl: courtImage,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => const Center(child: LoadingWidget(color: AppColors.primaryColor,)),
                   errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
@@ -414,7 +425,7 @@ class HomeScreen extends GetView<HomeController> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          "${club.city?.capitalizeFirst}, ${club.zipCode}",
+                          "${city.capitalizeFirst}${zipCode.isNotEmpty ? ', $zipCode' : ''}",
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 10, fontWeight: FontWeight.w500),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -424,7 +435,7 @@ class HomeScreen extends GetView<HomeController> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${club.courtCount ?? 0} Courts ",
+                    "$courtCount Courts",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 10, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),

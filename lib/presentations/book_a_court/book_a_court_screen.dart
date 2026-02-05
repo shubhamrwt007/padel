@@ -64,7 +64,7 @@ class BookACourtScreen extends StatelessWidget {
                 waitDuration: Duration(milliseconds: 200),
                 showDuration: Duration(seconds: 3),
                 triggerMode: TooltipTriggerMode.tap,
-                child: Icon(Icons.info_outline,size: 22,))
+                child: Icon(Icons.info_outline,size: 20,))
           ],
         ),
         centerTitle: true,
@@ -202,7 +202,7 @@ class BookACourtScreen extends StatelessWidget {
                     ? GestureDetector(
                   onTap: () => controller.fetchClubs(),
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12,horizontal: 14),
+                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(5),
                       gradient: const LinearGradient(
@@ -514,32 +514,32 @@ class BookACourtScreen extends StatelessWidget {
             ),
             SizedBox(width: 15,),
 
-            /// TIME SLOTS - Show all slots in grid format
+            /// TIME SLOTS - Show all slots in horizontal scroll
             if (displaySlots.isNotEmpty)
               Expanded(
-                child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.6,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Builder(
+                    builder: (context) => Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: displaySlots.map((slot) {
+                        final index = displaySlots.indexOf(slot);
+                        return SizedBox(
+                          width: 88,
+                          child: Obx(() => _buildCourtSlotTile(
+                            context,
+                            slot,
+                            courtName,
+                            selectedIndex,
+                            index,
+                            courtId: courtId ?? 'court$selectedIndex',
+                            availableSlots: displaySlots,
+                          )),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                  itemCount: displaySlots.length,
-                  itemBuilder: (context, index) {
-                    final slot = displaySlots[index];
-                    return Obx(() => _buildCourtSlotTile(
-                      context,
-                      slot,
-                      courtName,
-                      selectedIndex,
-                      index,
-                      courtId: courtId ?? 'court$selectedIndex',
-                      availableSlots: displaySlots,
-                    ));
-                  },
                 ),
               )
             else

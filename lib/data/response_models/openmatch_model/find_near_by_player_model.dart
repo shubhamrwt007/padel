@@ -30,6 +30,7 @@ class Player {
   final String? id;
   final String? name;
   final String? city;
+  final String? cityName;
   final String? level;
   final String? profilePic;
   final int? totalMatchesPlayed;
@@ -40,6 +41,7 @@ class Player {
     this.id,
     this.name,
     this.city,
+    this.cityName,
     this.level,
     this.profilePic,
     this.totalMatchesPlayed,
@@ -52,6 +54,7 @@ class Player {
       id: json['_id'],
       name: json['name'],
       city: json['city'],
+      cityName: json['cityName'],
       level: json['playerLevel'],
       profilePic: json['profilePic'],
       totalMatchesPlayed: json['totalMatchesPlayed'],
@@ -64,6 +67,7 @@ class Player {
     '_id': id,
     'name': name,
     'city': city,
+    'cityName': cityName,
     'playerLevel': level,
     'profilePic': profilePic,
     'totalMatchesPlayed': totalMatchesPlayed,

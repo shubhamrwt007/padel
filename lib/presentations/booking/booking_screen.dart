@@ -70,8 +70,11 @@ class BookingScreen extends GetView<BookingController> {
                       /// Background image (only when expanded)
                       if (!isCollapsed)
                         Obx(() {
-                          final imageUrl = controller.courtsData.value.courtImage?.isNotEmpty == true
-                              ? controller.courtsData.value.courtImage!.first
+                          final courtDetails = controller.courtsData.value.courts?.isNotEmpty == true 
+                              ? controller.courtsData.value.courts![0] 
+                              : null;
+                          final imageUrl = courtDetails?.courtImage?.isNotEmpty == true
+                              ? courtDetails!.courtImage![0]
                               : '';
                           return imageUrl.isNotEmpty
                               ? CachedNetworkImage(
@@ -150,11 +153,18 @@ class BookingScreen extends GetView<BookingController> {
                               }),
                               const SizedBox(height: 8),
                               Obx(() {
-                                final address =
-                                    controller.courtsData.value.address ?? 'Address not available';
-                                final city = controller.courtsData.value.city ?? '';
-                                final fullAddress =
-                                city.isNotEmpty ? "$address, $city" : address;
+                                final locationDetails = controller.courtsData.value.locations?.isNotEmpty == true
+                                    ? controller.courtsData.value.locations![0]
+                                    : null;
+                                final address = locationDetails?.address ?? controller.courtsData.value.address ?? '';
+                                final city = locationDetails?.city ?? controller.courtsData.value.city ?? '';
+                                final fullAddress = address.isNotEmpty && city.isNotEmpty 
+                                    ? "$address, $city" 
+                                    : address.isNotEmpty 
+                                        ? address 
+                                        : city.isNotEmpty 
+                                            ? city 
+                                            : 'Address not available';
                                 return Text(
                                   fullAddress,
                                   style: const TextStyle(

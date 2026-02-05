@@ -182,18 +182,36 @@ class MainHomeScreen extends StatelessWidget {
 
                     _bookingSection(),
 
-                    const SizedBox(height: 15),
-                    statsDashboard(),
-                    const SizedBox(height: 20),
+                    Obx(() {
+                      if (controller.selectedSportTab.value == 0) {
+                        return Column(
+                          children: [
+                            const SizedBox(height: 15),
+                            statsDashboard(),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      }
+                      return const SizedBox(height: 20);
+                    }),
                     _sectionTitle("Courts Near you", () {
                       Get.toNamed(RoutesName.home);
                     }),
                     _courtCard(),
                     const SizedBox(height: 15),
-                    _sectionTitle("Top players near you", () {
-                      Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+                    Obx(() {
+                      if (controller.selectedSportTab.value == 0) {
+                        return Column(
+                          children: [
+                            _sectionTitle("Top players near you", () {
+                              Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+                            }),
+                            _players(),
+                          ],
+                        );
+                      }
+                      return const SizedBox.shrink();
                     }),
-                    _players(),
                   ],
                 ),
               ),
@@ -211,7 +229,7 @@ class MainHomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.creamColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: const Color(0xFFE8E8E8),
           width: 1,
@@ -369,7 +387,7 @@ class MainHomeScreen extends StatelessWidget {
       final name =
           profile?.response?.name?.capitalizeFirst?.split(' ').first ?? "";
       final displayName = (name.trim().isEmpty) ? 'Guest' : name;
-      final location = profile?.response?.city ?? "";
+      final location = profile?.response?.city?.name ?? "";
 
       return SizedBox(
         width: Get.width * 0.34,
@@ -419,7 +437,6 @@ class MainHomeScreen extends StatelessWidget {
   Widget _bookingSection() {
     return Obx(() {
       final homeController = controller.homeController;
-
       if (homeController.isLoadingBookings.value && !homeController.isCreatingScoreboard.value) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
@@ -1083,13 +1100,22 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
+    final courtDetails = court.courts?.isNotEmpty == true ? court.courts![0] : null;
+    final courtImage = courtDetails?.courtImage?.isNotEmpty == true ? courtDetails!.courtImage![0] : null;
+    final courtCount = courtDetails?.courtCount ?? 0;
+    final features = courtDetails?.features ?? [];
+    final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
+    final city = locationDetails?.city ?? court.city ?? "N/A";
+    final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
+    
     return GestureDetector(
       onTap: () {
         log("CLUB ID -> ${court.id}");
+        log(" ID -> ${court.courts?[0].id??""}");
         if (court.id != null) {
           Get.delete<BookingController>();
           Get.toNamed(RoutesName.booking,
-              arguments: {"data": court, "clubId": court.id});
+              arguments: {"data": court, "clubId": court.id, "sID":court.courts?[0].id??""});
         }
       },
       child: Padding(
@@ -1100,9 +1126,9 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               /// IMAGE
               Positioned.fill(
-                child: court.courtImage != null && court.courtImage!.isNotEmpty
+                child: courtImage != null
                     ? CachedNetworkImage(
-                  imageUrl: court.courtImage![0],
+                  imageUrl: courtImage,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(
                     color: Colors.grey[300],
@@ -1212,7 +1238,7 @@ class MainHomeScreen extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "${court.city},${court.zipCode}",
+                              city,
                               style: Get.textTheme.bodySmall!
                                   .copyWith(color: Colors.white70, fontSize: 9),
                               maxLines: 1,
@@ -1223,7 +1249,7 @@ class MainHomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "${court.courtCount ?? 0} Courts | ${court.features?.join(' | ') ?? 'Available'}",
+                        "$courtCount Courts | ${features.isNotEmpty ? features.join(' | ') : 'Available'}",
                         style: Get.textTheme.bodySmall!
                             .copyWith(color: Colors.white70, fontSize: 9),
                         maxLines: 1,
@@ -1641,7 +1667,7 @@ class MainHomeScreen extends StatelessWidget {
       final profile = controller.profileController.profileModel.value;
       final recentMatches = profile?.response?.recentMatches ?? [];
 
-      List<String> results = recentMatches.isNotEmpty ? recentMatches : [];
+      List<String> results = recentMatches.isNotEmpty ? recentMatches.cast<String>() : [];
 
       final displayResults = results.length > 5
           ? results.sublist(results.length - 5)

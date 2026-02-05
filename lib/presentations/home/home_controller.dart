@@ -118,10 +118,9 @@ class HomeController extends GetxController {
   }
 
   /// Fetch clubs with pagination and comprehensive error handling
-  Future<void> fetchClubs({bool isRefresh = false}) async {
+  Future<void> fetchClubs({bool isRefresh = false, String? categoryId, String? locationId}) async {
     try {
-      log("Fetching clubs - Page: ${currentPage.value}, Search: ${searchQuery
-          .value}");
+      log("Fetching clubs - Page: ${currentPage.value}, Search: ${searchQuery.value}, CategoryId: $categoryId, LocationId: $locationId");
 
       if (isRefresh || currentPage.value == 1) {
         isLoadingClub.value = true;
@@ -136,6 +135,8 @@ class HomeController extends GetxController {
         limit: limit.toString(),
         page: currentPage.value.toString(),
         search: searchQuery.value,
+        categoryId: categoryId,
+        locationId: locationId,
       );
 
       log("Courts length ${result.data?.courts?.length ?? 0}");
@@ -265,11 +266,19 @@ class HomeController extends GetxController {
     return _isBookingOngoing(booking);
   }
 
-  Future<void> fetchBookings() async {
+  Future<void> fetchBookings({String? categoryId, String? locationId}) async {
     isLoadingBookings.value = true;
     try {
-      final ongoingResponse = await bookingHistoryRepository.getBookingHistory(type: "in-progress");
-      final upcomingResponse = await bookingHistoryRepository.getBookingHistory(type: "upcoming");
+      final ongoingResponse = await bookingHistoryRepository.getBookingHistory(
+        type: "in-progress",
+        categoryId: categoryId,
+        locationId: locationId,
+      );
+      final upcomingResponse = await bookingHistoryRepository.getBookingHistory(
+        type: "upcoming",
+        categoryId: categoryId,
+        locationId: locationId,
+      );
 
       final allBookings = <BookingHistoryData>[];
       

@@ -132,19 +132,33 @@ class OpenMatchRepository {
       rethrow;
     }
   }
-  Future<FindNearByPlayerModel> findNearByPlayer({dynamic? search,String? bookingId}) async {
+  Future<FindNearByPlayerModel> findNearByPlayer({
+    String? search,
+    String? bookingId,
+  }) async {
     try {
+      final queryParams = {
+        if (search != null && search.isNotEmpty) "search": search,
+        if (bookingId != null && bookingId.isNotEmpty) "bookingId": bookingId,
+      };
+
+      /// 🔹 Build full URL for logging
+      final uri = Uri.parse(AppEndpoints.findNearByPlayer)
+          .replace(queryParameters: queryParams);
+
+      CustomLogger.logMessage(
+        msg: "REQUEST → GET ${uri.toString()}",
+        level: LogLevel.info,
+      );
+
       final response = await dioClient.get(
         AppEndpoints.findNearByPlayer,
-        queryParameters: {
-          if (search != null && search.isNotEmpty) "search": search,
-          if (bookingId != null && bookingId.isNotEmpty) "bookingId":bookingId
-        },
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200) {
         CustomLogger.logMessage(
-          msg: "Find Near By Players fetched successfully: ${response.data}",
+          msg: "RESPONSE → ${response.data}",
           level: LogLevel.info,
         );
 
@@ -153,9 +167,14 @@ class OpenMatchRepository {
         throw Exception("Failed to fetch Near By Players: ${response.statusCode}");
       }
     } catch (e) {
+      CustomLogger.logMessage(
+        msg: "ERROR → $e",
+        level: LogLevel.error,
+      );
       rethrow;
     }
   }
+
 
   // Future<OpenMatchDetailsModel> getParticularMatch(String clubId) async {
   //   log("mes 2");

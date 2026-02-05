@@ -312,18 +312,18 @@ class QuestionsBottomsheetController extends GetxController {
   Future<void> initiateMatchCreation() async {
     log("🚀 Starting match creation process with payment");
     if (!validateSelections()) return;
-    if (!validateTeams()) {
-      Fluttertoast.showToast(
-        msg: "Please add required players to both teams",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
-      return;
-    }
+    // if (!validateTeams()) {
+    //   Fluttertoast.showToast(
+    //     msg: "Please add required players to both teams",
+    //     toastLength: Toast.LENGTH_SHORT,
+    //     gravity: ToastGravity.BOTTOM,
+    //     backgroundColor: Colors.red,
+    //     textColor: Colors.white,
+    //     fontSize: 16.0,
+    //     timeInSecForIosWeb: 3,
+    //   );
+    //   return;
+    // }
     if (_razorpayOrderId == null) {
       Fluttertoast.showToast(
         msg: "Match not initialized. Please try again.",

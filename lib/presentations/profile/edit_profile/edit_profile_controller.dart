@@ -39,7 +39,8 @@ class EditProfileController extends GetxController{
     } else {
       selectedDate.value = "";
     }
-    selectedLocation.value = model?.response?.city ?? '';
+    selectedLocation.value = model?.response?.city?.name ?? '';
+    selectedLocationId.value = model?.response?.city?.sId ?? '';
   }
 
   void selectDate(BuildContext context) async {
@@ -198,13 +199,17 @@ class EditProfileController extends GetxController{
 
       }
 
+      final locationId = selectedLocationId.value.isNotEmpty 
+          ? selectedLocationId.value 
+          : locations.firstWhere((loc) => loc.name == selectedLocation.value, orElse: () => GetLocationData()).id ?? '';
+
       final updatedProfile = await profileRepository.updateUserProfile(
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         // lastName: lastNameController.text.trim(),
         gender: selectedGender.value,
         dob: formattedDate,
-        city: selectedLocation.value,
+        city: locationId,
         location: locationJson,
         profileImage: profileImage.value != null ? File(profileImage.value!.path) : null,
       );
@@ -347,6 +352,7 @@ class EditProfileController extends GetxController{
   var locations = <GetLocationData>[].obs;
   var isLocationLoading = false.obs;
   var selectedLocation = "".obs;
+  var selectedLocationId = "".obs;
   SignUpRepository signUpRepository = Get.put(SignUpRepository());
   Future<void>fetchLocations()async{
     isLocationLoading.value = true;

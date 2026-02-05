@@ -409,7 +409,16 @@ class EditProfileUi extends StatelessWidget {
                   .toList(),
               onChanged: (value) {
                 controller.selectedLocation.value = value ?? "";
-                CustomLogger.logMessage(msg: "Selected Location -> ${controller.selectedLocation.value}",level: LogLevel.info);
+                // Find and set the location ID when location name is selected
+                final selectedLoc = controller.locations.firstWhere(
+                  (loc) => loc.name == value,
+                  orElse: () => GetLocationData(),
+                );
+                controller.selectedLocationId.value = selectedLoc.id ?? "";
+                CustomLogger.logMessage(
+                  msg: "Selected Location -> ${controller.selectedLocation.value}, ID -> ${controller.selectedLocationId.value}",
+                  level: LogLevel.info,
+                );
               },
             );
 

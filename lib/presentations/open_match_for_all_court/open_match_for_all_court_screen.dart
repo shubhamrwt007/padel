@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
@@ -11,7 +13,7 @@ import '../notification/notification_controller.dart';
 import 'open_match_for_all_court_controller.dart';
 class OpenMatchForAllCourtScreen extends StatefulWidget {
   const OpenMatchForAllCourtScreen({super.key});
-
+/////
   @override
   State<OpenMatchForAllCourtScreen> createState() => _OpenMatchForAllCourtScreenState();
 }
@@ -1845,7 +1847,8 @@ class AppPlayersBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<OpenMatchForAllCourtController>();
-    controller.fetchNearByPlayers();
+    log("BookingID___> $bookingId");
+    controller.fetchNearByPlayers(bookingId: bookingId??"");
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
@@ -1878,7 +1881,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 height: 45,
                 child: PrimaryTextField(
                     contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                    onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                    onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
                     hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                     suffixIcon: Icon(Icons.search,color: AppColors.textColor),
                     hintText: 'Search by Name / Phone number'),
@@ -2050,7 +2053,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                   ),
 
                   /// Button
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA'),
+                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',player['hasPendingRequest']),
                 ],
               ),
             );
@@ -2061,11 +2064,11 @@ class AppPlayersBottomSheet extends StatelessWidget {
   }
 
 
-  Widget _requestButton(bool sent, String playerId, String team) {
+  Widget _requestButton(bool sent, String playerId, String team,bool hasPendingRequest) {
     final controller = Get.find<OpenMatchForAllCourtController>();
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
+      final isRequested =hasPendingRequest || sent || controller.requestedPlayerIds.contains(playerId);
 
       return GestureDetector(
         onTap: (isRequested || isRequesting) ? null : () async {

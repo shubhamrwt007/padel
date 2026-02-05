@@ -20,22 +20,34 @@ class BookingHistoryRepository {
     required String type,
     int page = 1,
     int limit = 10,
+    String? categoryId,
+    String? locationId,
   }) async {
     try {
       if (kDebugMode) {
-        print("Making API call for type: $type, page: $page, limit: $limit");
+        print("Making API call for type: $type, page: $page, limit: $limit, categoryId: $categoryId, locationId: $locationId");
       }
       if (kDebugMode) {
         print("Endpoint: ${AppEndpoints.bookingHistory}");
       }
 
+      final queryParams = {
+        'type': type,
+        'page': page,
+        'limit': limit,
+      };
+      
+      if (categoryId != null && categoryId.isNotEmpty) {
+        queryParams['categoryId'] = categoryId;
+      }
+      
+      if (locationId != null && locationId.isNotEmpty) {
+        queryParams['locationId'] = locationId;
+      }
+
       final response = await dioClient.get(
         AppEndpoints.bookingHistory,
-        queryParameters: {
-          'type': type,
-          'page': page,
-          'limit': limit,
-        },
+        queryParameters: queryParams,
       );
 
       if (kDebugMode) {
