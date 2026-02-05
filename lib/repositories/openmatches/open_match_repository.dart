@@ -132,12 +132,13 @@ class OpenMatchRepository {
       rethrow;
     }
   }
-  Future<FindNearByPlayerModel> findNearByPlayer({dynamic? search}) async {
+  Future<FindNearByPlayerModel> findNearByPlayer({dynamic? search,String? bookingId}) async {
     try {
       final response = await dioClient.get(
         AppEndpoints.findNearByPlayer,
         queryParameters: {
           if (search != null && search.isNotEmpty) "search": search,
+          if (bookingId != null && bookingId.isNotEmpty) "bookingId":bookingId
         },
       );
 

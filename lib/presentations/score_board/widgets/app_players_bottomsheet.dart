@@ -20,12 +20,12 @@ class AppPlayersController extends GetxController {
   final OpenMatchRepository repository = OpenMatchRepository();
   RxString bookingType = ''.obs;
 
-  Future<void> fetchNearByPlayers({String search = ''}) async {
+  Future<void> fetchNearByPlayers({String search = '',required String bookingId}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
       
-      final response = await repository.findNearByPlayer(search: search);
+      final response = await repository.findNearByPlayer(search: search,bookingId: bookingId);
       if(response.status == 200 && response.players != null){
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
@@ -35,6 +35,7 @@ class AppPlayersController extends GetxController {
           'level': player.level ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
           'xpPoints': player.xpPoints ?? '',
+          "hasPendingRequest":player.hasPendingRequest??false
           // 'preferredTeam': player.preferredTeam ?? 'teamA',
         }).toList();
       }
@@ -74,7 +75,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   Widget build(BuildContext context) {
     print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType");
     controller.bookingType.value = bookingType ?? '';
-    controller.fetchNearByPlayers();
+    controller.fetchNearByPlayers(bookingId: bookingId??"");
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
@@ -106,7 +107,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               SizedBox(
                 height: 45,
                 child: PrimaryTextField(contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
                   hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                   suffixIcon: Icon(Icons.search, color: AppColors.textColor),
                   hintText: 'Search by Name / Phone number',
@@ -185,8 +186,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           ),
           itemBuilder: (_, i) {
             final player = controller.nearbyPlayers[i];
-            final isRequested = false;
-            final isAlreadyInMatch = currentPlayerIds?.contains(player['id']) ?? false;
+            final isRequested = player['hasPendingRequest'] ?? false;
             final initials = getInitials(player['name']);
 
             return Padding(
@@ -284,7 +284,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId, isAlreadyInMatch),
+                  _requestButton(player['hasPendingRequest'] ?? false, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId),
                 ],
               ),
             );
@@ -294,13 +294,13 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     });
   }
 
-  Widget _requestButton(bool sent, String playerId, String team, String bookingId, bool isAlreadyInMatch) {
+  Widget _requestButton(bool hasPendingRequest, String playerId, String team, String bookingId) {
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
+      final isRequested = hasPendingRequest || controller.requestedPlayerIds.contains(playerId);
       
       return GestureDetector(
-        onTap: (isRequested || isRequesting || isAlreadyInMatch) ? null : () async {
+        onTap: (isRequested || isRequesting) ? null : () async {
           controller.requestingPlayerId.value = playerId;
           
           // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
@@ -308,7 +308,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           
           print("=== REQUEST BUTTON TAPPED ===");
           print("bookingType: ${controller.bookingType.value}");
-          print("bookingId: $bookingId");
+          print("bookingId:-- $bookingId");
           print("playerId: $playerId");
           print("original teamName: $teamName");
           print("normalized team: $normalizedTeam");
@@ -351,7 +351,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isAlreadyInMatch ? const Color(0xffE9ECF5) : (isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF)),
+            color: isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF),
             borderRadius: BorderRadius.circular(8),
           ),
           child: isRequesting
@@ -364,9 +364,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                   ),
                 )
               : Text(
-                  isAlreadyInMatch ? 'Already Added' : (isRequested ? 'Request Sent' : 'Send Request'),
+                  isRequested ? 'Request Sent' : 'Send Request',
                   style: Get.textTheme.bodyLarge!.copyWith(
-                    color: (isAlreadyInMatch || isRequested) ? Colors.grey : AppColors.primaryColor,
+                    color: isRequested ? Colors.grey : AppColors.primaryColor,
                   ),
                 ),
         ),
