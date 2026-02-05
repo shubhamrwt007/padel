@@ -33,6 +33,7 @@ class Player {
   final String? level;
   final String? profilePic;
   final int? totalMatchesPlayed;
+  final bool? hasPendingRequest;
   final dynamic? xpPoints;
 
   const Player({
@@ -42,6 +43,7 @@ class Player {
     this.level,
     this.profilePic,
     this.totalMatchesPlayed,
+    this.hasPendingRequest,
     this.xpPoints,
   });
 
@@ -53,6 +55,7 @@ class Player {
       level: json['playerLevel'],
       profilePic: json['profilePic'],
       totalMatchesPlayed: json['totalMatchesPlayed'],
+      hasPendingRequest: json['hasPendingRequest'],
       xpPoints: json['xpPoints'],
     );
   }
@@ -64,6 +67,7 @@ class Player {
     'playerLevel': level,
     'profilePic': profilePic,
     'totalMatchesPlayed': totalMatchesPlayed,
+    'hasPendingRequest': hasPendingRequest,
     'xpPoints': xpPoints,
   };
 }
