@@ -16,7 +16,7 @@ class AppPlayersController extends GetxController {
   RxList<Map<String, dynamic>> nearbyPlayers = <Map<String, dynamic>>[].obs;
   RxBool isLoadingNearbyPlayers = false.obs;
   RxString requestingPlayerId = ''.obs;
-  RxMap<String, List<String>> requestedPlayersByBooking = <String, List<String>>{}.obs;
+  RxList<String> requestedPlayerIds = <String>[].obs;
   final OpenMatchRepository repository = OpenMatchRepository();
   RxString bookingType = ''.obs;
 
@@ -297,8 +297,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   Widget _requestButton(bool hasPendingRequest, String playerId, String team, String bookingId) {
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final bookingRequestedPlayers = controller.requestedPlayersByBooking[bookingId] ?? [];
-      final isRequested = hasPendingRequest || bookingRequestedPlayers.contains(playerId);
+      final isRequested = hasPendingRequest || controller.requestedPlayerIds.contains(playerId);
       
       return GestureDetector(
         onTap: (isRequested || isRequesting) ? null : () async {
@@ -344,17 +343,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           }
           
           if (success) {
-            if (controller.requestedPlayersByBooking[bookingId] == null) {
-              controller.requestedPlayersByBooking[bookingId] = [];
-            }
-            controller.requestedPlayersByBooking[bookingId]!.add(playerId);
-            controller.requestedPlayersByBooking.refresh();
-            
-            final playerIndex = controller.nearbyPlayers.indexWhere((p) => p['id'] == playerId);
-            if (playerIndex != -1) {
-              controller.nearbyPlayers[playerIndex]['hasPendingRequest'] = true;
-              controller.nearbyPlayers.refresh();
-            }
+            controller.requestedPlayerIds.add(playerId);
           }
           
           controller.requestingPlayerId.value = '';

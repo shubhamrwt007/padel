@@ -373,6 +373,7 @@ class OpenMatchesController extends GetxController {
           // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName': player.cityName ?? '',
           'level': player.level ?? '',
           'xpPoints': player.xpPoints ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',

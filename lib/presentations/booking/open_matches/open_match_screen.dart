@@ -1798,6 +1798,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<OpenMatchesController>();
+    controller.nearbyPlayers.clear();
     controller.fetchNearByPlayers(bookingId: bookingId);
     
     final screenHeight = MediaQuery.of(context).size.height;
@@ -2013,7 +2014,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                           Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
                           const SizedBox(width: 4),
                           Text(
-                            player['city'] ?? '',
+                            player['cityName'] ?? '',
                             style: Get.textTheme.bodyLarge!
                                 .copyWith(fontSize: 11),
                           ),
