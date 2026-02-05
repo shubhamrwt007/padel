@@ -525,7 +525,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 
     while (teamAPlayers.length < 2) {
       teamAPlayers.add(
-        _buildAvailableCircle("teamA", data.sId ?? "", data.skillLevel, index, data),
+        _buildAvailableCircle("teamA", data.sId ?? "", data.skillLevel, index, data,data.bookingId?.sId??""),
       );
     }
 
@@ -543,7 +543,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 
     while (teamBPlayers.length < 2) {
       teamBPlayers.add(
-        _buildAvailableCircle("teamB", data.sId ?? "", data.skillLevel, index, data),
+        _buildAvailableCircle("teamB", data.sId ?? "", data.skillLevel, index, data,data.bookingId?.sId??""),
       );
     }
 
@@ -776,7 +776,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   }
 
 
-  Widget _buildAvailableCircle(String team, String matchId, String? skillLevel, int index, MatchData? match) {
+  Widget _buildAvailableCircle(String team, String matchId, String? skillLevel, int index, MatchData? match,String bookingId) {
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
     final hasActiveRequest = match?.isRequest == true;
@@ -784,7 +784,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
-          Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team), isScrollControlled: true);
+          Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team,bookingId:bookingId ,), isScrollControlled: true);
         } else {
           // Direct API call for login user
           await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',(match?.bookingId?.totalAmount ?? 0)/4);
@@ -1792,12 +1792,13 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 class AppPlayersBottomSheet extends StatelessWidget {
   final String matchId;
   final String? selectedTeam;
-  const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam});
+  final String? bookingId;
+  const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam,this.bookingId});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<OpenMatchesController>();
-    controller.fetchNearByPlayers();
+    controller.fetchNearByPlayers(bookingId: bookingId);
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
@@ -1830,7 +1831,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 height: 45,
                 child: PrimaryTextField(
                     contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId),
                   hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                     suffixIcon: Icon(Icons.search,color: AppColors.textColor),
                     hintText: 'Search by Name / Phone number'),
@@ -1930,7 +1931,6 @@ class AppPlayersBottomSheet extends StatelessWidget {
           ),
           itemBuilder: (_, i) {
           final player = controller.nearbyPlayers[i];
-          final isRequested = false;
           final initials = getInitials(player['name']);
 
 
@@ -2024,7 +2024,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 ),
 
                 /// Button
-                _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA'),
+                _requestButton(player['id'] ?? '', player['preferredTeam'] ?? 'teamA',player['hasPendingRequest']),
               ],
             ),
           );
@@ -2035,11 +2035,11 @@ class AppPlayersBottomSheet extends StatelessWidget {
   }
 
 
-  Widget _requestButton(bool sent, String playerId, String team) {
+  Widget _requestButton(String playerId, String team, bool hasPendingRequest) {
     final controller = Get.find<OpenMatchesController>();
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
+      final isRequested = hasPendingRequest || controller.requestedPlayerIds.contains(playerId);
       
       return GestureDetector(
         onTap: (isRequested || isRequesting) ? null : () async {
@@ -2051,7 +2051,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
           addPlayerController.selectedTeam.value = team;
           addPlayerController.openMatchesController = controller;
           
-          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest');
+          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: bookingId);
           
           if (success) {
             controller.requestedPlayerIds.add(playerId);
