@@ -163,7 +163,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               Obx(
                     () => ProfileRow(
                   icon: Image.asset(Assets.imagesIcBalanceWallet, scale: 5, color: controller.selectedIndex.value == 3 ? AppColors.primaryColor : AppColors.labelBlackColor),
-                  title: AppStrings.payments,
+                  title: "My Transactions",
                   isSelected: controller.selectedIndex.value == 3,
                   onTap: () {
                     controller.selectedIndex.value = 3;
@@ -175,7 +175,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               Obx(
                     () => ProfileRow(
                   icon: Icon(Icons.person_add_alt_1, size: 20, color: controller.selectedIndex.value == 5 ? AppColors.primaryColor : AppColors.labelBlackColor),
-                  title: "Requests",
+                  title: "My Requests",
                   isSelected: controller.selectedIndex.value == 5,
                   onTap: () {
                     controller.selectedIndex.value = 5;
@@ -209,7 +209,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
                         BlendMode.srcIn,
                       ),
                     ),
-                  title: "Bookings",
+                  title: "My Bookings",
                   isSelected: controller.selectedIndex.value == 7,
                   onTap: () {
                     controller.selectedIndex.value = 7;
@@ -256,31 +256,6 @@ class CustomDrawerUi extends GetView<ProfileController> {
               //   ),
               // ),
 
-              Obx(
-                    () => ProfileRow(
-                  icon: Image.asset(
-                    Assets.imagesIcPrivacy,
-                    scale: 5,
-                    color: controller.selectedIndex.value == 12
-                        ? AppColors.primaryColor
-                        : AppColors.labelBlackColor,
-                  ),
-                  title: AppStrings.privacy,
-                  isSelected: controller.selectedIndex.value == 12,
-                  onTap: () async {
-                    controller.selectedIndex.value = 12;
-
-                    final url = Uri.parse("https://swootapp.com/privacy-policy");
-
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(
-                        url,
-                        mode: LaunchMode.externalApplication, // opens in browser
-                      );
-                    }
-                  },
-                ),
-              ),
 
 
 
@@ -298,17 +273,20 @@ class CustomDrawerUi extends GetView<ProfileController> {
           //         },
           //       ),
           //     ),
-              ProfileRow(
-                icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
-                title: AppStrings.logout,
-                textColor: Colors.red,
-                onTap: () => controller.showLogoutDialog(Get.context!),
-              ),
+
               const SizedBox(height: 20),
             ],
           ),
           Column(
             children: [
+              ProfileRow(
+                fontSize: 12,
+                height: 30,
+                icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
+                title: AppStrings.logout,
+                textColor: Colors.red,
+                onTap: () => controller.showLogoutDialog(Get.context!),
+              ),
               Obx(
                     () => ProfileRow(
                   icon: Icon(
@@ -343,6 +321,33 @@ class CustomDrawerUi extends GetView<ProfileController> {
               ),
               Obx(
                     () => ProfileRow(
+                  icon: Image.asset(
+                    Assets.imagesIcPrivacy,
+                    scale: 6,
+                    color: controller.selectedIndex.value == 12
+                        ? AppColors.primaryColor
+                        : AppColors.labelBlackColor,
+                  ),
+                  title: AppStrings.privacy,
+                      fontSize: 12,
+                      height: 30,
+                  isSelected: controller.selectedIndex.value == 12,
+                  onTap: () async {
+                    controller.selectedIndex.value = 12;
+
+                    final url = Uri.parse("https://swootapp.com/privacy-policy");
+
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication, // opens in browser
+                      );
+                    }
+                  },
+                ),
+              ),
+              Obx(
+                    () => ProfileRow(
                   icon: Icon(Icons.copyright, size: 15, color: controller.selectedIndex.value == 11 ? AppColors.primaryColor : AppColors.labelBlackColor),
                   title: "Terms and Conditions",
                   isSelected: controller.selectedIndex.value == 11,
@@ -363,12 +368,34 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 ),
               ).paddingOnly(bottom: 20),
 
-              Text(
-                "Powered By RowthTech",
-                style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                  color: AppColors.blackColor.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.w400,fontSize: 12,
-                ),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: ()async{
+                      final url = Uri.parse("https://rowthtech.com");
+
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(
+                          url,
+                          mode: LaunchMode.externalApplication, // opens in browser
+                        );
+                      }
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                      padding: EdgeInsets.symmetric(vertical: 4,horizontal: 9),
+                      child: Text(
+                        "Powered By RowthTech",
+                        style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                          color: AppColors.blackColor.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w400,fontSize: 12,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SvgPicture.asset(Assets.imagesRowthTechLogo,height: 13,width: 13,)
+                ],
               )
             ],
           ).paddingOnly(bottom: 50),

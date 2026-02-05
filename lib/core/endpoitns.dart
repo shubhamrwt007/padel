@@ -99,4 +99,7 @@ class AppEndpoints {
 
   /// Get Category
   static const String getCategory = "${baseUrl}court/category/list";
+
+  ///FCM Token------------------------------------------------------------------
+  static const String updateFcmToken = "${baseUrl}updateFcmToken";
 }
