@@ -88,6 +88,7 @@ class Assets {
   static const String imagesNewHomeBanner7 = 'assets/images/new_home_banner_7.jpg';
   static const String imagesPadelLogo = 'assets/images/Padel_logo.svg';
   static const String imagesPadelLogo11 = 'assets/images/Padel_logo_11.svg';
+  static const String imagesRowthTechLogo = 'assets/images/rowthTech_logo.svg';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';
 
 }
