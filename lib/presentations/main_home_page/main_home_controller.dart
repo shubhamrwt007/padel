@@ -42,7 +42,14 @@ class MainHomeController extends GetxController{
     super.onInit();
     pageController = PageController();
     await fetchCategories();
-    homeController.fetchBookings();
+    
+    // Fetch bookings with dynamic location from profile
+    final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+    homeController.fetchBookings(
+      categoryId: selectedCategoryId.value,
+      locationId: locationId,
+    );
+    
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
     _startBannerAutoSlide();
@@ -67,7 +74,7 @@ class MainHomeController extends GetxController{
   }
 
   /// Handle sport tab changes
-  void onSportTabChanged(int index) {
+  void onSportTabChanged(int index) async {
     selectedSportTab.value = index;
     
     final categories = categoryModel.value?.data ?? [];
@@ -92,15 +99,21 @@ class MainHomeController extends GetxController{
     
     selectedCategoryId.value = categoryId ?? '';
     
-    // Get location ID from profile (using city or user ID)
-    final locationId = profileController.profileModel.value?.response?.city;
+    // Get location ID from profile
+    final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
     
     // Fetch clubs with category and location
     homeController.currentPage.value = 1;
     homeController.fetchClubs(
       isRefresh: true,
       categoryId: selectedCategoryId.value,
-      locationId: "68c94a94d72a6f9769712ff0",
+      locationId: locationId,
+    );
+    
+    // Fetch bookings with category and location
+    await homeController.fetchBookings(
+      categoryId: selectedCategoryId.value,
+      locationId: locationId,
     );
   }
   Future<void> fetchNearCityPlayers() async {
@@ -133,12 +146,12 @@ class MainHomeController extends GetxController{
         );
         selectedCategoryId.value = padelCategory.sId ?? '';
         
-        // Fetch clubs with padel category by default
-        // final locationId = profileController.profileModel.value?.response?.city;
+        // Fetch clubs with padel category and dynamic location
+        final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
         homeController.fetchClubs(
           isRefresh: true,
           categoryId: selectedCategoryId.value,
-          locationId: "68c94a94d72a6f9769712ff0",
+          locationId: locationId,
         );
       }
     } catch (e) {

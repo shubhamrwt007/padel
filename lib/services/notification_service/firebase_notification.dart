@@ -409,8 +409,9 @@ class NotificationService {
       body,
       scheduledTZTime,
       details,
-      payload: payload,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
     );
   }
 

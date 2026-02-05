@@ -266,11 +266,19 @@ class HomeController extends GetxController {
     return _isBookingOngoing(booking);
   }
 
-  Future<void> fetchBookings() async {
+  Future<void> fetchBookings({String? categoryId, String? locationId}) async {
     isLoadingBookings.value = true;
     try {
-      final ongoingResponse = await bookingHistoryRepository.getBookingHistory(type: "in-progress");
-      final upcomingResponse = await bookingHistoryRepository.getBookingHistory(type: "upcoming");
+      final ongoingResponse = await bookingHistoryRepository.getBookingHistory(
+        type: "in-progress",
+        categoryId: categoryId,
+        locationId: locationId,
+      );
+      final upcomingResponse = await bookingHistoryRepository.getBookingHistory(
+        type: "upcoming",
+        categoryId: categoryId,
+        locationId: locationId,
+      );
 
       final allBookings = <BookingHistoryData>[];
       

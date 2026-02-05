@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
 import '../../repositories/authentication_repository/sign_up_repository.dart';
@@ -21,6 +22,10 @@ class BookACourtController extends GetxController {
   // Locations data
   Rx<GetLocationsModel?> locationsData = Rx<GetLocationsModel?>(null);
   RxBool isLoadingLocations = false.obs;
+  
+  // Category and Location IDs from MainHomeController
+  RxString categoryId = ''.obs;
+  RxString locationId = ''.obs;
   
   ///Available Slots------------------------------------------------------------
   final selectedDuration = '60 min'.obs;
@@ -269,6 +274,16 @@ class BookACourtController extends GetxController {
     updateDurationFromToggle(); // Initialize duration based on is30Slots
     _initializeMockData();
     await fetchLocations();
+    
+    // Get categoryId and locationId from MainHomeController
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      categoryId.value = mainHomeController.selectedCategoryId.value;
+      locationId.value = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+    } catch (e) {
+      log('MainHomeController not found: $e');
+    }
+    
     // Fetch wallet balance when controller initializes
     try {
       final walletController = Get.find<WalletController>();
@@ -1250,10 +1265,21 @@ class BookACourtController extends GetxController {
       // Get duration from is30Slots: 30 for 30m, 60 for 60m
       final durationValue = is30Slots.value ? '30' : '60';
       
+      // Get categoryId from MainHomeController
+      final mainHomeController = Get.find<MainHomeController>();
+      final categoryId = mainHomeController.selectedCategoryId.value.isNotEmpty 
+          ? mainHomeController.selectedCategoryId.value 
+          : null;
+      
+      // Get locationId from selectedCityId
+      // final locationId = selectedCityId.value.isNotEmpty ? selectedCityId.value : null;
+      
       final response = await _homeRepository.getCourtsByDuration(
         duration: durationValue,
         date: dateString,
         time: formattedTime,
+        categoryId: categoryId,
+        locationId: locationId.value,
       );
       
       courtsByDuration.value = response;
@@ -1573,6 +1599,9 @@ class BookACourtController extends GetxController {
           "register_club_id": clubId,
           "ownerId": specificCourtData.registerClub?.ownerId ?? "",
           "matchType":matchType.value,
+          "bookingMode": "mobile",
+          "categoryId": categoryId.value,
+          "locationId": locationId.value,
 
         };
         

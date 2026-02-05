@@ -43,7 +43,7 @@ class BookSessionController extends GetxController {
     totalAmount.value = 0;
     // Refetch courts with updated prices when duration changes
     if (slots.value != null) {
-      await getAvailableCourtsById(argument.id!, showUnavailable: true);
+      await getAvailableCourtsById(sId.value,argument.id!, showUnavailable: true);
     }
   }
 
@@ -266,15 +266,16 @@ class BookSessionController extends GetxController {
   
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
-
+var sId = "".obs;
   @override
   void onInit() {
     super.onInit();
     argument = Get.arguments['data'];
+    sId.value = Get.arguments['sID'];
     selectedDate.value = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchAllSlotPrices();
-      await getAvailableCourtsById(argument.id!, showUnavailable: true);
+      await getAvailableCourtsById(sId.value,argument.id!, showUnavailable: true);
     });
   }
 
@@ -323,7 +324,7 @@ class BookSessionController extends GetxController {
     }
   }
 
-  Future<void> getAvailableCourtsById(String clubId, {bool showUnavailable = false}) async {
+  Future<void> getAvailableCourtsById(String sID, String clubId, {bool showUnavailable = false}) async {
     log("=== DEBUG API CALL ===");
     log("Fetching courts for club: $clubId");
     log("Selected date: ${selectedDate.value}");
@@ -344,6 +345,7 @@ class BookSessionController extends GetxController {
         day: formattedDay,
         registerClubId: clubId,
         date: formattedDate,
+        sID: sID
         // duration: selectedDuration.value.split(' ').first
       );
 

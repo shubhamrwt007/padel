@@ -9,18 +9,25 @@ import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_locations_model.dart';
+import 'package:padel_mobile/data/response_models/home_models/profile_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_screen.dart';
 import 'package:padel_mobile/repositories/authentication_repository/sign_up_repository.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
+import 'package:padel_mobile/repositories/home_repository/profile_repository.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
+import '../../main_home_page/main_home_controller.dart';
 
 class CreateOpenMatchForAllCourtsController extends GetxController {
   final HomeRepository _homeRepository = HomeRepository();
   final SignUpRepository _signUpRepository = SignUpRepository();
+  final ProfileRepository _profileRepository = ProfileRepository();
 
+  // Profile data
+  Rx<ProfileModel?> profileData = Rx<ProfileModel?>(null);
+  
   // Locations data
   Rx<GetLocationsModel?> locationsData = Rx<GetLocationsModel?>(null);
   RxBool isLoadingLocations = false.obs;
@@ -264,15 +271,26 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   void onInit()async {
     super.onInit();
     selectedDate.value = DateTime.now();
-    updateDurationFromToggle(); // Initialize duration based on is30Slots
+    updateDurationFromToggle();
     _initializeMockData();
     await fetchLocations();
-    // Fetch wallet balance when controller initializes
+    await fetchProfile();
     try {
       final walletController = Get.find<WalletController>();
       walletController.fetchWallet();
+    } catch (e) {}
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final response = await _profileRepository.fetchUserProfile();
+      profileData.value = response;
+      log('Profile fetched - city: ${response.response?.city?.name}');
+      if (response.response?.city?.sId != null) {
+        selectedCityId.value = response.response!.city!.sId!;
+      }
     } catch (e) {
-      // WalletController not found, ignore
+      log('Error fetching profile: $e');
     }
   }
 
@@ -1461,10 +1479,19 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       // Get duration from is30Slots: 30 for 30m, 60 for 60m
       final durationValue = is30Slots.value ? '30' : '60';
       
+      final locationId = selectedCityId.value;
+      final mainHomeController = Get.find<MainHomeController>();
+      final categoryId = mainHomeController.selectedCategoryId.value.isNotEmpty
+          ? mainHomeController.selectedCategoryId.value
+          : null;
+      log('Fetching courts with categoryId: $categoryId, locationId: $locationId');
+      
       final response = await _homeRepository.getCourtsByDuration(
         duration: durationValue,
         date: dateString,
         time: formattedTime,
+        categoryId: categoryId,
+        locationId: selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
       );
 
       courtsByDuration.value = response;

@@ -7,6 +7,7 @@ import 'package:padel_mobile/repositories/score_board_repo/score_board_repositor
 import 'package:uuid/uuid.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:padel_mobile/presentations/score_board/widgets/match_summary_dialog.dart';
+import 'package:flutter/services.dart';
 
 class ScoreBoardController extends GetxController {
   RxList<Map<String, dynamic>> sets = <Map<String, dynamic>>[].obs;
@@ -905,6 +906,7 @@ class ScoreBoardController extends GetxController {
 
   ///Swap Players---------------------------------------------------------------
   void swapPlayers(String draggedPlayerId, String targetTeam, int targetIndex) {
+    HapticFeedback.mediumImpact();
     CustomLogger.logMessage(msg: 'swapPlayers called - draggedPlayerId: $draggedPlayerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
     try {
       // Find dragged player and remove from current position
@@ -972,6 +974,7 @@ class ScoreBoardController extends GetxController {
 
   ///Move Player to Empty Slot-------------------------------------------------
   void movePlayerToEmptySlot(String playerId, String targetTeam, int targetIndex) {
+    HapticFeedback.mediumImpact();
     CustomLogger.logMessage(msg: 'movePlayerToEmptySlot called - playerId: $playerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
     try {
       // Find the player to move

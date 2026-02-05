@@ -57,9 +57,10 @@ class HomeRepository {
     required String registerClubId,       // club id
     required String day,
      String? date,
+    String? sID
     // String? duration
   }) async {
-    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date";
+    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID";
 
     try {
       final response = await dioClient.get(url);
@@ -154,10 +155,12 @@ class HomeRepository {
   Future<GetCourtsByDurationModel> getCourtsByDuration({
     required String duration,
     required String date,
-    required String time
+    required String time,
+    String? locationId,
+    String? categoryId,
   }) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time",);
+      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&locationId=$locationId&categoryId=$categoryId",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get Courts By Durationt Data: ${response.data}",

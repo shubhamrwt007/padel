@@ -283,7 +283,12 @@ class ScoreBoardScreen extends StatelessWidget {
                               });
                             },
                             child: DragTarget<Map<String, dynamic>>(
+                              onWillAccept: (data) {
+                                HapticFeedback.selectionClick();
+                                return true;
+                              },
                               onAccept: (data) {
+                                HapticFeedback.heavyImpact();
                                 final playerId = data['player']['playerId'];
                                 final playerName = controller.capitalizeFirstWord(
                                     data['player']['name'].toString().split(' ').first.trim()
@@ -1124,7 +1129,12 @@ class ScoreBoardScreen extends StatelessWidget {
         );
       },
       child: DragTarget<Map<String, dynamic>>(
+        onWillAccept: (data) {
+          HapticFeedback.selectionClick();
+          return true;
+        },
         onAccept: (data) {
+          HapticFeedback.mediumImpact();
           controller.movePlayerToEmptySlot(data['player']['playerId'], team, index);
         },
         builder: (context, candidateData, rejectedData) {
@@ -1329,6 +1339,7 @@ class ScoreBoardScreen extends StatelessWidget {
         Draggable<Map<String, dynamic>>(
           data: {'player': player, 'team': team, 'index': index},
           onDragStarted: () {
+            HapticFeedback.lightImpact();
             isDragging.value = true;
             controller.shouldShakeAvatars.value = true;
           },
@@ -1387,8 +1398,13 @@ class ScoreBoardScreen extends StatelessWidget {
             ),
           ),
           child: DragTarget<Map<String, dynamic>>(
+            onWillAccept: (data) {
+              HapticFeedback.selectionClick();
+              return data != null && data['player']['playerId'] != player['playerId'];
+            },
             onAccept: (data) {
               if (data['player']['playerId'] != player['playerId']) {
+                HapticFeedback.mediumImpact();
                 controller.swapPlayers(data['player']['playerId'], team, index);
               }
             },

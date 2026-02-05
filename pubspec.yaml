@@ -34,7 +34,7 @@ dependencies:
   image_cropper:
   cached_network_image:
   razorpay_flutter: ^1.4.0
-  flutter_local_notifications:
+  flutter_local_notifications: ^17.0.0
   firebase_messaging:
   timezone:
   permission_handler:
