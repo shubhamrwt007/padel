@@ -46,6 +46,10 @@ class OpenMatchForAllCourtController extends GetxController {
   final GetStorage storage = GetStorage();
   RxBool isCheckingScoreboard = false.obs;
   RxString loadingMatchId = ''.obs;
+  
+  // Category and Location IDs
+  RxString categoryId = ''.obs;
+  RxString locationId = ''.obs;
 
   final List<String> timeSlots = [
     "6:00 am",
@@ -93,6 +97,14 @@ class OpenMatchForAllCourtController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // Get categoryId and locationId from arguments
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      categoryId.value = args['categoryId']?.toString() ?? '';
+      locationId.value = args['locationId']?.toString() ?? '';
+    }
+    
     focusedDate.value = selectedDate.value;
     if (timeSlots.isNotEmpty) {
       final firstAvail = firstAvailableSlot();
@@ -260,7 +272,9 @@ class OpenMatchForAllCourtController extends GetxController {
         userid: userId,
         filter: filter,
         type: '',
-        matchDate: matchDate
+        matchDate: matchDate,
+        locationId: locationId.value.isNotEmpty ? locationId.value : null,
+        categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
       );
       matchesBySelection.value = response;
     } catch (e) {

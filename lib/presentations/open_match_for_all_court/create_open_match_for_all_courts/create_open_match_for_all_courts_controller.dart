@@ -1714,6 +1714,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       "businessHours": businessHours.isNotEmpty ? businessHours : null,
       "selectedDuration": selectedDuration.value,
       "paymentOption": "payForAll",
+      "categoryId": Get.find<MainHomeController>().selectedCategoryId.value,
+      "locationId": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
     };
 
     // Debug: Print what we're sending
@@ -1910,6 +1912,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       "businessHours": businessHours.isNotEmpty ? businessHours : null,
       "selectedDuration": selectedDuration.value,
       "paymentOption": "payShareOnly",
+      "categoryId": Get.find<MainHomeController>().selectedCategoryId.value,
+      "locationId": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
     };
 
     // Debug: Print what we're sending

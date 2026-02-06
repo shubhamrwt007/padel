@@ -77,6 +77,9 @@ class OpenMatchBookingData {
   String? openMatchStatus;
   BookingId? bookingId;
   int? iV;
+  String? locationId;
+  String? categoryId;
+  dynamic? totalAmount;
 
   OpenMatchBookingData({
     this.sId,
@@ -111,6 +114,9 @@ class OpenMatchBookingData {
     this.openMatchStatus,
     this.bookingId,
     this.iV,
+    this.locationId,
+    this.categoryId,
+    this.totalAmount,
   });
 
   OpenMatchBookingData.fromJson(Map<String, dynamic> json) {
@@ -150,6 +156,9 @@ class OpenMatchBookingData {
         : null;
 
     iV = json['__v'];
+    locationId = json['locationId'];
+    categoryId = json['categoryId'];
+    totalAmount = json['totalAmount'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -184,8 +193,10 @@ class OpenMatchBookingData {
         'endTime': endTime,
         'openMatchStatus': openMatchStatus,
         'bookingId': bookingId?.toJson(),
-
-    '__v': iV,
+        '__v': iV,
+        'locationId': locationId,
+        'categoryId': categoryId,
+        'totalAmount': totalAmount,
       };
 }
 class BookingId {
@@ -241,6 +252,7 @@ class ClubId {
   String? updatedAt;
   String? zipCode;
   String? description;
+  List<ClubLocation>? locations;
 
   ClubId.fromJson(Map<String, dynamic> json) {
     location =
@@ -270,6 +282,9 @@ class ClubId {
     updatedAt = json['updatedAt'];
     zipCode = json['zipCode'];
     description = json['description'];
+    locations = (json['locations'] as List?)
+        ?.map((e) => ClubLocation.fromJson(e))
+        .toList();
   }
 
   Map<String, dynamic> toJson() => {
@@ -295,6 +310,7 @@ class ClubId {
         'updatedAt': updatedAt,
         'zipCode': zipCode,
         'description': description,
+        'locations': locations?.map((e) => e.toJson()).toList(),
       };
 }
 
@@ -483,5 +499,35 @@ class UserId {
         'updatedAt': updatedAt,
         'xpPoints': xpPoints,
         '__v': iV,
+      };
+}
+
+class ClubLocation {
+  String? sId;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+  List<String>? courtType;
+  List<String>? categories;
+
+  ClubLocation.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    city = json['city'];
+    address = json['address'];
+    zipCode = json['zipCode'];
+    state = json['state'];
+    courtType = (json['courtType'] as List?)?.cast<String>();
+    categories = (json['categories'] as List?)?.cast<String>();
+  }
+
+  Map<String, dynamic> toJson() => {
+        '_id': sId,
+        'city': city,
+        'address': address,
+        'zipCode': zipCode,
+        'state': state,
+        'courtType': courtType,
+        'categories': categories,
       };
 }

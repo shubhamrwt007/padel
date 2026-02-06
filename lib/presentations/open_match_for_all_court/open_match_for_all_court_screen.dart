@@ -526,8 +526,19 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final timeStr =data.openMatchStatus== "pending"?"${data.startTime?.split(' ').first??""}-${data.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
 
     final clubName = data.clubId?.clubName ?? '-';
-    final address = "${data.clubId?.city ?? ""} ${data.clubId?.zipCode??""}";
-    final price = "${data.bookingId?.totalAmount??0}";
+    
+    // Get location name from locations array using locationId
+    String locationName = '';
+    if (data.locationId != null && data.clubId?.locations != null) {
+      final matchingLocation = data.clubId!.locations!.firstWhere(
+        (loc) => loc.sId == data.locationId,
+        orElse: () => ClubLocation.fromJson({}),
+      );
+      locationName = matchingLocation.city ?? '';
+    }
+    
+    final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
+    final price = "${data.bookingId?.totalAmount ?? 0}";
     // final price = (data.slot?.isNotEmpty == true &&
     //     data.slot!.first.slotTimes?.isNotEmpty == true)
     //     ? '${data.slot!.first.slotTimes!.first.amount ?? ''}'

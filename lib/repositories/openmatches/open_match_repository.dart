@@ -65,6 +65,8 @@ class OpenMatchRepository {
     String? userid,
     String? filter,
     String? matchDate,
+    String? locationId,
+    String? categoryId,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -74,6 +76,8 @@ class OpenMatchRepository {
         'filter': filter,
         'userId': userid,
         if (matchDate != null) 'matchDate': matchDate,
+        if (locationId != null) 'locationId': locationId,
+        if (categoryId != null) 'categoryId': categoryId,
       };
 
       CustomLogger.logMessage(
