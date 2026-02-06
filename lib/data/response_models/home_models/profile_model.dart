@@ -12,14 +12,19 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
-    return ProfileModel(
-      status: json['status'],
-      message: json['message'],
-      response: json['response'] != null
-          ? ProfileResponse.fromJson(json['response'])
-          : null,
-      existsOpenMatchData: json['existsOpenMatchData'],
-    );
+    try {
+      return ProfileModel(
+        status: json['status']?.toString(),
+        message: json['message']?.toString(),
+        response: json['response'] != null
+            ? ProfileResponse.fromJson(json['response'] as Map<String, dynamic>)
+            : null,
+        existsOpenMatchData: json['existsOpenMatchData'] as bool?,
+      );
+    } catch (e) {
+      print('Error parsing ProfileModel: $e');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -101,43 +106,60 @@ class ProfileResponse {
     this.iV,
   });
 
+  static int? _parseIntSafely(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
-    return ProfileResponse(
-      sId: json['_id'],
-      name: json['name'],
-      lastName: json['lastName'],
-      email: json['email'],
-      profilePic: json['profilePic'],
-      playerLevel: json['playerLevel'],
-      level: json['level'],
-      role: json['role'],
-      countryCode: json['countryCode'],
-      phoneNumber: json['phoneNumber']?.toInt(),
-      dob: json['dob'],
-      gender: json['gender'],
-      location:
-      json['location'] != null ? Location.fromJson(json['location']) : null,
-      city: json['city'] != null ? City.fromJson(json['city']) : null,
-      totalMatchesPlayed: json['totalMatchesPlayed']?.toInt(),
-      totalWins: json['totalWins']?.toInt(),
-      simpleMatchCount: json['simpleMatchCount']?.toInt(),
-      openMatchCount: json['openMatchCount']?.toInt(),
-      americanMatchCount: json['americanMatchCount']?.toInt(),
-      rank: json['rank']?.toInt(),
-      winRatio: json['winRatio']?.toInt(),
-      currentWinStreak: json['currentWinStreak']?.toInt(),
-      currentLoseStreak: json['currentLoseStreak']?.toInt(),
-      xpPoints: json['xpPoints'],
-      fcmTokens: (json['fcmTokens'] as List?)
-          ?.map((e) => e.toString())
-          .toList(),
-      recentMatches: json['recentMatches'] as List?,
-      isActive: json['isActive'],
-      isDeleted: json['isDeleted'],
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
-      iV: json['__v']?.toInt(),
-    );
+    try {
+      return ProfileResponse(
+        sId: json['_id']?.toString(),
+        name: json['name']?.toString(),
+        lastName: json['lastName']?.toString(),
+        email: json['email']?.toString(),
+        profilePic: json['profilePic']?.toString(),
+        playerLevel: json['playerLevel']?.toString(),
+        level: json['level']?.toString(),
+        role: json['role']?.toString(),
+        countryCode: json['countryCode']?.toString(),
+        phoneNumber: _parseIntSafely(json['phoneNumber']),
+        dob: json['dob']?.toString(),
+        gender: json['gender']?.toString(),
+        location: json['location'] != null
+            ? Location.fromJson(json['location'] as Map<String, dynamic>)
+            : null,
+        city: json['city'] != null
+            ? City.fromJson(json['city'] as Map<String, dynamic>)
+            : null,
+        totalMatchesPlayed: _parseIntSafely(json['totalMatchesPlayed']),
+        totalWins: _parseIntSafely(json['totalWins']),
+        simpleMatchCount: _parseIntSafely(json['simpleMatchCount']),
+        openMatchCount: _parseIntSafely(json['openMatchCount']),
+        americanMatchCount: _parseIntSafely(json['americanMatchCount']),
+        rank: _parseIntSafely(json['rank']),
+        winRatio: _parseIntSafely(json['winRatio']),
+        currentWinStreak: _parseIntSafely(json['currentWinStreak']),
+        currentLoseStreak: _parseIntSafely(json['currentLoseStreak']),
+        xpPoints: json['xpPoints'],
+        fcmTokens: (json['fcmTokens'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList(),
+        recentMatches: json['recentMatches'] as List<dynamic>?,
+        isActive: json['isActive'] as bool?,
+        isDeleted: json['isDeleted'] as bool?,
+        createdAt: json['createdAt']?.toString(),
+        updatedAt: json['updatedAt']?.toString(),
+        iV: _parseIntSafely(json['__v']),
+      );
+    } catch (e) {
+      print('Error parsing ProfileResponse: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -185,12 +207,17 @@ class Location {
   });
 
   factory Location.fromJson(Map<String, dynamic> json) {
-    return Location(
-      type: json['type'],
-      coordinates: (json['coordinates'] as List?)
-          ?.map((e) => (e as num).toDouble())
-          .toList(),
-    );
+    try {
+      return Location(
+        type: json['type']?.toString(),
+        coordinates: (json['coordinates'] as List<dynamic>?)
+            ?.map((e) => (e as num).toDouble())
+            .toList(),
+      );
+    } catch (e) {
+      print('Error parsing Location: $e');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -217,14 +244,21 @@ class City {
   });
 
   factory City.fromJson(Map<String, dynamic> json) {
-    return City(
-      sId: json['_id'],
-      name: json['name'],
-      isActive: json['isActive'],
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
-      iV: json['__v']?.toInt(),
-    );
+    try {
+      return City(
+        sId: json['_id']?.toString(),
+        name: json['name']?.toString(),
+        isActive: json['isActive'] as bool?,
+        createdAt: json['createdAt']?.toString(),
+        updatedAt: json['updatedAt']?.toString(),
+        iV: json['__v'] != null
+            ? (json['__v'] is int ? json['__v'] as int : (json['__v'] as num).toInt())
+            : null,
+      );
+    } catch (e) {
+      print('Error parsing City: $e');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {

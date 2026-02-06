@@ -1,7 +1,3 @@
-import 'dart:ui';
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -12,16 +8,13 @@ import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/bookinghistory/widgets/court_selection_sheet.dart';
 import 'package:padel_mobile/presentations/bookinghistory/widgets/no_court_available_view.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/score_board/widgets/app_players_bottomsheet.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-
 import '../../configs/routes/routes_name.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
@@ -45,25 +38,33 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       BookingHistoryController(),
       tag: 'booking_history',
     );
-    return Scaffold(
-      appBar: primaryAppBar(
-          centerTitle: true,
-          showLeading:widget.buttonType=="drawer"? true:false,
-          title: Text("My Bookings"), context: context),
-      body: Column(
-        children: [
-          tabBar(controller),
-          Expanded(
-            child: TabBarView(
-              controller: controller.tabController,
-              children: [
-                _tabContent(context, controller: controller, type: "upcoming"),
-                _tabContent(context, controller: controller, type: "ongoing"),
-                _tabContent(context, controller: controller, type: "completed"),
-              ],
+    return WillPopScope(
+      onWillPop: () async {
+        final bottomNavController = Get.find<BottomNavigationController>();
+        bottomNavController.updateIndex(0);
+        Get.offAll(() => BottomNavUi());
+        return true;
+      },
+      child: Scaffold(
+        appBar: primaryAppBar(
+            centerTitle: true,
+            showLeading:widget.buttonType=="drawer"? true:false,
+            title: Text("My Bookings"), context: context),
+        body: Column(
+          children: [
+            tabBar(controller),
+            Expanded(
+              child: TabBarView(
+                controller: controller.tabController,
+                children: [
+                  _tabContent(context, controller: controller, type: "upcoming"),
+                  _tabContent(context, controller: controller, type: "ongoing"),
+                  _tabContent(context, controller: controller, type: "completed"),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -174,9 +175,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
               return GestureDetector(
                 onTap: (){
-                  final openMatchStatus= booking?.openMatchId?.openMatchStatus =="cancelled";
+                  final openMatchStatus= booking.openMatchId?.openMatchStatus =="cancelled";
                   if(openMatchStatus){
-                    final alternativeCourts = booking?.alternativeCourts ?? [];
+                    final alternativeCourts = booking.alternativeCourts ?? [];
                     if(alternativeCourts.isEmpty){
                       Get.bottomSheet(
                         backgroundColor: Colors.transparent,
@@ -212,7 +213,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   // NEW: Completed booking card matching the screenshot design
   Widget _buildCompletedBookingCard(BuildContext context, dynamic booking, dynamic club, int index) {
     final clubName = club?.clubName ?? "The Good Club";
-    final address = "${club?.city ?? 'Chandigarh'} ${club?.zipCode ?? '160001'}";
+    final address = "${club?.city ?? ''} ${club?.zipCode ?? ''}";
     final price = (booking.totalAmount ?? 2000).toString();
     final score = _getMatchScore(booking);
     final bookingType = booking.bookingType ?? "";
@@ -224,15 +225,15 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: !isBlueTheme ? const Color(0xffC8D6FB) : const Color(0xff3DBE64).withOpacity(0.5),
+          color: !isBlueTheme ? const Color(0xffC8D6FB) : const Color(0xff3DBE64).withValues(alpha: 0.5),
           width: 1,
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: !isBlueTheme
-              ? [const Color(0xffF3F7FF), const Color(0xff9EBAFF).withOpacity(0.3)]
-              : [const Color(0xffBFEECD).withOpacity(0.3), const Color(0xffBFEECD).withOpacity(0.2)],
+              ? [const Color(0xffF3F7FF), const Color(0xff9EBAFF).withValues(alpha:0.3)]
+              : [const Color(0xffBFEECD).withValues (alpha:0.3), const Color(0xffBFEECD).withValues(alpha:0.2)],
         ),
       ),
       child: Column(
@@ -591,27 +592,6 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       ),
     );
   }
-
-  Widget _buildDefaultAvatarStack() {
-    return SizedBox(
-      width: 80,
-      height: 50,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 0,
-            child: _buildCompletedAvatar(null, "P", isPlaceholder: true),
-          ),
-          Positioned(
-            right: 0,
-            child: _buildCompletedAvatar(null, "P", isPlaceholder: true),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCompletedAvatar(String? imageUrl, String name, {bool isPlaceholder = false}) {
     final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
     final initials = isPlaceholder ? "P" : controller.getInitials(name);
@@ -623,7 +603,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -698,11 +678,11 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: !isBlueTheme ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+        border: Border.all(color: !isBlueTheme ? Color(0xffC8D6FB) : Color(0xff3DBE64).withValues(alpha: 0.5)),
         gradient: LinearGradient(
           colors: !isBlueTheme
-              ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
-              : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
+              ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha:0.3)]
+              : [Color(0xffBFEECD).withValues(alpha:0.3), Color(0xffBFEECD).withValues(alpha:0.2)],
         ),
       ),
       child: Stack(
@@ -782,7 +762,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha:0.1),
                               blurRadius: 4,
                               spreadRadius: 1,
                               offset: Offset(0, 3),
@@ -856,61 +836,61 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     }
   }
 
-  String _getTimeString(dynamic booking) {
-    try {
-      // Check for matchTime array first
-      if (booking.openMatchId?.matchTime != null && booking.openMatchId?.matchTime is List) {
-        final matchTimes = booking.openMatchId?.matchTime as List;
-        if (matchTimes.isEmpty) return '';
-
-        if (matchTimes.length == 1) {
-          return matchTimes[0].toString();
-        }
-
-        final firstTime = matchTimes.first.toString();
-        final lastTime = matchTimes.last.toString();
-
-        // Extract hour from first and last time (e.g., "8 pm" -> "8", "9 pm" -> "9")
-        final firstHour = firstTime.replaceAll(RegExp(r'[^0-9]'), '');
-        final lastHour = lastTime.replaceAll(RegExp(r'[^0-9]'), '');
-        final period = lastTime.contains('pm') ? 'pm' : 'am';
-
-        return '$firstHour-$lastHour$period';
-      }
-
-      // Fallback to original slot logic
-      if (booking.slot == null) return '';
-      final slotList = booking.slot;
-      if (slotList is! List || slotList.isEmpty) return '';
-
-      List<String> allTimes = [];
-
-      // Collect all times from all slots
-      for (var slot in slotList) {
-        if (slot?.slotTimes != null) {
-          for (var slotTime in slot.slotTimes) {
-            final timeString = slotTime?.time ?? "";
-            if (timeString.isNotEmpty) {
-              allTimes.add(timeString);
-            }
-          }
-        }
-      }
-
-      if (allTimes.isEmpty) return '';
-
-      if (allTimes.length == 1) {
-        return formatTimeSlot(allTimes[0]);
-      }
-
-      final firstTime = allTimes.first;
-      final lastTime = allTimes.last;
-
-      return '${formatTimeSlot(firstTime)} - ${formatTimeSlot(lastTime)}';
-    } catch (e) {
-      return '';
-    }
-  }
+  // String _getTimeString(dynamic booking) {
+  //   try {
+  //     // Check for matchTime array first
+  //     if (booking.openMatchId?.matchTime != null && booking.openMatchId?.matchTime is List) {
+  //       final matchTimes = booking.openMatchId?.matchTime as List;
+  //       if (matchTimes.isEmpty) return '';
+  //
+  //       if (matchTimes.length == 1) {
+  //         return matchTimes[0].toString();
+  //       }
+  //
+  //       final firstTime = matchTimes.first.toString();
+  //       final lastTime = matchTimes.last.toString();
+  //
+  //       // Extract hour from first and last time (e.g., "8 pm" -> "8", "9 pm" -> "9")
+  //       final firstHour = firstTime.replaceAll(RegExp(r'[^0-9]'), '');
+  //       final lastHour = lastTime.replaceAll(RegExp(r'[^0-9]'), '');
+  //       final period = lastTime.contains('pm') ? 'pm' : 'am';
+  //
+  //       return '$firstHour-$lastHour$period';
+  //     }
+  //
+  //     // Fallback to original slot logic
+  //     if (booking.slot == null) return '';
+  //     final slotList = booking.slot;
+  //     if (slotList is! List || slotList.isEmpty) return '';
+  //
+  //     List<String> allTimes = [];
+  //
+  //     // Collect all times from all slots
+  //     for (var slot in slotList) {
+  //       if (slot?.slotTimes != null) {
+  //         for (var slotTime in slot.slotTimes) {
+  //           final timeString = slotTime?.time ?? "";
+  //           if (timeString.isNotEmpty) {
+  //             allTimes.add(timeString);
+  //           }
+  //         }
+  //       }
+  //     }
+  //
+  //     if (allTimes.isEmpty) return '';
+  //
+  //     if (allTimes.length == 1) {
+  //       return formatTimeSlot(allTimes[0]);
+  //     }
+  //
+  //     final firstTime = allTimes.first;
+  //     final lastTime = allTimes.last;
+  //
+  //     return '${formatTimeSlot(firstTime)} - ${formatTimeSlot(lastTime)}';
+  //   } catch (e) {
+  //     return '';
+  //   }
+  // }
 
   List<Widget> _buildPlayerAvatarsFromScoreboard(dynamic booking) {
     List<Widget> avatars = [];
@@ -995,7 +975,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   initials,
                   style: TextStyle(
                     fontSize: 16,
-                    color: (!isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor).withOpacity(0.5),
+                    color: (!isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor).withValues(alpha: 0.5),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1115,8 +1095,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
   Widget _collapsedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
     final isUpcoming = type == "upcoming";
-    final bookingType = booking.bookingType ?? "";
-    final isBlueTheme = bookingType.toLowerCase() == "normal";
+    // final bookingType = booking.bookingType ?? "";
+    // final isBlueTheme = bookingType.toLowerCase() == "normal";
     final isOpenMatch = booking?.isOpenMatch == true;
     final openMatchStatus= booking?.openMatchId?.openMatchStatus =="cancelled";
     
@@ -1276,8 +1256,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _expandedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
-    final isUpcoming = type == "upcoming";
-    final timeStr = _getTimeString(booking);
+    // final isUpcoming = type == "upcoming";
+    // final timeStr = _getTimeString(booking);
     final invoiceUrlString = booking.invoiceUrl??"";
 
     // Count actual players from scoreboard
@@ -1833,11 +1813,11 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: index % 2 == 0 ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+          border: Border.all(color: index % 2 == 0 ? Color(0xffC8D6FB) : Color(0xff3DBE64).withValues(alpha:0.5)),
           gradient: LinearGradient(
             colors: index % 2 == 0
-                ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
-                : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
+                ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha:0.3)]
+                : [Color(0xffBFEECD).withValues(alpha:0.3), Color(0xffBFEECD).withValues(alpha:0.2)],
           ),
         ),
         child: Column(
