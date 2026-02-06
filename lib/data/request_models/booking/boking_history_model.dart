@@ -628,6 +628,7 @@ class RegisterClubId {
   String? updatedAt;
   String? zipCode;
   String? description;
+  List<BookingLocation>? locations;
 
   RegisterClubId({
     this.sId,
@@ -651,6 +652,7 @@ class RegisterClubId {
     this.updatedAt,
     this.zipCode,
     this.description,
+    this.locations,
   });
 
   RegisterClubId.fromJson(Map<String, dynamic> json) {
@@ -701,6 +703,13 @@ class RegisterClubId {
     updatedAt = json['updatedAt']?.toString();
     zipCode = json['zipCode']?.toString();
     description = json['description']?.toString();
+    
+    if (json['locations'] != null) {
+      locations = <BookingLocation>[];
+      json['locations'].forEach((v) {
+        locations!.add(BookingLocation.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -884,5 +893,33 @@ class BookingTeamPlayer {
     data['_id'] = sId;
     data['amountPaid'] = amountPaid;
     return data;
+  }
+}
+
+class BookingLocation {
+  String? sId;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+
+  BookingLocation({this.sId, this.city, this.address, this.zipCode, this.state});
+
+  BookingLocation.fromJson(Map<String, dynamic> json) {
+    sId = json['_id']?.toString();
+    city = json['city']?.toString();
+    address = json['address']?.toString();
+    zipCode = json['zipCode']?.toString();
+    state = json['state']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': sId,
+      'city': city,
+      'address': address,
+      'zipCode': zipCode,
+      'state': state,
+    };
   }
 }

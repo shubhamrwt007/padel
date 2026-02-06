@@ -269,6 +269,8 @@ class HomeController extends GetxController {
   Future<void> fetchBookings({String? categoryId, String? locationId}) async {
     isLoadingBookings.value = true;
     try {
+      log("📋 Fetching bookings with categoryId: $categoryId, locationId: $locationId");
+      
       final ongoingResponse = await bookingHistoryRepository.getBookingHistory(
         type: "in-progress",
         categoryId: categoryId,
@@ -284,6 +286,14 @@ class HomeController extends GetxController {
       
       if (ongoingResponse.success == true && ongoingResponse.data != null) {
         allBookings.addAll(ongoingResponse.data!);
+        // Debug first booking
+        if (ongoingResponse.data!.isNotEmpty) {
+          final firstBooking = ongoingResponse.data!.first;
+          log("📦 First Booking registerClubId:");
+          log("   clubName: ${firstBooking.registerClubId?.clubName}");
+          log("   city: ${firstBooking.registerClubId?.city}");
+          log("   courtImage: ${firstBooking.registerClubId?.courtImage}");
+        }
       }
       
       if (upcomingResponse.success == true && upcomingResponse.data != null) {

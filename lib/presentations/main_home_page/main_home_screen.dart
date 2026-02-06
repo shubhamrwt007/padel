@@ -204,21 +204,8 @@ class MainHomeScreen extends StatelessWidget {
                     }),
                     _courtCard(),
                     const SizedBox(height: 15),
-                    Obx(() {
-                      final matches = controller.openMatches.value?.data ?? [];
-                      if (matches.isEmpty && !controller.isLoadingOpenMatches.value) {
-                        return const SizedBox.shrink();
-                      }
-                      return Column(
-                        children: [
-                          _sectionTitle("Book a match", () {
-                            Get.toNamed(RoutesName.openMatchForAllCourts);
-                          }),
-                          _openMatchesSection(),
-                          const SizedBox(height: 15),
-                        ],
-                      );
-                    }),
+
+
                     Obx(() {
                       if (controller.selectedSportTab.value == 0) {
                         return Column(
@@ -232,6 +219,21 @@ class MainHomeScreen extends StatelessWidget {
                       }
                       return const SizedBox.shrink();
                     }),
+                    Obx(() {
+                      final matches = controller.openMatches.value?.data ?? [];
+                      if (matches.isEmpty && !controller.isLoadingOpenMatches.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _sectionTitle("Open Match", () {
+                            Get.toNamed(RoutesName.openMatchForAllCourts);
+                          }).paddingOnly(bottom: 8),
+                          _openMatchesSection(),
+                          const SizedBox(height: 15),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -241,7 +243,6 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
-
   /// SPORT TAB SELECTOR
   Widget _buildSportTabSelector() {
     return Container(
@@ -533,9 +534,6 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildBookingCard(BuildContext context, BookingHistoryData b) {
     final club = b.registerClubId;
-    final isOpenMatch = b.isOpenMatch;
-
-    // Use the controller's method to check if booking is ongoing
     final isOngoing = controller.homeController.isBookingOngoing(b);
 
     return GestureDetector(
@@ -666,7 +664,7 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bookingImage(dynamic club) {
+  Widget _bookingImage(RegisterClubId? club) {
     return Container(
       height: 34,
       width: 34,
@@ -676,8 +674,7 @@ class MainHomeScreen extends StatelessWidget {
       ),
       child: ClipOval(
         child: (club?.courtImage != null &&
-            club!.courtImage!.isNotEmpty &&
-            club.courtImage![0].isNotEmpty)
+            club!.courtImage!.isNotEmpty)
             ? CachedNetworkImage(
           imageUrl: club.courtImage![0],
           fit: BoxFit.cover,
@@ -694,7 +691,13 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bookingInfo(BuildContext context, dynamic club) {
+  Widget _bookingInfo(BuildContext context, RegisterClubId? club) {
+    // Extract city from locations array based on locationId
+    String cityName = "N/A";
+    if (club?.locations != null && club!.locations!.isNotEmpty) {
+      cityName = club.locations![0].city?.capitalizeFirst ?? "N/A";
+    }
+    
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,7 +719,7 @@ class MainHomeScreen extends StatelessWidget {
             SizedBox(
               width: Get.width * 0.3,
               child: Text(
-                club?.city ?? "N/A",
+                cityName,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.blackColor, fontSize: 10),
                 overflow: TextOverflow.ellipsis,
@@ -790,7 +793,6 @@ class MainHomeScreen extends StatelessWidget {
     ).paddingOnly(bottom: 2);
   }
 
-  /// BANNER
   Widget _banner() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -805,14 +807,14 @@ class MainHomeScreen extends StatelessWidget {
           child: PageView.builder(
             controller: controller.pageController,
             onPageChanged: (index) {
-              controller.currentBannerIndex.value = index;
+              controller.currentBannerIndex.value = index % controller.bannerImages.length;
             },
-            itemCount: controller.bannerImages.length,
             itemBuilder: (context, index) {
+              final actualIndex = index % controller.bannerImages.length;
               return Container(
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage(controller.bannerImages[index]),
+                    image: AssetImage(controller.bannerImages[actualIndex]),
                     fit: BoxFit.cover,
                     alignment: Alignment(0, -0.3),
                   ),
@@ -841,7 +843,7 @@ class MainHomeScreen extends StatelessWidget {
                           child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () => controller.onBannerTap(index),
+                        onTap: () => controller.onBannerTap(actualIndex),
                         child: Container(
                           width: Get.width * 0.35,
                           padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
@@ -1030,7 +1032,12 @@ class MainHomeScreen extends StatelessWidget {
         Get.toNamed(RoutesName.bookACourt);
         break;
       case 'match':
-        Get.toNamed(RoutesName.openMatchForAllCourts);
+        final categoryId = controller.selectedCategoryId.value;
+        final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+        Get.toNamed(RoutesName.openMatchForAllCourts, arguments: {
+          'categoryId': categoryId,
+          'locationId': locationId,
+        });
         break;
       case 'americano':
       // SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
@@ -1770,15 +1777,20 @@ class MainHomeScreen extends StatelessWidget {
   Widget _openMatchesSection() {
     return Obx(() {
       if (controller.isLoadingOpenMatches.value) {
-        return Column(
-          children: List.generate(
-            2,
-            (i) => Container(
-              height: 160,
-              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+        return SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 3,
+            itemBuilder: (context, index) => Container(
+              height: 200,
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
                 color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
                 child: LoadingWidget(color: AppColors.primaryColor),
@@ -1789,83 +1801,51 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       final matches = controller.openMatches.value?.data ?? [];
+      if (matches.isEmpty) return const SizedBox.shrink();
 
-      if (matches.isEmpty) {
-        return Container(
-          height: 160,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.event_busy_outlined, size: 50, color: AppColors.darkGrey),
-                const SizedBox(height: 8),
-                Text(
-                  'No open matches available',
-                  style: Get.textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-
-      // Show only first 3 matches
       final displayMatches = matches.take(3).toList();
 
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: displayMatches
-            .asMap()
-            .entries
-            .map((entry) => _buildOpenMatchCard(entry.value, entry.key))
-            .toList(),
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: displayMatches.length,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildOpenMatchCard(displayMatches[index], index),
+        ),
       );
     });
   }
 
   Widget _buildOpenMatchCard(OpenMatchBookingData data, int index) {
-    final dayStr = _getDay(data.matchDate);
-    final dateOnlyStr = _getDate(data.matchDate);
+    final dayStr = DateFormat('EEEE').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
+    final dateOnlyStr = DateFormat('dd MMM').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
     final timeStr = data.openMatchStatus == "pending"
         ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
         : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
     final clubName = data.clubId?.clubName ?? '-';
-
-    // TEAM A
-    final teamAPlayers = (data.teamA ?? []).take(2).map((p) {
-      return _buildFilledPlayerCircle(
-        p.userId?.profilePic ?? "",
-        p.userId?.name ?? "",
-        p.userId?.lastName ?? "",
+    
+    // Extract location name from locations array matching locationId
+    String locationName = "N/A";
+    if (data.clubId?.locations != null && data.clubId!.locations!.isNotEmpty) {
+      final matchingLocation = data.clubId!.locations!.firstWhere(
+        (loc) => loc.sId == data.locationId,
+        orElse: () => data.clubId!.locations!.first,
       );
-    }).toList();
-
-    while (teamAPlayers.length < 2) {
-      teamAPlayers.add(_buildEmptyPlayerCircle());
+      locationName = matchingLocation.city?.capitalizeFirst ?? "N/A";
     }
 
-    // TEAM B
-    final teamBPlayers = (data.teamB ?? []).take(2).map((p) {
-      return _buildFilledPlayerCircle(
-        p.userId?.profilePic ?? "",
-        p.userId?.name ?? "",
-        p.userId?.lastName ?? "",
-      );
-    }).toList();
-
-    while (teamBPlayers.length < 2) {
-      teamBPlayers.add(_buildEmptyPlayerCircle());
-    }
+    final teamAPlayers = (data.teamA ?? []).take(2).toList();
+    final teamBPlayers = (data.teamB ?? []).take(2).toList();
 
     return GestureDetector(
       onTap: () => Get.toNamed(RoutesName.openMatchForAllCourts),
       child: Container(
-        height: 160,
-        margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 0),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Color(0xffC8D6FB)),
           gradient: LinearGradient(
             colors: [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha: 0.3)],
@@ -1873,87 +1853,128 @@ class MainHomeScreen extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            Positioned(
-              right: 0,
-              top: 0,
+            Align(
+              alignment: Alignment.centerRight,
               child: SvgPicture.asset(
                 index % 2 == 0 ? Assets.imagesImgOpenMatchBg : Assets.imagesImgOpenMatchGreenBg,
-                height: 140,
-                width: 140,
-              ),
+                height: 150,
+                width: 150,
+              ).paddingOnly(right: 20),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Date and Time
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '$dayStr ',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff1c46a0),
+                                ),
+                              ),
+                              TextSpan(
+                                text: '$dateOnlyStr | $timeStr',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            Text(
+                              " ${data.skillLevel?.capitalizeFirst ?? 'Professional'} | ",
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 2),
+                            genderIcon(data.gender),
+                            const SizedBox(width: 4),
+                            Text(
+                              data.gender?.capitalizeFirst ?? "Mixed Doubles",
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.keyboard_arrow_down, color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // UPDATED PLAYER CIRCLES WITH OVERLAPPING EFFECT
+                _buildOverlappingPlayerRow(teamAPlayers, teamBPlayers),
+
+                const SizedBox(height: 10),
+                Divider(color: Colors.grey, thickness: 0.1),
                 Row(
                   children: [
-                    RichText(
-                      text: TextSpan(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: '$dayStr ',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff1c46a0),
-                            ),
+                          Text(
+                            clubName,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                           ),
-                          TextSpan(
-                            text: '$dateOnlyStr | $timeStr',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.black87,
-                            ),
+                          Row(
+                            children: [
+                              Transform.translate(
+                                offset: Offset(0, -1),
+                                child: Image.asset(Assets.imagesIcLocation, scale: 2, color: AppColors.primaryColor),
+                              ),
+                              const SizedBox(width: 2),
+                              Expanded(
+                                child: Text(
+                                  locationName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // Level and Gender
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 16),
-                    Text(
-                      " ${data.skillLevel?.capitalizeFirst ?? 'Professional'} | ",
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    genderIcon(data.gender),
-                    const SizedBox(width: 4),
-                    Text(
-                      data.gender?.capitalizeFirst ?? "Mixed",
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Players
-                Row(
-                  children: [
-                    ...teamAPlayers,
-                    const SizedBox(width: 8),
-                    Text("VS", style: Get.textTheme.labelLarge),
-                    const SizedBox(width: 8),
-                    ...teamBPlayers,
-                  ],
-                ),
-                const Spacer(),
-                // Club Name
-                Row(
-                  children: [
-                    Icon(Icons.location_on, size: 14, color: Colors.black54),
-                    const SizedBox(width: 4),
-                    Expanded(
+                    Transform.translate(
+                      offset: Offset(0, 2),
                       child: Text(
-                        clubName,
-                        style: Get.textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        "₹ ${formatAmount(data.totalAmount ?? 0)}",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xff1c46a0),
+                        ),
                       ),
                     ),
                   ],
@@ -1966,57 +1987,124 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
+// NEW METHOD: Creates overlapping player circles exactly like the image
+// Replace the _buildOverlappingPlayerRow method with this:
+
+  Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
+    return SizedBox(
+      height: 44,
+      child: SizedBox(
+        width: Get.width, // Width for 4 overlapping circles (44 + 22 + 22 + 22)
+        child: Stack(
+          children: [
+            // First player (Team A - Player 1)
+            Positioned(
+              left: 0,
+              child: teamAPlayers.isNotEmpty
+                  ? _buildFilledPlayerCircle(
+                teamAPlayers[0].userId?.profilePic ?? "",
+                teamAPlayers[0].userId?.name ?? "",
+                teamAPlayers[0].userId?.lastName ?? "",
+              )
+                  : _buildEmptyPlayerCircle(),
+            ),
+            // Second player (Team A - Player 2)
+            Positioned(
+              left: 32, // Overlap by half
+              child: teamAPlayers.length > 1
+                  ? _buildFilledPlayerCircle(
+                teamAPlayers[1].userId?.profilePic ?? "",
+                teamAPlayers[1].userId?.name ?? "",
+                teamAPlayers[1].userId?.lastName ?? "",
+              )
+                  : _buildEmptyPlayerCircle(),
+            ),
+            // Third player (Team B - Player 1)
+            Positioned(
+              left: 64, // Continue overlapping
+              child: teamBPlayers.isNotEmpty
+                  ? _buildFilledPlayerCircle(
+                teamBPlayers[0].userId?.profilePic ?? "",
+                teamBPlayers[0].userId?.name ?? "",
+                teamBPlayers[0].userId?.lastName ?? "",
+              )
+                  : _buildEmptyPlayerCircle(),
+            ),
+            // Fourth player (Team B - Player 2)
+            Positioned(
+              left: 96, // Continue overlapping
+              child: teamBPlayers.length > 1
+                  ? _buildFilledPlayerCircle(
+                teamBPlayers[1].userId?.profilePic ?? "",
+                teamBPlayers[1].userId?.name ?? "",
+                teamBPlayers[1].userId?.lastName ?? "",
+              )
+                  : _buildEmptyPlayerCircle(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildFilledPlayerCircle(String? imageUrl, String name, String lastName) {
     final firstLetter = name.trim().isNotEmpty
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '?';
 
     return Container(
-      margin: const EdgeInsets.only(right: 6),
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: CircleAvatar(
-        radius: 18,
-        backgroundColor: Colors.white,
-        child: CircleAvatar(
-          radius: 16,
-          backgroundColor: const Color(0xffeaf0ff),
-          child: ClipOval(
-            child: (imageUrl != null && imageUrl.isNotEmpty)
-                ? CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    placeholder: (context, url) => Center(
-                      child: Text(
-                        firstLetter,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primaryColor.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Center(
-                      child: Text(
-                        firstLetter,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      firstLetter,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+        radius: 20,
+        backgroundColor: const Color(0xffeaf0ff),
+        child: ClipOval(
+          child: (imageUrl != null && imageUrl.isNotEmpty)
+              ? CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) => Center(
+              child: Text(
+                firstLetter,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.primaryColor.withOpacity(0.5),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Center(
+              child: Text(
+                firstLetter,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          )
+              : Center(
+            child: Text(
+              firstLetter,
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
@@ -2025,15 +2113,23 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildEmptyPlayerCircle() {
     return Container(
-      margin: const EdgeInsets.only(right: 6),
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: CircleAvatar(
-        radius: 18,
-        backgroundColor: Colors.white,
-        child: CircleAvatar(
-          radius: 16,
-          backgroundColor: const Color(0xffeaf0ff),
-          child: Icon(Icons.add, color: AppColors.primaryColor, size: 16),
-        ),
+        radius: 20,
+        backgroundColor: const Color(0xffeaf0ff),
+        child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
       ),
     );
   }
