@@ -6,6 +6,8 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/widgets/top_tab_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -42,72 +44,80 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        backgroundColor: AppColors.primaryColor,
-        appBar: primaryAppBar(
-          systemOverlayStyle: SystemUiOverlayStyle.light,
-          leadingButtonColor: AppColors.whiteColor,
-          titleTextColor: AppColors.whiteColor,
-          centerTitle: true,
-          showLeading: buttonType=="drawer"?true:false,
-          title: const Text("Leaderboard"),
-          context: context,
-          action: [
-            Obx(() {
-              final options = controller.genderFilterOptions;
-              return Container(
-                height: 30,
-                width: Get.width*.25,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: controller.selectedGenderFilter.value,
-                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    dropdownColor: AppColors.primaryColor,
-                    items: options.map((option) {
-                      return DropdownMenuItem(
-                        value: option,
-                        child: Text(
-                          option == 'all' ? 'All' : option,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        controller.selectedGenderFilter.value = value;
-                      }
-                    },
-                  ).paddingOnly(left: 5, right: 5),
-                ),
-              );
-            }),
-          ],
-        ),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                TopTabBar(),
-                const SizedBox(height: 16),
-                const SizedBox(height: 20),
+    return WillPopScope(
+      onWillPop: () async {
+        final bottomNavController = Get.find<BottomNavigationController>();
+        bottomNavController.updateIndex(0);
+        Get.offAll(() => BottomNavUi());
+        return true;
+      },
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Scaffold(
+          backgroundColor: AppColors.primaryColor,
+          appBar: primaryAppBar(
+            systemOverlayStyle: SystemUiOverlayStyle.light,
+            leadingButtonColor: AppColors.whiteColor,
+            titleTextColor: AppColors.whiteColor,
+            centerTitle: true,
+            showLeading: buttonType=="drawer"?true:false,
+            title: const Text("Leaderboard"),
+            context: context,
+            action: [
+              Obx(() {
+                final options = controller.genderFilterOptions;
+                return Container(
+                  height: 30,
+                  width: Get.width*.25,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: controller.selectedGenderFilter.value,
+                      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                      dropdownColor: AppColors.primaryColor,
+                      items: options.map((option) {
+                        return DropdownMenuItem(
+                          value: option,
+                          child: Text(
+                            option == 'all' ? 'All' : option,
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          controller.selectedGenderFilter.value = value;
+                        }
+                      },
+                    ).paddingOnly(left: 5, right: 5),
+                  ),
+                );
+              }),
+            ],
+          ),
+          body: Stack(
+            children: [
+              Column(
+                children: [
+                  TopTabBar(),
+                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                // ✅ Directly reactive podium
-                Obx(() {
-                  final top3 = controller.topThreePlayers;
-                  return _buildPodiumSectionFor(top3);
-                }),
-              ],
-            ),
+                  // ✅ Directly reactive podium
+                  Obx(() {
+                    final top3 = controller.topThreePlayers;
+                    return _buildPodiumSectionFor(top3);
+                  }),
+                ],
+              ),
 
-            // ✅ Directly reactive leaderboard sheet
-            _buildLeaderboardSheet(context, buttonType??""),
-          ],
+              // ✅ Directly reactive leaderboard sheet
+              _buildLeaderboardSheet(context, buttonType??""),
+            ],
+          ),
         ),
       ),
     );
@@ -239,9 +249,9 @@ class LeaderboardScreen extends StatelessWidget {
                   controller.selectedGender.value = value;
                 },
                 itemBuilder: (_) => [
-                  PopupMenuItem(value: 'Male', child: Text('Male',style: Get.textTheme.bodyLarge,)),
-                  PopupMenuItem(value: 'Female', child: Text('Female',style: Get.textTheme.bodyLarge,)),
-                  PopupMenuItem(value: 'Others', child: Text('Others',style: Get.textTheme.bodyLarge,)),
+                  PopupMenuItem(value: 'Male', child: Text('Male',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
+                  PopupMenuItem(value: 'Female', child: Text('Female',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
+                  PopupMenuItem(value: 'Others', child: Text('Others',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
                 ],
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -630,16 +640,16 @@ class LeaderboardScreen extends StatelessWidget {
                                       child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
                                     );
                                   }
-                                  if (!controller.hasMoreData.value && data.isNotEmpty) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(bottom: 20, top: 16),
-                                      child: Text(
-                                        'No more data to load',
-                                        style: TextStyle(color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    );
-                                  }
+                                  // if (!controller.hasMoreData.value && data.isNotEmpty) {
+                                  //   return Padding(
+                                  //     padding: EdgeInsets.only(bottom: 20, top: 16),
+                                  //     child: Text(
+                                  //       'No more data to load',
+                                  //       style: TextStyle(color: Colors.grey),
+                                  //       textAlign: TextAlign.center,
+                                  //     ),
+                                  //   );
+                                  // }
                                   return const SizedBox(height: 20);
                                 });
                               },

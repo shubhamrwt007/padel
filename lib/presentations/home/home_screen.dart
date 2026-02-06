@@ -13,6 +13,8 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
@@ -24,65 +26,73 @@ class HomeScreen extends GetView<HomeController> {
   @override
 
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: PopScope(
-        canPop: false,
-        child: Scaffold(
-          appBar: primaryAppBar(
-              centerTitle: true,
-              title: Text("Courts"), context: context),
-          body: Padding(
-            padding: EdgeInsets.symmetric(horizontal: Get.width * 0.04),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                searchField(),
-                Obx(() => AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  switchInCurve: Curves.easeIn,
-                  switchOutCurve: Curves.easeOut,
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) {
-                    return SizeTransition(
-                      sizeFactor: animation,
-                      axisAlignment: -1.0,
-                      child: FadeTransition(opacity: animation, child: child),
-                    );
-                  },
-                  child: controller.showLocationAndDate.value
-                      ? locationAndDateTime(context)
-                      : const SizedBox.shrink(
-                    key: ValueKey('empty'),
-                  ),
-                )),
-                Expanded(
-                  child: Obx(() {
-                    return RefreshIndicator(
-                      color: Colors.white,
-                      onRefresh: controller.retryFetch,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        controller: controller.scrollController,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // --- Courts Section ---
-                            if (controller.isLoadingClub.value)
-                              Column(
-                                children: List.generate(5, (_) => loadingCard()),
-                              )
-                            else
-                              _buildCourtList(),
-                          ],
+    return WillPopScope(
+      onWillPop: () async {
+        final bottomNavController = Get.find<BottomNavigationController>();
+        bottomNavController.updateIndex(0);
+        Get.offAll(() => BottomNavUi());
+        return true;
+      },
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: PopScope(
+          canPop: false,
+          child: Scaffold(
+            appBar: primaryAppBar(
+                centerTitle: true,
+                title: Text("Courts"), context: context),
+            body: Padding(
+              padding: EdgeInsets.symmetric(horizontal: Get.width * 0.04),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  searchField(),
+                  Obx(() => AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    switchInCurve: Curves.easeIn,
+                    switchOutCurve: Curves.easeOut,
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                      return SizeTransition(
+                        sizeFactor: animation,
+                        axisAlignment: -1.0,
+                        child: FadeTransition(opacity: animation, child: child),
+                      );
+                    },
+                    child: controller.showLocationAndDate.value
+                        ? locationAndDateTime(context)
+                        : const SizedBox.shrink(
+                      key: ValueKey('empty'),
+                    ),
+                  )),
+                  Expanded(
+                    child: Obx(() {
+                      return RefreshIndicator(
+                        color: Colors.white,
+                        onRefresh: controller.retryFetch,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          controller: controller.scrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // --- Courts Section ---
+                              if (controller.isLoadingClub.value)
+                                Column(
+                                  children: List.generate(5, (_) => loadingCard()),
+                                )
+                              else
+                                _buildCourtList(),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                ),
+                      );
+                    }),
+                  ),
 
 
-              ],
+                ],
+              ),
             ),
           ),
         ),

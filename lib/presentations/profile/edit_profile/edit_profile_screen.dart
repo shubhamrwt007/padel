@@ -51,6 +51,8 @@ class EditProfileUi extends StatelessWidget {
                 _textFieldWithLabel(
                   "Email",
                   controller.emailController,
+                  readOnly: true,
+                  color: Colors.grey.shade100,
                   context,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
@@ -450,7 +452,7 @@ class EditProfileUi extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(child: _statItem("XP Points", "${response?.xpPoints ?? 0}")),
+                    Expanded(child: _statItem("XP Points", "${response?.xpPoints.toStringAsFixed(2) ?? 0}")),
                     // Expanded(child: _statItem("Rank", "${response?.rank ?? 0}")),
                     Expanded(child: _statItem("Win Streak", "${response?.currentWinStreak ?? 0}")),
                   ],

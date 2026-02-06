@@ -30,7 +30,7 @@ class YourMatchRequestsController extends GetxController {
       isLoadingRequests.value = true;
       joinRequests.clear();
 
-      final response = await repository.getRequestPlayersOpenMatch();
+      final response = await repository.getRequestPlayersOpenMatch(type: "both",filter: "invitation");
 
       if (response != null && response.requests != null) {
         joinRequests.addAll(response.requests!);

@@ -362,29 +362,10 @@ class YourMatchRequestsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children:  [
-                  Icon(Icons.access_time, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "${formatMatchDate(match?.matchDate)} | ${formatTimeRange(match?.matchTime)}",
-                    style: Get.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              // const Icon(Icons.share, size: 20, color: Colors.grey),
-            ],
-          ),
-      
-          const SizedBox(height: 12),
-      
-          Row(
             children:  [
               Icon(Icons.group, size: 18),
               SizedBox(width: 8),
-              Text("$totalPlayers attendee ($totalPlayers confirmed)",style: Get.textTheme.bodySmall,),
+              Text("$totalPlayers attendee",style: Get.textTheme.bodySmall,),
             ],
           ),
           const SizedBox(height: 8),
