@@ -1,4 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
@@ -19,6 +23,7 @@ import 'dart:developer';
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
   final WalletController walletController = Get.put(WalletController());
+  final storage = GetStorage();
 
   MainHomeScreen({super.key});
 
@@ -199,6 +204,21 @@ class MainHomeScreen extends StatelessWidget {
                     }),
                     _courtCard(),
                     const SizedBox(height: 15),
+                    Obx(() {
+                      final matches = controller.openMatches.value?.data ?? [];
+                      if (matches.isEmpty && !controller.isLoadingOpenMatches.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _sectionTitle("Book a match", () {
+                            Get.toNamed(RoutesName.openMatchForAllCourts);
+                          }),
+                          _openMatchesSection(),
+                          const SizedBox(height: 15),
+                        ],
+                      );
+                    }),
                     Obx(() {
                       if (controller.selectedSportTab.value == 0) {
                         return Column(
@@ -437,7 +457,9 @@ class MainHomeScreen extends StatelessWidget {
   Widget _bookingSection() {
     return Obx(() {
       final homeController = controller.homeController;
-      if (homeController.isLoadingBookings.value && !homeController.isCreatingScoreboard.value) {
+      
+      // Show shimmer while loading
+      if (homeController.isLoadingBookings.value) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
           child: bookingShimmer(),
@@ -491,6 +513,11 @@ class MainHomeScreen extends StatelessWidget {
     return Obx(() {
       final allBookings = controller.homeController.bookings.value?.data ?? [];
       final booking = allBookings.where((b) => b.isOpenMatch != true).toList();
+      
+      if (booking.isEmpty) {
+        return SizedBox.shrink();
+      }
+      
       return SizedBox(
         height: 80,
         child: ListView.builder(
@@ -1737,5 +1764,297 @@ class MainHomeScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  /// OPEN MATCHES SECTION
+  Widget _openMatchesSection() {
+    return Obx(() {
+      if (controller.isLoadingOpenMatches.value) {
+        return Column(
+          children: List.generate(
+            2,
+            (i) => Container(
+              height: 160,
+              margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: LoadingWidget(color: AppColors.primaryColor),
+              ),
+            ),
+          ),
+        );
+      }
+
+      final matches = controller.openMatches.value?.data ?? [];
+
+      if (matches.isEmpty) {
+        return Container(
+          height: 160,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_busy_outlined, size: 50, color: AppColors.darkGrey),
+                const SizedBox(height: 8),
+                Text(
+                  'No open matches available',
+                  style: Get.textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      // Show only first 3 matches
+      final displayMatches = matches.take(3).toList();
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: displayMatches
+            .asMap()
+            .entries
+            .map((entry) => _buildOpenMatchCard(entry.value, entry.key))
+            .toList(),
+      );
+    });
+  }
+
+  Widget _buildOpenMatchCard(OpenMatchBookingData data, int index) {
+    final dayStr = _getDay(data.matchDate);
+    final dateOnlyStr = _getDate(data.matchDate);
+    final timeStr = data.openMatchStatus == "pending"
+        ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
+        : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
+    final clubName = data.clubId?.clubName ?? '-';
+
+    // TEAM A
+    final teamAPlayers = (data.teamA ?? []).take(2).map((p) {
+      return _buildFilledPlayerCircle(
+        p.userId?.profilePic ?? "",
+        p.userId?.name ?? "",
+        p.userId?.lastName ?? "",
+      );
+    }).toList();
+
+    while (teamAPlayers.length < 2) {
+      teamAPlayers.add(_buildEmptyPlayerCircle());
+    }
+
+    // TEAM B
+    final teamBPlayers = (data.teamB ?? []).take(2).map((p) {
+      return _buildFilledPlayerCircle(
+        p.userId?.profilePic ?? "",
+        p.userId?.name ?? "",
+        p.userId?.lastName ?? "",
+      );
+    }).toList();
+
+    while (teamBPlayers.length < 2) {
+      teamBPlayers.add(_buildEmptyPlayerCircle());
+    }
+
+    return GestureDetector(
+      onTap: () => Get.toNamed(RoutesName.openMatchForAllCourts),
+      child: Container(
+        height: 160,
+        margin: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xffC8D6FB)),
+          gradient: LinearGradient(
+            colors: [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha: 0.3)],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: 0,
+              top: 0,
+              child: SvgPicture.asset(
+                index % 2 == 0 ? Assets.imagesImgOpenMatchBg : Assets.imagesImgOpenMatchGreenBg,
+                height: 140,
+                width: 140,
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Date and Time
+                Row(
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$dayStr ',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff1c46a0),
+                            ),
+                          ),
+                          TextSpan(
+                            text: '$dateOnlyStr | $timeStr',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Level and Gender
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
+                    Text(
+                      " ${data.skillLevel?.capitalizeFirst ?? 'Professional'} | ",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    genderIcon(data.gender),
+                    const SizedBox(width: 4),
+                    Text(
+                      data.gender?.capitalizeFirst ?? "Mixed",
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Players
+                Row(
+                  children: [
+                    ...teamAPlayers,
+                    const SizedBox(width: 8),
+                    Text("VS", style: Get.textTheme.labelLarge),
+                    const SizedBox(width: 8),
+                    ...teamBPlayers,
+                  ],
+                ),
+                const Spacer(),
+                // Club Name
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        clubName,
+                        style: Get.textTheme.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilledPlayerCircle(String? imageUrl, String name, String lastName) {
+    final firstLetter = name.trim().isNotEmpty
+        ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
+        : '?';
+
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: const Color(0xffeaf0ff),
+          child: ClipOval(
+            child: (imageUrl != null && imageUrl.isNotEmpty)
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    placeholder: (context, url) => Center(
+                      child: Text(
+                        firstLetter,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryColor.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Center(
+                      child: Text(
+                        firstLetter,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      firstLetter,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyPlayerCircle() {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: const Color(0xffeaf0ff),
+          child: Icon(Icons.add, color: AppColors.primaryColor, size: 16),
+        ),
+      ),
+    );
+  }
+
+  String _getDay(String? ymd) {
+    if (ymd == null || ymd.isEmpty) return '';
+    try {
+      final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
+      return DateFormat('EEEE').format(parsed);
+    } catch (_) {
+      return ymd;
+    }
+  }
+
+  String _getDate(String? ymd) {
+    if (ymd == null || ymd.isEmpty) return '';
+    try {
+      final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
+      return DateFormat('dd MMM').format(parsed);
+    } catch (_) {
+      return ymd;
+    }
   }
 }

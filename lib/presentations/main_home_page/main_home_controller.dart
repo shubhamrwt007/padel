@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
+import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
+import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 class MainHomeController extends GetxController{
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
   final HomeRepository _homeRepository = HomeRepository();
+  final OpenMatchRepository _openMatchRepository = OpenMatchRepository();
 
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
@@ -24,6 +28,10 @@ class MainHomeController extends GetxController{
   final Rx<GetCategoryModel?> categoryModel = Rx<GetCategoryModel?>(null);
   final RxBool isLoadingCategory = false.obs;
   final RxString selectedCategoryId = ''.obs;
+  
+  // Open Matches
+  final Rx<OpenMatchBookingModel?> openMatches = Rx<OpenMatchBookingModel?>(null);
+  final RxBool isLoadingOpenMatches = false.obs;
 
   // Banner functionality
   final RxInt currentBannerIndex = 0.obs;
@@ -52,6 +60,7 @@ class MainHomeController extends GetxController{
     
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
+    await fetchOpenMatches();
     _startBannerAutoSlide();
   }
 
@@ -115,6 +124,30 @@ class MainHomeController extends GetxController{
       categoryId: selectedCategoryId.value,
       locationId: locationId,
     );
+    
+    // Fetch open matches with category
+    await fetchOpenMatches();
+  }
+  
+  Future<void> fetchOpenMatches() async {
+    try {
+      isLoadingOpenMatches.value = true;
+      final userId = storage.read('userId') ?? '';
+      final formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      
+      final response = await _openMatchRepository.getOpenMatchBookings(
+        userid: userId,
+        filter: 'allMatches',
+        type: selectedCategoryId.value,
+        matchDate: formattedDate,
+      );
+      
+      openMatches.value = response;
+    } catch (e) {
+      print('Error fetching open matches: $e');
+    } finally {
+      isLoadingOpenMatches.value = false;
+    }
   }
   Future<void> fetchNearCityPlayers() async {
     try {
