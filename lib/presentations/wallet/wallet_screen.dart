@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
+import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
@@ -65,7 +66,6 @@ class _WalletScreenState extends State<WalletScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// AppBar Row
-          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -94,10 +94,10 @@ class _WalletScreenState extends State<WalletScreen> {
                 'Current Balance',
                 style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 14),
               ),
-              Text(
-                _getCurrentDate(),
-                style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
-              )
+              // Text(
+              //   _getCurrentDate(),
+              //   style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
+              // )
             ],
           ),
           Row(
@@ -131,29 +131,35 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
           const SizedBox(height: 6),
 
+          // Row(
+          //   children: [
+          //     Text(
+          //       'Total Spending: ',
+          //       style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14),
+          //     ),
+          //     Text(
+          //       '${formatAmount(controller.totalDebitedBalance.value.toString())} Credits',
+          //       style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14,fontWeight: FontWeight.w800),
+          //     ),
+          //   ],
+          // ),
           Row(
             children: [
-              Text(
-                'Total Spending: ',
-                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14),
-              ),
-              Text(
-                '${formatAmount(controller.totalDebitedBalance.value.toString())} Credits',
-                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white,fontSize: 14,fontWeight: FontWeight.w800),
-              ),
+              Icon(Icons.info_outline,color: Colors.white,size: 13,),
+              Text("1 Credits = 1 Rupee",style: Get.textTheme.bodySmall!.copyWith(color: Colors.white,fontWeight: FontWeight.w400),)
             ],
           ),
           const SizedBox(height: 24),
 
           /// Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _actionButton(Icons.add, 'Add'),
-              // const SizedBox(width: 16),
-              // _actionButton(Icons.arrow_downward, 'Withdraw'),
-            ],
-          ),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //   children: [
+          //     _actionButton(Icons.add, 'Add'),
+          //     // const SizedBox(width: 16),
+          //     // _actionButton(Icons.arrow_downward, 'Withdraw'),
+          //   ],
+          // ),
           const SizedBox(height: 24),
         ],
       ),
@@ -291,7 +297,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     controller: _scrollController,
                     itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
                     padding: EdgeInsets.zero,
-                    separatorBuilder: (_, index) => index < controller.transactionList.length ? const Divider(height: 1) : SizedBox.shrink(),
+                    separatorBuilder: (_, index) => index < controller.transactionList.length ? fadeDivider(): SizedBox.shrink(),
                     itemBuilder: (_, index) {
                       if (index >= controller.transactionList.length) {
                         return Obx(() => controller.isLoadingMore.value

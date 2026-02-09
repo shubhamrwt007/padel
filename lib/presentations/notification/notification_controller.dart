@@ -251,22 +251,38 @@ class NotificationController extends GetxController {
   }
 
   /// Handle notification URL routing
-  void handleNotificationRoute(String notificationUrl) {
+  void handleNotificationRoute(String notificationUrl, {String? redirect, String? matchId}) {
     if (kDebugMode) {
-      print('🔔 Handling notification URL: $notificationUrl');
+      print('🔔 Handling notification URL: $notificationUrl, redirect: $redirect, matchId: $matchId');
     }
 
     try {
+      if (notificationUrl == 'true') {
+        if (redirect != null && redirect.isNotEmpty) {
+          if (redirect == '/openmatchrequest') {
+            Get.toNamed(RoutesName.requests);
+          } else {
+            Get.toNamed(redirect);
+          }
+        }
+        return;
+      }
+
       switch (notificationUrl) {
         case '/yourMatchRequest':
-          Get.toNamed(RoutesName.yourMatchRequest);
+          Get.toNamed(RoutesName.requests);
           break;
         case "/bookingRequests":
-          Get.toNamed(RoutesName.yourMatchRequest);
+          Get.toNamed(RoutesName.requests);
           break;
         case '/matches':
           Get.to(BookingHistoryUi(buttonType: "drawer",));
           break;
+        case '/matchmessage':
+          Get.toNamed(RoutesName.chat, arguments: {
+            "matchID": matchId ?? "",
+          });
+
         default:
           if (kDebugMode) {
             print('⚠️ Unknown notification URL: $notificationUrl');
@@ -553,7 +569,9 @@ class NotificationController extends GetxController {
               'time': createdAt,
               'icon': icon,
               'payload': notif.notificationUrl ?? '',
+              'redirect': notif.redirect ?? '',
               'bookingId': notif.bookingId?.id ?? '',
+              'matchId': notif.matchId ?? '',
               'isRead': notif.isRead ?? false,
               'bookingStatus': notif.bookingId?.bookingStatus ?? '',
               'notificationType': notif.notificationType ?? '',

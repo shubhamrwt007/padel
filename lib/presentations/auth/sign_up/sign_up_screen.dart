@@ -325,6 +325,7 @@ class SignUpScreen extends GetView<SignUpController> {
                       title: Text(location.name ?? ''),
                       onTap: () {
                         controller.selectedLocation.value = location.name ?? '';
+                        controller.selectedLocationId.value = location.id ?? '';
                         Get.back();
                       },
                     );
