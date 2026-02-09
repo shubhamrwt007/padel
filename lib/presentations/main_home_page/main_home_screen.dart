@@ -171,8 +171,17 @@ class MainHomeScreen extends StatelessWidget {
             child: RefreshIndicator(
               color: Colors.white,
               onRefresh: () async {
-                await controller.homeController.retryFetch();
-                await controller.profileController.fetchUserProfile();
+                final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+                await controller.homeController.fetchBookings(
+                  categoryId: controller.selectedCategoryId.value,
+                  locationId: locationId,
+                );
+                await controller.homeController.fetchClubs(
+                  isRefresh: true,
+                  categoryId: controller.selectedCategoryId.value,
+                  locationId: locationId,
+                );
+                await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
               },
               child: SingleChildScrollView(
@@ -1840,7 +1849,14 @@ class MainHomeScreen extends StatelessWidget {
     final teamBPlayers = (data.teamB ?? []).take(2).toList();
 
     return GestureDetector(
-      onTap: () => Get.toNamed(RoutesName.openMatchForAllCourts),
+      onTap: () {
+        final categoryId = controller.selectedCategoryId.value;
+        final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+        Get.toNamed(RoutesName.openMatchForAllCourts, arguments: {
+          'categoryId': categoryId,
+          'locationId': locationId,
+        });
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 0),
         padding: const EdgeInsets.all(16),

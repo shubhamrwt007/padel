@@ -85,6 +85,7 @@ class RegisterClub {
   String? zipCode;
   String? city;
   List<String>? courtImage;
+  List<Location>? locations;
 
   RegisterClub({
     this.id,
@@ -97,6 +98,7 @@ class RegisterClub {
     this.zipCode,
     this.city,
     this.courtImage,
+    this.locations,
   });
 
   RegisterClub.fromJson(Map<String, dynamic> json) {
@@ -114,6 +116,13 @@ class RegisterClub {
       businessHours = <BusinessHour>[];
       json['businessHours'].forEach((v) {
         businessHours!.add(BusinessHour.fromJson(v));
+      });
+    }
+
+    if (json['locations'] != null) {
+      locations = <Location>[];
+      json['locations'].forEach((v) {
+        locations!.add(Location.fromJson(v));
       });
     }
   }
@@ -134,6 +143,36 @@ class BusinessHour {
     id = json['_id'];
     day = json['day'];
     time = json['time'];
+  }
+}
+
+class Location {
+  String? id;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+  List<String>? courtType;
+  List<String>? categories;
+
+  Location({
+    this.id,
+    this.city,
+    this.address,
+    this.zipCode,
+    this.state,
+    this.courtType,
+    this.categories,
+  });
+
+  Location.fromJson(Map<String, dynamic> json) {
+    id = json['_id'];
+    city = json['city'];
+    address = json['address'];
+    zipCode = json['zipCode'];
+    state = json['state'];
+    courtType = json['courtType']?.cast<String>();
+    categories = json['categories']?.cast<String>();
   }
 }
 

@@ -265,6 +265,46 @@ class BookACourtController extends GetxController {
     
     return location.name ?? 'Change Location';
   }
+  
+  // Get city name by city ID - first try profile model, then locations data
+  String getCityNameById(String? cityId) {
+    if (cityId == null || cityId.isEmpty) {
+      return '';
+    }
+    
+    // First try to get from profile model
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      final profileCity = mainHomeController.profileController.profileModel.value?.response?.city;
+      if (profileCity?.sId == cityId && profileCity?.name != null) {
+        return profileCity!.name!;
+      }
+    } catch (e) {
+      log('getCityNameById: MainHomeController not found: $e');
+    }
+    
+    // Fallback to locations data
+    if (locationsData.value?.data != null) {
+      final location = locationsData.value!.data!.firstWhereOrNull(
+        (loc) => loc.id == cityId,
+      );
+      if (location?.name != null) {
+        return location!.name!;
+      }
+    }
+    
+    return '';
+  }
+
+  // Get location name from club data
+  String getLocationNameFromClub(GetCourtsByDurationData? clubData) {
+    if (clubData?.registerClub?.locations == null || clubData!.registerClub!.locations!.isEmpty) {
+      return '';
+    }
+    
+    final location = clubData.registerClub!.locations!.first;
+    return location.city ?? location.address ?? '';
+  }
 
 
   @override
@@ -280,6 +320,8 @@ class BookACourtController extends GetxController {
       final mainHomeController = Get.find<MainHomeController>();
       categoryId.value = mainHomeController.selectedCategoryId.value;
       locationId.value = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      // Set selectedCityId to show location name in UI
+      selectedCityId.value = locationId.value;
     } catch (e) {
       log('MainHomeController not found: $e');
     }
