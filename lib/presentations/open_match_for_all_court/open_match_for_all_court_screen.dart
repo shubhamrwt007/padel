@@ -526,16 +526,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final timeStr =data.openMatchStatus== "pending"?"${data.startTime?.split(' ').first??""}-${data.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
 
     final clubName = data.clubId?.clubName ?? '-';
-    
-    // Get location name from locations array using locationId
-    String locationName = '';
-    if (data.locationId != null && data.clubId?.locations != null) {
-      final matchingLocation = data.clubId!.locations!.firstWhere(
-        (loc) => loc.sId == data.locationId,
-        orElse: () => ClubLocation.fromJson({}),
-      );
-      locationName = matchingLocation.city ?? '';
-    }
+
+    final locationName = data.clubId?.locations?[0].city?.capitalizeFirstChar()??"";
     
     final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
     final price = "${data.bookingId?.totalAmount ?? 0}";
