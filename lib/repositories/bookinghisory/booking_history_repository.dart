@@ -42,7 +42,7 @@ class BookingHistoryRepository {
       }
       
       if (locationId != null && locationId.isNotEmpty) {
-        queryParams['locationId'] = locationId;
+        queryParams['location'] = locationId;
       }
 
       final response = await dioClient.get(

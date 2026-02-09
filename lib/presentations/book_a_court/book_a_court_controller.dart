@@ -1601,7 +1601,7 @@ class BookACourtController extends GetxController {
           "matchType":matchType.value,
           "bookingMode": "mobile",
           "categoryId": categoryId.value,
-          "locationId": locationId.value,
+          "location": locationId.value,
 
         };
         

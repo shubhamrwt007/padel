@@ -76,7 +76,7 @@ class OpenMatchRepository {
         'filter': filter,
         'userId': userid,
         if (matchDate != null) 'matchDate': matchDate,
-        if (locationId != null) 'locationId': locationId,
+        if (locationId != null) 'location': locationId,
         if (categoryId != null) 'categoryId': categoryId,
       };
 

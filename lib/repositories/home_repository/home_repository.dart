@@ -30,7 +30,7 @@ class HomeRepository {
       }
       
       if (locationId != null && locationId.isNotEmpty) {
-        url += "&locationId=$locationId";
+        url += "&location=$locationId";
       }
       
       final response = await dioClient.get(url);
@@ -160,7 +160,7 @@ class HomeRepository {
     String? categoryId,
   }) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&locationId=$locationId&categoryId=$categoryId",);
+      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&location=$locationId&categoryId=$categoryId",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get Courts By Durationt Data: ${response.data}",

@@ -1036,7 +1036,7 @@ class MainHomeScreen extends StatelessWidget {
         final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
         Get.toNamed(RoutesName.openMatchForAllCourts, arguments: {
           'categoryId': categoryId,
-          'locationId': locationId,
+          'location': locationId,
         });
         break;
       case 'americano':

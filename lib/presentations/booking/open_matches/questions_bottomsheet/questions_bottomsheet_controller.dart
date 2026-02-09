@@ -612,7 +612,7 @@ class QuestionsBottomsheetController extends GetxController {
       "matchTime": overallTimeRange.isNotEmpty ? overallTimeRange : (localMatchData["matchTime"] ?? ""),
       "gender":selectedGameType.value,
       "categoryId": localMatchData["categoryId"] ?? "",
-      "locationId": localMatchData["locationId"] ?? "",
+      "location": localMatchData["location"] ?? "",
       "teamA": teamA
           .where((p) =>
       (p["userId"] ?? p["_id"]) != null &&
@@ -627,7 +627,7 @@ class QuestionsBottomsheetController extends GetxController {
           .toList(),
     };
 
-    log("CategoryId in body: ${localMatchData["categoryId"]}, LocationId in body: ${localMatchData["locationId"]}");
+    log("CategoryId in body: ${localMatchData["categoryId"]}, Location in body: ${localMatchData["location"]}");
 
     return removeEmpty(body);
   }
