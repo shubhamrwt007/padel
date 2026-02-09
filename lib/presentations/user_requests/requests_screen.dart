@@ -261,6 +261,8 @@ class RequestsScreen extends StatelessWidget {
       Requests request,
       ) {
     final match = request.match;
+    final time = "${request.startTime?.split(' ').first??""}-${request.endTime??""}";
+
     return Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.all(16),
@@ -399,7 +401,7 @@ class RequestsScreen extends StatelessWidget {
                                 ),
                               ),
                               TextSpan(
-                                text: ' | ${formatTimeRange(match?.matchTime)}',
+                                text: ' | $time',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.black87,
@@ -733,6 +735,7 @@ class RequestsScreen extends StatelessWidget {
     final match = request.match;
     final club = match?.club;
 
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -779,7 +782,8 @@ class RequestsScreen extends StatelessWidget {
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
-                          '${club?.city ?? ''}, ${club?.zipCode ?? ''}',
+                          // '${club?.city ?? ''}, ${club?.zipCode ?? ''}',
+                          club?.locations?[0].city?.capitalizeFirstChar()??"",
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 11,
@@ -812,7 +816,7 @@ class RequestsScreen extends StatelessWidget {
     final match = request.match;
     final club = match?.club;
     final totalPlayers = (match?.teamA?.length ?? 0) + (match?.teamB?.length ?? 0);
-
+    final courtCount = request.courtCount??0;
     return Container(
       margin: EdgeInsets.only(top: 10),
       padding: EdgeInsets.all(10),
@@ -824,29 +828,10 @@ class RequestsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children:  [
-                  Icon(Icons.access_time, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "${formatMatchDate(match?.matchDate)} | ${formatTimeRange(match?.matchTime)}",
-                    style: Get.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              // const Icon(Icons.share, size: 20, color: Colors.grey),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
             children:  [
               Icon(Icons.group, size: 18),
               SizedBox(width: 8),
-              Text("$totalPlayers attendee ($totalPlayers confirmed)",style: Get.textTheme.bodySmall,),
+              Text("$totalPlayers attendee",style: Get.textTheme.bodySmall,),
             ],
           ),
           const SizedBox(height: 8),
@@ -884,7 +869,7 @@ class RequestsScreen extends StatelessWidget {
                   Text(club?.clubName ?? 'N/A',style:Get.textTheme.labelLarge),
                   SizedBox(
                       width: Get.width*0.5,
-                      child: Text("${club?.city ?? ''} ${club?.zipCode ?? ''}",style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),overflow: TextOverflow.clip,)),
+                      child: Text(club?.locations?[0].city?.capitalizeFirstChar() ?? '',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),overflow: TextOverflow.clip,)),
                 ],
               ),
             ],
@@ -897,8 +882,8 @@ class RequestsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Type of Court (${club?.courtCount ?? 0} court)",style:Get.textTheme.labelLarge),
-                  Text(club?.courtType?.join(' • ').split(" ").first ?? 'N/A',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)),
+                  Text("Type of ${((request.courtCount ?? 0) >= 2) ? 'Courts' : 'Court'} ($courtCount)",style:Get.textTheme.labelLarge),
+                  Text(club?.locations?[0].courtType?.join(' • ') ?? 'N/A',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)),
                 ],
               ),
             ],

@@ -41,7 +41,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
     final teamAPlayers = match?.teamA?.map((player) => player.user).where((user) => user != null).cast<RequesterId>().toList() ?? [];
     final teamBPlayers = match?.teamB?.map((player) => player.user).where((user) => user != null).cast<RequesterId>().toList() ?? [];
     final matchId = match?.id ?? "";
-    final isBookingInvitation = request.type == 'invitation';
+    final isBookingInvitation = request.type != 'booking_invitation';
     List<Widget> avatars = [];
 
     // Add Team A players (first 2 slots)
@@ -127,17 +127,19 @@ class YourMatchRequestsScreen extends StatelessWidget {
   ) {
     final match = request.match;
     final club = match?.club;
-    final isBookingInvitation = request.type == 'invitation';
+    final isBookingInvitation = request.type != 'booking_invitation';
+    final time = "${request.startTime?.split(' ').first??""}-${request.endTime??""}";
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: isBookingInvitation ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+        border: Border.all(color: isBookingInvitation ? Color(0xffC8D6FB) : Color(0xff3DBE64).withValues(alpha: 0.5)),
         gradient: LinearGradient(
           colors: isBookingInvitation
-              ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
-              : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
+              ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha:0.3)]
+              : [Color(0xffBFEECD).withValues(alpha: 0.3), Color(0xffBFEECD).withValues(alpha: 0.2)],
         ),
       ),
       child: Column(
@@ -162,7 +164,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: ' | ${formatTimeRange(match?.matchTime)}',
+                              text: ' | $time',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black87,
@@ -213,7 +215,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha:0.1),
                       blurRadius: 4,
                       spreadRadius: 1,
                       offset: Offset(0, 3),
@@ -317,7 +319,8 @@ class YourMatchRequestsScreen extends StatelessWidget {
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
-                          '${club?.city ?? ''},${club?.zipCode??""}',
+                          // '${club?.city ?? ''},${club?.zipCode??""}',
+                          club?.locations?[0].city?.capitalizeFirstChar()??"",
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 14,
@@ -403,7 +406,7 @@ class YourMatchRequestsScreen extends StatelessWidget {
                   Text(club?.clubName ?? 'N/A',style:Get.textTheme.labelLarge),
                   SizedBox(
                       width: Get.width*0.5,
-                      child: Text("${club?.address ?? ''}, ${club?.city ?? ''} ${club?.zipCode ?? ''}",style:Get.textTheme.bodySmall,overflow: TextOverflow.clip,)),
+                      child: Text(club?.locations?[0].city?.capitalizeFirstChar() ?? '',style:Get.textTheme.bodySmall,overflow: TextOverflow.clip,)),
                 ],
               ),
             ],
@@ -416,8 +419,11 @@ class YourMatchRequestsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Type of Court (${club?.courtCount ?? 0} court)",style:Get.textTheme.labelLarge),
-                  Text(club?.courtType?.join(' • ') ?? 'N/A',style:Get.textTheme.bodySmall),
+                  Text(
+                    "Type of ${((request.courtCount ?? 0) >= 2) ? 'Courts' : 'Court'} (${request.courtCount ?? 0})",
+                    style: Get.textTheme.labelLarge,
+                  ),
+                  Text(club?.locations?[0].courtType?.join(' • ') ?? '-',style:Get.textTheme.bodySmall),
                 ],
               ),
             ],

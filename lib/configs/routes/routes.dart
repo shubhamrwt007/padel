@@ -60,6 +60,8 @@ import 'package:padel_mobile/presentations/scoreview/score_view_binding.dart';
 import 'package:padel_mobile/presentations/splash/splash_screen.dart';
 import 'package:padel_mobile/presentations/support/support_binding.dart';
 import 'package:padel_mobile/presentations/support/support_screen.dart';
+import 'package:padel_mobile/presentations/tutorial/tutorial_binding.dart';
+import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_binding.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_binding.dart';
@@ -369,6 +371,14 @@ class Routes {
       name: RoutesName.xpPoints,
       page: () => XpPointsScreen(),
       binding: XpPointsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    ///tutorial----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.tutorial,
+      page: () => TutorialScreen(),
+      binding: TutorialBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
