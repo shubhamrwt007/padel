@@ -102,7 +102,7 @@ class OpenMatchForAllCourtController extends GetxController {
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null) {
       categoryId.value = args['categoryId']?.toString() ?? '';
-      locationId.value = args['locationId']?.toString() ?? '';
+      locationId.value = args['location']?.toString() ?? '';
     }
     
     focusedDate.value = selectedDate.value;
