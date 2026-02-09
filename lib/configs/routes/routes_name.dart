@@ -73,4 +73,7 @@ class RoutesName {
 
   //Xp Points----------------------------------------------------------------------
   static const String xpPoints = '/xpPoints';
+
+  //Tutorial--------------------------------------------------------------------
+ static const String tutorial = '/tutorial';
 }

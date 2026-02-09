@@ -745,47 +745,54 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '?';
 
-    return CircleAvatar(
-      radius: 22,
-      backgroundColor: Colors.white,
+    return GestureDetector(
+      onTap: (){
+        if (matchData != null && (_isLoginUserInMatch(matchData) || _isMatchCreator(matchData))) {
+          _showPlayerDetailsDialog(matchData);
+        }
+      },
       child: CircleAvatar(
-        radius: 20,
-        backgroundColor:const Color(0xffeaf0ff),
-        child: ClipOval(
-          child: (imageUrl != null && imageUrl.isNotEmpty)
-              ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            placeholder: (context, url) => Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.primaryColor.withOpacity(0.5),
-                  fontWeight: FontWeight.bold,
+        radius: 22,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor:const Color(0xffeaf0ff),
+          child: ClipOval(
+            child: (imageUrl != null && imageUrl.isNotEmpty)
+                ? CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              placeholder: (context, url) => Center(
+                child: Text(
+                  firstLetter,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.primaryColor.withOpacity(0.5),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            errorWidget: (context, url, error) => Center(
+              errorWidget: (context, url, error) => Center(
+                child: Text(
+                  firstLetter,
+                  style:  TextStyle(
+                    fontSize: 18,
+                    color:  AppColors.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
+                : Center(
               child: Text(
                 firstLetter,
                 style:  TextStyle(
                   fontSize: 18,
-                  color:  AppColors.primaryColor,
+                  color: AppColors.primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-            ),
-          )
-              : Center(
-            child: Text(
-              firstLetter,
-              style:  TextStyle(
-                fontSize: 18,
-                color: AppColors.primaryColor,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ),

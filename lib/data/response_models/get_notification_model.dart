@@ -26,8 +26,10 @@ class GetNotificationModel {
 class GetNotificationResponse {
   final String? id;
   final String? userId;
+  final String? matchId;
   final String? adminId;
   final String? notificationType;
+  final String? redirect;
   final String? profileImage;
   final BookingId? bookingId;
   final String? notificationUrl;
@@ -41,8 +43,10 @@ class GetNotificationResponse {
   GetNotificationResponse({
     required this.id,
     required this.userId,
+    required this.matchId,
     required this.adminId,
     required this.notificationType,
+    required this.redirect,
     required this.profileImage,
     required this.bookingId,
     required this.notificationUrl,
@@ -59,12 +63,14 @@ class GetNotificationResponse {
       id: json['_id'] ?? '',
       userId: json['userId'] ?? '',
       adminId: json['adminId'] ?? '',
+      matchId: json['matchId'] ?? '',
       notificationType: json['notificationType'] ?? '',
       profileImage: json['profileImage'] ?? '',
       bookingId: json['bookingId'] != null
           ? BookingId.fromJson(json['bookingId'])
           : null,
       notificationUrl: json['notificationUrl'] ?? '',
+      redirect: json['redirect'] ?? '',
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       isRead: json['isRead'] ?? false,
@@ -78,10 +84,12 @@ class GetNotificationResponse {
     '_id': id,
     'userId': userId,
     'adminId': adminId,
+    'matchId': matchId,
     'notificationType': notificationType,
     'profileImage': profileImage,
     if (bookingId != null) 'bookingId': bookingId!.toJson(),
     'notificationUrl': notificationUrl,
+    'redirect': redirect,
     'title': title,
     'message': message,
     'isRead': isRead,

@@ -40,6 +40,9 @@ class Requests {
   final int? totalAmount;
   final dynamic? perShare;
   final int? v;
+  final String? startTime;
+  final String? endTime;
+  final int? courtCount;
 
   Requests({
     this.id,
@@ -57,6 +60,9 @@ class Requests {
     this.totalAmount,
     this.perShare,
     this.v,
+    this.startTime,
+    this.endTime,
+    this.courtCount,
   });
 
   factory Requests.fromJson(Map<String, dynamic> json) {
@@ -87,6 +93,9 @@ class Requests {
       totalAmount: json['totalAmount'],
       perShare: json['perShare'],
       v: json['__v'],
+      startTime: json['startTime'],
+      endTime: json['endTime'],
+      courtCount: json['courtCount'],
     );
   }
 }
@@ -324,6 +333,7 @@ class ClubId {
 
   final String? createdAt;
   final String? updatedAt;
+  final List<ClubLocation>? locations;
 
   ClubId({
     this.id,
@@ -344,6 +354,7 @@ class ClubId {
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
+    this.locations,
   });
 
   factory ClubId.fromJson(Map<String, dynamic> json) {
@@ -368,12 +379,53 @@ class ClubId {
       location: json['location'] is Map<String, dynamic>
           ? Location.fromJson(json['location'])
           : null,
+      locations: json['locations'] != null
+          ? List<ClubLocation>.from(
+        json['locations'].map((x) => ClubLocation.fromJson(x)),
+      )
+          : null,
       isActive: json['isActive'],
       isVerified: json['isVerified'],
       isFeatured: json['isFeatured'],
       isDeleted: json['isDeleted'],
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
+    );
+  }
+}
+/* -------------------------------------------------------------------------- */
+class ClubLocation {
+  final String? id;
+  final String? city;
+  final String? address;
+  final String? zipCode;
+  final String? state;
+  final List<String>? courtType;
+  final List<String>? categories;
+
+  ClubLocation({
+    this.id,
+    this.city,
+    this.address,
+    this.zipCode,
+    this.state,
+    this.courtType,
+    this.categories,
+  });
+
+  factory ClubLocation.fromJson(Map<String, dynamic> json) {
+    return ClubLocation(
+      id: json['_id']?.toString(),
+      city: json['city']?.toString(),
+      address: json['address']?.toString(),
+      zipCode: json['zipCode']?.toString(),
+      state: json['state']?.toString(),
+      courtType: json['courtType'] != null
+          ? List<String>.from(json['courtType'].map((x) => x.toString()))
+          : null,
+      categories: json['categories'] != null
+          ? List<String>.from(json['categories'].map((x) => x.toString()))
+          : null,
     );
   }
 }

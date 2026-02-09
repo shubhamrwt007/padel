@@ -193,7 +193,7 @@ class SignUpController extends GetxController {
       "countryCode": "+91",
       "phoneNumber": phoneController.text.trim(),
       // "password": passwordController.text.trim(),
-      "city": selectedLocation.value,
+      "city": selectedLocationId.value,
       "gender": selectedGender.value,
       // "agreeTermsAndCondition": true,
       // "location": {
@@ -225,7 +225,7 @@ class SignUpController extends GetxController {
       if (loginResult.status == "200") {
         storage.write('token', loginResult.response!.token);
         storage.write('userId', loginResult.response!.user!.id);
-        Get.offAllNamed(RoutesName.bottomNav);
+        Get.offAllNamed(RoutesName.tutorial);
       }
 
     } else {
@@ -291,6 +291,7 @@ class SignUpController extends GetxController {
   var isLocationLoading = false.obs;
   var locations = <GetLocationData>[].obs;
   var selectedLocation = ''.obs;
+  var selectedLocationId = ''.obs;
   Future<void>fetchLocations()async{
     isLocationLoading.value = true;
     try{
