@@ -47,6 +47,8 @@ class OpenMatchBookingController extends GetxController
   // Misc
   final OpenMatchRepository repository = Get.put(OpenMatchRepository());
   RxString argument = "".obs;
+  RxString categoryId = ''.obs;
+  RxString locationId = ''.obs;
 
   // Join requests
   RxList<Map<String, dynamic>> joinRequests = <Map<String, dynamic>>[].obs;
@@ -86,8 +88,16 @@ class OpenMatchBookingController extends GetxController
 
     // Handle arguments safely
     final args = Get.arguments;
-    if (args is Map && args.containsKey("type")) {
-      argument.value = args["type"];
+    if (args is Map) {
+      if (args.containsKey("type")) {
+        argument.value = args["type"];
+      }
+      if (args.containsKey("categoryId")) {
+        categoryId.value = args["categoryId"];
+      }
+      if (args.containsKey("locationId")) {
+        locationId.value = args["locationId"];
+      }
     } else {
       argument.value = "upcoming";
     }
@@ -213,6 +223,8 @@ class OpenMatchBookingController extends GetxController
         type: type,
         page: page,
         limit: pageSize,
+        categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+        locationId: locationId.value.isNotEmpty ? locationId.value : null,
       );
 
       if (response != null && response.data != null && response.data!.isNotEmpty) {

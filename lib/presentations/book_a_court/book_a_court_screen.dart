@@ -407,7 +407,7 @@ class BookACourtScreen extends StatelessWidget {
                                 children: [
                                   Image.asset(Assets.imagesIcLocation,color: AppColors.textColor,scale: 2.2,),
                                   Text(
-                                      clubData.registerClub?.city ?? '',
+                                      controller.getLocationNameFromClub(clubData),
                                       style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
                                   ),
                                 ],

@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../../repositories/bookinghisory/booking_history_repository.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
+import '../main_home_page/main_home_controller.dart';
 
 class BookingHistoryController extends GetxController with GetSingleTickerProviderStateMixin {
   late TabController tabController;
@@ -35,9 +36,21 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   RxBool isLoadingMore = false.obs;
   RxString errorMessage = ''.obs;
 
+  RxString categoryId = ''.obs;
+  RxString location = ''.obs;
+
   @override
   void onInit() {
     tabController = TabController(length: 3, vsync: this); // Changed from 2 to 3
+
+    // Get categoryId and location from MainHomeController
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      categoryId.value = mainHomeController.selectedCategoryId.value;
+      location.value = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+    } catch (e) {
+      print("Error getting MainHomeController: $e");
+    }
 
     // Add tab listener to fetch data when switching tabs
     tabController.addListener(() {
@@ -94,7 +107,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   }
 
   Future<void> _fetchBookingType(String type) async {
-    final data = await bookingRepo.getBookingHistory(type: type, page: 1, limit: 30);
+    final data = await bookingRepo.getBookingHistory(
+      type: type,
+      page: 1,
+      limit: 30,
+      categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+      locationId: location.value.isNotEmpty ? location.value : null,
+    );
     data.data ??= [];
 
     switch (type) {
@@ -153,7 +172,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading upcoming page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Upcoming page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -188,7 +213,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading in-progress page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("In-progress page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -223,7 +254,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading completed page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Completed page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -258,7 +295,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading cancelled page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Cancelled page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }

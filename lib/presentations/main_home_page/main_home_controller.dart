@@ -17,10 +17,8 @@ class MainHomeController extends GetxController{
   final HomeController homeController = Get.put(HomeController());
   final HomeRepository _homeRepository = HomeRepository();
   final OpenMatchRepository _openMatchRepository = OpenMatchRepository();
-
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
-
   // Sport Tab Selection
   final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
   
@@ -154,15 +152,19 @@ class MainHomeController extends GetxController{
       final formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
       
+      print("🎾 Fetching Open Matches - CategoryId: ${selectedCategoryId.value}, LocationId: $locationId");
+      
       final response = await _openMatchRepository.getOpenMatchBookings(
         userid: userId,
         filter: 'allMatches',
-        type: selectedCategoryId.value,
+        type: 'upcoming',
         matchDate: formattedDate,
         locationId: locationId,
+        categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
       );
       
       openMatches.value = response;
+      print("🎾 Open Matches Fetched: ${response?.data?.length ?? 0} matches");
     } catch (e) {
       print('Error fetching open matches: $e');
     } finally {
