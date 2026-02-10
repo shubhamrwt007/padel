@@ -4,11 +4,13 @@ import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart'
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 
 class RequestsController extends GetxController {
+  ProfileController profileController = Get.put(ProfileController());
   RxInt expandedIndex = (-1).obs;
 
   void toggleExpand(int index) {
@@ -50,10 +52,10 @@ class RequestsController extends GetxController {
   }
 
   @override
-  void onInit() {
+  void onInit()async {
     super.onInit();
-    fetchJoinRequests();
-    fetchMyRequests();
+    await fetchJoinRequests();
+    await fetchMyRequests();
   }
   Future<void> fetchJoinRequests() async {
     try {
@@ -113,7 +115,8 @@ class RequestsController extends GetxController {
       // Remove the accepted request from the list
       joinRequests.removeWhere((request) => request.id == requestId);
       // Refresh data
-      fetchJoinRequests();
+      await fetchJoinRequests();
+      await profileController.fetCustomerLeaderBoardRank();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         Get.to(() => PaymentForWallet(
@@ -153,6 +156,7 @@ class RequestsController extends GetxController {
           // Remove the request from the list after successful withdrawal
           myRequests.removeWhere((request) => request.id == requestId);
           // Get.snackbar("Success", "Request withdrawn successfully");
+          await profileController.fetCustomerLeaderBoardRank();
         }
       } catch (e) {
         CustomLogger.logMessage(msg: "Error request: $e", level: LogLevel.error);
