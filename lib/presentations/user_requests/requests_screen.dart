@@ -332,7 +332,7 @@ class RequestsScreen extends StatelessWidget {
                                   style: Get.textTheme.bodySmall
                                       ?.copyWith(color: Colors.orange),
                                 ),Text(
-                                  '| ${request.type == "request" ? request.requester?.gender ?? 'N/A' : request.matchCreator?.gender ?? 'N/A'}',
+                                  '| ${request.type == "request" ? request.requester?.gender ?? '' : request.matchCreator?.gender ?? ''}',
                                   style: Get.textTheme.bodySmall
                                       ?.copyWith(fontWeight: FontWeight.w500),
                                 ),

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +9,7 @@ import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart'
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
@@ -546,7 +549,7 @@ class MainHomeScreen extends StatelessWidget {
     final isOngoing = controller.homeController.isBookingOngoing(b);
 
     return GestureDetector(
-      onTap: () {
+      onTap: controller.selectedSportTab.value == 1 ? null : () {
         if (!controller.homeController.isCheckingScoreboard.value) {
           final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
           if (id != null && id.isNotEmpty) {
@@ -977,47 +980,79 @@ class MainHomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // 🎀 Perfect corner ribbon
-                    if (e["action"] == "americano" || e["action"] == "player")
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        child: SizedBox(
-                          width: boxSize,
-                          height: boxSize,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Stack(
-                              children: [
-                                // Diagonal strip
-                                Positioned(
-                                  top: 6,
-                                  left: -28,
-                                  child: Transform.rotate(
-                                    angle: -0.685398, // -45°
-                                    child: Container(
-                                      width: 90,
-                                      height: 14,
-                                      alignment: Alignment.center,
-                                      color: Colors.orange,
-                                      child: const Text(
-                                        "COMING SOON",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 5,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.6,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+// Coming Soon overlay
+                    if (e["action"] == "americano")
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              decoration:  BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Color(0xFF3DBE64).withValues(alpha: 0.5), // green tint
+                                    Color(0xFF1F41BB).withValues(alpha: 0.5), // blue tint
+                                  ],
                                 ),
-                              ],
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                "Coming\nSoon",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
+                    // 🎀 Perfect corner ribbon
+                    // if (e["action"] == "americano" || e["action"] == "player")
+                    //   Positioned(
+                    //     top: 0,
+                    //     left: 0,
+                    //     child: SizedBox(
+                    //       width: boxSize,
+                    //       height: boxSize,
+                    //       child: ClipRRect(
+                    //         borderRadius: BorderRadius.circular(20),
+                    //         child: Stack(
+                    //           children: [
+                    //             // Diagonal strip
+                    //             Positioned(
+                    //               top: 6,
+                    //               left: -28,
+                    //               child: Transform.rotate(
+                    //                 angle: -0.685398, // -45°
+                    //                 child: Container(
+                    //                   width: 90,
+                    //                   height: 14,
+                    //                   alignment: Alignment.center,
+                    //                   color: Colors.orange,
+                    //                   child: const Text(
+                    //                     "COMING SOON",
+                    //                     style: TextStyle(
+                    //                       color: Colors.white,
+                    //                       fontSize: 5,
+                    //                       fontWeight: FontWeight.w700,
+                    //                       letterSpacing: 0.6,
+                    //                     ),
+                    //                   ),
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
@@ -1053,6 +1088,14 @@ class MainHomeScreen extends StatelessWidget {
         break;
       case 'player':
       // SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
+        Get.bottomSheet(
+          backgroundColor: Colors.transparent,
+          SizedBox(
+            height: Get.height,
+            child: FindPlayerScreen(),
+          ),
+          isScrollControlled: true,
+        );
         break;
     }
   }
