@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
@@ -15,6 +16,12 @@ class PaymentForWallet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     walletController.fetchWallet();
+    final args = Get.arguments as Map<String, dynamic>?;
+    final match = args?['match'] as OpenMatchBookingData?;
+    final prefferedTeam = args?['prefferedTeam'];
+    final razorpayOrderId = args?['razorpay_order_id'];
+    final matchId = match?.sId;
+    final displayAmount = (args?['totalAmount'] ?? totalAmount).toDouble();
 
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
@@ -40,7 +47,7 @@ class PaymentForWallet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Payment Summary Section
-            _buildPaymentSummary(context,),
+            _buildPaymentSummary(context, displayAmount),
 
             // UPI Section
             Text(
@@ -74,7 +81,10 @@ class PaymentForWallet extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentSummary(BuildContext context,) {
+  Widget _buildPaymentSummary(BuildContext context, double amount) {
+    final args = Get.arguments as Map<String, dynamic>?;
+    final isAdminMatch = args?['match'] != null;
+    
     return Container(
       margin: EdgeInsets.all(Get.width * 0.05),
       padding: EdgeInsets.all(Get.width * 0.05),
@@ -82,7 +92,7 @@ class PaymentForWallet extends StatelessWidget {
         color: Color(0xFFF8F9FA),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Obx(() => Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -92,9 +102,11 @@ class PaymentForWallet extends StatelessWidget {
             ),
           ),
           SizedBox(height: Get.height * 0.02),
-          _buildSummaryRow(context, "Total Amount", "₹${formatAmount(totalAmount.toString())}", false),
-          SizedBox(height: Get.height * 0.015),
-          _buildSummaryRow(context, "Less: Wallet Balance", "- ₹${formatAmount(walletController.walletBalance.value.toString())}", true),
+          _buildSummaryRow(context, "Total Amount", "₹${formatAmount(amount.toString())}", false),
+          if (!isAdminMatch) ...[
+            SizedBox(height: Get.height * 0.015),
+            _buildSummaryRow(context, "Less: Wallet Balance", "- ₹${formatAmount(walletController.walletBalance.value.toString())}", true),
+          ],
           SizedBox(height: Get.height * 0.015),
           Container(
             padding: EdgeInsets.all(12),
@@ -112,7 +124,7 @@ class PaymentForWallet extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "₹${formatAmount((totalAmount - walletController.walletBalance.value).toString())}",
+                  "₹${formatAmount(isAdminMatch ? amount.toString() : (amount - walletController.walletBalance.value).toString())}",
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryColor,
@@ -122,7 +134,7 @@ class PaymentForWallet extends StatelessWidget {
             ),
           ),
         ],
-      )),
+      ),
     );
   }
 
@@ -195,6 +207,12 @@ class PaymentForWallet extends StatelessWidget {
         String? subtitle,
         bool hasButton = false,
       }) {
+    final args = Get.arguments as Map<String, dynamic>?;
+    final match = args?['match'] as OpenMatchBookingData?;
+    final prefferedTeam = args?['prefferedTeam'];
+    final razorpayOrderId = args?['razorpay_order_id'];
+    final matchId = match?.sId;
+    
     return GestureDetector(
         onTap: () {
           if (value.startsWith('visa') || value.contains('card')) {
@@ -217,57 +235,58 @@ class PaymentForWallet extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Obx(() {
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: iconPath.isEmpty
+                        ? Center(
+                      child: Text(
+                        title[0].toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryColor,
+                        ),
                       ),
-                      child: iconPath.isEmpty
-                          ? Center(
-                        child: Text(
-                          title[0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryColor,
+                    )
+                        : Image.asset(
+                      iconPath,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  SizedBox(width: Get.width * 0.03),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      )
-                          : Image.asset(
-                        iconPath,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    SizedBox(width: Get.width * 0.03),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                        if (subtitle != null)
                           Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                              fontWeight: FontWeight.w600,
+                            subtitle,
+                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: Colors.grey[600],
                             ),
                           ),
-                          if (subtitle != null)
-                            Text(
-                              subtitle,
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                    Radio<String>(
+                  ),
+                  Obx(() {
+                    final isSelected = option.value == value;
+                    return Radio<String>(
                       value: value,
                       groupValue: option.value,
                       onChanged: (val) {
@@ -275,25 +294,37 @@ class PaymentForWallet extends StatelessWidget {
                       },
                       activeColor: AppColors.primaryColor,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ],
-                ),
-                AnimatedSize(
+                    );
+                  }),
+                ],
+              ),
+              Obx(() {
+                final isSelected = option.value == value;
+                return AnimatedSize(
                   duration: Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  child: hasButton && option.value == value
+                  child: hasButton && isSelected
                       ? Padding(
                     padding: EdgeInsets.only(top: 12),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                          final amountToPay = totalAmount - walletController.walletBalance.value;
+                          final args = Get.arguments as Map<String, dynamic>?;
+                          final isAdminMatch = args?['match'] != null;
+                          final amountToPay = (args?['totalAmount'] ?? totalAmount).toDouble();
+                          
                           if (amountToPay <= 0) {
                             Get.snackbar("Error", "Amount cannot be zero or negative");
                             return;
                           }
-                          walletController.createBalance(amountToPay);
+                          
+                          if (matchId != null && prefferedTeam != null && razorpayOrderId != null) {
+                            await walletController.createBalance(amountToPay);
+                            Get.back(result: true);
+                          } else {
+                            walletController.createBalance(amountToPay);
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryColor,
@@ -323,10 +354,10 @@ class PaymentForWallet extends StatelessWidget {
                     ),
                   )
                       : SizedBox.shrink(),
-                ),
-              ],
-            );
-          }),
+                );
+              }),
+            ],
+          ),
         ));
   }
 

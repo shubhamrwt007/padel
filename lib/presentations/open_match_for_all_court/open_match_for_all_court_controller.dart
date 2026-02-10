@@ -621,4 +621,65 @@ class OpenMatchForAllCourtController extends GetxController {
       loadingMatchId.value = '';
     }
   }
+
+  /// Direct Join Admin Match---------------------------------------------------
+  Future<void> directJoinAdminMatch({
+    required OpenMatchBookingData? match,
+    required String prefferedTeam,
+    String? razorpayOrderId,
+  }) async {
+    try {
+      final matchId = match?.sId ?? '';
+      final body = {
+        "matchId": matchId,
+        "prefferedTeam": prefferedTeam,
+        if (razorpayOrderId != null) "razorpay_order_id": razorpayOrderId,
+      };
+
+      CustomLogger.logMessage(msg: "directJoinAdminMatch body: $body", level: LogLevel.info);
+      final response = await repository.directJoinAdminMatch(body: body);
+      CustomLogger.logMessage(msg: "directJoinAdminMatch response: $response", level: LogLevel.info);
+
+      if (razorpayOrderId == null) {
+        // First call - store order ID and navigate to payment
+        final orderId = response['orderId'];
+        final amount = response['perShare'] ?? response['amount'] ?? 0.0;
+        
+        CustomLogger.logMessage(msg: "Order ID: $orderId, Amount: $amount", level: LogLevel.info);
+        
+        if (orderId != null) {
+          // Navigate to payment page with order ID
+          final result = await Get.toNamed(
+            RoutesName.paymentForWallet,
+            arguments: {
+              'match': match,
+              'prefferedTeam': prefferedTeam,
+              'razorpay_order_id': orderId,
+              'totalAmount': amount,
+            },
+          );
+          
+          CustomLogger.logMessage(msg: "Payment result: $result", level: LogLevel.info);
+          
+          // If payment successful, call API again with order ID
+          if (result == true) {
+            await directJoinAdminMatch(
+              match: match,
+              prefferedTeam: prefferedTeam,
+              razorpayOrderId: orderId,
+            );
+          }
+        } else {
+          SnackBarUtils.showErrorSnackBar("Failed to get order ID");
+        }
+      } else {
+        // Second call - join completed
+        SnackBarUtils.showSuccessSnackBar("Successfully joined the match!");
+        await fetchMatchesForSelection();
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error in directJoinAdminMatch: $e", level: LogLevel.error);
+      SnackBarUtils.showErrorSnackBar("Failed to join match: ${e.toString()}");
+    }
+  }
 }

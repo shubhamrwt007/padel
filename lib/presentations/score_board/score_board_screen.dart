@@ -701,6 +701,9 @@ class ScoreBoardScreen extends StatelessWidget {
     });
   }
 
+// This is the UPDATED _buildMergedPlayersView method
+// Replace the existing method in your scoreboard_screen.dart file with this one
+
   Widget _buildMergedPlayersView(List teamAPlayers, List teamBPlayers) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -708,51 +711,82 @@ class ScoreBoardScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Team A merged avatars with names
-          Column(
-            children: [
-              SizedBox(
-                width: 105,
-                child: Stack(
-                  children: [
-                    _buildMergedAvatar(teamAPlayers[0]),
-                    Positioned(
-                      left: 45,
-                      child: _buildMergedAvatar(teamAPlayers[1]),
-                    ),
-                  ],
+          Obx(() {
+            final bool isWinner = controller.isCompleted.value &&
+                controller.winner.value.toLowerCase() == "team a";
+            final bool isLoser = controller.isCompleted.value &&
+                controller.winner.value.toLowerCase() == "team b";
+
+            return Column(
+              children: [
+                SizedBox(
+                  width: 105,
+                  child: Stack(
+                    children: [
+                      _buildMergedAvatar(teamAPlayers[0]),
+                      Positioned(
+                        left: 45,
+                        child: _buildMergedAvatar(teamAPlayers[1]),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Team A",
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                  color: AppColors.primaryColor,
+                const SizedBox(height: 4),
+                // Winner/Loser indicator
+                if (controller.isCompleted.value)
+                  Column(
+                    children: [
+                      if (isWinner)
+                        Image.asset(
+                          Assets.imagesIcCrown,
+                          height: 20,
+                          width: 20,
+                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isWinner ? "Winner" : "-",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          color: isWinner ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                  )
+                else
+                  const SizedBox(height: 4),
+                Text(
+                  "Team A",
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: isLoser ? Colors.grey : AppColors.primaryColor,
+                  ),
                 ),
-              ),
-              Text(
-                controller.capitalizeFirstWord(teamAPlayers[0]["name"].toString().split(' ').first.trim()),
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 10,
-                  color: AppColors.textColor,
+                Text(
+                  controller.capitalizeFirstWord(teamAPlayers[0]["name"].toString().split(' ').first.trim()),
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    color: isLoser ? Colors.grey : AppColors.textColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                controller.capitalizeFirstWord(teamAPlayers[1]["name"].toString().split(' ').first.trim()),
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 10,
-                  color: AppColors.textColor,
+                Text(
+                  controller.capitalizeFirstWord(teamAPlayers[1]["name"].toString().split(' ').first.trim()),
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    color: isLoser ? Colors.grey : AppColors.textColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
           const SizedBox(width: 20),
           // Score in middle
           Text(
@@ -765,56 +799,86 @@ class ScoreBoardScreen extends StatelessWidget {
           ),
           const SizedBox(width: 20),
           // Team B merged avatars with names
-          Column(
-            children: [
-              SizedBox(
-                width: 105,
-                child: Stack(
-                  children: [
-                    _buildMergedAvatar(teamBPlayers[0]),
-                    Positioned(
-                      left: 45,
-                      child: _buildMergedAvatar(teamBPlayers[1]),
-                    ),
-                  ],
+          Obx(() {
+            final bool isWinner = controller.isCompleted.value &&
+                controller.winner.value.toLowerCase() == "team b";
+            final bool isLoser = controller.isCompleted.value &&
+                controller.winner.value.toLowerCase() == "team a";
+
+            return Column(
+              children: [
+                SizedBox(
+                  width: 105,
+                  child: Stack(
+                    children: [
+                      _buildMergedAvatar(teamBPlayers[0]),
+                      Positioned(
+                        left: 45,
+                        child: _buildMergedAvatar(teamBPlayers[1]),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "Team B",
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                  color: AppColors.primaryColor,
+                const SizedBox(height: 4),
+                // Winner/Loser indicator
+                if (controller.isCompleted.value)
+                  Column(
+                    children: [
+                      if (isWinner)
+                        Image.asset(
+                          Assets.imagesIcCrown,
+                          height: 20,
+                          width: 20,
+                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isWinner ? "Winner" : "-",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          color: isWinner ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                  )
+                else
+                  const SizedBox(height: 4),
+                Text(
+                  "Team B",
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: isLoser ? Colors.grey : AppColors.primaryColor,
+                  ),
                 ),
-              ),
-              Text(
-                controller.capitalizeFirstWord(teamBPlayers[0]["name"].toString().split(' ').first.trim()),
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 10,
-                  color: AppColors.textColor,
+                Text(
+                  controller.capitalizeFirstWord(teamBPlayers[0]["name"].toString().split(' ').first.trim()),
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    color: isLoser ? Colors.grey : AppColors.textColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                controller.capitalizeFirstWord(teamBPlayers[1]["name"].toString().split(' ').first.trim()),
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 10,
-                  color: AppColors.textColor,
+                Text(
+                  controller.capitalizeFirstWord(teamBPlayers[1]["name"].toString().split(' ').first.trim()),
+                  style: Get.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    color: isLoser ? Colors.grey : AppColors.textColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              ],
+            );
+          }),
         ],
       ),
     );
   }
-
   Widget _buildMergedAvatar(Map<String, dynamic> player) {
     return Container(
       height: 60,

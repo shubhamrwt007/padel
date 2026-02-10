@@ -14,11 +14,9 @@ import '../../repositories/authentication_repository/sign_up_repository.dart';
 import '../../data/response_models/get_courts_by_duration_model.dart' hide CourtDurationSlots;
 import '../../data/response_models/get_all_slot_prices_of_court_model.dart';
 import '../../data/response_models/get_locations_model.dart';
-
 class BookACourtController extends GetxController {
   final HomeRepository _homeRepository = HomeRepository();
   final SignUpRepository _signUpRepository = SignUpRepository();
-  
   // Locations data
   Rx<GetLocationsModel?> locationsData = Rx<GetLocationsModel?>(null);
   RxBool isLoadingLocations = false.obs;
@@ -63,6 +61,7 @@ class BookACourtController extends GetxController {
     }
 
     showMainGrid.value = false; // Hide main grid
+    isSlotsCollapsed.value = false; // Reset collapse state
     fetchCourtsIfReady(); // Hit the API
   }
   void showNoSelectionDialog() {

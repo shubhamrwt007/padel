@@ -39,13 +39,13 @@ class MainHomeController extends GetxController{
   final List<String> padelBannerImages = [
     Assets.imagesNewHomeBanner,
     Assets.imagesNewHomeBanner2,
-    Assets.imagesNewHomeBanner4,
-    Assets.imagesNewHomeBanner5,
+    Assets.imagesNewHomeBanner7,
+    Assets.imagesNewHomeBanner6,
   ];
 
   final List<String> pickleballBannerImages = [
-    Assets.imagesNewHomeBanner7,
-    Assets.imagesNewHomeBanner6,
+    Assets.imagesNewHomeBanner4,
+    Assets.imagesNewHomeBanner5,
   ];
 
   List<String> get bannerImages => selectedSportTab.value == 0 ? padelBannerImages : pickleballBannerImages;
