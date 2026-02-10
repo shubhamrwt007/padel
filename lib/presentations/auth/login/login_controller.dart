@@ -10,6 +10,9 @@ import 'package:padel_mobile/presentations/auth/login/widgets/login_exports.dart
 import 'package:padel_mobile/presentations/auth/otp/otp_controller.dart';
 import 'package:padel_mobile/repositories/authentication_repository/login_repository.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
+import 'package:padel_mobile/presentations/home/home_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 import '../../../configs/components/snack_bars.dart';
 import '../../notification/notification_controller.dart';
@@ -128,8 +131,21 @@ class LoginController extends GetxController {
 
       LoginModel result = await loginRepository.loginUser(body: body);
       if (result.status == "200") {
-        storage.write('token', result.response!.token);
-        storage.write('userId', result.response!.user!.id);
+        // Clear old data first
+        await storage.remove('token');
+        await storage.remove('userId');
+        
+        // Write new user data
+        await storage.write('token', result.response!.token);
+        await storage.write('userId', result.response!.user!.id);
+        
+        log("🔑 User logged in - userId: ${result.response!.user!.id}");
+        
+        // Delete old controllers to prevent showing old user data
+        Get.delete<HomeController>(force: true);
+        Get.delete<MainHomeController>(force: true);
+        Get.delete<ProfileController>(force: true);
+        
         Get.offAllNamed(RoutesName.bottomNav);
       }
     }on DioException catch (e) {
