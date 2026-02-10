@@ -454,6 +454,7 @@ class OpenMatchForAllCourtController extends GetxController {
           // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName' : player.cityName ?? '',
           'level': player.level ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
           'xpPoints': player.xpPoints ?? '',
