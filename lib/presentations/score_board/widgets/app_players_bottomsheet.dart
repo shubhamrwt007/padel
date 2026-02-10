@@ -32,6 +32,7 @@ class AppPlayersController extends GetxController {
           'name': player.name ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName': player.cityName ?? '',
           'level': player.level ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
           'xpPoints': player.xpPoints ?? '',
@@ -275,7 +276,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                             Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
                             const SizedBox(width: 4),
                             Text(
-                              player['city'] ?? '',
+                              player['cityName'] ?? '',
                               style: Get.textTheme.bodyLarge!
                                   .copyWith(fontSize: 11),
                             ),

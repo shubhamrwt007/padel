@@ -146,7 +146,7 @@ class _WalletScreenState extends State<WalletScreen> {
           Row(
             children: [
               Icon(Icons.info_outline,color: Colors.white,size: 13,),
-              Text("1 Credits = 1 Rupee",style: Get.textTheme.bodySmall!.copyWith(color: Colors.white,fontWeight: FontWeight.w400),)
+              Text("1 Credit = 1 Rupee",style: Get.textTheme.bodySmall!.copyWith(color: Colors.white,fontWeight: FontWeight.w400),)
             ],
           ),
           const SizedBox(height: 24),
