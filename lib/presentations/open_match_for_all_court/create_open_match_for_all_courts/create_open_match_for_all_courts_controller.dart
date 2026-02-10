@@ -97,6 +97,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     }
 
     showMainGrid.value = false; // Hide main grid
+    isSlotsCollapsed.value = false; // Reset collapse state
     fetchCourtsIfReady(); // Hit the API
   }
   void showNoSelectionDialog() {

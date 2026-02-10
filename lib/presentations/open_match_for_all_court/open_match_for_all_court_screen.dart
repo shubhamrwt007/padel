@@ -530,7 +530,11 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final locationName = data.clubId?.locations?[0].city?.capitalizeFirstChar()??"";
     
     final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
-    final price = "${data.bookingId?.totalAmount ?? 0}";
+    
+    // Show yourShare if adminStatus is true, otherwise show totalAmount
+    final price = data.adminStatus == true 
+        ? "${data.yourShare ?? 0}"
+        : "${data.totalAmount ?? 0}";
     // final price = (data.slot?.isNotEmpty == true &&
     //     data.slot!.first.slotTimes?.isNotEmpty == true)
     //     ? '${data.slot!.first.slotTimes!.first.amount ?? ''}'
@@ -806,10 +810,14 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
     final hasActiveRequest = match?.isRequest == true;
+    final isAdminMatch = match?.adminStatus == true;
 
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
-        if (isMatchCreator) {
+        if (isAdminMatch && !isLoginUserInMatch) {
+          // Admin match - direct join flow
+          await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
+        } else if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
         } else {
           // Direct API call for login user

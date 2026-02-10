@@ -546,4 +546,38 @@ class OpenMatchRepository {
     }
   }
 
+  ///Direct Join Admin Match---------------------------------------------------
+  Future<Map<String, dynamic>> directJoinAdminMatch({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Direct Join Admin Match request body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.directJoinAdminMatch,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Direct Join Admin Match Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return response.data;
+      } else {
+        throw Exception("Direct Join Admin Match Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Direct Join Admin Match failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
 }

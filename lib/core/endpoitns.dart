@@ -5,12 +5,12 @@ class AppEndpoints {
   // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
 
   // /// -----------------------New Live URL-------------------------------------------
-  // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
-  // static const String socketUrl = "https://apimobile.swootapp.com";
+  static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
+  static const String socketUrl = "https://apimobile.swootapp.com";
 
   ///-----------------------Local URL-------------------------------------------
-  static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
-  static const String socketUrl = "http://192.168.0.129:5070";
+  // static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.0.129:5070";
 
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
@@ -67,6 +67,7 @@ class AppEndpoints {
   static const String acceptOrRejectRequestUserForOpenMatch = "${baseUrl}court/openmatch/respondToRequest";
   static const String respondToBookingRequest = "${baseUrl}court/openmatch/respondToBookingRequest";
   static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests";
+  static const String directJoinAdminMatch = "${baseUrl}court/openmatch/directJoinAdminMatch";
   static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
   ///Notification---------------------------------------------------------------

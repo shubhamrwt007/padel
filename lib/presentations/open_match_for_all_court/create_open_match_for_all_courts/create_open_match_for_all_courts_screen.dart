@@ -119,62 +119,63 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
                       style: Get.textTheme.labelLarge
                   ),
-                  Row(
-                    children: [
-                      Obx(() {
-                        final is30 = controller.is30Slots.value;
+                  if (controller.showMainGrid.value)
+                    Row(
+                      children: [
+                        Obx(() {
+                          final is30 = controller.is30Slots.value;
 
-                        return Transform.scale(
-                          scale: 0.7,
-                          child: ToggleButtons(
-                            isSelected: [is30, !is30],
-                            borderRadius: BorderRadius.circular(5),
-                            constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
-                            fillColor: Colors.transparent, // important
-                            selectedColor: Colors.white,
-                            color: Colors.black,
-                            textStyle: const TextStyle(fontSize: 12),
-                            onPressed: (index) {
-                              controller.is30Slots.value = index == 0;
-                              controller.updateDurationFromToggle();
-                              // Clear selections when duration changes
-                              // controller.clearAllSelections();
-                            },
-                            children: [
-                              _buildGradientToggleChild(
-                                text: "Half",
-                                isSelected: is30,
-                              ),
-                              _buildGradientToggleChild(
-                                text: "Full",
-                                isSelected: !is30,
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      GestureDetector(
-                        onTap: () {
-                          controller.toggleSlotsCollapse();
-                        },
-                        child: AnimatedRotation(
-                          turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 250),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
-                                shape: BoxShape.circle
+                          return Transform.scale(
+                            scale: 0.7,
+                            child: ToggleButtons(
+                              isSelected: [is30, !is30],
+                              borderRadius: BorderRadius.circular(5),
+                              constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
+                              fillColor: Colors.transparent, // important
+                              selectedColor: Colors.white,
+                              color: Colors.black,
+                              textStyle: const TextStyle(fontSize: 12),
+                              onPressed: (index) {
+                                controller.is30Slots.value = index == 0;
+                                controller.updateDurationFromToggle();
+                                // Clear selections when duration changes
+                                // controller.clearAllSelections();
+                              },
+                              children: [
+                                _buildGradientToggleChild(
+                                  text: "Half",
+                                  isSelected: is30,
+                                ),
+                                _buildGradientToggleChild(
+                                  text: "Full",
+                                  isSelected: !is30,
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.keyboard_arrow_up,
-                              size: 22,
-                              color: AppColors.whiteColor,
+                          );
+                        }),
+                        GestureDetector(
+                          onTap: () {
+                            controller.toggleSlotsCollapse();
+                          },
+                          child: AnimatedRotation(
+                            turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 250),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: AppColors.primaryColor,
+                                  shape: BoxShape.circle
+                              ),
+                              child: Icon(
+                                Icons.keyboard_arrow_up,
+                                size: 22,
+                                color: AppColors.whiteColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               )),
               Obx(() => AnimatedSwitcher(
@@ -736,6 +737,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                               controller.showUnavailableSlots.value,
                             );
                             controller.slots.refresh();
+                            // Show main grid when date changes
+                            controller.showMainGrid.value = true;
 
                             // If clubs were showing before date change, refetch them after slots are refreshed
                             if (wasShowingClubs) {

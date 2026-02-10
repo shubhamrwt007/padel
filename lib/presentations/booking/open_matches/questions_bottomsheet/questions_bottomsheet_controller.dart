@@ -613,6 +613,7 @@ class QuestionsBottomsheetController extends GetxController {
       "gender":selectedGameType.value,
       "categoryId": localMatchData["categoryId"] ?? "",
       "location": localMatchData["location"] ?? "",
+      "ownerId": profileController.profileModel.value?.response?.sId ?? "",
       "teamA": teamA
           .where((p) =>
       (p["userId"] ?? p["_id"]) != null &&
@@ -626,8 +627,6 @@ class QuestionsBottomsheetController extends GetxController {
           .map((p) => p["userId"] ?? p["_id"])
           .toList(),
     };
-
-    log("CategoryId in body: ${localMatchData["categoryId"]}, Location in body: ${localMatchData["location"]}");
 
     return removeEmpty(body);
   }

@@ -80,6 +80,7 @@ class OpenMatchBookingData {
   String? locationId;
   String? categoryId;
   dynamic? totalAmount;
+  dynamic? yourShare;
 
   OpenMatchBookingData({
     this.sId,
@@ -117,6 +118,7 @@ class OpenMatchBookingData {
     this.locationId,
     this.categoryId,
     this.totalAmount,
+    this.yourShare,
   });
 
   OpenMatchBookingData.fromJson(Map<String, dynamic> json) {
@@ -159,6 +161,7 @@ class OpenMatchBookingData {
     locationId = json['locationId'];
     categoryId = json['categoryId'];
     totalAmount = json['totalAmount'];
+    yourShare = json['yourShare'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -197,6 +200,7 @@ class OpenMatchBookingData {
         'locationId': locationId,
         'categoryId': categoryId,
         'totalAmount': totalAmount,
+        'yourShare': yourShare,
       };
 }
 class BookingId {

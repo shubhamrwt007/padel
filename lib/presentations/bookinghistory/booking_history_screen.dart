@@ -213,7 +213,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   // NEW: Completed booking card matching the screenshot design
   Widget _buildCompletedBookingCard(BuildContext context, dynamic booking, dynamic club, int index) {
     final clubName = club?.clubName ?? "The Good Club";
-    final address = "${club?.city ?? ''} ${club?.zipCode ?? ''}";
+    final address = "${club?.locations[0].city ?? ''}";
     final price = (booking.totalAmount ?? 2000).toString();
     final score = _getMatchScore(booking);
     final bookingType = booking.bookingType ?? "";
@@ -469,34 +469,34 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                     ),
                     const SizedBox(height: 8),
                     // Invoice download button - only show for booking owner
-                    if (booking.userId == storage.read('userId'))
-                      GestureDetector(
-                        onTap: () async {
-                          final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
-                          final invoiceUrlString = booking.invoiceUrl ?? '';
-                          
-                          if (invoiceUrlString.isNotEmpty) {
-                            await controller.downloadInvoice(invoiceUrlString);
-                          } else {
-                            Get.snackbar("Error", "Invoice URL not available");
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            color: AppColors.textFieldColor
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text("Invoice", style: Get.textTheme.labelMedium),
-                              const SizedBox(width: 6),
-                              const Icon(Icons.file_download, size: 18),
-                            ],
-                          ),
-                        ),
-                      ),
+                    // if (booking.userId == storage.read('userId'))
+                    //   GestureDetector(
+                    //     onTap: () async {
+                    //       final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
+                    //       final invoiceUrlString = booking.invoiceUrl ?? '';
+                    //
+                    //       if (invoiceUrlString.isNotEmpty) {
+                    //         await controller.downloadInvoice(invoiceUrlString);
+                    //       } else {
+                    //         Get.snackbar("Error", "Invoice URL not available");
+                    //       }
+                    //     },
+                    //     child: Container(
+                    //       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    //       decoration: BoxDecoration(
+                    //         borderRadius: BorderRadius.circular(5),
+                    //         color: AppColors.textFieldColor
+                    //       ),
+                    //       child: Row(
+                    //         mainAxisSize: MainAxisSize.min,
+                    //         children: [
+                    //           Text("Invoice", style: Get.textTheme.labelMedium),
+                    //           const SizedBox(width: 6),
+                    //           const Icon(Icons.file_download, size: 18),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
@@ -663,7 +663,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _buildUpcomingBookingCard(BuildContext context, dynamic booking, dynamic club, int index, String type) {
     final isUpcoming = type == "upcoming";
     final clubName = club?.clubName ?? "N/A";
-    final address = "${club?.city ?? ''}, ${club?.zipCode ?? ''}";
+    final address = "${club?.locations?[0].city ?? ''}";
     final price = (booking.totalAmount ?? 2000).toString();
     final bookingType = booking.bookingType ?? "";
     final isBlueTheme = bookingType.toLowerCase() == "normal";
@@ -1259,7 +1259,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     // final isUpcoming = type == "upcoming";
     // final timeStr = _getTimeString(booking);
     final invoiceUrlString = booking.invoiceUrl??"";
-
+print("invoice--------- $invoiceUrlString");
     // Count actual players from scoreboard
     int totalPlayers = 0;
     final scoreboard = booking.scoreboard;

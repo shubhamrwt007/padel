@@ -17,7 +17,6 @@ class WalletController extends GetxController {
   final WalletRepository repository = Get.put(WalletRepository());
   RazorpayPaymentService? _paymentService;
   ProfileController profileController = Get.put(ProfileController());
-
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
   var isWalletLoading = false.obs;
