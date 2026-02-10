@@ -6,6 +6,9 @@ import 'package:padel_mobile/data/request_models/authentication_models/sign_up_m
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
+import 'package:padel_mobile/presentations/home/home_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 class SignUpController extends GetxController {
   SignUpRepository signUpRepository = SignUpRepository();
@@ -223,8 +226,21 @@ class SignUpController extends GetxController {
       LoginModel loginResult = await loginRepository.loginUser(body: loginBody);
 
       if (loginResult.status == "200") {
-        storage.write('token', loginResult.response!.token);
-        storage.write('userId', loginResult.response!.user!.id);
+        // Clear old data first
+        await storage.remove('token');
+        await storage.remove('userId');
+        
+        // Write new user data
+        await storage.write('token', loginResult.response!.token);
+        await storage.write('userId', loginResult.response!.user!.id);
+        
+        log("🔑 New user logged in - userId: ${loginResult.response!.user!.id}");
+        
+        // Delete old controllers to prevent showing old user data
+        Get.delete<HomeController>(force: true);
+        Get.delete<MainHomeController>(force: true);
+        Get.delete<ProfileController>(force: true);
+        
         Get.offAllNamed(RoutesName.tutorial);
       }
 

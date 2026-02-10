@@ -269,6 +269,11 @@ class HomeController extends GetxController {
   Future<void> fetchBookings({String? categoryId, String? locationId}) async {
     isLoadingBookings.value = true;
     try {
+      // Verify we have the correct userId and token
+      final currentUserId = storage.read('userId');
+      final currentToken = storage.read('token');
+      log("🔐 Fetching bookings for userId: $currentUserId");
+      log("🔐 Token exists: ${currentToken != null && currentToken.isNotEmpty}");
       log("📋 Fetching bookings with categoryId: $categoryId, locationId: $locationId");
       
       final ongoingResponse = await bookingHistoryRepository.getBookingHistory(
@@ -523,13 +528,26 @@ class HomeController extends GetxController {
     if (result != null) selectedLocation.value = result;
   }
 
+  void clearAllData() {
+    bookings.value = null;
+    courtsData.value = null;
+    isInitialized.value = false;
+    currentPage.value = 1;
+    hasMoreData.value = true;
+    searchQuery.value = '';
+    clubError.value = '';
+    totalCourts.value = 0;
+    scoreboardIds.clear();
+    openMatchToBookingMap.clear();
+    openMatchId.value = '';
+  }
+
   @override
   void onInit() {
     super.onInit();
-    // notificationService.initialize();
-    // var token = notificationService.getToken();
-    // log("Firebase Token $token");
-
+    
+    clearAllData();
+    
     // Initialize scroll controller listener for pagination
     scrollController.addListener(() {
       if (scrollController.position.pixels >=

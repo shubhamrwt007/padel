@@ -50,10 +50,22 @@ class MainHomeController extends GetxController{
 
   List<String> get bannerImages => selectedSportTab.value == 0 ? padelBannerImages : pickleballBannerImages;
 
+  void clearAllData() {
+    openMatches.value = null;
+    nearCityPlayers.value = null;
+    customerRank.value = 0;
+    currentBannerIndex.value = 0;
+    selectedSportTab.value = 0;
+    selectedCategoryId.value = '';
+    homeController.clearAllData();
+  }
+
   @override
   void onInit() async {
     super.onInit();
     pageController = PageController(initialPage: 1000);
+    
+    clearAllData();
     
     // Fetch categories first and wait for it to complete
     await fetchCategories();
