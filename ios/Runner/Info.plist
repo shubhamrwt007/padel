@@ -28,6 +28,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to the camera to take profile pictures.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
