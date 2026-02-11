@@ -174,7 +174,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                               : Obx(() => Text(
                             controller.requiresPayment.value
                                 ? "Pay Now"
-                                : "Confirm Match",
+                                : "Pay with Wallet",
                             style: Get.textTheme.headlineLarge!.copyWith(
                               color: AppColors.secondaryColor,
                               fontSize: 16,
