@@ -51,8 +51,8 @@ class EditProfileUi extends StatelessWidget {
                 _textFieldWithLabel(
                   "Email",
                   controller.emailController,
-                  readOnly: true,
-                  color: Colors.grey.shade100,
+                  // readOnly: true,
+                  // color: Colors.grey.shade100,
                   context,
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {

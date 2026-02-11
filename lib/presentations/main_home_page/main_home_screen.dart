@@ -211,11 +211,21 @@ class MainHomeScreen extends StatelessWidget {
                       }
                       return const SizedBox(height: 20);
                     }),
-                    _sectionTitle("Courts Near you", () {
-                      Get.toNamed(RoutesName.home);
+                    Obx(() {
+                      final courts = controller.homeController.courtsList;
+                      if (courts.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _sectionTitle("Courts Near you", () {
+                            Get.toNamed(RoutesName.home);
+                          }),
+                          _courtCard(),
+                          const SizedBox(height: 15),
+                        ],
+                      );
                     }),
-                    _courtCard(),
-                    const SizedBox(height: 15),
 
 
                     Obx(() {
