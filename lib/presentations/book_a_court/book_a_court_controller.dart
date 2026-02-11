@@ -20,11 +20,11 @@ class BookACourtController extends GetxController {
   // Locations data
   Rx<GetLocationsModel?> locationsData = Rx<GetLocationsModel?>(null);
   RxBool isLoadingLocations = false.obs;
-  
+
   // Category and Location IDs from MainHomeController
   RxString categoryId = ''.obs;
   RxString locationId = ''.obs;
-  
+
   ///Available Slots------------------------------------------------------------
   final selectedDuration = '60 min'.obs;
   final matchType = "competitive".obs;
@@ -34,21 +34,21 @@ class BookACourtController extends GetxController {
   void toggle(int index) {
     expandedIndex.value = expandedIndex.value == index ? -1 : index;
   }
-  
+
   ///Available Slots Collapse/Expand------------------------------------------------------------
   RxBool isSlotsCollapsed = false.obs;
   RxnString selectedSearchSlotId = RxnString();
   RxBool showMainGrid = true.obs; // New variable to control main grid visibility
-  
+
   void toggleSlotsCollapse() {
     isSlotsCollapsed.value = !isSlotsCollapsed.value;
     showMainGrid.value = !showMainGrid.value; // Toggle main grid visibility
-    
+
     // Don't reset available courts - keep them visible
     // User can modify selections and re-fetch if needed
   }
   final is30Slots = false.obs;
-  
+
   // Sync selectedDuration with is30Slots toggle
   void updateDurationFromToggle() {
     selectedDuration.value = is30Slots.value ? '30 min' : '60 min';
@@ -215,28 +215,28 @@ class BookACourtController extends GetxController {
 
   // Multi-date selections - key format: "date_courtId_slotId"
   RxMap<String, Map<String, dynamic>> multiDateSelections = <String, Map<String, dynamic>>{}.obs;
-  
+
   // Real court selections from availableCourts (for payment panel)
   RxMap<String, Map<String, dynamic>> realCourtSelections = <String, Map<String, dynamic>>{}.obs;
 
   RxInt totalAmount = 0.obs;
   Rx<GetAllActiveCourtsForSlotWiseModel?> slots = Rx<GetAllActiveCourtsForSlotWiseModel?>(null);
   RxBool isLoadingCourts = false.obs;
-  
+
   // Courts by duration data
   Rx<GetCourtsByDurationModel?> courtsByDuration = Rx<GetCourtsByDurationModel?>(null);
   RxBool isLoadingCourtsByDuration = false.obs;
   RxString selectedTimeSlot = ''.obs;
-  
+
   // Variables to store fetched slot prices
   var allSlotPricesResponse = Rxn<GetAllSlotPricesOfCourtModel>();
   var isSlotPricesLoading = false.obs;
   final Map<String, Map<String, int>> slotPricesData = {}; // day -> {duration -> price}
   final Map<String, Map<String, int>> originalSlotPricesData = {}; // Track original prices
-  
+
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
-  
+
   // Fetch locations from SignUpRepository
   Future<void> fetchLocations() async {
     try {
@@ -249,28 +249,28 @@ class BookACourtController extends GetxController {
       isLoadingLocations.value = false;
     }
   }
-    RxString selectedCityId = ''.obs;
+  RxString selectedCityId = ''.obs;
 
   // Get selected location name for display
   String getSelectedLocationName() {
     if (selectedCityId.value.isEmpty || locationsData.value?.data == null) {
       return 'Change Location';
     }
-    
+
     final location = locationsData.value!.data!.firstWhere(
-      (loc) => loc.id == selectedCityId.value,
+          (loc) => loc.id == selectedCityId.value,
       orElse: () => GetLocationData(),
     );
-    
+
     return location.name ?? 'Change Location';
   }
-  
+
   // Get city name by city ID - first try profile model, then locations data
   String getCityNameById(String? cityId) {
     if (cityId == null || cityId.isEmpty) {
       return '';
     }
-    
+
     // First try to get from profile model
     try {
       final mainHomeController = Get.find<MainHomeController>();
@@ -281,17 +281,17 @@ class BookACourtController extends GetxController {
     } catch (e) {
       log('getCityNameById: MainHomeController not found: $e');
     }
-    
+
     // Fallback to locations data
     if (locationsData.value?.data != null) {
       final location = locationsData.value!.data!.firstWhereOrNull(
-        (loc) => loc.id == cityId,
+            (loc) => loc.id == cityId,
       );
       if (location?.name != null) {
         return location!.name!;
       }
     }
-    
+
     return '';
   }
 
@@ -300,7 +300,7 @@ class BookACourtController extends GetxController {
     if (clubData?.registerClub?.locations == null || clubData!.registerClub!.locations!.isEmpty) {
       return '';
     }
-    
+
     final location = clubData.registerClub!.locations!.first;
     return location.city ?? location.address ?? '';
   }
@@ -313,7 +313,7 @@ class BookACourtController extends GetxController {
     updateDurationFromToggle(); // Initialize duration based on is30Slots
     _initializeMockData();
     await fetchLocations();
-    
+
     // Get categoryId and locationId from MainHomeController
     try {
       final mainHomeController = Get.find<MainHomeController>();
@@ -324,7 +324,7 @@ class BookACourtController extends GetxController {
     } catch (e) {
       log('MainHomeController not found: $e');
     }
-    
+
     // Fetch wallet balance when controller initializes
     try {
       final walletController = Get.find<WalletController>();
@@ -384,10 +384,10 @@ class BookACourtController extends GetxController {
 
   Future<void> cleanupOnBack() async {
     if (realCourtSelections.isEmpty) return;
-    
+
     try {
       final slots = [];
-      
+
       for (var entry in realCourtSelections.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
@@ -396,12 +396,12 @@ class BookACourtController extends GetxController {
         final dateString = selection['date'] as String;
         final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
-        
-        final bookingTime = isHalfSlot 
+
+        final bookingTime = isHalfSlot
             ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
-        
+
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -411,7 +411,7 @@ class BookACourtController extends GetxController {
           "duration": duration,
         });
       }
-            log('Bulk delete slot history on back: $slots');
+      log('Bulk delete slot history on back: $slots');
       await _homeRepository.deleteSlotHistory(data: {"slots": slots});
     } catch (e) {
       log('Error in bulk delete on back: $e');
@@ -517,11 +517,11 @@ class BookACourtController extends GetxController {
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
-    
+
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
-      
+
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
       } else {
@@ -530,7 +530,7 @@ class BookACourtController extends GetxController {
           time: slot.time,
           amount: slot.amount ?? 0,
         );
-        
+
         realCourtSelections[realCourtKey] = {
           'slot': halfSlot,
           'courtId': resolvedCourtId,
@@ -547,9 +547,9 @@ class BookACourtController extends GetxController {
 
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
-        selectedSlots.removeWhere((s) => s.sId == slotId && 
-            realCourtSelections.values.any((selection) => 
-                (selection['slot'] as Slots).sId == s.sId && 
+        selectedSlots.removeWhere((s) => s.sId == slotId &&
+            realCourtSelections.values.any((selection) =>
+            (selection['slot'] as Slots).sId == s.sId &&
                 selection['courtId'] == resolvedCourtId));
       } else {
         realCourtSelections[realCourtKey] = {
@@ -586,7 +586,7 @@ class BookACourtController extends GetxController {
       final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
       final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
       final clickedHalfKey = isFirstHalf == true ? firstHalfKey : secondHalfKey;
-      
+
       // Check if the clicked half is already selected - if so, unselect it
       if (multiDateSelections.containsKey(clickedHalfKey)) {
         multiDateSelections.remove(clickedHalfKey);
@@ -644,7 +644,7 @@ class BookACourtController extends GetxController {
           time: slot.time,
           amount: (slot.amount ?? 0) ~/ 2,
         );
-        
+
         multiDateSelections[clickedHalfKey] = {
           'slot': halfSlot,
           'courtId': resolvedCourtId,
@@ -659,7 +659,7 @@ class BookACourtController extends GetxController {
     } else {
       // Handle full slot selection for 60 minutes
       final multiDateKey = '${dateString}_${resolvedCourtId}_$slotId';
-      
+
       if (multiDateSelections.containsKey(multiDateKey)) {
         multiDateSelections.remove(multiDateKey);
       } else {
@@ -695,7 +695,7 @@ class BookACourtController extends GetxController {
     });
     totalAmount.value = total;
   }
-  
+
   void recalculateRealCourtTotalAmount() {
     int total = 0;
     realCourtSelections.forEach((key, selection) {
@@ -803,47 +803,47 @@ class BookACourtController extends GetxController {
   bool isSlotSelected(Slots slot, String courtId) {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
-    
+
     // Check for full slot selection
     final multiDateKey = '${dateString}_${courtId}_${slot.sId}';
     if (multiDateSelections.containsKey(multiDateKey)) {
       return true;
     }
-    
+
     // Check for half-slot selections if 30 minutes is selected
     if (is30Slots.value) {
       final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
       final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
       return multiDateSelections.containsKey(firstHalfKey) || multiDateSelections.containsKey(secondHalfKey);
     }
-    
+
     return false;
   }
-  
+
   // Check if both halves are selected for a main grid slot
   bool isBothHalvesSelectedInMainGrid(Slots slot, String courtId) {
     if (!is30Slots.value) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
-    
+
     // Check if full slot exists (both halves consolidated) OR both halves exist separately
-    return multiDateSelections.containsKey(fullSlotKey) || 
-           (multiDateSelections.containsKey(firstHalfKey) && multiDateSelections.containsKey(secondHalfKey));
+    return multiDateSelections.containsKey(fullSlotKey) ||
+        (multiDateSelections.containsKey(firstHalfKey) && multiDateSelections.containsKey(secondHalfKey));
   }
 
   // Check if left half is selected for a main grid slot
   bool isLeftHalfSelectedInMainGrid(Slots slot, String courtId) {
     if (!is30Slots.value) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
-    
+
     // Full slot means both halves are selected, so left half is selected
     return multiDateSelections.containsKey(fullSlotKey) || multiDateSelections.containsKey(firstHalfKey);
   }
@@ -851,67 +851,67 @@ class BookACourtController extends GetxController {
   // Check if right half is selected for a main grid slot
   bool isRightHalfSelectedInMainGrid(Slots slot, String courtId) {
     if (!is30Slots.value) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
-    
+
     // Full slot means both halves are selected, so right half is selected
     return multiDateSelections.containsKey(fullSlotKey) || multiDateSelections.containsKey(secondHalfKey);
   }
-  
+
   bool isRealCourtSlotSelected(Slots slot, String courtId) {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
-    
+
     // Check for full slot selection
     final realCourtKey = '${dateString}_${courtId}_${slot.sId}';
     if (realCourtSelections.containsKey(realCourtKey)) {
       return true;
     }
-    
+
     // Check for half-slot selections if club supports 30-minute slots
     if (clubSupports30MinSlots(courtId)) {
       final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
       final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
       return realCourtSelections.containsKey(firstHalfKey) || realCourtSelections.containsKey(secondHalfKey);
     }
-    
+
     return false;
   }
 
   // Check if both halves are selected for a court slot
   bool isBothHalvesSelectedInCourt(Slots slot, String courtId) {
     if (!clubSupports30MinSlots(courtId)) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
-    
+
     return realCourtSelections.containsKey(firstHalfKey) && realCourtSelections.containsKey(secondHalfKey);
   }
 
   // Check if left half is selected for a court slot
   bool isLeftHalfSelectedInCourt(Slots slot, String courtId) {
     if (!clubSupports30MinSlots(courtId)) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
-    
+
     return realCourtSelections.containsKey(firstHalfKey);
   }
 
   // Check if right half is selected for a court slot
   bool isRightHalfSelectedInCourt(Slots slot, String courtId) {
     if (!clubSupports30MinSlots(courtId)) return false;
-    
+
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
-    
+
     return realCourtSelections.containsKey(secondHalfKey);
   }
 
@@ -956,7 +956,7 @@ class BookACourtController extends GetxController {
       fetchCourtsByDuration();
     }
   }
-  
+
   ///Fetch All Slot Prices------------------------------------------------------
   Future<void> fetchAllSlotPrices(String clubId, {String? selectedTimes}) async {
     try {
@@ -1011,24 +1011,24 @@ class BookACourtController extends GetxController {
       isSlotPricesLoading.value = false;
     }
   }
-  
+
   /// Update slot prices from fetchAllSlotPrices API for a specific club
   void updateSlotPricesForSpecificClub(GetCourtsByDurationData clubData) {
     if (clubData.courts == null) return;
-    
+
     final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
     final currentDate = selectedDate.value ?? DateTime.now();
     final dayName = getWeekday(currentDate.weekday);
-    
+
     for (var court in clubData.courts!) {
       if (court.slots == null) continue;
-      
+
       for (var slot in court.slots!) {
         final slotTime = slot.time;
         if (slotTime == null) continue;
-        
+
         int? slotPrice;
-        
+
         if (selectedDurationMinutes == 90) {
           // For 90min display: show only 60min price
           slotPrice = findPriceForSlot(slotTime, dayName, 60);
@@ -1037,57 +1037,57 @@ class BookACourtController extends GetxController {
           final duration = selectedDurationMinutes == 120 ? 60 : selectedDurationMinutes;
           slotPrice = findPriceForSlot(slotTime, dayName, duration);
         }
-        
+
         if (slotPrice != null) {
           slot.amount = slotPrice;
         }
       }
     }
   }
-  
+
   /// Find price for a specific slot time from fetchAllSlotPrices data
   int? findPriceForSlot(String slotTime, String day, int duration) {
     final slotPrices = allSlotPricesResponse.value?.data;
     if (slotPrices == null) return null;
-    
+
     // Parse slot time to 24-hour format
     final slotHour = parseHour24(slotTime);
     if (slotHour == null) return null;
-    
+
     // Find matching price entry
     for (final priceEntry in slotPrices) {
       if (priceEntry.day != day || priceEntry.duration != duration) continue;
-      
+
       final slotTimeRange = priceEntry.slotTime;
       if (slotTimeRange == null) continue;
-      
+
       // Check if slot time falls within the price range
       if (isTimeInRange(slotHour, slotTimeRange)) {
         return priceEntry.price;
       }
     }
-    
+
     return null;
   }
-  
+
   /// Check if a time falls within a time range (e.g., "6:00 AM - 11:00 AM")
   bool isTimeInRange(int slotHour, String timeRange) {
     try {
       final parts = timeRange.split(' - ');
       if (parts.length != 2) return false;
-      
+
       final startHour = parseHour24(parts[0].trim());
       final endHour = parseHour24(parts[1].trim());
-      
+
       if (startHour == null || endHour == null) return false;
-      
+
       // Handle cases where end time is inclusive (e.g., 6 AM - 11 AM includes 11 AM)
       return slotHour >= startHour && slotHour <= endHour;
     } catch (e) {
       return false;
     }
   }
-  
+
   /// Parse time string to 24-hour format
   int? parseHour24(String? timeStr) {
     if (timeStr == null || timeStr.isEmpty) return null;
@@ -1114,7 +1114,7 @@ class BookACourtController extends GetxController {
       }
     }
   }
-  
+
   String getWeekday(int weekday) {
     switch (weekday) {
       case 1: return 'Monday';
@@ -1127,18 +1127,18 @@ class BookACourtController extends GetxController {
       default: return '';
     }
   }
-  
+
   /// Format time from "7pm" to "7:00 pm" for UI display
   String formatTimeForDisplay(String? time) {
     if (time == null || time.isEmpty) return '';
-    
+
     final timeStr = time.trim().toLowerCase();
-    
+
     // If already in correct format, return as is
     if (timeStr.contains(':')) {
       return time;
     }
-    
+
     // Parse time like "7pm" or "7am"
     final match = RegExp(r'(\d+)\s*(am|pm)').firstMatch(timeStr);
     if (match != null) {
@@ -1146,10 +1146,10 @@ class BookACourtController extends GetxController {
       final period = match.group(2);
       return '$hour:00 $period';
     }
-    
+
     return time; // Return original if parsing fails
   }
-  
+
   /// Get next hour time for 90min half slot display
   String _getNextHourTime(String currentTime) {
     try {
@@ -1165,7 +1165,7 @@ class BookACourtController extends GetxController {
     }
     return currentTime;
   }
-  
+
   // Get half slot time - for left half return original time, for right half add 30 minutes
   String getHalfSlotTime(String originalTime, bool isFirstHalf) {
     if (isFirstHalf) {
@@ -1175,7 +1175,7 @@ class BookACourtController extends GetxController {
       try {
         final timeString = originalTime.trim();
         DateTime? parsedTime;
-        
+
         // Try to parse with common formats
         for (final pattern in ['h:mm a', 'h a', 'HH:mm', 'H:mm']) {
           try {
@@ -1183,32 +1183,32 @@ class BookACourtController extends GetxController {
             break;
           } catch (_) {}
         }
-        
+
         if (parsedTime != null) {
           // Add 30 minutes
           final newTime = parsedTime.add(Duration(minutes: 30));
           return DateFormat('h:mm a').format(newTime);
         }
-        
+
         // Fallback: manual parsing for formats like "8 PM"
         final parts = timeString.split(' ');
         if (parts.length == 2) {
           final timePart = parts[0];
           final period = parts[1].toLowerCase();
-          
+
           int? hour = int.tryParse(timePart);
           if (hour != null) {
             // Add 30 minutes (0.5 hour)
             final newHour = hour;
             final newMinute = 30;
-            
+
             return '$newHour:${newMinute.toString().padLeft(2, '0')} ${period.toLowerCase()}';
           }
         }
       } catch (e) {
         log('Error calculating half slot time: $e');
       }
-      
+
       // Fallback: return original time with :30 added
       return originalTime.replaceFirst(':', ':30').replaceFirst(' ', ':30 ');
     }
@@ -1217,11 +1217,11 @@ class BookACourtController extends GetxController {
   // Convert time format from "7:00 PM" to "7 pm"
   String _formatTimeForAPI(String time) {
     if (time.isEmpty) return time;
-    
+
     try {
       // Parse the time string
       final timeString = time.trim();
-      
+
       // Try to parse with common formats
       DateTime? parsedTime;
       for (final pattern in ['h:mm a', 'h a', 'HH:mm', 'H:mm']) {
@@ -1230,31 +1230,31 @@ class BookACourtController extends GetxController {
           break;
         } catch (_) {}
       }
-      
+
       if (parsedTime != null) {
         int hour = parsedTime.hour;
         String period = hour >= 12 ? 'pm' : 'am';
-        
+
         // Convert to 12-hour format
         if (hour == 0) {
           hour = 12;
         } else if (hour > 12) {
           hour = hour - 12;
         }
-        
+
         return '$hour $period';
       }
-      
+
       // Fallback: manual parsing
       final parts = timeString.split(' ');
       String timePart = parts[0];
       String? period = parts.length > 1 ? parts[1].toLowerCase() : null;
-      
+
       // Remove minutes (everything after colon)
       if (timePart.contains(':')) {
         timePart = timePart.split(':')[0];
       }
-      
+
       int? hour = int.tryParse(timePart);
       if (hour != null) {
         // Determine period if not provided
@@ -1263,7 +1263,7 @@ class BookACourtController extends GetxController {
         } else {
           period = period.toLowerCase();
         }
-        
+
         // Convert to 12-hour format if needed
         if (hour == 0) {
           hour = 12;
@@ -1273,13 +1273,13 @@ class BookACourtController extends GetxController {
         } else if (hour == 12 && period == 'am') {
           hour = 12;
         }
-        
+
         return '$hour $period';
       }
     } catch (e) {
       log('Error formatting time: $e');
     }
-    
+
     // Return original if parsing fails
     return time;
   }
@@ -1288,9 +1288,9 @@ class BookACourtController extends GetxController {
   Future<void> fetchCourtsByDuration() async {
     try {
       isLoadingCourtsByDuration.value = true;
-      
+
       final dateString = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
-      
+
       String formattedTime = '';
       if (multiDateSelections.isNotEmpty) {
         final selectedSlotTimes = <String>{};
@@ -1302,19 +1302,19 @@ class BookACourtController extends GetxController {
         });
         formattedTime = selectedSlotTimes.join(',');
       }
-      
+
       // Get duration from is30Slots: 30 for 30m, 60 for 60m
       final durationValue = is30Slots.value ? '30' : '60';
-      
+
       // Get categoryId from MainHomeController
       final mainHomeController = Get.find<MainHomeController>();
-      final categoryId = mainHomeController.selectedCategoryId.value.isNotEmpty 
-          ? mainHomeController.selectedCategoryId.value 
+      final categoryId = mainHomeController.selectedCategoryId.value.isNotEmpty
+          ? mainHomeController.selectedCategoryId.value
           : null;
-      
+
       // Get locationId from selectedCityId
       // final locationId = selectedCityId.value.isNotEmpty ? selectedCityId.value : null;
-      
+
       final response = await _homeRepository.getCourtsByDuration(
         duration: durationValue,
         date: dateString,
@@ -1322,9 +1322,9 @@ class BookACourtController extends GetxController {
         categoryId: categoryId,
         locationId: locationId.value,
       );
-      
+
       courtsByDuration.value = response;
-      
+
       log('Courts by duration fetched: ${response.data?.length} clubs');
     } catch (e) {
       log('Error fetching courts by duration: $e');
@@ -1336,7 +1336,7 @@ class BookACourtController extends GetxController {
   // Check if left half of a slot is booked based on API response
   bool isLeftHalfBooked(Slots slot, String courtId) {
     if (courtsByDuration.value?.data == null) return false;
-    
+
     for (var clubData in courtsByDuration.value!.data!) {
       if (clubData.courts != null) {
         for (var court in clubData.courts!) {
@@ -1347,7 +1347,7 @@ class BookACourtController extends GetxController {
                 final leftHalfTime = getHalfSlotTime(slot.time ?? '', true);
                 final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
                 final leftHalfTimeLower = leftHalfTime.toLowerCase().trim();
-                
+
                 if (apiBookingTime == leftHalfTimeLower) {
                   return true;
                 }
@@ -1363,7 +1363,7 @@ class BookACourtController extends GetxController {
   // Check if right half of a slot is booked based on API response
   bool isRightHalfBooked(Slots slot, String courtId) {
     if (courtsByDuration.value?.data == null) return false;
-    
+
     for (var clubData in courtsByDuration.value!.data!) {
       if (clubData.courts != null) {
         for (var court in clubData.courts!) {
@@ -1374,7 +1374,7 @@ class BookACourtController extends GetxController {
                 final rightHalfTime = getHalfSlotTime(slot.time ?? '', false);
                 final apiBookingTime = apiSlot.bookingTime!.toLowerCase().trim();
                 final rightHalfTimeLower = rightHalfTime.toLowerCase().trim();
-                
+
                 if (apiBookingTime == rightHalfTimeLower) {
                   return true;
                 }
@@ -1390,7 +1390,7 @@ class BookACourtController extends GetxController {
   // Check if a club supports 30-minute slots
   bool clubSupports30MinSlots(String courtId) {
     if (courtsByDuration.value?.data == null) return false;
-    
+
     for (var clubData in courtsByDuration.value!.data!) {
       if (clubData.courts != null) {
         for (var court in clubData.courts!) {
@@ -1409,7 +1409,7 @@ class BookACourtController extends GetxController {
 
     try {
       final slots = <Map<String, dynamic>>[];
-      
+
       for (var entry in realCourtSelections.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
@@ -1419,12 +1419,12 @@ class BookACourtController extends GetxController {
         final dateString = selection['date'] as String;
         final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
         final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
-        
-        final bookingTime = isHalfSlot 
+
+        final bookingTime = isHalfSlot
             ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
-        
+
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -1436,7 +1436,7 @@ class BookACourtController extends GetxController {
           "totalTime": duration,
         });
       }
-      
+
       final success = await createAndGetSlotHistory(slots: slots);
       if (success) {
         hasCalledSlotHistoryAPI.value = true;
@@ -1455,14 +1455,14 @@ class BookACourtController extends GetxController {
     }
 
     final List<Map<String, dynamic>> payloadList = [];
-    
+
     // Group selections by clubId
     final Map<String, List<Map<String, dynamic>>> selectionsByClub = {};
-    
+
     for (var entry in realCourtSelections.entries) {
       final selection = entry.value;
       final courtId = selection['courtId'] as String;
-      
+
       // Find the club for this court from courtsByDuration
       String? clubId;
       GetCourtsByDurationData? courtData;
@@ -1479,29 +1479,29 @@ class BookACourtController extends GetxController {
         }
         if (clubId != null) break;
       }
-      
+
       if (clubId == null || courtData == null) continue;
-      
+
       if (!selectionsByClub.containsKey(clubId)) {
         selectionsByClub[clubId] = [];
       }
-      
+
       selectionsByClub[clubId]!.add(selection);
     }
-    
+
     // Build payload for each club
     for (var clubEntry in selectionsByClub.entries) {
       final clubId = clubEntry.key;
       final clubSelections = clubEntry.value;
-      
+
       // Find the specific court data for this club
       final specificCourtData = courtsByDuration.value!.data?.firstWhere(
-        (c) => c.registerClub?.id == clubId,
+            (c) => c.registerClub?.id == clubId,
         orElse: () => GetCourtsByDurationData(),
       );
-      
+
       if (specificCourtData == null || specificCourtData.registerClub?.id == null) continue;
-      
+
       // Get booking day
       final firstSelection = clubSelections.first;
       final dateTime = firstSelection['dateTime'] as DateTime;
@@ -1529,16 +1529,16 @@ class BookACourtController extends GetxController {
           bookingDay = "Sunday";
           break;
       }
-      
+
       // Get business hours for the day
       final selectedBusinessHour = specificCourtData.registerClub?.businessHours
           ?.where((bh) => bh.day == bookingDay)
           .map((bh) => {
-                "time": bh.time ?? "",
-                "day": bh.day ?? "",
-              })
+        "time": bh.time ?? "",
+        "day": bh.day ?? "",
+      })
           .toList() ?? [];
-      
+
       // Group selections by courtId + slotId + date to handle half slots correctly
       final Map<String, List<Map<String, dynamic>>> slotGroups = {};
       for (var selection in clubSelections) {
@@ -1547,25 +1547,25 @@ class BookACourtController extends GetxController {
         final slotId = slot.sId ?? '';
         final dateString = selection['date'] as String;
         final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
-        
+
         // Create unique key: for half slots include half info, for full slots just basic info
-        final groupKey = isHalfSlot 
+        final groupKey = isHalfSlot
             ? '${dateString}_${courtId}_${slotId}_half'
             : '${dateString}_${courtId}_${slotId}_full';
-            
+
         if (!slotGroups.containsKey(groupKey)) {
           slotGroups[groupKey] = [];
         }
         slotGroups[groupKey]!.add(selection);
       }
-      
+
       // Build slot data
       final List<Map<String, dynamic>> slotData = [];
-      
+
       for (var slotGroup in slotGroups.entries) {
         final selections = slotGroup.value;
         final isHalfSlotGroup = slotGroup.key.endsWith('_half');
-        
+
         if (isHalfSlotGroup && selections.length == 2) {
           // Both halves selected - treat as one full slot
           final firstSelection = selections.first;
@@ -1575,10 +1575,10 @@ class BookACourtController extends GetxController {
           final dateTime = firstSelection['dateTime'] as DateTime;
           final dateString = DateFormat('yyyy-MM-dd').format(dateTime);
           final slotId = slot.sId ?? '';
-          
+
           // Calculate full slot amount
           final fullAmount = selections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
-          
+
           slotData.add({
             "slotId": slotId,
             "businessHours": selectedBusinessHour,
@@ -1604,16 +1604,16 @@ class BookACourtController extends GetxController {
             final dateTime = selection['dateTime'] as DateTime;
             final dateString = DateFormat('yyyy-MM-dd').format(dateTime);
             final slotId = slot.sId ?? '';
-            
+
             final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
             final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
             final durationMinutes = isHalfSlot ? 30 : 60;
             final totalTimeMinutes = isHalfSlot ? 30 : 60;
-            
-            final bookingTime = isHalfSlot 
+
+            final bookingTime = isHalfSlot
                 ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
                 : slot.time ?? '';
-            
+
             slotData.add({
               "slotId": slotId,
               "businessHours": selectedBusinessHour,
@@ -1633,7 +1633,7 @@ class BookACourtController extends GetxController {
           }
         }
       }
-      
+
       if (slotData.isNotEmpty) {
         final bookingPayload = {
           "slot": slotData,
@@ -1645,13 +1645,13 @@ class BookACourtController extends GetxController {
           "location": locationId.value,
 
         };
-        
+
         log('Booking payload ownerId: ${specificCourtData.registerClub?.ownerId}');
-        
+
         payloadList.add(bookingPayload);
       }
     }
-    
+
     return payloadList.isEmpty ? null : payloadList;
   }
 

@@ -423,8 +423,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
       final tabs = [
         {"label": "Morning", "icon": Icons.wb_twilight_sharp, "value": "morning"},
-        {"label": "Noon", "icon": Icons.wb_sunny, "value": "noon"},
-        {"label": "Evening", "icon": Icons.nightlight_round, "value": "night"},
+        {"label": "Noon", "icon": Icons.wb_sunny, "value": "afternoon"},
+        {"label": "Evening", "icon": Icons.nightlight_round, "value": "evening"},
       ];
 
       return Theme(
@@ -449,8 +449,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () =>
-                      controller.selectedTimeFilter.value = value,
+                      onTap: () {
+                        controller.selectedTimeFilter.value = value;
+                        controller.fetchMatchesForSelection();
+                      },
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 250),

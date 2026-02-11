@@ -567,7 +567,7 @@ class ScoreBoardScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Obx(() => controller.matchStatus.value
+            Obx(() => controller.matchStatus.value || controller.isCompleted.value
                 ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
