@@ -79,7 +79,7 @@ class MainHomeController extends GetxController{
       categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
       locationId: locationId,
     );
-    
+
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
     await fetchOpenMatches();
@@ -107,16 +107,16 @@ class MainHomeController extends GetxController{
   /// Handle sport tab changes
   void onSportTabChanged(int index) async {
     selectedSportTab.value = index;
-    
+
     // Reset banner to first page when switching tabs
     currentBannerIndex.value = 0;
     if (pageController.hasClients) {
       pageController.jumpToPage(1000);
     }
-    
+
     final categories = categoryModel.value?.data ?? [];
     if (categories.isEmpty) return;
-    
+
     String? categoryId;
     if (index == 0 && categories.isNotEmpty) {
       // Padel - find padel category
@@ -133,12 +133,12 @@ class MainHomeController extends GetxController{
       );
       categoryId = pickleballCategory.sId;
     }
-    
+
     selectedCategoryId.value = categoryId ?? '';
-    
+
     // Get location ID from profile
     final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-    
+
     // Fetch clubs with category and location
     homeController.currentPage.value = 1;
     homeController.fetchClubs(
@@ -146,26 +146,26 @@ class MainHomeController extends GetxController{
       categoryId: selectedCategoryId.value,
       locationId: locationId,
     );
-    
+
     // Fetch bookings with category and location
     await homeController.fetchBookings(
       categoryId: selectedCategoryId.value,
       locationId: locationId,
     );
-    
+
     // Fetch open matches with category
     await fetchOpenMatches();
   }
-  
+
   Future<void> fetchOpenMatches() async {
     try {
       isLoadingOpenMatches.value = true;
       final userId = storage.read('userId') ?? '';
       final formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-      
+
       print("🎾 Fetching Open Matches - CategoryId: ${selectedCategoryId.value}, LocationId: $locationId");
-      
+
       final response = await _openMatchRepository.getOpenMatchBookings(
         userid: userId,
         filter: 'allMatches',
@@ -174,7 +174,7 @@ class MainHomeController extends GetxController{
         locationId: locationId,
         categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
       );
-      
+
       openMatches.value = response;
       print("🎾 Open Matches Fetched: ${response?.data?.length ?? 0} matches");
     } catch (e) {
@@ -197,13 +197,13 @@ class MainHomeController extends GetxController{
       isLoadingPlayers.value = false;
     }
   }
-  
+
   Future<void> fetchCategories() async {
     try {
       isLoadingCategory.value = true;
       final response = await _homeRepository.getCategory();
       categoryModel.value = response;
-      
+
       // Set default to Padel category
       final categories = response.data ?? [];
       if (categories.isNotEmpty) {
@@ -212,9 +212,9 @@ class MainHomeController extends GetxController{
           orElse: () => categories.first,
         );
         selectedCategoryId.value = padelCategory.sId ?? '';
-        
+
         print("🎯 Selected Category: ${padelCategory.name}, ID: ${selectedCategoryId.value}");
-        
+
         // Fetch clubs with padel category and dynamic location
         final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
         homeController.fetchClubs(

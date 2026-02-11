@@ -14,6 +14,7 @@ import 'package:padel_mobile/repositories/score_board_repo/score_board_repositor
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../repositories/home_repository/home_repository.dart';
 import '../../repositories/authentication_repository/sign_up_repository.dart';
+import '../main_home_page/main_home_controller.dart';
 
 class HomeController extends GetxController {
 
@@ -206,7 +207,16 @@ class HomeController extends GetxController {
 
     try {
       currentPage.value++;
-      await fetchClubs();
+      
+      // Get categoryId and locationId from MainHomeController if available
+      try {
+        final mainHomeController = Get.find<MainHomeController>();
+        final categoryId = mainHomeController.selectedCategoryId.value;
+        final locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+        await fetchClubs(categoryId: categoryId, locationId: locationId);
+      } catch (e) {
+        await fetchClubs();
+      }
     } catch (e) {
       // Revert page increment on error
       currentPage.value = (currentPage.value - 1).clamp(1, currentPage.value);
@@ -219,7 +229,16 @@ class HomeController extends GetxController {
     searchQuery.value = query.trim();
     currentPage.value = 1;
     hasMoreData.value = true;
-    fetchClubs(isRefresh: true);
+    
+    // Get categoryId and locationId from MainHomeController if available
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      final categoryId = mainHomeController.selectedCategoryId.value;
+      final locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId);
+    } catch (e) {
+      fetchClubs(isRefresh: true);
+    }
   }
 
   /// Retry fetching data
@@ -229,10 +248,23 @@ class HomeController extends GetxController {
     hasMoreData.value = true;
     isInitialized.value = false;
 
-    await Future.wait([
-      fetchClubs(isRefresh: true),
-      fetchBookings(),
-    ]);
+    // Get categoryId and locationId from MainHomeController if available
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      final categoryId = mainHomeController.selectedCategoryId.value;
+      final locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      
+      await Future.wait([
+        fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId),
+        fetchBookings(categoryId: categoryId, locationId: locationId),
+      ]);
+    } catch (e) {
+      // Fallback if MainHomeController not found
+      await Future.wait([
+        fetchClubs(isRefresh: true),
+        fetchBookings(),
+      ]);
+    }
   }
 
   /// Clear search and reset data
@@ -240,7 +272,16 @@ class HomeController extends GetxController {
     searchQuery.value = '';
     currentPage.value = 1;
     hasMoreData.value = true;
-    fetchClubs(isRefresh: true);
+    
+    // Get categoryId and locationId from MainHomeController if available
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      final categoryId = mainHomeController.selectedCategoryId.value;
+      final locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId);
+    } catch (e) {
+      fetchClubs(isRefresh: true);
+    }
   }
 
   /// Update selected location
@@ -275,7 +316,7 @@ class HomeController extends GetxController {
       log("🔐 Fetching bookings for userId: $currentUserId");
       log("🔐 Token exists: ${currentToken != null && currentToken.isNotEmpty}");
       log("📋 Fetching bookings with categoryId: $categoryId, locationId: $locationId");
-      
+
       final ongoingResponse = await bookingHistoryRepository.getBookingHistory(
         type: "in-progress",
         categoryId: categoryId,
@@ -288,7 +329,7 @@ class HomeController extends GetxController {
       );
 
       final allBookings = <BookingHistoryData>[];
-      
+
       if (ongoingResponse.success == true && ongoingResponse.data != null) {
         allBookings.addAll(ongoingResponse.data!);
         // Debug first booking
@@ -300,7 +341,7 @@ class HomeController extends GetxController {
           log("   courtImage: ${firstBooking.registerClubId?.courtImage}");
         }
       }
-      
+
       if (upcomingResponse.success == true && upcomingResponse.data != null) {
         allBookings.addAll(upcomingResponse.data!);
       }
@@ -543,11 +584,11 @@ class HomeController extends GetxController {
   }
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    
+
     clearAllData();
-    
+
     // Initialize scroll controller listener for pagination
     scrollController.addListener(() {
       if (scrollController.position.pixels >=
@@ -556,11 +597,9 @@ class HomeController extends GetxController {
       }
     });
 
-    // Fetch initial data
+    // Fetch initial data - don't pass parameters here, let MainHomeController handle it
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.wait([
-        fetchClubs(isRefresh: true),
-        fetchBookings(),
         fetchLocations(),
       ]);
     });
