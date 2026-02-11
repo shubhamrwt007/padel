@@ -534,8 +534,8 @@ class PaymentMethodController extends GetxController {
 
     try {
       await _paymentService!.initiatePayment(
-        // keyId: 'rzp_live_RtOIWe2johK6H7',
-        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        keyId: 'rzp_live_RtOIWe2johK6H7',
+        // keyId: 'rzp_test_1DP5mmOlF5G5ag',
         amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
