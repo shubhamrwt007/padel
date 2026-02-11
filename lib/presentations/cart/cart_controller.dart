@@ -224,7 +224,7 @@ extension CartControllerBooking on CartController {
       }
     }
   }
-  List<Map<String, dynamic>>? buildBookingPayload() {
+  List<Map<String, dynamic>>? buildBookingPayload({String? categoryId, String? locationId}) {
     final selectedItems = cartItems
         .where((c) => selectedClubIds.contains(c.registerClubId?.sId ?? ""))
         .toList();
@@ -308,6 +308,8 @@ extension CartControllerBooking on CartController {
           "slot": slotData,
           "register_club_id": cart.registerClubId?.sId ?? "",
           "ownerId": cart.registerClubId?.ownerId ?? "",
+          "categoryId": categoryId ?? "",
+          "locationId": locationId ?? "",
         };
 
         payloadList.add(bookingPayload);
