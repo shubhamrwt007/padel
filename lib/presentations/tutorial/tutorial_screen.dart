@@ -1,7 +1,8 @@
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 
 class TutorialScreen extends StatefulWidget {
-  const TutorialScreen({super.key});
+  final String? buttonType;
+  const TutorialScreen({super.key,this.buttonType});
 
   @override
   State<TutorialScreen> createState() =>
@@ -139,7 +140,13 @@ class _TutorialScreenState extends State<TutorialScreen> {
                      );
                    } else {
                      // Final navigation
-                     Get.offAllNamed(RoutesName.bottomNav);
+                     if(widget.buttonType == "home"){
+                       print("FromHome--------------------------");
+                       Get.back();
+                     }else{
+                       print("FromSignUp--------------------------");
+                       Get.offAllNamed(RoutesName.bottomNav);
+                     }
                    }
                  },
                  child: Container(

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -19,6 +20,7 @@ import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 import 'package:padel_mobile/presentations/open_match_for_all_court/widgets/semi_circle_progress_bar.dart';
 import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
+import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
@@ -77,6 +79,9 @@ class MainHomeScreen extends StatelessWidget {
           ],
         ),
         action: [
+          IconButton(onPressed: (){
+            Get.to(TutorialScreen(buttonType: "home",));
+          }, icon: Icon(CupertinoIcons.question_circle,size: 24,color: Colors.white,)),
           GestureDetector(
             onTap: () {
               Get.toNamed(RoutesName.notification);
