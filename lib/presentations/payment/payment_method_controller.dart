@@ -15,6 +15,8 @@ import '../../repositories/cart/cart_repository.dart';
 import '../cart/cart_controller.dart';
 import '../book_a_court/book_a_court_controller.dart';
 import '../booking/book_session/book_session_controller.dart';
+import '../main_home_page/main_home_controller.dart';
+import '../profile/profile_controller.dart';
 
 class PaymentMethodController extends GetxController {
   var option = ''.obs;
@@ -157,13 +159,18 @@ class PaymentMethodController extends GetxController {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
+      final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
+      final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
+      final categoryId = mainHomeController?.selectedCategoryId.value;
+      final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+
       if (isFromBookSession && directBookingPayload != null) {
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else {
         final cart = _cartController;
-        bookingPayload = cart != null ? cart.buildBookingPayload() : null;
+        bookingPayload = cart?.buildBookingPayload(categoryId: categoryId, locationId: locationId);
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
@@ -356,13 +363,18 @@ class PaymentMethodController extends GetxController {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
+      final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
+      final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
+      final categoryId = mainHomeController?.selectedCategoryId.value;
+      final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+
       if (isFromBookSession && directBookingPayload != null) {
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else {
         final cart = _cartController;
-        bookingPayload = cart?.buildBookingPayload();
+        bookingPayload = cart?.buildBookingPayload(categoryId: categoryId, locationId: locationId);
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
