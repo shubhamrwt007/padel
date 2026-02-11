@@ -197,9 +197,9 @@ class OpenMatchForAllCourtController extends GetxController {
       if (hour >= 6 && hour < 12) {
         return 'morning'; // 6 AM - 11:59 AM
       } else if (hour >= 12 && hour < 18) {
-        return 'noon'; // 12 PM - 5:59 PM
+        return 'afternoon'; // 12 PM - 5:59 PM
       } else {
-        return 'night'; // 6 PM - 5:59 AM
+        return 'evening'; // 6 PM - 5:59 AM
       }
     } catch (_) {
       return 'morning';
@@ -275,6 +275,7 @@ class OpenMatchForAllCourtController extends GetxController {
         matchDate: matchDate,
         locationId: locationId.value.isNotEmpty ? locationId.value : null,
         categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+        dayfilter: selectedTimeFilter.value,
       );
       matchesBySelection.value = response;
     } catch (e) {
