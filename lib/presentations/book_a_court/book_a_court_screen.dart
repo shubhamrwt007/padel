@@ -28,10 +28,7 @@ class BookACourtScreen extends StatelessWidget {
   final WalletController walletController = Get.put(WalletController());
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
-
   BookACourtScreen({super.key});
-
-
   @override
   Widget build(BuildContext context) {
     // Fetch wallet balance after build completes

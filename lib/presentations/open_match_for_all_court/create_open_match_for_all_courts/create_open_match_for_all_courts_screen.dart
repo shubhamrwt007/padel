@@ -1572,8 +1572,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
   Widget _buildPaymentPanel() {
     return Obx(() {
-      final totalSelections = controller.getTotalSelectionsCount();
-      final hasSelections = totalSelections > 0;
+      final hasCourtSlotSelections = controller.realCourtSelections.isNotEmpty;
+      final isEnabled = hasCourtSlotSelections;
 
       final double collapsedHeight = Get.height * .11;
       final double expandedHeight = Get.height * .11;
@@ -1582,7 +1582,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
         alignment: Alignment.center,
-        height: hasSelections ? expandedHeight : collapsedHeight,
+        height: isEnabled ? expandedHeight : collapsedHeight,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -1598,31 +1598,26 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            CustomButton(
-              width: Get.width*0.9,
-              child: Text("Next",style:  Get.textTheme.headlineMedium!.copyWith(
-                color: AppColors.whiteColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
-              ),).paddingOnly(right: 40),
-              onTap: () {
-                if (!hasSelections) {
-                  // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
-                  return;
-                }
-                // SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
-                // controller.onNext();
-                Get.bottomSheet(
-                  backgroundColor: Colors.transparent,
-                  SizedBox(
-                    height: Get.height,
-                    child: PaymentOptionSheet(),
-                  ),
-                  isScrollControlled: true,
-                );
-
-
-              },
+            Opacity(
+              opacity: isEnabled ? 1.0 : 0.5,
+              child: CustomButton(
+                width: Get.width*0.9,
+                child: Text("Next",style:  Get.textTheme.headlineMedium!.copyWith(
+                  color: AppColors.whiteColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                ),).paddingOnly(right: 40),
+                onTap: isEnabled ? () {
+                  Get.bottomSheet(
+                    backgroundColor: Colors.transparent,
+                    SizedBox(
+                      height: Get.height,
+                      child: PaymentOptionSheet(),
+                    ),
+                    isScrollControlled: true,
+                  );
+                } : null,
+              ),
             )
           ],
         ),
