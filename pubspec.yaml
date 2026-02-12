@@ -54,6 +54,7 @@ dependencies:
   fluttertoast:
   rolling_number_text:
   animate_do: ^3.3.4
+  sms_autofill:
 
 dev_dependencies:
   flutter_test:

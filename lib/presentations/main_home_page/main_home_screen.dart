@@ -226,8 +226,9 @@ class MainHomeScreen extends StatelessWidget {
                           _sectionTitle("Courts Near you", () {
                             Get.toNamed(RoutesName.home);
                           }),
+                          const SizedBox(height: 8),
                           _courtCard(),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 18),
                         ],
                       );
                     }),
@@ -240,7 +241,9 @@ class MainHomeScreen extends StatelessWidget {
                             _sectionTitle("Top players near you", () {
                               Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
                             }),
+                            const SizedBox(height: 5),
                             _players(),
+                            const SizedBox(height: 5),
                           ],
                         );
                       }
@@ -253,9 +256,10 @@ class MainHomeScreen extends StatelessWidget {
                       }
                       return Column(
                         children: [
-                          _sectionTitle("Open Match", () {
+                          _sectionTitle("Open Matches", () {
                             Get.toNamed(RoutesName.openMatchForAllCourts);
                           }).paddingOnly(bottom: 8),
+                          const SizedBox(height: 5),
                           _openMatchesSection(),
                           const SizedBox(height: 15),
                         ],
@@ -1508,9 +1512,10 @@ class MainHomeScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    player.name?.capitalizeFirstChar() ?? "Unknown Player",
-                    style: Get.textTheme.labelLarge,
-                    maxLines: 1,
+                    player.name?.capitalizeFirstChar() ??"Unknown Player",
+                    style: Get.textTheme.labelLarge!.copyWith(fontSize: 12),
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -1889,7 +1894,7 @@ class MainHomeScreen extends StatelessWidget {
     final dayStr = DateFormat('EEEE').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
     final dateOnlyStr = DateFormat('dd MMM').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
     final timeStr = data.openMatchStatus == "pending"
-        ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
+        ? "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}"
         : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
     final clubName = data.clubId?.clubName ?? '-';
     
@@ -2065,57 +2070,66 @@ class MainHomeScreen extends StatelessWidget {
 // Replace the _buildOverlappingPlayerRow method with this:
 
   Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
-    return SizedBox(
-      height: 44,
+    return Container(
+      width: (teamAPlayers.length + teamBPlayers.length) * 49 + 49,
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.greyColor),
+      ),
       child: SizedBox(
-        width: Get.width, // Width for 4 overlapping circles (44 + 22 + 22 + 22)
-        child: Stack(
-          children: [
-            // First player (Team A - Player 1)
-            Positioned(
-              left: 0,
-              child: teamAPlayers.isNotEmpty
-                  ? _buildFilledPlayerCircle(
-                teamAPlayers[0].userId?.profilePic ?? "",
-                teamAPlayers[0].userId?.name ?? "",
-                teamAPlayers[0].userId?.lastName ?? "",
-              )
-                  : _buildEmptyPlayerCircle(),
-            ),
-            // Second player (Team A - Player 2)
-            Positioned(
-              left: 32, // Overlap by half
-              child: teamAPlayers.length > 1
-                  ? _buildFilledPlayerCircle(
-                teamAPlayers[1].userId?.profilePic ?? "",
-                teamAPlayers[1].userId?.name ?? "",
-                teamAPlayers[1].userId?.lastName ?? "",
-              )
-                  : _buildEmptyPlayerCircle(),
-            ),
-            // Third player (Team B - Player 1)
-            Positioned(
-              left: 64, // Continue overlapping
-              child: teamBPlayers.isNotEmpty
-                  ? _buildFilledPlayerCircle(
-                teamBPlayers[0].userId?.profilePic ?? "",
-                teamBPlayers[0].userId?.name ?? "",
-                teamBPlayers[0].userId?.lastName ?? "",
-              )
-                  : _buildEmptyPlayerCircle(),
-            ),
-            // Fourth player (Team B - Player 2)
-            Positioned(
-              left: 96, // Continue overlapping
-              child: teamBPlayers.length > 1
-                  ? _buildFilledPlayerCircle(
-                teamBPlayers[1].userId?.profilePic ?? "",
-                teamBPlayers[1].userId?.name ?? "",
-                teamBPlayers[1].userId?.lastName ?? "",
-              )
-                  : _buildEmptyPlayerCircle(),
-            ),
-          ],
+        height: 44,
+        child: SizedBox(
+          width: Get.width, // Width for 4 overlapping circles (44 + 22 + 22 + 22)
+          child: Stack(
+            children: [
+              // First player (Team A - Player 1)
+              Positioned(
+                left: 0,
+                child: teamAPlayers.isNotEmpty
+                    ? _buildFilledPlayerCircle(
+                  teamAPlayers[0].userId?.profilePic ?? "",
+                  teamAPlayers[0].userId?.name ?? "",
+                  teamAPlayers[0].userId?.lastName ?? "",
+                )
+                    : _buildEmptyPlayerCircle(),
+              ),
+              // Second player (Team A - Player 2)
+              Positioned(
+                left: 32, // Overlap by half
+                child: teamAPlayers.length > 1
+                    ? _buildFilledPlayerCircle(
+                  teamAPlayers[1].userId?.profilePic ?? "",
+                  teamAPlayers[1].userId?.name ?? "",
+                  teamAPlayers[1].userId?.lastName ?? "",
+                )
+                    : _buildEmptyPlayerCircle(),
+              ),
+              // Third player (Team B - Player 1)
+              Positioned(
+                left: 64, // Continue overlapping
+                child: teamBPlayers.isNotEmpty
+                    ? _buildFilledPlayerCircle(
+                  teamBPlayers[0].userId?.profilePic ?? "",
+                  teamBPlayers[0].userId?.name ?? "",
+                  teamBPlayers[0].userId?.lastName ?? "",
+                )
+                    : _buildEmptyPlayerCircle(),
+              ),
+              // Fourth player (Team B - Player 2)
+              Positioned(
+                left: 96, // Continue overlapping
+                child: teamBPlayers.length > 1
+                    ? _buildFilledPlayerCircle(
+                  teamBPlayers[1].userId?.profilePic ?? "",
+                  teamBPlayers[1].userId?.name ?? "",
+                  teamBPlayers[1].userId?.lastName ?? "",
+                )
+                    : _buildEmptyPlayerCircle(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2131,13 +2145,6 @@ class MainHomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
       child: CircleAvatar(
         radius: 20,
@@ -2192,13 +2199,6 @@ class MainHomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
       child: CircleAvatar(
         radius: 20,
