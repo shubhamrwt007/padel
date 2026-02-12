@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_club_name_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/all_open_matches.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
@@ -12,6 +13,9 @@ import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
+import 'package:padel_mobile/services/payment_services/razorpay.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 class OpenMatchForAllCourtController extends GetxController {
   final isMyBooking = false.obs;
@@ -50,6 +54,16 @@ class OpenMatchForAllCourtController extends GetxController {
   // Category and Location IDs
   RxString categoryId = ''.obs;
   RxString locationId = ''.obs;
+
+  // Payment
+  RazorpayPaymentService? _paymentService;
+  ProfileController profileController = Get.put(ProfileController());
+  RxBool isAddingBalance = false.obs;
+  
+  // Store payment context
+  OpenMatchBookingData? _pendingMatch;
+  String? _pendingPrefferedTeam;
+  String? _pendingOrderId;
 
   final List<String> timeSlots = [
     "6:00 am",
@@ -97,6 +111,18 @@ class OpenMatchForAllCourtController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // Initialize payment service
+    _paymentService = RazorpayPaymentService();
+    _paymentService!.onPaymentSuccess = (response) {
+      _onPaymentSuccess(response.paymentId ?? '', response.orderId ?? '', response.signature ?? '');
+    };
+    _paymentService!.onPaymentFailure = (response) {
+      _onPaymentError(response.message ?? 'Payment failed');
+    };
+    _paymentService!.onExternalWallet = (response) {
+      CustomLogger.logMessage(msg: 'External wallet: ${response.walletName}', level: LogLevel.debug);
+    };
     
     // Get categoryId and locationId from arguments
     final args = Get.arguments as Map<String, dynamic>?;
@@ -628,6 +654,8 @@ class OpenMatchForAllCourtController extends GetxController {
     required OpenMatchBookingData? match,
     required String prefferedTeam,
     String? razorpayOrderId,
+    String? razorpaySignature,
+    String? razorpayPaymentId
   }) async {
     try {
       final matchId = match?.sId ?? '';
@@ -635,6 +663,8 @@ class OpenMatchForAllCourtController extends GetxController {
         "matchId": matchId,
         "prefferedTeam": prefferedTeam,
         if (razorpayOrderId != null) "razorpay_order_id": razorpayOrderId,
+        if (razorpaySignature != null) "razorpay_signature": razorpaySignature,
+        if (razorpayPaymentId != null) "razorpay_payment_id":razorpayPaymentId
       };
 
       CustomLogger.logMessage(msg: "directJoinAdminMatch body: $body", level: LogLevel.info);
@@ -649,38 +679,86 @@ class OpenMatchForAllCourtController extends GetxController {
         CustomLogger.logMessage(msg: "Order ID: $orderId, Amount: $amount", level: LogLevel.info);
         
         if (orderId != null) {
+          // Store context for payment callback
+          _pendingMatch = match;
+          _pendingPrefferedTeam = prefferedTeam;
+          _pendingOrderId = orderId;
+          
           // Navigate to payment page with order ID
-          final result = await Get.toNamed(
-            RoutesName.paymentForWallet,
+          final result = await Get.to(
+            () => PaymentForWallet(),
             arguments: {
               'match': match,
               'prefferedTeam': prefferedTeam,
               'razorpay_order_id': orderId,
               'totalAmount': amount,
+              'controller': this,
             },
           );
           
           CustomLogger.logMessage(msg: "Payment result: $result", level: LogLevel.info);
-          
-          // If payment successful, call API again with order ID
-          if (result == true) {
-            await directJoinAdminMatch(
-              match: match,
-              prefferedTeam: prefferedTeam,
-              razorpayOrderId: orderId,
-            );
-          }
         } else {
-          SnackBarUtils.showErrorSnackBar("Failed to get order ID");
+          CustomLogger.logMessage(msg: "Failed to get order ID", level: LogLevel.info);
+
         }
       } else {
         // Second call - join completed
-        SnackBarUtils.showSuccessSnackBar("Successfully joined the match!");
+        CustomLogger.logMessage(msg: "Successfully joined the match!", level: LogLevel.info);
+
         await fetchMatchesForSelection();
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error in directJoinAdminMatch: $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to join match: ${e.toString()}");
     }
+  }
+
+  /// Initiate Admin Match Payment
+  Future<void> initiateAdminMatchPayment(String orderId, double amount, String matchId, String prefferedTeam) async {
+    try {
+      isAddingBalance.value = true;
+      await _paymentService!.initiatePayment(
+        keyId: PaymentConfig.keyId,
+        orderId: orderId,
+        amount: amount.toDouble(),
+        currency: 'INR',
+        name: 'Swoot',
+        description: 'Paying for court booking',
+        image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
+        userEmail: 'test@example.com',
+        userContact: '9999999999',
+      );
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Payment initiation error: $e", level: LogLevel.error);
+      isAddingBalance.value = false;
+    }
+  }
+
+  void _onPaymentSuccess(String paymentId, String orderId, String signature) {
+    CustomLogger.logMessage(msg: "Payment success - PaymentId: $paymentId, OrderId: $orderId, Signature: $signature", level: LogLevel.info);
+    isAddingBalance.value = false;
+    
+    // Call directJoinAdminMatch with payment details
+    if (_pendingMatch != null && _pendingPrefferedTeam != null && _pendingOrderId != null) {
+      directJoinAdminMatch(
+        match: _pendingMatch,
+        prefferedTeam: _pendingPrefferedTeam!,
+        razorpayOrderId: _pendingOrderId,
+        razorpaySignature: signature,
+        razorpayPaymentId: paymentId
+      );
+    }
+    
+    Get.back(result: true);
+  }
+
+  void _onPaymentError(String error) {
+    CustomLogger.logMessage(msg: "Payment failed: $error", level: LogLevel.error);
+    isAddingBalance.value = false;
+  }
+
+  @override
+  void onClose() {
+    _paymentService?.dispose();
+    super.onClose();
   }
 }

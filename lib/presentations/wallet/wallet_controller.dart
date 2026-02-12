@@ -123,7 +123,6 @@ class WalletController extends GetxController {
     try {
       await _paymentService!.initiatePayment(
 
-        // keyId: 'rzp_test_1DP5mmOlF5G5ag',
         ///Live Key-----------------------------
         keyId: 'rzp_live_RtOIWe2johK6H7',
         amount: amount.toDouble(),

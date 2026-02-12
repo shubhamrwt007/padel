@@ -102,3 +102,16 @@ class AppEndpoints {
   ///FCM Token------------------------------------------------------------------
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
 }
+class PaymentConfig {
+  // Toggle this when switching environment
+  static const bool isLive = false;
+
+  // Test Key
+  static const String _testKeyId = 'rzp_test_RtRFaVPUzoUtkG';
+
+  // Live Key
+  static const String _liveKeyId = 'rzp_live_RtOIWe2johK6H7';
+
+  // Getter
+  static String get keyId => isLive ? _liveKeyId : _testKeyId;
+}
