@@ -1079,7 +1079,7 @@ class BookACourtScreen extends StatelessWidget {
       int courtIndex,
       int slotIndex, {
         String? courtId,
-        List<dynamic>? availableSlots,
+        List<Slots>? availableSlots,
       }) {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
@@ -1115,6 +1115,7 @@ class BookACourtScreen extends StatelessWidget {
                 courtName: courtName,
                 isHalfSlot: true,
                 isFirstHalf: isLeftHalf,
+                availableSlots: availableSlots,
               );
             }
           } : null,

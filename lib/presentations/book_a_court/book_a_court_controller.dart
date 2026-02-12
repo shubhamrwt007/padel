@@ -512,7 +512,7 @@ class BookACourtController extends GetxController {
     }
   }
 
-  void toggleCourtRowSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
+  void toggleCourtRowSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf, List<Slots>? availableSlots}) {
     final slotId = slot.sId ?? '';
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
@@ -521,27 +521,68 @@ class BookACourtController extends GetxController {
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
+      final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
 
+      // Check if clicking on already selected half - unselect it
       if (realCourtSelections.containsKey(realCourtKey)) {
         realCourtSelections.remove(realCourtKey);
-      } else {
-        final halfSlot = Slots(
-          sId: slotId,
-          time: slot.time,
-          amount: slot.amount ?? 0,
-        );
+        recalculateRealCourtTotalAmount();
+        realCourtSelections.refresh();
+        return;
+      }
 
-        realCourtSelections[realCourtKey] = {
-          'slot': halfSlot,
+      // Check if full slot already selected - unselect it
+      if (realCourtSelections.containsKey(fullSlotKey)) {
+        realCourtSelections.remove(fullSlotKey);
+        recalculateRealCourtTotalAmount();
+        realCourtSelections.refresh();
+        return;
+      }
+
+      // Get all current selections for this court and date
+      final courtSelections = realCourtSelections.entries
+          .where((entry) => 
+              entry.value['courtId'] == resolvedCourtId && 
+              entry.value['date'] == dateString)
+          .toList();
+
+      // If this is the first selection, select full slot
+      if (courtSelections.isEmpty) {
+        realCourtSelections[fullSlotKey] = {
+          'slot': slot,
           'courtId': resolvedCourtId,
           'courtName': courtName ?? '',
           'date': dateString,
           'dateTime': currentDate,
           'amount': slot.amount ?? 0,
-          'isHalfSlot': true,
-          'isFirstHalf': isFirstHalf,
         };
+        recalculateRealCourtTotalAmount();
+        realCourtSelections.refresh();
+        return;
       }
+
+      // Validate consecutive selection for half slots
+      if (!_isConsecutiveCourtSlotSelection(slotId, resolvedCourtId, dateString, isFirstHalf ?? true, availableSlots)) {
+        SnackBarUtils.showInfoSnackBar("Please select consecutive slots only");
+        return;
+      }
+
+      final halfSlot = Slots(
+        sId: slotId,
+        time: slot.time,
+        amount: slot.amount ?? 0,
+      );
+
+      realCourtSelections[realCourtKey] = {
+        'slot': halfSlot,
+        'courtId': resolvedCourtId,
+        'courtName': courtName ?? '',
+        'date': dateString,
+        'dateTime': currentDate,
+        'amount': slot.amount ?? 0,
+        'isHalfSlot': true,
+        'isFirstHalf': isFirstHalf,
+      };
     } else {
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId';
 
@@ -568,6 +609,7 @@ class BookACourtController extends GetxController {
     }
 
     recalculateRealCourtTotalAmount();
+    realCourtSelections.refresh();
   }
   void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
     if(Get.isSnackbarOpen) return;
@@ -887,10 +929,13 @@ class BookACourtController extends GetxController {
 
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
 
-    return realCourtSelections.containsKey(firstHalfKey) && realCourtSelections.containsKey(secondHalfKey);
+    // Check if full slot is selected OR both halves are selected
+    return realCourtSelections.containsKey(fullSlotKey) ||
+        (realCourtSelections.containsKey(firstHalfKey) && realCourtSelections.containsKey(secondHalfKey));
   }
 
   // Check if left half is selected for a court slot
@@ -899,9 +944,11 @@ class BookACourtController extends GetxController {
 
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final firstHalfKey = '${dateString}_${courtId}_${slot.sId}_first_half';
 
-    return realCourtSelections.containsKey(firstHalfKey);
+    // Full slot means both halves are selected, so left half is selected
+    return realCourtSelections.containsKey(fullSlotKey) || realCourtSelections.containsKey(firstHalfKey);
   }
 
   // Check if right half is selected for a court slot
@@ -910,9 +957,11 @@ class BookACourtController extends GetxController {
 
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+    final fullSlotKey = '${dateString}_${courtId}_${slot.sId}';
     final secondHalfKey = '${dateString}_${courtId}_${slot.sId}_second_half';
 
-    return realCourtSelections.containsKey(secondHalfKey);
+    // Full slot means both halves are selected, so right half is selected
+    return realCourtSelections.containsKey(fullSlotKey) || realCourtSelections.containsKey(secondHalfKey);
   }
 
 
@@ -1164,6 +1213,67 @@ class BookACourtController extends GetxController {
       // Fallback
     }
     return currentTime;
+  }
+
+  // Validate if the new half slot selection is consecutive
+  bool _isConsecutiveCourtSlotSelection(String slotId, String courtId, String dateString, bool isFirstHalf, List<Slots>? availableSlots) {
+    // Get all current selections for this court and date
+    final courtSelections = realCourtSelections.entries
+        .where((entry) => 
+            entry.value['courtId'] == courtId && 
+            entry.value['date'] == dateString)
+        .toList();
+
+    // If no selections yet, allow first selection
+    if (courtSelections.isEmpty) {
+      return true;
+    }
+
+    // Find the slot index in available slots
+    if (availableSlots == null) return false;
+    final currentSlotIndex = availableSlots.indexWhere((s) => s.sId == slotId);
+    if (currentSlotIndex == -1) return false;
+
+    // Check if any existing selection is consecutive
+    for (var entry in courtSelections) {
+      final selection = entry.value;
+      final existingSlot = selection['slot'] as Slots;
+      final existingSlotId = existingSlot.sId ?? '';
+      final existingIsHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+      final existingIsFirstHalf = selection['isFirstHalf'] as bool? ?? true;
+      
+      final existingSlotIndex = availableSlots.indexWhere((s) => s.sId == existingSlotId);
+      if (existingSlotIndex == -1) continue;
+
+      // Case 1: Existing is a full slot
+      if (!existingIsHalfSlot) {
+        // Check if current slot is immediately after (next slot, first half)
+        if (currentSlotIndex == existingSlotIndex + 1 && isFirstHalf) {
+          return true; // e.g., 7pm full + 8pm first half = 7pm-8:30pm
+        }
+        // Check if current slot is immediately before (prev slot, second half)
+        if (currentSlotIndex == existingSlotIndex - 1 && !isFirstHalf) {
+          return true; // e.g., 6pm second half + 7pm full = 6:30pm-8pm
+        }
+      }
+      // Case 2: Existing is a half slot
+      else {
+        // Same slot, different half
+        if (currentSlotIndex == existingSlotIndex) {
+          return true; // Completing the full slot
+        }
+        // Next slot after existing second half
+        if (currentSlotIndex == existingSlotIndex + 1 && !existingIsFirstHalf && isFirstHalf) {
+          return true; // e.g., 7pm second half + 8pm first half
+        }
+        // Previous slot before existing first half
+        if (currentSlotIndex == existingSlotIndex - 1 && existingIsFirstHalf && !isFirstHalf) {
+          return true; // e.g., 6pm second half + 7pm first half
+        }
+      }
+    }
+
+    return false;
   }
 
   // Get half slot time - for left half return original time, for right half add 30 minutes
