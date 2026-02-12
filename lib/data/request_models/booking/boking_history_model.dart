@@ -423,6 +423,8 @@ class PlayerId {
   String? name;
   dynamic? xpPoints;
   String? profilePic;
+  String? gender;
+  String? level;
 
   PlayerId({
     this.sId,
@@ -431,6 +433,8 @@ class PlayerId {
     this.name,
     this.xpPoints,
     this.profilePic,
+    this.gender,
+    this.level
   });
 
   PlayerId.fromJson(Map<String, dynamic> json) {
@@ -440,6 +444,8 @@ class PlayerId {
     xpPoints = json['xpPoints'];
     name = json['name']?.toString();
     profilePic = json['profilePic']?.toString();
+    gender = json['gender']?.toString();
+    level = json['level']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -450,6 +456,8 @@ class PlayerId {
     data['xpPoints'] = xpPoints;
     data['name'] = name;
     data['profilePic'] = profilePic;
+    data['gender'] = gender;
+    data['level'] = level;
     return data;
   }
 }

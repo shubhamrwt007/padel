@@ -1059,9 +1059,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           .where((e) => e != null && e!.isNotEmpty)
           .map((e) => e![0].toUpperCase() + e.substring(1).toLowerCase())
           .join(' ');
-      final countryCode = p.userId?.countryCode;
-      final phoneNumber = p.userId?.phoneNumber;
       final xpPoints = p.userId?.xpPoints;
+      final gender = p.userId?.gender ??"";
+      final level = p.userId?.level ?? "";
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 14),
@@ -1117,6 +1117,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      Text("⭐ ", style: Get.textTheme.bodySmall
+                          ?.copyWith(fontWeight: FontWeight.w500),),
                       Container(
                         // height: 25,
                         // width: 55,
@@ -1127,7 +1129,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
-                          '⭐${formatAmount(xpPoints??"")} XP',
+                          '${formatAmount(xpPoints??"")} XP',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -1136,7 +1138,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         ),
                       ),
                       Text(
-                        ' | $countryCode-$phoneNumber',
+                        ' | $gender | $level',
                         style: Get.textTheme.bodySmall
                             ?.copyWith(fontWeight: FontWeight.w500),
                       ),
@@ -1162,17 +1164,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   //   ),
                   // ),
                 ],
-              ),
-            ),
-
-            /// Call button
-            GestureDetector(
-              onTap: () => _makeCall('$countryCode$phoneNumber'),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.primaryColor,
-                child: const Icon(Icons.call,
-                    color: Colors.white, size: 20),
               ),
             ),
           ],

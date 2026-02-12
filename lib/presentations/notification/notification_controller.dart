@@ -282,7 +282,8 @@ class NotificationController extends GetxController {
           Get.toNamed(RoutesName.chat, arguments: {
             "matchID": matchId ?? "",
           });
-
+        case '/simpleBooking':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
         default:
           if (kDebugMode) {
             print('⚠️ Unknown notification URL: $notificationUrl');

@@ -86,8 +86,8 @@ class Assets {
   static const String imagesNewHomeBanner5 = 'assets/images/new_home_banner_5.jpg';
   static const String imagesNewHomeBanner6 = 'assets/images/new_home_banner_6.jpg';
   static const String imagesNewHomeBanner7 = 'assets/images/new_home_banner_7.jpg';
-  static const String imagesPadelLogo = 'assets/images/Padel_logo.svg';
   static const String imagesPadelLogo11 = 'assets/images/Padel_logo_11.svg';
+  static const String imagesPlaystore = 'assets/images/playstore.png';
   static const String imagesRowthTechLogo = 'assets/images/rowthTech_logo.svg';
   static const String imagesTutorialScreenPng1 = 'assets/images/tutorial_screen_png_1.png';
   static const String imagesTutorialScreenPng2 = 'assets/images/tutorial_screen_png_2.png';
