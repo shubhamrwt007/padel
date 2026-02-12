@@ -59,17 +59,23 @@ class PaymentMethodController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize Razorpay for both iOS and Android
     _paymentService = RazorpayPaymentService();
-    _paymentService!.onPaymentSuccess = _handlePaymentSuccess;
-    _paymentService!.onPaymentFailure = _handlePaymentFailure;
-    // _paymentService!.onExternalWallet = _handleExternalWallet;
     
-    // Create initial booking
-    // _createInitialBooking();
-  }
+    _paymentService!.onPaymentSuccess = (response) {
+      _handlePaymentSuccess(response);
+    };
+    
+    _paymentService!.onPaymentFailure = (response) {
+      _handlePaymentFailure(response);
+    };
+      }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     isProcessing.value = false;
+
+    // Extract signature from response
+    final signature = response.signature;
+    
+    print('Payment Success - PaymentId: ${response.paymentId}, OrderId: ${response.orderId}, Signature: $signature');
 
     Get.generalDialog(
       barrierDismissible: false,
@@ -105,6 +111,7 @@ class PaymentMethodController extends GetxController {
     await _processBookingAfterPayment(
       razorpayPaymentId: response.paymentId,
       razorpayOrderId: _razorpayOrderId,
+      razorpaySignature: signature,
     );
   }
 
@@ -155,6 +162,7 @@ class PaymentMethodController extends GetxController {
   Future<void> _processBookingAfterPayment({
     String? razorpayPaymentId,
     String? razorpayOrderId,
+    String? razorpaySignature,
   }) async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
@@ -182,9 +190,11 @@ class PaymentMethodController extends GetxController {
         for (var payload in bookingPayload) {
           payload['razorpay_payment_id'] = razorpayPaymentId;
           payload['razorpay_order_id'] = razorpayOrderId;
+          if (razorpaySignature != null) {
+            payload['razorpay_signature'] = razorpaySignature;
+          }
           payload['initiatePayment'] = true;
           payload['type'] = 'booked';
-
         }
       }
 
@@ -397,7 +407,7 @@ class PaymentMethodController extends GetxController {
         final responseData = response.data;
         print("Booking API response: $responseData");
 
-        _razorpayOrderId = responseData['orderId'];
+        _razorpayOrderId = responseData['orderId']; // Use razorpayOrderId from backend
         initiatePayment = responseData.containsKey('requiresPayment')
             ? (responseData['requiresPayment'] as bool)
             : false;
@@ -407,7 +417,7 @@ class PaymentMethodController extends GetxController {
             (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
         print(
-          "Booking created with order ID: $_razorpayOrderId\n"
+          "Booking created with Razorpay order ID: $_razorpayOrderId\n"
           "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
         );
 
@@ -525,17 +535,19 @@ class PaymentMethodController extends GetxController {
       return;
     }
 
-    if (_razorpayOrderId == null) {
+    if (_razorpayOrderId == null || _razorpayOrderId!.isEmpty) {
       SnackBarUtils.showErrorSnackBar("Booking not initialized. Please try again.");
       return;
     }
+
+    print("Starting payment with Razorpay Order ID: $_razorpayOrderId");
 
     isProcessing.value = true;
 
     try {
       await _paymentService!.initiatePayment(
-        // keyId: 'rzp_live_RtOIWe2johK6H7',
-        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        keyId: PaymentConfig.keyId,
+        orderId: _razorpayOrderId,
         amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
@@ -547,7 +559,6 @@ class PaymentMethodController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Payment failed: $e");
     }
   }
 
@@ -556,19 +567,4 @@ class PaymentMethodController extends GetxController {
     _paymentService?.dispose();
     super.dispose();
   }
-
-  final List<Map<String, String>> paymentList = [
-    {
-      "name": "Google Pay",
-      "icon": Assets.imagesIcGooglePayment,
-      "value": "google_pay",
-    },
-    {"name": "PayPal", "icon": Assets.imagesIcPaypal, "value": "paypal"},
-    {"name": "ApplePay", "icon": Assets.imagesIcApple, "value": "apple_pay"},
-    {
-      "name": ".... .... .... 4698",
-      "icon": Assets.imagesIcMasterCardPayment,
-      "value": "mastercard",
-    },
-  ];
 }

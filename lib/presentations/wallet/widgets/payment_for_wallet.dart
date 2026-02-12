@@ -160,29 +160,29 @@ class PaymentForWallet extends StatelessWidget {
   Widget _buildUPIOptions(BuildContext context) {
     final upiOptions = [
       {
-        "name": "Google Pay",
-        "icon": Assets.imagesImgGooglePay,
-        "value": "google_pay",
+        "name": "Razor Pay",
+        "icon": Assets.imagesRazorPay,
+        "value": "razor_pay",
         "hasButton": true,
       },
-      {
-        "name": "Paytm",
-        "icon": Assets.imagesImgPaytm, // Add this asset
-        "value": "paytm",
-        "hasButton": true,
-      },
-      {
-        "name": "PhonePe",
-        "icon": Assets.imagesImgPhonePay, // Add this asset
-        "value": "phonepe",
-        "hasButton": true,
-      },
-      {
-        "name": "Other Ways",
-        "icon": Assets.imagesImgOtherUpi, // Add this asset
-        "value": "other_ways",
-        "hasButton": true,
-      },
+      // {
+      //   "name": "Paytm",
+      //   "icon": Assets.imagesImgPaytm, // Add this asset
+      //   "value": "paytm",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "PhonePe",
+      //   "icon": Assets.imagesImgPhonePay, // Add this asset
+      //   "value": "phonepe",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "Other Ways",
+      //   "icon": Assets.imagesImgOtherUpi, // Add this asset
+      //   "value": "other_ways",
+      //   "hasButton": true,
+      // },
     ];
 
     return Column(
@@ -312,16 +312,29 @@ class PaymentForWallet extends StatelessWidget {
                         onPressed: () async {
                           final args = Get.arguments as Map<String, dynamic>?;
                           final isAdminMatch = args?['match'] != null;
-                          final amountToPay = (args?['totalAmount'] ?? totalAmount).toDouble();
+                          final amountToPay = (args?['totalAmount'] ?? totalAmount);
+                          final controller = args?['controller'];
+                          
+                          if (isAdminMatch) {
+                            print('Routed from open_match_for_all_court_controller');
+                            print('Match ID: $matchId');
+                            print('Preferred Team: $prefferedTeam');
+                            print('Razorpay Order ID: $razorpayOrderId');
+                            print('Amount to Pay: $amountToPay');
+                          }
                           
                           if (amountToPay <= 0) {
                             Get.snackbar("Error", "Amount cannot be zero or negative");
                             return;
                           }
                           
-                          if (matchId != null && prefferedTeam != null && razorpayOrderId != null) {
-                            await walletController.createBalance(amountToPay);
-                            Get.back(result: true);
+                          if (matchId != null && prefferedTeam != null && razorpayOrderId != null && controller != null) {
+                            await controller.initiateAdminMatchPayment(
+                              razorpayOrderId,
+                              amountToPay.toDouble(),
+                              matchId,
+                              prefferedTeam,
+                            );
                           } else {
                             walletController.createBalance(amountToPay);
                           }

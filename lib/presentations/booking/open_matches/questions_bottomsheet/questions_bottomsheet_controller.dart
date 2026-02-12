@@ -133,6 +133,7 @@ class QuestionsBottomsheetController extends GetxController {
       await _createMatchAfterPayment(
         razorpayPaymentId: paymentId,
         razorpayOrderId: _razorpayOrderId,
+        razorpaySignature: signature,
       );
     } catch (e) {
       log("Error after payment success: $e");
@@ -145,6 +146,7 @@ class QuestionsBottomsheetController extends GetxController {
   Future<void> _createMatchAfterPayment({
     String? razorpayPaymentId,
     String? razorpayOrderId,
+    String? razorpaySignature,
   }) async {
     try {
       final matchBody = _buildMatchBody();
@@ -163,6 +165,7 @@ class QuestionsBottomsheetController extends GetxController {
       if (razorpayPaymentId != null && razorpayOrderId != null) {
         matchBody['razorpay_payment_id'] = razorpayPaymentId;
         matchBody['razorpay_order_id'] = razorpayOrderId;
+        matchBody['razorpay_signature'] = razorpaySignature;
         matchBody['initiatePayment'] = true;
         
         // Only set type 'booked' when using createMatches endpoint
@@ -341,8 +344,8 @@ class QuestionsBottomsheetController extends GetxController {
 
     try {
       await _paymentService!.initiatePayment(
-        // keyId: 'rzp_live_RtOIWe2johK6H7',
-        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        keyId: PaymentConfig.keyId,
+        orderId: _razorpayOrderId,
         amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
