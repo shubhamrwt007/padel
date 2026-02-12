@@ -525,7 +525,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
     // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
-    final timeStr =data.openMatchStatus== "pending"?"${data.startTime?.split(' ').first??""}-${data.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
+    final timeStr =data.openMatchStatus== "pending"?"${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
 
     final clubName = data.clubId?.clubName ?? '-';
 
