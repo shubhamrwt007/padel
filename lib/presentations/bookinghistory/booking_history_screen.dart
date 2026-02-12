@@ -742,7 +742,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   ),
                   Row(
                     children: [
-                      if (isUpcoming)
+                      if (isUpcoming  && getTotalPlayersCount(booking) > 1)
                         GestureDetector(
                           onTap: isSlotBooked ? null : () {
                             _navigateToChat(booking);
@@ -803,7 +803,12 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       ),
     );
   }
-
+  int getTotalPlayersCount(dynamic matchData) {
+    if (matchData == null) return 0;
+    final teamACount = matchData.teamA?.length ?? 0;
+    final teamBCount = matchData.teamB?.length ?? 0;
+    return teamACount + teamBCount;
+  }
   Widget _buildDateTimeInfo(BuildContext context, dynamic booking) {
     try {
       final dateStr = formatDate(booking.bookingDate);
@@ -1586,7 +1591,8 @@ print("invoice--------- $invoiceUrlString");
       final xpPoints = userId?.xpPoints??0.0;
       final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
-
+      final gender = userId?.gender ??'';
+      final level = userId?.level?.split(' ').first ??'';
       playerWidgets.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
@@ -1618,7 +1624,7 @@ print("invoice--------- $invoiceUrlString");
                     Row(
                       children: [
                         Text(
-                          '⭐',
+                          '⭐ ',
                           style: Get.textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
@@ -1641,21 +1647,13 @@ print("invoice--------- $invoiceUrlString");
                           ),
                         ),
                         Text(
-                          ' | $countryCode-$phoneNumber',
+                          ' | $gender | $level',
                           style: Get.textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
                   ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.primaryColor,
-                  child: const Icon(Icons.call, color: Colors.white, size: 20),
                 ),
               ),
             ],
@@ -1672,6 +1670,8 @@ print("invoice--------- $invoiceUrlString");
       final xpPoints = userId?.xpPoints??0.0;
       final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
+      final gender = userId?.gender ?? "";
+      final level = userId?.level ?? "";
 
       playerWidgets.add(
         Padding(
@@ -1727,21 +1727,13 @@ print("invoice--------- $invoiceUrlString");
                           ),
                         ),
                         Text(
-                          ' | $countryCode-$phoneNumber',
+                          ' | $gender | $level',
                           style: Get.textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
                   ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.primaryColor,
-                  child: const Icon(Icons.call, color: Colors.white, size: 20),
                 ),
               ),
             ],

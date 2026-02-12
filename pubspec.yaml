@@ -57,9 +57,17 @@ dependencies:
   sms_autofill:
 
 dev_dependencies:
+  flutter_launcher_icons:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/playstore.png"
+  image_path: "assets/images/playstore.png"
 
 flutter:
   uses-material-design: true
