@@ -162,29 +162,29 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
   Widget _buildUPIOptions(BuildContext context) {
     final upiOptions = [
       {
-        "name": "Google Pay",
-        "icon": Assets.imagesImgGooglePay,
-        "value": "google_pay",
+        "name": "Razor Pay",
+        "icon": Assets.imagesRazorPay,
+        "value": "razor_pay",
         "hasButton": true,
       },
-      {
-        "name": "Paytm",
-        "icon": Assets.imagesImgPaytm, // Add this asset
-        "value": "paytm",
-        "hasButton": true,
-      },
-      {
-        "name": "PhonePe",
-        "icon": Assets.imagesImgPhonePay, // Add this asset
-        "value": "phonepe",
-        "hasButton": true,
-      },
-      {
-        "name": "Other Ways",
-        "icon": Assets.imagesImgOtherUpi, // Add this asset
-        "value": "other_ways",
-        "hasButton": true,
-      },
+      // {
+      //   "name": "Paytm",
+      //   "icon": Assets.imagesImgPaytm, // Add this asset
+      //   "value": "paytm",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "PhonePe",
+      //   "icon": Assets.imagesImgPhonePay, // Add this asset
+      //   "value": "phonepe",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "Other Ways",
+      //   "icon": Assets.imagesImgOtherUpi, // Add this asset
+      //   "value": "other_ways",
+      //   "hasButton": true,
+      // },
     ];
 
     return Column(
@@ -200,45 +200,6 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     );
   }
 
-  Widget _buildCardOptions(BuildContext context) {
-    return Column(
-      children: [
-        _buildPaymentOption(
-          context,
-          "", // Add this asset
-          "Visa",
-          "visa_1324",
-          subtitle: "**1324 | Vikram Kumar",
-        ),
-        SizedBox(height: Get.height * 0.015),
-        GestureDetector(
-          onTap: () {
-            // Navigate to add card screen
-          },
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  color: AppColors.primaryColor,
-                  size: 24,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  "Add a new credit or debit card",
-                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildPaymentOption(
       BuildContext context,
