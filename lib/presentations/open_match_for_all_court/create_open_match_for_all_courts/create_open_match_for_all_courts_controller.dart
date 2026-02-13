@@ -271,7 +271,24 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   @override
   void onInit()async {
     super.onInit();
-    selectedDate.value = DateTime.now();
+    
+    // Get selected date from arguments if available
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null && args['selectedDate'] != null) {
+      selectedDate.value = args['selectedDate'] as DateTime;
+      focusedMonth.value = DateTime(
+        selectedDate.value!.year,
+        selectedDate.value!.month,
+        1,
+      );
+      // Animate to the selected date
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        dateTimelineController.animateToDate(selectedDate.value!);
+      });
+    } else {
+      selectedDate.value = DateTime.now();
+    }
+    
     updateDurationFromToggle();
     _initializeMockData();
     await fetchLocations();
