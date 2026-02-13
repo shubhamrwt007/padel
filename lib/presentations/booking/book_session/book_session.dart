@@ -243,6 +243,8 @@ class BookSession extends StatelessWidget {
                           controller.isLoadingCourts.value = true;
                           await controller.fetchAllSlotPrices();
                           await controller.getAvailableCourtsById(
+                            controller.locationID.value,
+                            controller.categoryId.value,
                             controller.sId.value,
                             controller.argument.id!,
                             showUnavailable: true,

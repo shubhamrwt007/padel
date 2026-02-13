@@ -131,9 +131,8 @@ class WalletController extends GetxController {
         description: 'Add balance to wallet',
         image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         orderId: orderId,
-        userEmail: profileController.profileModel.value?.response?.email ??
-            'test@example.com',
-        userContact: '9999999999',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
         notes: {
           'user_id': profileController.profileModel.value?.response?.sId ?? '',
           'type': 'wallet_recharge',
