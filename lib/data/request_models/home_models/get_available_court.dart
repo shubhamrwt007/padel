@@ -81,6 +81,8 @@ class RegisterClubId {
   String? city;
   String? state;
   String? zipCode;
+  List<Location>? locations;
+
 
   RegisterClubId({
     this.sId,
@@ -93,6 +95,7 @@ class RegisterClubId {
     this.city,
     this.state,
     this.zipCode,
+    this.locations
   });
 
   RegisterClubId.fromJson(Map<String, dynamic> json) {
@@ -109,6 +112,9 @@ class RegisterClubId {
     city = json['city'];
     state = json['state'];
     zipCode = json['zipCode'];
+    locations = (json['locations'] as List?)
+        ?.map((e) => Location.fromJson(e))
+        .toList();
   }
 
   Map<String, dynamic> toJson() => {
@@ -122,7 +128,56 @@ class RegisterClubId {
         'city': city,
         'state': state,
         'zipCode': zipCode,
-      };
+    'locations': locations?.map((e) => e.toJson()).toList(), // 👈 ADD THIS
+
+  };
+}
+class Location {
+  String? sId;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+  String? stateId;
+  List<String>? courtType;
+  bool? status;
+  List<String>? categories;
+
+  Location({
+    this.sId,
+    this.city,
+    this.address,
+    this.zipCode,
+    this.state,
+    this.stateId,
+    this.courtType,
+    this.status,
+    this.categories,
+  });
+
+  Location.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    city = json['city'];
+    address = json['address'];
+    zipCode = json['zipCode'];
+    state = json['state'];
+    stateId = json['stateId'];
+    courtType = (json['courtType'] as List?)?.cast<String>();
+    status = json['status'];
+    categories = (json['categories'] as List?)?.cast<String>();
+  }
+
+  Map<String, dynamic> toJson() => {
+    '_id': sId,
+    'city': city,
+    'address': address,
+    'zipCode': zipCode,
+    'state': state,
+    'stateId': stateId,
+    'courtType': courtType,
+    'status': status,
+    'categories': categories,
+  };
 }
 
 class OwnerId {

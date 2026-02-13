@@ -663,7 +663,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   Widget _buildUpcomingBookingCard(BuildContext context, dynamic booking, dynamic club, int index, String type) {
     final isUpcoming = type == "upcoming";
     final clubName = club?.clubName ?? "N/A";
-    final address = "${club?.locations?[0].city ?? ''}";
+    final address = (club?.locations != null && club!.locations!.isNotEmpty)
+        ? club.locations![0].city ?? ''
+        : '';
     final price = (booking.totalAmount ?? 2000).toString();
     final bookingType = booking.bookingType ?? "";
     final isBlueTheme = bookingType.toLowerCase() == "normal";
