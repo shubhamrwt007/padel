@@ -636,6 +636,10 @@ class BookACourtController extends GetxController {
 
     // Handle half slot selection for 30 minutes
     if (is30Slots.value && isHalfSlot == true) {
+      // Check if the half slot is in the past
+      if (isPastHalfSlot(slot, isFirstHalf ?? true)) {
+        return;
+      }
       final firstHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
       final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
       final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
@@ -761,6 +765,76 @@ class BookACourtController extends GetxController {
       }
     });
     totalAmount.value = total;
+  }
+
+  bool isPastHalfSlot(Slots slot, bool isFirstHalf) {
+    final rawTime = slot.time;
+    if (rawTime == null || rawTime.trim().isEmpty) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    final selected = selectedDate.value ?? now;
+
+    // Only check if it's today
+    final isToday = selected.year == now.year &&
+        selected.month == now.month &&
+        selected.day == now.day;
+
+    if (!isToday) return false;
+
+    try {
+      final timeString = rawTime.toLowerCase().trim();
+
+      DateTime? parsed;
+      for (final pattern in const ['h:mm a', 'h a', 'HH:mm', 'H:mm', 'HH']) {
+        try {
+          parsed = DateFormat(pattern).parseStrict(timeString);
+          break;
+        } catch (_) {}
+      }
+
+      int hour;
+      int minute;
+      if (parsed != null) {
+        hour = parsed.hour;
+        minute = parsed.minute;
+      } else {
+        String t = timeString;
+        String meridiem = '';
+        final parts = t.split(' ');
+        if (parts.length == 2) {
+          t = parts[0];
+          meridiem = parts[1];
+        }
+        final timePieces = t.split(':');
+        hour = int.tryParse(timePieces[0]) ?? 0;
+        minute = timePieces.length > 1 ? int.tryParse(timePieces[1]) ?? 0 : 0;
+        if (meridiem == 'pm' && hour != 12) hour += 12;
+        if (meridiem == 'am' && hour == 12) hour = 0;
+      }
+
+      // For half slots, add 30 minutes if it's the second half
+      if (!isFirstHalf) {
+        minute += 30;
+        if (minute >= 60) {
+          hour += 1;
+          minute -= 60;
+        }
+      }
+
+      final slotDateTime = DateTime(
+        selected.year,
+        selected.month,
+        selected.day,
+        hour,
+        minute,
+      );
+
+      return now.isAfter(slotDateTime);
+    } catch (_) {
+      return false;
+    }
   }
 
   bool isPastAndUnavailable(Slots slot) {
