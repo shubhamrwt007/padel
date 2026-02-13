@@ -1217,10 +1217,17 @@ class MainHomeScreen extends StatelessWidget {
       onTap: () {
         log("CLUB ID -> ${court.id}");
         log(" ID -> ${court.courts?[0].id??""}");
+        log("locationsId => ${court.locations?[0].id}");
         if (court.id != null) {
           Get.delete<BookingController>();
           Get.toNamed(RoutesName.booking,
-              arguments: {"data": court, "clubId": court.id, "sID":court.courts?[0].id??""});
+              arguments: {
+            "data": court,
+            "clubId": court.id,
+            "sID":court.courts?[0].id??"",
+            "categoryId":controller.selectedCategoryId.value,
+            "locationsId": court.locations?[0].id,
+            "location":controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0"});
         }
       },
       child: Padding(
@@ -2071,7 +2078,7 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
     return Container(
-      width: (teamAPlayers.length + teamBPlayers.length) * 49 + 49,
+      width: (teamAPlayers.length + teamBPlayers.length) * 57 + 89,
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,

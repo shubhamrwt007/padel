@@ -102,7 +102,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
         ).paddingOnly(right: Get.width * 0.14),
         onTap: () {
           final booking = Get.put(BookSessionController());
-          Get.toNamed(RoutesName.createOpenMatch, arguments: {"id": booking.argument});
+          Get.toNamed(RoutesName.createOpenMatch, arguments: {"id": booking.argument,"sID":controller.sId.value,"categoryId":controller.categoryId.value,"location":controller.locationID.value,"locationsId":controller.locationsId.value});
         },
       ).paddingOnly(bottom: 0),
     );

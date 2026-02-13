@@ -144,10 +144,19 @@ class CreateOpenMatchesController extends GetxController {
   
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
+  var categoryId = "".obs;
+  var locationID = "".obs;
+  var locationsId = "".obs;
+   var sId = "".obs;
+
   @override
   void onInit() {
     super.onInit();
     argument = Get.arguments['id'];
+    sId.value = Get.arguments['sID']??"";
+    categoryId.value = Get.arguments['categoryId'];
+    locationID.value = Get.arguments['location'];
+    locationsId.value = Get.arguments['locationsId'];
     selectedDate.value = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchAllSlotPrices();
@@ -940,6 +949,9 @@ class CreateOpenMatchesController extends GetxController {
         day: formattedDay,
         registerClubId: clubId,
         date: formattedDate,
+        sID: sId.value,
+        categoryId: categoryId.value,
+        location: locationID.value
       );
 
       // Debug: Log booking times from API
@@ -1520,6 +1532,8 @@ class CreateOpenMatchesController extends GetxController {
         duration: '', // Get all durations
         day: '', // Get all days
         timePeriod: '', // Get all time periods
+        categoryId: categoryId.value,
+        locationId: locationsId.value
       );
 
       allSlotPricesResponse.value = result;

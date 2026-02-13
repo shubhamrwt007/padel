@@ -74,11 +74,19 @@ class OpenMatchesController extends GetxController {
   Courts argument = Courts();
   Rx<DateTime> focusedDate = DateTime.now().obs; // Add this new line
 
+  var categoryId = "".obs;
+  var locationID = "".obs;
+  var locationsId = "".obs;
+  var sId = "".obs;
   @override
   void onInit() {
     super.onInit();
     focusedDate.value = selectedDate.value; // Add this line
     argument = Get.arguments["data"];
+    sId.value = Get.arguments['sID']??"";
+    categoryId.value = Get.arguments['categoryId']??"";
+    locationID.value = Get.arguments['location']??"";
+    locationsId.value = Get.arguments['locationsId']??"";
     if (timeSlots.isNotEmpty) {
       final firstAvail = firstAvailableSlot();
       if (firstAvail != null) {

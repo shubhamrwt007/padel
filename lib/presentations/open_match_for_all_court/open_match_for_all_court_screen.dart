@@ -162,6 +162,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     }
 
                     return Column(
+
                       children: matches.data!.asMap().entries.map((entry) =>
                           _buildMatchCardFromData(context, entry.value, entry.key)).toList(),
                     );

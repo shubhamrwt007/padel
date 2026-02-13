@@ -526,10 +526,52 @@ class BookACourtController extends GetxController {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
       final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
       final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
+      final otherHalfKey = isFirstHalf == true 
+          ? '${dateString}_${resolvedCourtId}_${slotId}_second_half'
+          : '${dateString}_${resolvedCourtId}_${slotId}_first_half';
 
-      // Check if clicking on already selected slot - unselect and cascade
-      if (realCourtSelections.containsKey(realCourtKey) || realCourtSelections.containsKey(fullSlotKey)) {
+      // Check if clicking on already selected half - unselect and cascade
+      if (realCourtSelections.containsKey(realCourtKey)) {
         _removeSlotAndCascade(slot, resolvedCourtId, dateString, isFirstHalf ?? true, availableSlots);
+        recalculateRealCourtTotalAmount();
+        realCourtSelections.refresh();
+        return;
+      }
+      
+      // Check if full slot is selected - convert to other half only
+      if (realCourtSelections.containsKey(fullSlotKey)) {
+        realCourtSelections.remove(fullSlotKey);
+        final halfSlot = Slots(
+          sId: slotId,
+          time: slot.time,
+          amount: (slot.amount ?? 0) ~/ 2,
+        );
+        realCourtSelections[otherHalfKey] = {
+          'slot': halfSlot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': (slot.amount ?? 0) ~/ 2,
+          'isHalfSlot': true,
+          'isFirstHalf': !isFirstHalf!,
+        };
+        recalculateRealCourtTotalAmount();
+        realCourtSelections.refresh();
+        return;
+      }
+      
+      // Check if other half is already selected - combine to full slot
+      if (realCourtSelections.containsKey(otherHalfKey)) {
+        realCourtSelections.remove(otherHalfKey);
+        realCourtSelections[fullSlotKey] = {
+          'slot': slot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': slot.amount ?? 0,
+        };
         recalculateRealCourtTotalAmount();
         realCourtSelections.refresh();
         return;
@@ -1092,60 +1134,6 @@ class BookACourtController extends GetxController {
     }
   }
 
-  ///Fetch All Slot Prices------------------------------------------------------
-  Future<void> fetchAllSlotPrices(String clubId, {String? selectedTimes}) async {
-    try {
-      isSlotPricesLoading.value = true;
-
-      final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
-
-      final result = await _homeRepository.getAllSlotPricesOfCourt(
-        registerClubId: clubId,
-        duration: '',
-        // duration: selectedDurationMinutes.toString(), // Send selected duration
-        day: '', // Get all days
-        timePeriod: '', // Send selected times or empty for all
-      );
-
-      allSlotPricesResponse.value = result;
-
-      // Clear existing data
-      slotPricesData.clear();
-      originalSlotPricesData.clear();
-
-      // Parse and store the data
-      if (result.data?.isNotEmpty ?? false) {
-        for (final item in result.data!) {
-          final day = item.day;
-          final duration = item.duration?.toString();
-          final price = item.price ?? 0;
-
-          if (day != null && duration != null) {
-            slotPricesData[day] ??= {};
-            slotPricesData[day]![duration] = price;
-
-            // Store original prices
-            originalSlotPricesData[day] ??= {};
-            originalSlotPricesData[day]![duration] = price;
-          }
-        }
-      }
-
-      CustomLogger.logMessage(
-        msg: "Fetched slot prices for selected times: $selectedTimes, data: $slotPricesData",
-        level: LogLevel.info,
-      );
-
-    } catch (e, st) {
-      CustomLogger.logMessage(
-        msg: "Error fetching slot prices: ${e.toString()}",
-        level: LogLevel.error,
-        st: st,
-      );
-    } finally {
-      isSlotPricesLoading.value = false;
-    }
-  }
 
   /// Update slot prices from fetchAllSlotPrices API for a specific club
   void updateSlotPricesForSpecificClub(GetCourtsByDurationData clubData) {

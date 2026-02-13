@@ -1124,60 +1124,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     }
   }
 
-  ///Fetch All Slot Prices------------------------------------------------------
-  Future<void> fetchAllSlotPrices(String clubId, {String? selectedTimes}) async {
-    try {
-      isSlotPricesLoading.value = true;
-
-      final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
-
-      final result = await _homeRepository.getAllSlotPricesOfCourt(
-        registerClubId: clubId,
-        duration: '',
-        // duration: selectedDurationMinutes.toString(), // Send selected duration
-        day: '', // Get all days
-        timePeriod: '', // Send selected times or empty for all
-      );
-
-      allSlotPricesResponse.value = result;
-
-      // Clear existing data
-      slotPricesData.clear();
-      originalSlotPricesData.clear();
-
-      // Parse and store the data
-      if (result.data?.isNotEmpty ?? false) {
-        for (final item in result.data!) {
-          final day = item.day;
-          final duration = item.duration?.toString();
-          final price = item.price ?? 0;
-
-          if (day != null && duration != null) {
-            slotPricesData[day] ??= {};
-            slotPricesData[day]![duration] = price;
-
-            // Store original prices
-            originalSlotPricesData[day] ??= {};
-            originalSlotPricesData[day]![duration] = price;
-          }
-        }
-      }
-
-      CustomLogger.logMessage(
-        msg: "Fetched slot prices for selected times: $selectedTimes, data: $slotPricesData",
-        level: LogLevel.info,
-      );
-
-    } catch (e, st) {
-      CustomLogger.logMessage(
-        msg: "Error fetching slot prices: ${e.toString()}",
-        level: LogLevel.error,
-        st: st,
-      );
-    } finally {
-      isSlotPricesLoading.value = false;
-    }
-  }
 
   /// Update slot prices from fetchAllSlotPrices API for a specific club
   void updateSlotPricesForSpecificClub(GetCourtsByDurationData clubData) {
