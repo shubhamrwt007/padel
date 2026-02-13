@@ -346,9 +346,13 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                                 children: [
                                   Image.asset(Assets.imagesIcLocation,color: AppColors.textColor,scale: 2.2,),
                                   Text(
-                                      clubData.registerClub?.city ?? '',
-                                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
+                                    clubData.registerClub?.locations?.isNotEmpty == true
+                                        ? clubData.registerClub!.locations!.first.city ?? ''
+                                        : '',
+                                    style: Get.textTheme.labelMedium!
+                                        .copyWith(fontWeight: FontWeight.w400),
                                   ),
+
                                 ],
                               ),
                             ],

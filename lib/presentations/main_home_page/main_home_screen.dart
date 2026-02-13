@@ -1210,7 +1210,7 @@ class MainHomeScreen extends StatelessWidget {
     final courtCount = courtDetails?.courtCount ?? 0;
     final features = courtDetails?.features ?? [];
     final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
-    final city = locationDetails?.city ?? court.city ?? "N/A";
+    final city = locationDetails?.city ?? court.city ?? "";
     final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
     
     return GestureDetector(
