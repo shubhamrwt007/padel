@@ -1129,6 +1129,9 @@ var locationsId = "".obs;
         'slot': slotData,
         'register_club_id': clubId,
         'ownerId': ownerIdStr,
+        'categoryId': categoryId.value,
+        'location': locationsId.value,
+        'stateId': locationID.value,
       },
     ];
   }
@@ -1516,6 +1519,65 @@ var locationsId = "".obs;
       return false;
     }
   }
-  
- 
+
+  List<Map<String, dynamic>>? buildBookingPayload() {
+    if (multiDateSelections.isEmpty) return null;
+
+    final clubId = argument.id ?? '';
+    if (clubId.isEmpty) return null;
+
+    final registerClub = slots.value?.data?.firstOrNull?.registerClubId;
+    final ownerIdStr = registerClub?.ownerId?.sId?.toString() ?? argument.ownerId ?? '';
+    final clubLocationId = registerClub?.locations?.isNotEmpty == true
+        ? registerClub!.locations![0].sId ?? ''
+        : '';
+
+    final List<Map<String, dynamic>> slotData = [];
+
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final courtId = selection['courtId'] as String;
+      final courtName = selection['courtName'] as String;
+      final dateString = selection['date'] as String;
+      final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+      final adjustedAmount = selection['adjustedAmount'] as int? ?? slot.amount ?? 0;
+      final isLeftHalf = selection['isLeftHalf'] as bool?;
+      final supports30Min = slotSupports30Min(slot);
+      final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+
+      final bookingDay = _getWeekday(DateTime.parse(dateString).weekday);
+      final selectedBusinessHour = slot.businessHours
+          ?.where((bh) => bh.day == bookingDay)
+          .map((bh) => {'time': bh.time ?? '', 'day': bh.day ?? ''})
+          .toList() ?? [];
+
+      slotData.add({
+        'slotId': slot.sId ?? '',
+        'businessHours': selectedBusinessHour,
+        'slotTimes': [
+          {'time': slot.time ?? '', 'amount': adjustedAmount}
+        ],
+        'courtId': courtId,
+        'courtName': courtName,
+        'bookingDate': dateString,
+        'duration': duration,
+        'totalTime': duration,
+        'bookingTime': bookingTime,
+      });
+    });
+
+    if (slotData.isEmpty) return null;
+
+    return [
+      {
+        'slot': slotData,
+        'register_club_id': clubId,
+        'ownerId': ownerIdStr,
+        'categoryId': categoryId.value,
+        'location': clubLocationId,
+        'stateId': locationID.value,
+      },
+    ];
+  }
+
 }

@@ -1528,6 +1528,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     String selectedCourtId = '';
     String selectedCourtName = '';
     String selectedClubId = '';
+    String selectedClubLocationId = '';
 
     if (realCourtSelections.isNotEmpty) {
       final firstSelection = realCourtSelections.values.first;
@@ -1540,6 +1541,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
               if (court.id == selectedCourtId) {
                 selectedClubId = club.registerClub?.id ?? '';
                 selectedCourtName = court.courtName ?? selectedCourtName;
+                selectedClubLocationId = club.registerClub?.locations?.isNotEmpty == true
+                    ? club.registerClub!.locations![0].id ?? ''
+                    : '';
                 break;
               }
             }
@@ -1662,7 +1666,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       "selectedDuration": selectedDuration.value,
       "paymentOption": "payForAll",
       "categoryId": Get.find<MainHomeController>().selectedCategoryId.value,
-      "location": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
+      "location": selectedClubLocationId,
+      "stateId": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
     };
 
     // Debug: Print what we're sending
@@ -1726,6 +1731,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     String selectedCourtId = '';
     String selectedCourtName = '';
     String selectedClubId = '';
+    String selectedClubLocationId = '';
 
     if (realCourtSelections.isNotEmpty) {
       final firstSelection = realCourtSelections.values.first;
@@ -1738,6 +1744,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
               if (court.id == selectedCourtId) {
                 selectedClubId = club.registerClub?.id ?? '';
                 selectedCourtName = court.courtName ?? selectedCourtName;
+                selectedClubLocationId = club.registerClub?.locations?.isNotEmpty == true
+                    ? club.registerClub!.locations![0].id ?? ''
+                    : '';
                 break;
               }
             }
@@ -1860,7 +1869,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       "selectedDuration": selectedDuration.value,
       "paymentOption": "payShareOnly",
       "categoryId": Get.find<MainHomeController>().selectedCategoryId.value,
-      "location": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
+      "location": selectedClubLocationId,
+      "stateId": selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
     };
 
     // Debug: Print what we're sending

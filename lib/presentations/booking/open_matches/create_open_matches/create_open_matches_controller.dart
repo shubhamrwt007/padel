@@ -144,6 +144,12 @@ class CreateOpenMatchesController extends GetxController {
   
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
+  
+  // Payment option selection
+  final selectedIndex = 0.obs; // 0 = Pay All, 1 = Pay Share
+  void selectPaymentOption(int index) {
+    selectedIndex.value = index;
+  }
   var categoryId = "".obs;
   var locationID = "".obs;
   var locationsId = "".obs;
@@ -263,6 +269,190 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
+  void onNextPressed() {
+    if (selectedIndex.value == 0) {
+      // Pay for All Players
+      Get.back();
+      onNext();
+    } else if (selectedIndex.value == 1) {
+      // Pay your share only
+      Get.back();
+      onNextPayShareOnly();
+    }
+  }
+  
+  void onNextPayShareOnly() async {
+    log("Pay Share Only - Slots -> $selectedSlots");
+
+    if (multiDateSelections.isEmpty) {
+      return;
+    }
+
+    try {
+      final success = await processSlotHistoryForPayment();
+      if (!success) {
+        return;
+      }
+    } catch (e) {
+      return;
+    }
+
+    // Collect all unique court IDs and names from selections
+    Map<String, String> courtsMap = {};
+    multiDateSelections.forEach((key, selection) {
+      final courtId = selection['courtId'] as String?;
+      final courtName = selection['courtName'] as String?;
+      if (courtId != null && courtId.isNotEmpty) {
+        courtsMap[courtId] = courtName ?? '';
+      }
+    });
+
+    List<String> courtIds = courtsMap.keys.toList();
+    List<String> courtNames = courtsMap.values.toList();
+    String primaryCourtId = courtIds.first;
+    String primaryCourtName = courtNames.first;
+
+    if (Get.isRegistered<DetailsController>()) {
+      Get.delete<DetailsController>();
+    }
+    final detailsController = Get.put(DetailsController());
+    detailsController.isFromOpenMatch = true;
+
+    detailsController.localMatchData.update("clubName", (value) => slots.value!.data![0].clubName ?? "");
+    detailsController.localMatchData.update("address", (value) => slots.value!.data![0].registerClubId?.address ?? "");
+    detailsController.localMatchData.update("clubId", (v) => slots.value!.data![0].registerClubId!.sId ?? "");
+    detailsController.localMatchData["ownerId"] = slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
+    detailsController.localMatchData["categoryId"] = categoryId.value;
+    detailsController.localMatchData["location"] = locationID.value;
+    detailsController.localMatchData["stateId"] = locationsId.value;
+    detailsController.localMatchData["paymentOption"] = "payShareOnly";
+    
+    detailsController.localMatchData.update("matchDate", (v) => selectedDate.value ?? "");
+    detailsController.localMatchData.update("clubImage", (v)=> slots.value!.data![0].registerClubId?.courtImage ??[]);
+    detailsController.localMatchData.update("matchTime", (v) => selectedSlots.map((s) => s.time).toList());
+    detailsController.localMatchData.update("price", (v) => totalAmount.toString());
+
+    
+    final courtTypes = slots.value!.data![0].registerClubId!.courtType ?? [];
+    final courts = slots.value?.data ?? [];
+    List<String> selectedCourtTypes = [];
+    
+    for (String courtId in courtIds) {
+      int courtIndex = -1;
+      for (int i = 0; i < courts.length; i++) {
+        if (courts[i].sId == courtId) {
+          courtIndex = i;
+          break;
+        }
+      }
+      
+      if (courtIndex >= 0 && courtIndex < courtTypes.length) {
+        selectedCourtTypes.add(courtTypes[courtIndex]);
+      } else if (courtTypes.isNotEmpty) {
+        selectedCourtTypes.add(courtTypes.first);
+      }
+    }
+    
+    final courtTypeValue = selectedCourtTypes.length == 1 ? selectedCourtTypes.first : selectedCourtTypes;
+    detailsController.localMatchData.update("courtType", (v) => courtTypeValue);
+    
+    List<Slots> updatedSlots = [];
+    Map<String, Slots> consolidatedSlots = {};
+    
+    for (Slots slot in selectedSlots) {
+      Map<String, dynamic>? leftHalfSelection;
+      Map<String, dynamic>? rightHalfSelection;
+      
+      multiDateSelections.forEach((key, selection) {
+        final selectionSlot = selection['slot'] as Slots;
+        if (selectionSlot.sId == slot.sId) {
+          if (key.endsWith('_L')) {
+            leftHalfSelection = selection;
+          } else if (key.endsWith('_R')) {
+            rightHalfSelection = selection;
+          } else {
+            leftHalfSelection = selection;
+          }
+        }
+      });
+      
+      final supports30Min = slotSupports30Min(slot);
+      
+      if (supports30Min && leftHalfSelection != null && rightHalfSelection != null) {
+        if (!consolidatedSlots.containsKey(slot.sId)) {
+          consolidatedSlots[slot.sId!] = Slots(
+            sId: slot.sId,
+            time: slot.time,
+            amount: slot.amount,
+            businessHours: slot.businessHours,
+            status: slot.status,
+            availabilityStatus: slot.availabilityStatus,
+            duration: 60,
+            bookingTime: slot.time ?? '',
+          );
+        }
+      } else {
+        final selectionData = leftHalfSelection ?? rightHalfSelection;
+        final adjustedAmount = selectionData?['adjustedAmount'] as int? ?? slot.amount ?? 0;
+        final duration = supports30Min && (leftHalfSelection != null || rightHalfSelection != null) ? 30 : 60;
+        
+        Slots updatedSlot = Slots(
+          sId: slot.sId,
+          time: slot.time,
+          amount: adjustedAmount,
+          businessHours: slot.businessHours,
+          status: slot.status,
+          availabilityStatus: slot.availabilityStatus,
+          duration: duration,
+          bookingTime: selectionData?['bookingTime'] ?? slot.time ?? '',
+        );
+        updatedSlots.add(updatedSlot);
+      }
+    }
+    
+    updatedSlots.addAll(consolidatedSlots.values);
+    
+    final slotsAsMap = updatedSlots.map((slot) {
+      final businessHoursList = (slot.businessHours ?? []).map((bh) => {
+        "time": bh.time ?? '',
+        "day": bh.day ?? '',
+      }).toList();
+      
+      return {
+        "slotId": slot.sId ?? '',
+        "businessHours": businessHoursList,
+        "slotTimes": [{
+          "time": slot.bookingTime ?? slot.time ?? '',
+          "amount": slot.amount ?? 0,
+        }],
+        "duration": slot.duration ?? 60,
+        "bookingTime": slot.bookingTime ?? slot.time ?? '',
+      };
+    }).toList();
+    
+    detailsController.localMatchData.update("slot", (v) => slotsAsMap);
+    detailsController.localMatchData["courtId"] = primaryCourtId;
+    detailsController.localMatchData["courtName"] = primaryCourtName;
+    detailsController.localMatchData["courtIds"] = courtIds;
+    detailsController.localMatchData["courtNames"] = courtNames;
+    detailsController.localMatchData["courtsDetails"] = courtsMap;
+
+    Get.put(QuestionsBottomsheetController(), tag: 'questions');
+    Get.find<QuestionsBottomsheetController>(tag: 'questions').localMatchData = detailsController.localMatchData;
+    
+    Get.bottomSheet(
+      QuestionsBottomsheetScreen(),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+    ).then((_) {
+      cleanupSlotHistory();
+      Get.delete<QuestionsBottomsheetController>(tag: 'questions');
+    });
+  }
+
   void onNext() async {
     log("Slots -> $selectedSlots");
 
@@ -309,15 +499,12 @@ class CreateOpenMatchesController extends GetxController {
     detailsController.localMatchData.update("clubName", (value) => slots.value!.data![0].clubName ?? "");
     detailsController.localMatchData.update("address", (value) => slots.value!.data![0].registerClubId?.address ?? "");
     detailsController.localMatchData.update("clubId", (v) => slots.value!.data![0].registerClubId!.sId ?? "");
-    // ✅ Store ownerId from registerClubId for booking payload (use direct assignment to avoid missing-key issues)
-    detailsController.localMatchData["ownerId"] =
-        slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
-    // Store categoryId and locationId from argument
-    final categoryId = (argument.categories?.isNotEmpty ?? false) ? argument.categories!.first.toString() : "";
-    final locationId = (argument.locations?.isNotEmpty ?? false) ? argument.locations!.first.id.toString() : "";
-    detailsController.localMatchData["categoryId"] = categoryId;
-    detailsController.localMatchData["location"] = locationId;
-    log("CategoryId: $categoryId, Location: $locationId");
+    detailsController.localMatchData["ownerId"] = slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
+    detailsController.localMatchData["categoryId"] = categoryId.value;
+    detailsController.localMatchData["location"] = locationsId.value;
+    detailsController.localMatchData["stateId"] = locationID.value;
+    detailsController.localMatchData["paymentOption"] = "payForAll";
+    log("CategoryId: ${categoryId.value}, Location: ${locationID.value}, StateId: ${locationsId.value}");
     detailsController.localMatchData.update("matchDate", (v) => selectedDate.value ?? "");
     detailsController.localMatchData.update("clubImage", (v)=> slots.value!.data![0].registerClubId?.courtImage ??[]);
     detailsController.localMatchData.update(
@@ -414,7 +601,26 @@ class CreateOpenMatchesController extends GetxController {
     // Add consolidated full slots
     updatedSlots.addAll(consolidatedSlots.values);
     
-    detailsController.localMatchData.update("slot", (v) => updatedSlots);
+    // Convert Slots objects to Map format for questions controller
+    final slotsAsMap = updatedSlots.map((slot) {
+      final businessHoursList = (slot.businessHours ?? []).map((bh) => {
+        "time": bh.time ?? '',
+        "day": bh.day ?? '',
+      }).toList();
+      
+      return {
+        "slotId": slot.sId ?? '',
+        "businessHours": businessHoursList,
+        "slotTimes": [{
+          "time": slot.bookingTime ?? slot.time ?? '',
+          "amount": slot.amount ?? 0,
+        }],
+        "duration": slot.duration ?? 60,
+        "bookingTime": slot.bookingTime ?? slot.time ?? '',
+      };
+    }).toList();
+    
+    detailsController.localMatchData.update("slot", (v) => slotsAsMap);
     
     // Use direct assignment for new keys instead of update
     detailsController.localMatchData["courtId"] = primaryCourtId;
