@@ -162,6 +162,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     }
 
                     return Column(
+
                       children: matches.data!.asMap().entries.map((entry) =>
                           _buildMatchCardFromData(context, entry.value, entry.key)).toList(),
                     );
@@ -197,8 +198,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: AppColors.whiteColor),
         ).paddingOnly(right: Get.width * 0.14),
         onTap: () {
-          Get.toNamed(RoutesName.createOpenMatchForAllCourts,);
-          // SnackBarUtils.showInfoSnackBar("Create an Open Match Coming Soon!");
+          Get.toNamed(RoutesName.createOpenMatchForAllCourts, arguments: {
+            'selectedDate': controller.selectedDate.value,
+          });
         },
       ).paddingOnly(bottom: 0),
     );

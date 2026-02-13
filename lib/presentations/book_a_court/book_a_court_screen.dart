@@ -119,6 +119,19 @@ class BookACourtScreen extends StatelessWidget {
                       controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
                       style: Get.textTheme.labelLarge
                   ),
+                  if (!controller.showMainGrid.value && controller.courtsByDuration.value != null)
+                    GestureDetector(
+                      onTap: () {
+                        controller.showMainGrid.value = true;
+                      },
+                      child: Text(
+                        '+ Add more slots',
+                        style: Get.textTheme.labelMedium!.copyWith(
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   if (controller.showMainGrid.value)
                     Row(
                       children: [
@@ -988,21 +1001,27 @@ class BookACourtScreen extends StatelessWidget {
         }
       });
 
-      return GridView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 3.0,
-        ),
-        itemCount: consolidatedSlots.length,
-        itemBuilder: (context, index) {
-          final slot = consolidatedSlots[index];
-          return _buildSelectedSlotTile(slot);
-        },
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GridView.builder(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 3.0,
+            ),
+            itemCount: consolidatedSlots.length,
+            itemBuilder: (context, index) {
+              final slot = consolidatedSlots[index];
+              return _buildSelectedSlotTile(slot);
+            },
+          ),
+
+        ],
       );
     });
   }
@@ -1246,6 +1265,15 @@ class BookACourtScreen extends StatelessWidget {
                     ),
                   ),
 
+                /// FULL SLOT IN OTHER COURT OVERLAY
+                if (!supports30Min && isFullSlotInOtherCourt && !isSelected)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(radius),
+                      color: Colors.grey.shade300.withValues(alpha: 0.8),
+                    ),
+                  ),
+
                 /// VERTICAL DIVIDER FOR 30MIN SLOTS
                 if (supports30Min && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
                   Center(
@@ -1316,7 +1344,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Left half grayed text for booked slots
-                      if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && (isLeftHalfBooked || isLeftHalfInOtherCourt) && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: LeftHalfClipper(),
                           child: Text(
@@ -1330,7 +1358,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Right half grayed text for booked slots
-                      if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && (isRightHalfBooked || isRightHalfInOtherCourt) && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: RightHalfClipper(),
                           child: Text(
@@ -1340,6 +1368,17 @@ class BookACourtScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: Colors.grey.shade600,
                             ),
+                          ),
+                        ),
+
+                      // Full slot grayed text for other court
+                      if (!supports30Min && isFullSlotInOtherCourt && !isSelected)
+                        Text(
+                          controller.formatTimeForDisplay(slot.time),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
                           ),
                         ),
 

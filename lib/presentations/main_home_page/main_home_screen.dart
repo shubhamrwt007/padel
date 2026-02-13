@@ -2078,7 +2078,7 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
     return Container(
-      width: (teamAPlayers.length + teamBPlayers.length) * 49 + 49,
+      width: (teamAPlayers.length + teamBPlayers.length) * 57 + 89,
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
