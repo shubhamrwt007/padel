@@ -298,18 +298,22 @@ extension CartControllerBooking on CartController {
             "bookingDate": slotTime.bookingDate ?? "",
             "duration": finalDuration,
             "totalTime": totalTimeForBooking,
-            "bookingTime": finalBookingTime
+            "bookingTime": finalBookingTime,
+            "locationId": slotTime.locationId ?? "",
           });
         }
       }
 
       if (slotData.isNotEmpty) {
+        final clubLocationId = slotData.first['locationId'] ?? '';
+
         final bookingPayload = {
           "slot": slotData,
           "register_club_id": cart.registerClubId?.sId ?? "",
           "ownerId": cart.registerClubId?.ownerId ?? "",
           "categoryId": categoryId ?? "",
-          "locationId": locationId ?? "",
+          "location": clubLocationId,
+          "stateId": locationId ?? "",
         };
 
         payloadList.add(bookingPayload);

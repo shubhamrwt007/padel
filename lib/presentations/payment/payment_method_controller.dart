@@ -48,6 +48,14 @@ class PaymentMethodController extends GetxController {
     }
   }
   
+  BookSessionController? get bookSessionController {
+    try {
+      return Get.isRegistered<BookSessionController>() ? Get.find<BookSessionController>() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  
   bool get isFromBookACourt {
     final controller = bookACourtController;
     return controller != null && controller.realCourtSelections.isNotEmpty;
@@ -167,18 +175,15 @@ class PaymentMethodController extends GetxController {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
-      final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
-      final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
-      final categoryId = mainHomeController?.selectedCategoryId.value;
-      final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-
       if (isFromBookSession && directBookingPayload != null) {
+        print("object------------------------");
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
+        print("From Book A Court PAge----------------------");
         bookingPayload = bookACourtController!.buildBookingPayload();
-      } else {
-        final cart = _cartController;
-        bookingPayload = cart?.buildBookingPayload(categoryId: categoryId, locationId: locationId);
+      } else if (bookSessionController != null) {
+        print("From Book Session PAge----------------------");
+        bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
@@ -379,12 +384,14 @@ class PaymentMethodController extends GetxController {
       final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
 
       if (isFromBookSession && directBookingPayload != null) {
+        print("Diraect----------------------");
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
+        print("From Book A Court PAge----------------------");
         bookingPayload = bookACourtController!.buildBookingPayload();
-      } else {
-        final cart = _cartController;
-        bookingPayload = cart?.buildBookingPayload(categoryId: categoryId, locationId: locationId);
+      } else if (bookSessionController != null) {
+        print("From Book Session PAge----------------------");
+        bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {

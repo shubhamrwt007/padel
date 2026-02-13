@@ -782,8 +782,9 @@ class RequestsScreen extends StatelessWidget {
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
-                          // '${club?.city ?? ''}, ${club?.zipCode ?? ''}',
-                          club?.locations?[0].city?.capitalizeFirstChar()??"",
+                          club?.locations?.isNotEmpty == true
+                              ? club!.locations!.first.city?.capitalizeFirstChar() ?? ""
+                              : "",
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 11,
@@ -791,6 +792,7 @@ class RequestsScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+
                     ],
                   ),
                 ],
@@ -868,8 +870,17 @@ class RequestsScreen extends StatelessWidget {
                 children: [
                   Text(club?.clubName ?? 'N/A',style:Get.textTheme.labelLarge),
                   SizedBox(
-                      width: Get.width*0.5,
-                      child: Text(club?.locations?[0].city?.capitalizeFirstChar() ?? '',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),overflow: TextOverflow.clip,)),
+                    width: Get.width * 0.5,
+                    child: Text(
+                      club?.locations?.isNotEmpty == true
+                          ? club!.locations!.first.city?.capitalizeFirstChar() ?? ""
+                          : "",
+                      style: Get.textTheme.bodySmall!
+                          .copyWith(fontWeight: FontWeight.w400),
+                      overflow: TextOverflow.clip,
+                    ),
+                  ),
+
                 ],
               ),
             ],
@@ -883,7 +894,7 @@ class RequestsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Type of ${((request.courtCount ?? 0) >= 2) ? 'Courts' : 'Court'} ($courtCount)",style:Get.textTheme.labelLarge),
-                  Text(club?.locations?[0].courtType?.join(' • ') ?? 'N/A',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)),
+                  // Text(club?.locations?[0].courtType?.join(' • ') ?? 'N/A',style:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)),
                 ],
               ),
             ],

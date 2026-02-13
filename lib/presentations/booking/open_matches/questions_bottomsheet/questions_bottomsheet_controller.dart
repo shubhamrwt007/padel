@@ -616,6 +616,7 @@ class QuestionsBottomsheetController extends GetxController {
       "gender":selectedGameType.value,
       "categoryId": localMatchData["categoryId"] ?? "",
       "location": localMatchData["location"] ?? "",
+      "stateId": localMatchData["stateId"] ?? "",
       "ownerId": profileController.profileModel.value?.response?.sId ?? "",
       "teamA": teamA
           .where((p) =>

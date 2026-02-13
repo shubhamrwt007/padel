@@ -1092,7 +1092,7 @@ class MainHomeScreen extends StatelessWidget {
 
     switch (action) {
       case 'book':
-        Get.toNamed(RoutesName.bookACourt);
+        Get.toNamed(RoutesName.bookACourt,arguments: {});
         break;
       case 'match':
         final categoryId = controller.selectedCategoryId.value;

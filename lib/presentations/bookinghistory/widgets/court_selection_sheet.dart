@@ -83,8 +83,13 @@ class CourtSelectionSheet extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-                  Obx(() => Column(
-                    children: _buildCourtTiles(),
+                  Obx(() => Container(
+                    height: Get.height*0.47,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: _buildCourtTiles(),
+                      ),
+                    ),
                   )),
 
                   const Spacer(),

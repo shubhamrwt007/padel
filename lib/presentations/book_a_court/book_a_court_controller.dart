@@ -24,6 +24,7 @@ class BookACourtController extends GetxController {
   // Category and Location IDs from MainHomeController
   RxString categoryId = ''.obs;
   RxString locationId = ''.obs;
+  RxString locationsId = ''.obs;
 
   ///Available Slots------------------------------------------------------------
   final selectedDuration = '60 min'.obs;
@@ -1878,6 +1879,13 @@ class BookACourtController extends GetxController {
       }
 
       if (slotData.isNotEmpty) {
+        final clubLocationId = specificCourtData.registerClub?.locations?.isNotEmpty == true
+            ? specificCourtData.registerClub!.locations![0].id
+            : "";
+
+        final mainHomeController = Get.find<MainHomeController>();
+        final profileLocationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+
         final bookingPayload = {
           "slot": slotData,
           "register_club_id": clubId,
@@ -1885,7 +1893,8 @@ class BookACourtController extends GetxController {
           "matchType":matchType.value,
           "bookingMode": "mobile",
           "categoryId": categoryId.value,
-          "location": locationId.value,
+          "location": clubLocationId,
+          "stateId":profileLocationId
 
         };
 

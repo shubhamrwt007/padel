@@ -1,8 +1,12 @@
 import 'dart:developer';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
+import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
@@ -1189,17 +1193,17 @@ class CreateOpenMatchesScreen extends StatelessWidget {
           ).paddingOnly(right: 40),
           onTap: () async {
             if (!hasSelections) {
-              // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
               return;
             }
             
-            // Call API to process slot history
-            final success = await controller.processSlotHistoryForPayment();
-            if (!success) {
-              return;
-            }
-            
-            controller.onNext();
+            Get.bottomSheet(
+              backgroundColor: Colors.transparent,
+              SizedBox(
+                height: Get.height,
+                child: PaymentOptionSheet(),
+              ),
+              isScrollControlled: true,
+            );
           },
         ),
       );
@@ -1240,5 +1244,217 @@ class CreateOpenMatchesScreen extends StatelessWidget {
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
     return controller.multiDateSelections.containsKey(rightKey);
+  }
+}
+
+
+class PaymentOptionSheet extends StatelessWidget {
+  final CreateOpenMatchesController controller = Get.find<CreateOpenMatchesController>();
+  PaymentOptionSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                color: Colors.black.withOpacity(0.35),
+              ),
+            ),
+          ),
+      
+          SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: 180),
+                Obx(() => Column(
+                  children: [
+                    _optionCard(
+                      index: 0,
+                      controller: controller,
+                      title: 'Pay for All Players',
+                      subtitle: 'INSTANT CONFIRMATION',
+                      image: Assets.imagesIcCash,
+                      optionIcon: Icons.check_circle,
+                      activeColor: Colors.green,
+                      points: const [
+                        'Confirm court booking immediately',
+                        'Instant refunds as your teammates pay their share',
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _optionCard(
+                      index: 1,
+                      controller: controller,
+                      title: 'Pay your share only',
+                      subtitle: 'FLEXIBLE BOOKING',
+                      image: Assets.imagesIcPerson,
+                      optionIcon: Icons.timelapse,
+                      activeColor: Colors.orange,
+                      points: const [
+                        'Matches remain unbooked until the 4-player minimum is reached.',
+                        "Fail to hit 4 players? You'll get an automatic refund.",
+                        "If your court is busy, we'll relocate your game or issue a full refund.",
+                      ],
+                    ),
+                  ],
+                )),
+                _secureInfo().paddingSymmetric(vertical: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: Colors.white10,
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Cancel",
+                          style: Get.textTheme.labelLarge!
+                              .copyWith(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => controller.onNextPressed(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          "Next",
+                          style: Get.textTheme.labelLarge!
+                              .copyWith(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ).paddingAll(16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _secureInfo() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Image.asset(Assets.imagesIcPrivacy, scale: 4.5, color: Colors.white70),
+          SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Secured payment with automated instant refunds',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _optionCard({
+    required int index,
+    required CreateOpenMatchesController controller,
+    required String title,
+    required String subtitle,
+    required String image,
+    required IconData optionIcon,
+    required Color activeColor,
+    required List<String> points,
+  }) {
+    final isSelected = controller.selectedIndex.value == index;
+
+    return GestureDetector(
+      onTap: () => controller.selectPaymentOption(index),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? activeColor : Colors.white24,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: activeColor,
+                  child: SvgPicture.asset(image, height: 20, width: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600)),
+                      Text(subtitle,
+                          style: TextStyle(
+                              color: activeColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: activeColor,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...points.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(optionIcon, color: activeColor, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        e,
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
