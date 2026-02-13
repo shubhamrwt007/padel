@@ -531,8 +531,11 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     final clubName = data.clubId?.clubName ?? '-';
 
-    final locationName = data.clubId?.locations?[0].city?.capitalizeFirstChar()??"";
-    
+    final locationName = (data.clubId?.locations?.isNotEmpty ?? false)
+        ? data.clubId!.locations![0].city?.capitalizeFirstChar() ?? ""
+        : "";
+
+
     final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
     
     // Show yourShare if adminStatus is true, otherwise show totalAmount
