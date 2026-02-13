@@ -20,6 +20,7 @@ import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dar
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -387,10 +388,25 @@ class HomeScreen extends GetView<HomeController> {
         log("CLUB ID -> ${club.id}");
         if (club.id != null) {
           Get.delete<BookingController>();
+          
+          String categoryId = "";
+          String locationId = "";
+          
+          try {
+            final mainHomeController = Get.find<MainHomeController>();
+            categoryId = mainHomeController.selectedCategoryId.value;
+            locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "";
+          } catch (e) {
+            log("MainHomeController not found: $e");
+          }
+          
           Get.toNamed(RoutesName.booking, arguments: {
             "data": club,
             "clubId": club.id,
             "sID": courtDetails?.id ?? "",
+            "categoryId": categoryId,
+            "location": locationId,
+            "locationsId":club.locations?[0].id
           });
           FocusManager.instance.primaryFocus?.unfocus();
         }

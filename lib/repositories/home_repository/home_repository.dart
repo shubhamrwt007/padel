@@ -57,10 +57,12 @@ class HomeRepository {
     required String registerClubId,       // club id
     required String day,
      String? date,
-    String? sID
+    String? sID,
+    String? location,
+    String? categoryId
     // String? duration
   }) async {
-    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID";
+    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID&location=$location&categoryId=$categoryId";
 
     try {
       final response = await dioClient.get(url);
@@ -129,9 +131,9 @@ class HomeRepository {
   }
 
   ///Get All Slot Prices Of Court------------------------------------------------
-  Future<GetAllSlotPricesOfCourtModel> getAllSlotPricesOfCourt({required registerClubId,required duration,required day,required timePeriod}) async {
+  Future<GetAllSlotPricesOfCourtModel> getAllSlotPricesOfCourt({required registerClubId,required duration,required day,required timePeriod,String? categoryId,String? locationId}) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getAllSlotPricesOfCourt}register_club_id=$registerClubId&duration=$duration&day=$day&timePeriod=$timePeriod",);
+      final response = await dioClient.get("${AppEndpoints.getAllSlotPricesOfCourt}register_club_id=$registerClubId&duration=$duration&day=$day&timePeriod=$timePeriod&categoryId=$categoryId&location=$locationId",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get All Slot Prices Of Court Data: ${response.data}",

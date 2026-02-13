@@ -368,30 +368,30 @@ class DetailsController extends GetxController {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Your payment has been received successfully, "
-                        "but we couldn't confirm your booking at this moment.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Please contact support for assistance or a refund.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                    ),
-                  ),
+                  //
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Your payment has been received successfully, "
+                  //       "but we couldn't confirm your booking at this moment.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //     height: 1.4,
+                  //   ),
+                  // ),
+                  //
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Please contact support for assistance or a refund.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 40),
 
@@ -481,8 +481,8 @@ class DetailsController extends GetxController {
         name: 'Swoot',
         description: 'Payment for court booking and match creation',
         orderId: '', // You can generate order ID from your backend if needed
-        userEmail: profileController.profileModel.value?.response?.email ?? 'test@example.com',
-        userContact: '9999999999',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
         notes: {
           'user_id': profileController.profileModel.value?.response?.sId ?? '123',
           'club_id': localMatchData['clubId'],

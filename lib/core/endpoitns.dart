@@ -8,8 +8,8 @@ class AppEndpoints {
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  static const String baseUrl = "http://192.168.0.129:5070/api/customer/";
-  static const String socketUrl = "http://192.168.0.129:5070";
+  static const String baseUrl = "http://192.168.0.121:5071/api/customer/";
+  static const String socketUrl = "http://192.168.0.121:5071";
 
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
