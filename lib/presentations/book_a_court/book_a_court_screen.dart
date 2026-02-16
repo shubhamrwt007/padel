@@ -321,12 +321,14 @@ class BookACourtScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         // Conditional content based on selection state
-        _buildAvailableCourtsContent(),
+        Builder(
+          builder: (context) => _buildAvailableCourtsContent(context),
+        ),
       ],
     );
   }
 
-  Widget _buildAvailableCourtsContent() {
+  Widget _buildAvailableCourtsContent(BuildContext context) {
     return Obx(() {
       // Check if no slots are selected from main grid
       if (controller.multiDateSelections.isEmpty) {
@@ -468,8 +470,9 @@ class BookACourtScreen extends StatelessWidget {
                         curve: Curves.easeInOut,
                         child: isExpanded && court.slots != null && court.slots!.isNotEmpty
                             ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           child: _courtRow(
+                            context: context,
                             courtName: court.courtName ?? 'Court ${courtIndex + 1}',
                             // type: clubData.registerClub?.courtType?.join(', ') ?? '',
                             selectedIndex: courtIndex,
@@ -494,6 +497,7 @@ class BookACourtScreen extends StatelessWidget {
   }
 
   Widget _courtRow({
+    required BuildContext context,
     required String courtName,
     // required String type,
     required int selectedIndex,
@@ -516,44 +520,40 @@ class BookACourtScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// LEFT TEXT
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                Text(courtName, style: Get.textTheme.headlineMedium),
-                // Text(
-                //   type.split(',').first,
-                //   style: const TextStyle(fontSize: 13, color: Colors.grey),
-                // ),
-              ],
+            SizedBox(
+              width: 80,
+              child: Text(
+                courtName,
+                style: Get.textTheme.headlineLarge,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            SizedBox(width: 15,),
+            SizedBox(width: 15),
 
             /// TIME SLOTS - Show all slots in horizontal scroll
             if (displaySlots.isNotEmpty)
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Builder(
-                    builder: (context) => Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: displaySlots.map((slot) {
-                        final index = displaySlots.indexOf(slot);
-                        return SizedBox(
-                          width: 88,
-                          child: Obx(() => _buildCourtSlotTile(
-                            context,
-                            slot,
-                            courtName,
-                            selectedIndex,
-                            index,
-                            courtId: courtId ?? 'court$selectedIndex',
-                            availableSlots: displaySlots,
-                          )),
-                        );
-                      }).toList(),
-                    ),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: displaySlots.map((slot) {
+                      final index = displaySlots.indexOf(slot);
+                      return SizedBox(
+                        width: 88,
+                        child: Obx(() => _buildCourtSlotTile(
+                          context,
+                          slot,
+                          courtName,
+                          selectedIndex,
+                          index,
+                          courtId: courtId ?? 'court$selectedIndex',
+                          availableSlots: displaySlots,
+                        )),
+                      );
+                    }).toList(),
                   ),
                 ),
               )
@@ -577,6 +577,7 @@ class BookACourtScreen extends StatelessWidget {
   }
 
   /// Date Picker - Fixed spacing and toggle functionality
+
   Widget _buildDatePicker(BuildContext context) {
     return Container(
       height: 110,
