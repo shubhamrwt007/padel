@@ -1900,8 +1900,8 @@ class MainHomeScreen extends StatelessWidget {
   Widget _buildOpenMatchCard(OpenMatchBookingData data, int index) {
     final dayStr = DateFormat('EEEE').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
     final dateOnlyStr = DateFormat('dd MMM').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
-    final timeStr = data.openMatchStatus == "pending"
-        ? "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}"
+    final timeStr = data.openMatchStatus == "pending"||data.openMatchStatus =="cancelled"
+        ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
         : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
     final clubName = data.clubId?.clubName ?? '-';
     
