@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_controller.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 class RequestsScreen extends StatelessWidget {
-  RequestsScreen({super.key});
+  const RequestsScreen({super.key});
 
   RequestsController get controller => Get.find<RequestsController>();
 
@@ -181,7 +179,7 @@ class RequestsScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -228,7 +226,7 @@ class RequestsScreen extends StatelessWidget {
               boxShadow: selected
                   ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -268,11 +266,11 @@ class RequestsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: request.type != "booking_invitation" ? Color(0xffC8D6FB) : Color(0xff3DBE64).withOpacity(0.5)),
+          border: Border.all(color: request.type != "booking_invitation" ? Color(0xffC8D6FB) : Color(0xff3DBE64).withValues(alpha: 0.5)),
           gradient: LinearGradient(
             colors: request.type != "booking_invitation"
-                ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withOpacity(0.3)]
-                : [Color(0xffBFEECD).withOpacity(0.3), Color(0xffBFEECD).withOpacity(0.2)],
+                ? [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha:0.3)]
+                : [Color(0xffBFEECD).withValues(alpha:0.3), Color(0xffBFEECD).withValues(alpha:0.2)],
           ),
         ),
         child: Column(
@@ -450,7 +448,7 @@ class RequestsScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                         blurRadius: 4,
                         spreadRadius: 1,
                         offset: Offset(0, 3),
