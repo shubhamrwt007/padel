@@ -527,8 +527,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
     // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
-    final timeStr =data.openMatchStatus== "pending"?"${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
-
+    final timeStr = data.openMatchStatus == "pending"||data.openMatchStatus =="cancelled"
+        ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
+        : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
     final clubName = data.clubId?.clubName ?? '-';
 
     final locationName = (data.clubId?.locations?.isNotEmpty ?? false)
@@ -538,8 +539,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
     
-    // Show yourShare if adminStatus is true, otherwise show totalAmount
-    final price = data.adminStatus == true 
+    // Show yourShare if openMatchStatus is pending, otherwise show totalAmount
+    final price = data.openMatchStatus == "pending"
         ? "${data.yourShare ?? 0}"
         : "${data.totalAmount ?? 0}";
     // final price = (data.slot?.isNotEmpty == true &&
@@ -828,7 +829,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
         } else {
           // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.bookingId?.totalAmount/4);
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.totalAmount/4);
         }
       },
       child: CircleAvatar(
