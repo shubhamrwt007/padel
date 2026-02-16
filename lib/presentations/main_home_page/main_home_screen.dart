@@ -499,8 +499,9 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       final bookings = homeController.bookings.value?.data ?? [];
+      final filteredBookings = bookings.where((b) => b.isOpenMatch != true).toList();
 
-      if (bookings.isEmpty) {
+      if (filteredBookings.isEmpty) {
         return SizedBox.shrink();
       } else {
         return Column(
