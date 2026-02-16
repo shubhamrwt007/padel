@@ -21,10 +21,10 @@ class OpenMatchForAllCourtController extends GetxController {
   final isMyBooking = false.obs;
   Rx<bool> viewUnavailableSlots = false.obs;
   RxList<String> selectedSlots = <String>[].obs;
-  RxString selectedTimeFilter = 'morning'.obs; // New: for tab selection
-  RxString selectedGameLevel = 'Game Level'.obs; // New: for game level selection
-  RxBool isGameLevelSelected = false.obs; // Track if game level is selected
-  RxInt expandedIndex = (-1).obs; // Add expanded index for card expansion
+  RxString selectedTimeFilter = 'morning'.obs;
+  RxString selectedGameLevel = 'Game Level'.obs;
+  RxBool isGameLevelSelected = false.obs;
+  RxInt expandedIndex = (-1).obs;
 
   String? selectedTime;
   Rx<DateTime> selectedDate = DateTime.now().obs;
@@ -111,6 +111,17 @@ class OpenMatchForAllCourtController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // Set default tab based on current time
+    final now = DateTime.now();
+    final hour = now.hour;
+    if (hour >= 6 && hour < 12) {
+      selectedTimeFilter.value = 'morning';
+    } else if (hour >= 12 && hour < 18) {
+      selectedTimeFilter.value = 'afternoon';
+    } else {
+      selectedTimeFilter.value = 'evening';
+    }
     
     // Initialize payment service
     _paymentService = RazorpayPaymentService();

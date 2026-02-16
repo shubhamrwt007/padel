@@ -177,6 +177,13 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 onTap: (){
                   final openMatchStatus= booking.openMatchId?.openMatchStatus =="cancelled";
                   if(openMatchStatus){
+                    final createdBy = booking.openMatchId?.createdBy;
+                    final currentUserId = storage.read('userId');
+                    
+                    if(createdBy != currentUserId) {
+                      return;
+                    }
+                    
                     final alternativeCourts = booking.alternativeCourts ?? [];
                     if(alternativeCourts.isEmpty){
                       Get.bottomSheet(

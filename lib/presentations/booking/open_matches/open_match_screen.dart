@@ -2,16 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
-import 'package:padel_mobile/configs/components/search_field.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/booking_exports.dart';
-
 class OpenMatchesScreen extends StatefulWidget {
   OpenMatchesScreen({super.key});
-
   @override
   State<OpenMatchesScreen> createState() => _OpenMatchesScreenState();
 }
@@ -319,8 +316,8 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 
       final tabs = [
         {"label": "Morning", "icon": Icons.wb_twilight_sharp, "value": "morning"},
-        {"label": "Noon", "icon": Icons.wb_sunny, "value": "noon"},
-        {"label": "Evening", "icon": Icons.nightlight_round, "value": "night"},
+        {"label": "Noon", "icon": Icons.wb_sunny, "value": "afternoon"},
+        {"label": "Evening", "icon": Icons.nightlight_round, "value": "evening"},
       ];
 
       return Theme(
@@ -345,8 +342,10 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
 
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () =>
-                      controller.selectedTimeFilter.value = value,
+                      onTap: () {
+                        controller.selectedTimeFilter.value = value;
+                        controller.fetchMatchesForSelection();
+                      },
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 250),

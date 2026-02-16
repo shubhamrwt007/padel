@@ -202,6 +202,7 @@ class OpenMatchesController extends GetxController {
         matchTime: '',
         cubId: argument.id ?? "",
         search: selectedGameLevel.value == 'Game Level' ? '' : selectedGameLevel.value,
+        dayfilter: selectedTimeFilter.value,
       );
       matchesBySelection.value = response;
     } catch (e) {
