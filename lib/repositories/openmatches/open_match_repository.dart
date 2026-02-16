@@ -118,14 +118,15 @@ class OpenMatchRepository {
     required String matchDate,
     String? matchTime,
     required String cubId,
-    String? search
+    String? search,
+    String? dayfilter,
   }) async {
     try {
       // Encode matchTime properly (space → %20)
       final encodedTime = Uri.encodeComponent(matchTime!);
 
       final url =
-          "${AppEndpoints.getOpenMatches}?clubId=$cubId&matchDate=$matchDate&matchTime=$encodedTime&search=$search";
+          "${AppEndpoints.getOpenMatches}?clubId=$cubId&matchDate=$matchDate&matchTime=$encodedTime&search=$search${dayfilter != null ? '&dayfilter=$dayfilter' : ''}";
 
       final response = await dioClient.get(url);
 

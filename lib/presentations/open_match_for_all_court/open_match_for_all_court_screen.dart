@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
