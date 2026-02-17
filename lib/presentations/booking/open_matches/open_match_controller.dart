@@ -102,7 +102,7 @@ class OpenMatchesController extends GetxController {
     }
   }
 
-  /// Get time period (morning, noon, night) for a given time slot
+  /// Get time period (morning, noon, evening) for a given time slot
   String getTimePeriod(String timeSlot) {
     try {
       final cleaned = timeSlot.replaceAll(' ', '').toUpperCase();
@@ -117,7 +117,7 @@ class OpenMatchesController extends GetxController {
           try {
             parsed = DateFormat('ha').parse(cleaned);
           } catch (_) {
-            return 'morning'; // default fallback
+            return 'morning';
           }
         }
       }
@@ -126,10 +126,10 @@ class OpenMatchesController extends GetxController {
 
       if (hour >= 6 && hour < 12) {
         return 'morning'; // 6 AM - 11:59 AM
-      } else if (hour >= 12 && hour < 18) {
-        return 'noon'; // 12 PM - 5:59 PM
+      } else if (hour >= 12 && hour < 17) {
+        return 'afternoon'; // 12 PM - 4:59 PM
       } else {
-        return 'night'; // 6 PM - 5:59 AM
+        return 'evening'; // 5 PM onwards
       }
     } catch (_) {
       return 'morning';
@@ -139,6 +139,13 @@ class OpenMatchesController extends GetxController {
   /// Filter slots by selected time period
   List<String> filterSlotsByPeriod(List<String> slots) {
     final filter = selectedTimeFilter.value;
+    if (filter == 'afternoon') {
+      // Noon: 12 PM to 4 PM
+      return slots.where((slot) => getTimePeriod(slot) == 'afternoon').toList();
+    } else if (filter == 'evening') {
+      // Evening: 5 PM to 11 PM
+      return slots.where((slot) => getTimePeriod(slot) == 'evening').toList();
+    }
     return slots.where((slot) => getTimePeriod(slot) == filter).toList();
   }
 
