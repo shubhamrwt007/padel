@@ -1157,7 +1157,8 @@ class CreateOpenMatchesController extends GetxController {
         date: formattedDate,
         sID: sId.value,
         categoryId: categoryId.value,
-        location: locationID.value
+        location: locationID.value,
+        locId: locationsId.value
       );
 
       // Debug: Log booking times from API
@@ -1739,7 +1740,8 @@ class CreateOpenMatchesController extends GetxController {
         day: '', // Get all days
         timePeriod: '', // Get all time periods
         categoryId: categoryId.value,
-        locationId: locationsId.value
+        locationId: locationID.value,
+        lockId: locationsId.value
       );
 
       allSlotPricesResponse.value = result;

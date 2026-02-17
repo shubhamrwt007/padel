@@ -3,7 +3,6 @@ class AppEndpoints {
   /// -----------------------Staging URL-------------------------------------------
   // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
   // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
-
    /// -----------------------New Live URL-------------------------------------------
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
@@ -82,7 +81,6 @@ class AppEndpoints {
 
   ///Google Maps Api------------------------------------------------------------
   static const String getLocationMaps = "${baseUrl}GetgoogleMap?";
-
   ///Wallet---------------------------------------------------------------------
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";

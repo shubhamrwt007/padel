@@ -361,6 +361,7 @@ class BookACourtController extends GetxController {
             Slots(sId: 'slot16', time: '8:00 PM', amount: 0, status: 'available'),
             Slots(sId: 'slot17', time: '9:00 PM', amount: 0, status: 'available'),
             Slots(sId: 'slot18', time: '10:00 PM', amount: 0, status: 'available'),
+            Slots(sId: 'slot19', time: '11:00 PM', amount: 0, status: 'available'),
           ],
         ),
       ],

@@ -12,12 +12,10 @@ class OpenMatchesScreen extends StatefulWidget {
   @override
   State<OpenMatchesScreen> createState() => _OpenMatchesScreenState();
 }
-
 class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   final OpenMatchesController controller = Get.put(OpenMatchesController());
   final storage = GetStorage();
   final List<bool> _expandedStates = [];
-
   @override
   Widget build(BuildContext context) {
     return Stack(

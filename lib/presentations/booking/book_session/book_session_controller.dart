@@ -167,41 +167,10 @@ class BookSessionController extends GetxController {
   }
 
   Map<String, int> _getTimeRanges() {
-    final allHours = <int>[];
-    _originalSlotsCache.forEach((_, list) {
-      for (final s in list) {
-        final hour = _parseHour24(s.time);
-        if (hour != null) allHours.add(hour);
-      }
-    });
-    
-    if (allHours.isEmpty) {
-      return {
-        'morningStart': 5, 'morningEnd': 11,
-        'noonStart': 12, 'noonEnd': 17,
-        'nightStart': 18, 'nightEnd': 23,
-      };
-    }
-    
-    allHours.sort();
-    final minHour = allHours.first;
-    final maxHour = allHours.last;
-    
-    // Dynamic ranges based on available slots
-    final morningStart = minHour;
-    final morningEnd = minHour < 12 ? 11 : minHour;
-    final noonStart = 12;
-    final noonEnd = maxHour > 17 ? 17 : maxHour;
-    final nightStart = 18;
-    final nightEnd = maxHour;
-    
     return {
-      'morningStart': morningStart,
-      'morningEnd': morningEnd,
-      'noonStart': noonStart,
-      'noonEnd': noonEnd,
-      'nightStart': nightStart,
-      'nightEnd': nightEnd,
+      'morningStart': 5, 'morningEnd': 11,
+      'noonStart': 12, 'noonEnd': 16,
+      'nightStart': 17, 'nightEnd': 23,
     };
   }
 
@@ -335,6 +304,7 @@ var locationsId = "".obs;
     log("Fetching courts for club: $clubId");
     log("Selected date: ${selectedDate.value}");
     log("Show unavailable: $showUnavailable");
+    log("Lock ID (locationsId): ${locationsId.value}");
 
     isLoadingCourts.value = true;
 
@@ -353,7 +323,8 @@ var locationsId = "".obs;
         date: formattedDate,
         sID: sID,
         categoryId: categoryId,
-        location: locationId
+        location: locationId,
+        locId: locationsId.value
         // duration: selectedDuration.value.split(' ').first
       );
 
@@ -411,7 +382,6 @@ var locationsId = "".obs;
       log("Error occurred: $e");
       log("Stack trace: $stackTrace");
       slots.value = null;
-
       // Get.snackbar(
       //   "Error",
       //   "Failed to load courts. Please try again.",
@@ -1387,8 +1357,9 @@ var locationsId = "".obs;
         duration: '', // Get all durations
         day: '', // Get all days
         timePeriod: '', // Get all time periods
-        locationId: locationsId.value,
-        categoryId: categoryId.value
+        locationId: locationID.value,
+        categoryId: categoryId.value,
+        lockId: locationsId.value
       );
 
       allSlotPricesResponse.value = result;

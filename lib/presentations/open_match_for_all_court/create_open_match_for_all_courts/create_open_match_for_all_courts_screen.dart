@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +22,6 @@ import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.d
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'create_open_match_for_all_courts_controller.dart';
-
-
-
 class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   final CreateOpenMatchForAllCourtsController controller = Get.put(CreateOpenMatchForAllCourtsController());
   final WalletController walletController = Get.put(WalletController());
@@ -399,8 +395,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                             ? Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           child: _courtRow(
-                            courtName: court.courtName ?? 'Court ${courtIndex + 1}',
-                            type: clubData.registerClub?.courtType?.join(', ') ?? 'Court',
+                            courtName: court.courtName ?? ' ${courtIndex + 1}',
+                            type: clubData.registerClub?.courtType?.join(', ') ?? '',
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
                             courtId: court.id ?? '',
@@ -442,18 +438,21 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             /// LEFT TEXT
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(courtName, style: Get.textTheme.headlineMedium),
-                Text(
-                  type.split(',').first,
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-              ],
+            SizedBox(
+              width: 100,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(courtName, style: Get.textTheme.headlineMedium),
+                  Text(
+                    type.split(',').first,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
             SizedBox(width: 15,),
 
