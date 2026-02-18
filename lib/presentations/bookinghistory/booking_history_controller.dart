@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../../repositories/bookinghisory/booking_history_repository.dart';
@@ -463,14 +464,47 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
         barrierDismissible: false,
       );
 
+      // Request storage permission based on Android version
+      PermissionStatus status;
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          // Android 13+ doesn't need storage permission for downloads
+          status = PermissionStatus.granted;
+        } else {
+          status = await Permission.storage.request();
+        }
+      } else {
+        status = await Permission.storage.request();
+      }
+      
+      if (status.isDenied) {
+        Get.back();
+        Fluttertoast.showToast(
+          msg: "Storage permission denied",
+          toastLength: Toast.LENGTH_SHORT,
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+
       final response = await http.get(Uri.parse(invoiceUrl));
 
       if (response.statusCode == 200) {
-        final directory = await getApplicationDocumentsDirectory();
+        Directory? directory;
+        
+        if (Platform.isAndroid) {
+          directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            directory = await getExternalStorageDirectory();
+          }
+        } else {
+          directory = await getApplicationDocumentsDirectory();
+        }
 
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final fileName = 'invoice_$timestamp.pdf';
-        final filePath = '${directory.path}/$fileName';
+        final filePath = '${directory!.path}/$fileName';
 
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
@@ -478,14 +512,25 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
         Get.back();
 
         Fluttertoast.showToast(
-          msg: "Invoice downloaded successfully",
-          toastLength: Toast.LENGTH_SHORT,
+          msg: "Invoice downloaded to Downloads folder",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
         );
       } else {
         Get.back();
+        Fluttertoast.showToast(
+          msg: "Failed to download invoice",
+          toastLength: Toast.LENGTH_SHORT,
+          backgroundColor: Colors.red,
+        );
       }
     } catch (e) {
       Get.back();
+      Fluttertoast.showToast(
+        msg: "Error downloading invoice: $e",
+        toastLength: Toast.LENGTH_SHORT,
+        backgroundColor: Colors.red,
+      );
     }
   }
 

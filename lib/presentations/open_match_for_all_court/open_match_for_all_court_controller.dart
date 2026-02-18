@@ -5,8 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
-import 'package:padel_mobile/data/request_models/home_models/get_club_name_model.dart';
-import 'package:padel_mobile/data/response_models/openmatch_model/all_open_matches.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -164,7 +162,7 @@ class OpenMatchForAllCourtController extends GetxController {
     final DateTime today = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate.value ?? today,
+      initialDate: selectedDate.value,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365)),
       builder: (context, child) {
@@ -321,28 +319,6 @@ class OpenMatchForAllCourtController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  String _formatTimeForApi(String raw) {
-    final cleaned = raw.replaceAll(' ', '').toUpperCase();
-    DateTime? parsed;
-    try {
-      parsed = DateFormat('h:mma').parse(cleaned);
-    } catch (_) {
-      try {
-        parsed = DateFormat('hha').parse(cleaned);
-      } catch (_) {
-        try {
-          parsed = DateFormat('ha').parse(cleaned);
-        } catch (_) {
-          parsed = null;
-        }
-      }
-    }
-    if (parsed == null) {
-      return raw;
-    }
-    return DateFormat('h a').format(parsed).toLowerCase();
   }
 
   /// Format time range from list of times
@@ -670,6 +646,8 @@ class OpenMatchForAllCourtController extends GetxController {
   }) async {
     try {
       final matchId = match?.sId ?? '';
+
+      final isPendingMatch = match?.openMatchStatus == "pending";
       final body = {
         "matchId": matchId,
         "prefferedTeam": prefferedTeam,
@@ -679,7 +657,7 @@ class OpenMatchForAllCourtController extends GetxController {
       };
 
       CustomLogger.logMessage(msg: "directJoinAdminMatch body: $body", level: LogLevel.info);
-      final response = await repository.directJoinAdminMatch(body: body);
+      final response = await repository.directJoinAdminMatch(body: body, isPendingMatch: isPendingMatch);
       CustomLogger.logMessage(msg: "directJoinAdminMatch response: $response", level: LogLevel.info);
 
       if (razorpayOrderId == null) {

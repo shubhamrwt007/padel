@@ -397,10 +397,12 @@ class AddPlayerController extends GetxController {
         Get.to(() => PaymentForWallet(
           totalAmount: price??0,
           title: "Match Request",
-        ));
-        // _showInsufficientBalanceDialog(
-        //   e.response?.data?['message'] ?? "Resource not found",
-        // );
+        ), arguments: {
+          'requestMatchId': matchId.value,
+          'requestBookingId': bookingId,
+          'requestTeam': selectedTeam.value,
+          'requestPrice': price,
+        });
       } else {
         // SnackBarUtils.showErrorSnackBar(
         //   e.response?.data?['message'] ?? "Something went wrong",

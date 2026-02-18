@@ -67,6 +67,7 @@ class AppEndpoints {
   static const String respondToBookingRequest = "${baseUrl}court/openmatch/respondToBookingRequest";
   static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests";
   static const String directJoinAdminMatch = "${baseUrl}court/openmatch/directJoinAdminMatch";
+  static const String joinPerShareMatchWithPayment = "${baseUrl}court/openmatch/joinPerShareMatchWithPayment";
   static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
   ///Notification---------------------------------------------------------------

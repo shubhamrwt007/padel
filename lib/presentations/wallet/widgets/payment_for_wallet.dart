@@ -336,6 +336,19 @@ class PaymentForWallet extends StatelessWidget {
                               prefferedTeam,
                             );
                           } else {
+                            // Store request context if available
+                            final requestMatchId = args?['requestMatchId'];
+                            final requestBookingId = args?['requestBookingId'];
+                            final requestTeam = args?['requestTeam'];
+                            final requestPrice = args?['requestPrice'];
+                            
+                            if (requestMatchId != null && requestBookingId != null && requestTeam != null) {
+                              walletController.pendingMatchId = requestMatchId;
+                              walletController.pendingBookingId = requestBookingId;
+                              walletController.pendingTeam = requestTeam;
+                              walletController.pendingPrice = requestPrice;
+                            }
+                            
                             walletController.createBalance(amountToPay);
                           }
                         },
