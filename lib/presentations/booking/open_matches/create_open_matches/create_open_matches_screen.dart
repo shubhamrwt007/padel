@@ -409,6 +409,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
                           borderRadius: BorderRadius.circular(10),
+                          border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
+
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -478,6 +480,44 @@ class CreateOpenMatchesScreen extends StatelessWidget {
       }
 
       final courts = slotsData.data!;
+      
+      // Check if all courts have no slots (all past)
+      final hasAnySlots = courts.any((court) => (court.slots ?? []).isNotEmpty);
+      
+      if (!hasAnySlots) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "No slots available",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Try selecting a different date or time",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
 
       return GestureDetector(
         onHorizontalDragEnd: (details) {
@@ -856,15 +896,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -874,15 +907,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -899,15 +925,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                             topLeft: Radius.circular(radius),
                             bottomLeft: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 16,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -924,15 +943,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                             topRight: Radius.circular(radius),
                             bottomRight: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 16,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -948,8 +960,8 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
-                  if (!isUnavailable && !isSelected && !isPartOfGroup)
+                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED)
+                  if (!isSelected && !isPartOfGroup)
                     Positioned.fill(
                       left: 0,
                       child: Align(
@@ -957,7 +969,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: blueColor,
+                            color: isAnyHalfBooked ? Colors.red : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),

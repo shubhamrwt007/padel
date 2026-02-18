@@ -82,18 +82,17 @@ class ScoreBoardController extends GetxController {
   ///Calculate remaining match time in seconds----------------------------------------------
   int _calculateRemainingMatchTime() {
     try {
-      if (endTime.value.isEmpty) return 0;
+      if (endTime.value.isEmpty || matchDate.value.isEmpty) return 0;
 
       String endTimeStr = _normalizeTimeFormat(endTime.value.trim());
       DateTime endTimeObj = DateFormat('h:mm a').parse(endTimeStr);
       DateTime now = DateTime.now();
       
-      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTimeObj.hour, endTimeObj.minute);
-
-      // If end time is in the past, it means it's for next day
-      if (endDateTime.isBefore(now)) {
-        endDateTime = endDateTime.add(const Duration(days: 1));
-      }
+      // Parse match date
+      DateTime matchDateObj = DateTime.parse(matchDate.value.trim());
+      
+      // Create end datetime using match date
+      DateTime endDateTime = DateTime(matchDateObj.year, matchDateObj.month, matchDateObj.day, endTimeObj.hour, endTimeObj.minute);
 
       int remainingSeconds = endDateTime.difference(now).inSeconds;
       return remainingSeconds > 0 ? remainingSeconds : 0;
@@ -132,8 +131,8 @@ class ScoreBoardController extends GetxController {
   ///Check if current time is at or after match start time----------------------------------------------
   bool _isWithinMatchTimeWindow() {
     try {
-      if (startTime.value.isEmpty || endTime.value.isEmpty) {
-        CustomLogger.logMessage(msg: "startTime or endTime is EMPTY", level: LogLevel.error);
+      if (startTime.value.isEmpty || endTime.value.isEmpty || matchDate.value.isEmpty) {
+        CustomLogger.logMessage(msg: "startTime, endTime or matchDate is EMPTY", level: LogLevel.error);
         return false;
       }
 
@@ -144,8 +143,12 @@ class ScoreBoardController extends GetxController {
       DateTime endTimeObj = DateFormat('h:mm a').parse(endTimeStr);
       DateTime now = DateTime.now();
       
-      DateTime startDateTime = DateTime(now.year, now.month, now.day, startTimeObj.hour, startTimeObj.minute);
-      DateTime endDateTime = DateTime(now.year, now.month, now.day, endTimeObj.hour, endTimeObj.minute);
+      // Parse match date
+      DateTime matchDateObj = DateTime.parse(matchDate.value.trim());
+      
+      // Create start and end datetime using match date
+      DateTime startDateTime = DateTime(matchDateObj.year, matchDateObj.month, matchDateObj.day, startTimeObj.hour, startTimeObj.minute);
+      DateTime endDateTime = DateTime(matchDateObj.year, matchDateObj.month, matchDateObj.day, endTimeObj.hour, endTimeObj.minute);
       
       // If end time is before start time, it's next day
       if (endDateTime.isBefore(startDateTime)) {

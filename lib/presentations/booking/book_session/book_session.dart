@@ -345,6 +345,8 @@ class BookSession extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
                           borderRadius: BorderRadius.circular(10),
+                            border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
+
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -413,7 +415,47 @@ class BookSession extends StatelessWidget {
         return const Center(child: Text("No courts available"));
       }
 
-      final courts = slotsData.data!;
+      // Filter courts that have at least one non-past slot
+      final courts = slotsData.data!.where((court) {
+        final slotTimes = court.slots ?? [];
+        return slotTimes.any((slot) => !controller.isPastAndUnavailable(slot));
+      }).toList();
+
+      // If no courts have available slots, show "No slots available" message
+      if (courts.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "No slots available",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "All slots have passed for this time period",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
 
       return GestureDetector(
         onHorizontalDragEnd: (details) {
@@ -556,7 +598,8 @@ class BookSession extends StatelessWidget {
   }
   /// Build slots grid for a specific court
   Widget _buildSlotsGrid(List<dynamic> slotTimes, String courtId) {
-    final filteredSlots = slotTimes;
+    // Filter out past time slots
+    final filteredSlots = slotTimes.where((slot) => !controller.isPastAndUnavailable(slot)).toList();
 
     if (filteredSlots.isEmpty) {
       return Center(
@@ -618,7 +661,6 @@ class BookSession extends StatelessWidget {
     final isHalfSlot = supports30Min;
 
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
-        (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
         (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
@@ -694,9 +736,11 @@ class BookSession extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
-                color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) ? Colors.grey.shade100 : Colors.white,
+                color: (isUnavailable || (isBothHalvesBooked && supports30Min) || isSlotBookedForFullSlot) 
+                    ? Colors.grey.shade100
+                    : Colors.white,
                 border: Border.all(
-                  color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
+                  color: (isUnavailable || (isBothHalvesBooked && supports30Min) || isSlotBookedForFullSlot)
                       ? Colors.grey.shade300
                       : (isSelected || isPartOfGroup)
                       ? Colors.transparent
@@ -786,33 +830,19 @@ class BookSession extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
-                  /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS
-                  if ((!supports30Min || !isHalfSlot) && isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                  /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS (NON-30MIN SLOTS ONLY)
+                  if (!supports30Min && isAnyHalfBooked && !isSelected && !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -829,15 +859,8 @@ class BookSession extends StatelessWidget {
                             topLeft: Radius.circular(radius),
                             bottomLeft: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 16,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
@@ -854,20 +877,20 @@ class BookSession extends StatelessWidget {
                             topRight: Radius.circular(radius),
                             bottomRight: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
                         child: Center(
                           child: Icon(
                             Icons.block,
                             size: 16,
-                            color: Colors.grey.shade600,
+                            color: Colors.red.shade600,
                           ),
                         ),
                       ),
                     ),
 
                   /// VERTICAL DIVIDER FOR 30MIN SLOTS THAT SUPPORT IT
-                  if (supports30Min && !isUnavailable && !isBothHalvesBooked && !isSlotBookedForFullSlot)
+                  if (supports30Min && !isUnavailable && !isBothHalvesBooked)
                     Positioned(
                       left: 40, // Center of the 80px wide slot tile
                       top: 0,
@@ -878,8 +901,8 @@ class BookSession extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
-                  if (!isUnavailable && !isSelected && !isPartOfGroup)
+                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED)
+                  if (!isSelected && !isPartOfGroup)
                     Positioned.fill(
                       left: 0,
                       child: Align(
@@ -887,7 +910,7 @@ class BookSession extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: blueColor,
+                            color: isAnyHalfBooked ? Colors.red : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
