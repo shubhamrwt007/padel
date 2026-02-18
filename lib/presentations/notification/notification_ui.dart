@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
-import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 class NotificationScreen extends StatelessWidget {
   final NotificationController controller = Get.put(NotificationController());

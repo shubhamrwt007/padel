@@ -39,6 +39,7 @@ dependencies:
   timezone:
   permission_handler:
   path_provider:
+  device_info_plus:
   firebase_core:
   flutter_dash:
   shimmer:

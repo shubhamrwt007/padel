@@ -552,6 +552,7 @@ class OpenMatchRepository {
   ///Direct Join Admin Match---------------------------------------------------
   Future<Map<String, dynamic>> directJoinAdminMatch({
     required Map<String, dynamic> body,
+    required bool isPendingMatch,
   }) async {
     try {
       CustomLogger.logMessage(
@@ -559,8 +560,12 @@ class OpenMatchRepository {
         level: LogLevel.info,
       );
 
+      final endpoint = isPendingMatch 
+          ? AppEndpoints.joinPerShareMatchWithPayment 
+          : AppEndpoints.directJoinAdminMatch;
+
       final response = await dioClient.post(
-        AppEndpoints.directJoinAdminMatch,
+        endpoint,
         data: body,
       );
 

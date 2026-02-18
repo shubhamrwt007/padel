@@ -89,7 +89,7 @@ class MainHomeController extends GetxController{
   @override
   void onClose() {
     _bannerTimer?.cancel();
-    pageController.dispose();
+    // pageController.dispose();
     super.onClose();
   }
 

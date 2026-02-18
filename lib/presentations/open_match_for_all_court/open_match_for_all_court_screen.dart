@@ -461,6 +461,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
                           borderRadius: BorderRadius.circular(5),
+                          border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -823,6 +824,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       onTap: hasActiveRequest ? null : () async {
         if (isAdminMatch && !isLoginUserInMatch) {
           // Admin match - direct join flow
+          print("Match from Admin----------------------");
+          await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
+        } else if(match?.openMatchStatus == "pending"){
+          print("Match from User Per Share----------------------");
           await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
         } else if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
@@ -934,7 +939,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       );
       return;
     }
-
     try {
       final addPlayerController = Get.put(AddPlayerController());
       
