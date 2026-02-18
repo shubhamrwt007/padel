@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
-import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
@@ -203,6 +202,13 @@ class BookACourtController extends GetxController {
   }
   final EasyDatePickerController dateTimelineController = EasyDatePickerController();
 
+  DateTime _getInitialDate() {
+    final now = DateTime.now();
+    if (now.hour == 23 && now.minute >= 1) {
+      return DateTime(now.year, now.month, now.day + 1);
+    }
+    return now;
+  }
 
   final selectedDate = Rxn<DateTime>();
   Rx<DateTime> focusedMonth = DateTime.now().obs;
@@ -310,7 +316,7 @@ class BookACourtController extends GetxController {
   @override
   void onInit()async {
     super.onInit();
-    selectedDate.value = DateTime.now();
+    selectedDate.value = _getInitialDate();
     updateDurationFromToggle(); // Initialize duration based on is30Slots
     _initializeMockData();
     await fetchLocations();
@@ -520,8 +526,9 @@ class BookACourtController extends GetxController {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
 
+    // Filter selections for this specific court and date only
     final allDateSelections = realCourtSelections.entries
-        .where((entry) => entry.value['date'] == dateString)
+        .where((entry) => entry.value['date'] == dateString && entry.value['courtId'] == resolvedCourtId)
         .toList();
 
     if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
@@ -579,13 +586,6 @@ class BookACourtController extends GetxController {
         return;
       }
 
-      // Check if this specific half is already selected in another court
-      final isHalfInOtherCourt = isSlotTimeSelectedInOtherCourt(slot, resolvedCourtId, checkingFirstHalf: isFirstHalf);
-      if (isHalfInOtherCourt) {
-        SnackBarUtils.showInfoSnackBar("This half slot is already selected in another court");
-        return;
-      }
-
       // First selection must be full slot
       if (allDateSelections.isEmpty) {
         realCourtSelections[fullSlotKey] = {
@@ -598,7 +598,7 @@ class BookACourtController extends GetxController {
         };
       } else {
         // For half slots, check if consecutive to existing range
-        final timeRange = _getGlobalTimeRange(dateString);
+        final timeRange = _getGlobalTimeRange(dateString, resolvedCourtId);
         final clickedTime = _getSlotStartTime(slot, isFirstHalf ?? true);
         
         if (!_isConsecutiveToRange(clickedTime, timeRange, isFirstHalf ?? true)) {
@@ -639,13 +639,6 @@ class BookACourtController extends GetxController {
         _removeSlotAndCascade(slot, resolvedCourtId, dateString, true, availableSlots);
         recalculateRealCourtTotalAmount();
         realCourtSelections.refresh();
-        return;
-      }
-
-      // Check if full slot is already selected in another court
-      final isTimeInOtherCourt = isSlotTimeSelectedInOtherCourt(slot, resolvedCourtId);
-      if (isTimeInOtherCourt) {
-        SnackBarUtils.showInfoSnackBar("This time slot is already selected in another court");
         return;
       }
 
@@ -1430,13 +1423,15 @@ class BookACourtController extends GetxController {
   }
 
   // Get global time range (earliest start to latest end) across all selections
-  Map<String, DateTime?> _getGlobalTimeRange(String dateString) {
+  // Get global time range (earliest start to latest end) for a specific court
+  Map<String, DateTime?> _getGlobalTimeRange(String dateString, String courtId) {
     DateTime? earliest;
     DateTime? latest;
 
     for (var entry in realCourtSelections.entries) {
       final selection = entry.value;
       if (selection['date'] != dateString) continue;
+      if (selection['courtId'] != courtId) continue; // Only check same court
 
       final slot = selection['slot'] as Slots;
       final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
@@ -1504,12 +1499,13 @@ class BookACourtController extends GetxController {
     final clickedTime = _getSlotStartTime(slot, isFirstHalf);
     if (clickedTime == null) return;
 
-    // Remove all selections that start at or after the clicked time
+    // Remove all selections that start at or after the clicked time FOR THIS SPECIFIC COURT
     final keysToRemove = <String>[];
     
     for (var entry in realCourtSelections.entries) {
       final selection = entry.value;
       if (selection['date'] != dateString) continue;
+      if (selection['courtId'] != courtId) continue; // Only remove from same court
 
       final selectionSlot = selection['slot'] as Slots;
       final selectionIsHalfSlot = selection['isHalfSlot'] as bool? ?? false;

@@ -684,6 +684,9 @@ class CreateOpenMatchesController extends GetxController {
       final courtId = court.sId ?? '';
       final baseList = _originalSlotsCache[courtId] ?? List<Slots>.from(court.slots ?? []);
       court.slots = baseList.where((s) {
+        // Filter out past slots
+        if (isPastAndUnavailable(s)) return false;
+        
         final hour = _parseHour24(s.time);
         if (hour == null) return false;
         if (tab == 0) return hour >= 6 && hour <= 11; // Morning 6-11 am
@@ -700,6 +703,9 @@ class CreateOpenMatchesController extends GetxController {
     nightCount.value = 0;
     _originalSlotsCache.forEach((_, list) {
       for (final s in list) {
+        // Skip past slots in count
+        if (isPastAndUnavailable(s)) continue;
+        
         final hour = _parseHour24(s.time);
         if (hour == null) continue;
         if (hour >= 6 && hour <= 11) {

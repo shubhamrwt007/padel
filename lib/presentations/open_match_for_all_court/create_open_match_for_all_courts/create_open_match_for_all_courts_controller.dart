@@ -1,16 +1,13 @@
 import 'package:easy_date_timeline/easy_date_timeline.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_locations_model.dart';
 import 'package:padel_mobile/data/response_models/home_models/profile_model.dart';
-import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_screen.dart';
@@ -187,7 +184,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       barrierDismissible: false,
     );
   }
-  ///Date Picker----------------------------------------------------------------
+  /// Date Picker----------------------------------------------------------------
   Future<void> openDatePicker(BuildContext context) async {
 
     final DateTime today = DateTime.now();
@@ -1917,3 +1914,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   }
 
 }
+
+
+
+
+

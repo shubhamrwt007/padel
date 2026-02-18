@@ -351,6 +351,8 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
                           borderRadius: BorderRadius.circular(10),
+                          border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
+
                           boxShadow: isSelected
                               ? [
                             BoxShadow(

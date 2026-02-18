@@ -157,6 +157,10 @@ class BookSessionController extends GetxController {
       court.slots = baseList.where((s) {
         final hour = _parseHour24(s.time);
         if (hour == null) return false;
+        
+        // Filter out past slots
+        if (isPastAndUnavailable(s)) return false;
+        
         if (tab == 0) return hour >= timeRanges['morningStart']! && hour <= timeRanges['morningEnd']!;
         if (tab == 1) return hour >= timeRanges['noonStart']! && hour <= timeRanges['noonEnd']!;
         return hour >= timeRanges['nightStart']! && hour <= timeRanges['nightEnd']!;
@@ -184,6 +188,10 @@ class BookSessionController extends GetxController {
       for (final s in list) {
         final hour = _parseHour24(s.time);
         if (hour == null) continue;
+        
+        // Skip past slots when counting
+        if (isPastAndUnavailable(s)) continue;
+        
         if (hour >= timeRanges['morningStart']! && hour <= timeRanges['morningEnd']!) {
           morningCount.value++;
         } else if (hour >= timeRanges['noonStart']! && hour <= timeRanges['noonEnd']!) {

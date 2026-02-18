@@ -43,6 +43,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text("Create a Game").paddingOnly(right: 5),
+            
             Tooltip(
                 textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
                 decoration: BoxDecoration(
@@ -216,7 +217,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     : SizedBox.shrink()),
               ).paddingOnly(bottom: 10),
               Obx(() => !controller.showMainGrid.value
-                  ? availableCourts()
+                  ? availableCourts(context)
                   : SizedBox.shrink()),
               const SizedBox(height: 20),
             ],
@@ -224,11 +225,12 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         ),
       ),
     );
+
   }
 
 
 
-  Widget availableCourts() {
+  Widget availableCourts(BuildContext context) {
     return Obx(() {
       // Check if no slots are selected from main grid
       if (controller.multiDateSelections.isEmpty) {
@@ -393,9 +395,10 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         curve: Curves.easeInOut,
                         child: isExpanded && court.slots != null && court.slots!.isNotEmpty
                             ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           child: _courtRow(
-                            courtName: court.courtName ?? ' ${courtIndex + 1}',
+                            context: context,
+                            courtName: court.courtName ?? 'Court ${courtIndex + 1}',
                             type: clubData.registerClub?.courtType?.join(', ') ?? '',
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
@@ -419,12 +422,14 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   }
 
   Widget _courtRow({
+    required BuildContext context,
     required String courtName,
     required String type,
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
-  }) {
+  })
+  {
     // Show all slots from API
     final displaySlots = availableSlots?.isNotEmpty == true
         ? availableSlots!.map((slot) => Slots(
@@ -438,50 +443,44 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// LEFT TEXT
             SizedBox(
-              width: 100,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(courtName, style: Get.textTheme.headlineMedium),
-                  Text(
-                    type.split(',').first,
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
+              width: 80,
+              child: Text(
+                courtName,
+                style: Get.textTheme.headlineLarge,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            SizedBox(width: 15,),
+            SizedBox(width: 15),
 
-            /// TIME SLOTS - Show all slots in grid format
+            /// TIME SLOTS - Show all slots in horizontal scroll
             if (displaySlots.isNotEmpty)
               Expanded(
-                child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.6,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: displaySlots.map((slot) {
+                      final index = displaySlots.indexOf(slot);
+                      return SizedBox(
+                        width: 88,
+                        child: Obx(() => _buildCourtSlotTile(
+                          context,
+                          slot,
+                          courtName,
+                          selectedIndex,
+                          index,
+                          courtId: courtId ?? 'court$selectedIndex',
+                          availableSlots: displaySlots,
+                        )),
+                      );
+                    }).toList(),
                   ),
-                  itemCount: displaySlots.length,
-                  itemBuilder: (context, index) {
-                    final slot = displaySlots[index];
-                    return Obx(() => _buildCourtSlotTile(
-                      context,
-                      slot,
-                      courtName,
-                      selectedIndex,
-                      index,
-                      courtId: courtId ?? 'court$selectedIndex',
-                      availableSlots: displaySlots,
-                    ));
-                  },
                 ),
               )
             else
@@ -1052,7 +1051,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       int slotIndex, {
         String? courtId,
         List<dynamic>? availableSlots,
-      }) {
+      })
+  {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
@@ -1553,9 +1553,6 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       },
     );
   }
-
-
-
   String formatTimeSlot(String time) {
     return controller.formatTimeForDisplay(time);
   }

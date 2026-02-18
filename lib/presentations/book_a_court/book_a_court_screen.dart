@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
 import 'package:padel_mobile/generated/assets.dart';
@@ -676,6 +675,14 @@ class BookACourtScreen extends StatelessWidget {
                               date.month,
                               date.day,
                             );
+                            // Hide today's date if time is 11:01 PM or later
+                            if (now.hour == 23 && now.minute >= 1) {
+                              if (currentDate.year == today.year &&
+                                  currentDate.month == today.month &&
+                                  currentDate.day == today.day) {
+                                return const SizedBox.shrink();
+                              }
+                            }
                             if (currentDate.isBefore(today)) {
                               return const SizedBox.shrink();
                             }
@@ -1107,9 +1114,6 @@ class BookACourtScreen extends StatelessWidget {
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
     final isLeftHalfBooked = supports30Min && controller.isLeftHalfBooked(slot, resolvedCourtId);
     final isRightHalfBooked = supports30Min && controller.isRightHalfBooked(slot, resolvedCourtId);
-    final isLeftHalfInOtherCourt = supports30Min && controller.isSlotTimeSelectedInOtherCourt(slot, resolvedCourtId, checkingFirstHalf: true);
-    final isRightHalfInOtherCourt = supports30Min && controller.isSlotTimeSelectedInOtherCourt(slot, resolvedCourtId, checkingFirstHalf: false);
-    final isFullSlotInOtherCourt = !supports30Min && controller.isSlotTimeSelectedInOtherCourt(slot, resolvedCourtId);
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
@@ -1124,12 +1128,12 @@ class BookACourtScreen extends StatelessWidget {
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Prevent selection of left half if it's booked or in other court
-              if (isLeftHalf && (isLeftHalfBooked || isLeftHalfInOtherCourt)) {
+              // Prevent selection of left half if it's booked
+              if (isLeftHalf && isLeftHalfBooked) {
                 return;
               }
-              // Prevent selection of right half if it's booked or in other court
-              if (!isLeftHalf && (isRightHalfBooked || isRightHalfInOtherCourt)) {
+              // Prevent selection of right half if it's booked
+              if (!isLeftHalf && isRightHalfBooked) {
                 return;
               }
 
@@ -1143,7 +1147,7 @@ class BookACourtScreen extends StatelessWidget {
               );
             }
           } : null,
-          onTap: !supports30Min && !isFullSlotInOtherCourt ? () {
+          onTap: !supports30Min ? () {
             // Prevent selection if slot is booked
             if (isLeftHalfBooked || isRightHalfBooked) {
               return;
@@ -1233,7 +1237,7 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// LEFT HALF BOOKED OVERLAY (FADED)
-                if (supports30Min && (isLeftHalfBooked || isLeftHalfInOtherCourt) && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
@@ -1250,7 +1254,7 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// RIGHT HALF BOOKED OVERLAY (FADED)
-                if (supports30Min && (isRightHalfBooked || isRightHalfInOtherCourt) && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
@@ -1263,15 +1267,6 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                         color: Colors.grey.shade300.withValues(alpha: 0.8),
                       ),
-                    ),
-                  ),
-
-                /// FULL SLOT IN OTHER COURT OVERLAY
-                if (!supports30Min && isFullSlotInOtherCourt && !isSelected)
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(radius),
-                      color: Colors.grey.shade300.withValues(alpha: 0.8),
                     ),
                   ),
 
@@ -1345,7 +1340,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Left half grayed text for booked slots
-                      if (supports30Min && (isLeftHalfBooked || isLeftHalfInOtherCourt) && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: LeftHalfClipper(),
                           child: Text(
@@ -1359,7 +1354,7 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Right half grayed text for booked slots
-                      if (supports30Min && (isRightHalfBooked || isRightHalfInOtherCourt) && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: RightHalfClipper(),
                           child: Text(
@@ -1369,17 +1364,6 @@ class BookACourtScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: Colors.grey.shade600,
                             ),
-                          ),
-                        ),
-
-                      // Full slot grayed text for other court
-                      if (!supports30Min && isFullSlotInOtherCourt && !isSelected)
-                        Text(
-                          controller.formatTimeForDisplay(slot.time),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
                           ),
                         ),
 
