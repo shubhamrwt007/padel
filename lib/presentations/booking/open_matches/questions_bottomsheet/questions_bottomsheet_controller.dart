@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/generated/assets.dart';
@@ -316,27 +317,11 @@ class QuestionsBottomsheetController extends GetxController {
     log("🚀 Starting match creation process with payment");
     if (!validateSelections()) return;
     // if (!validateTeams()) {
-    //   Fluttertoast.showToast(
-    //     msg: "Please add required players to both teams",
-    //     toastLength: Toast.LENGTH_SHORT,
-    //     gravity: ToastGravity.BOTTOM,
-    //     backgroundColor: Colors.red,
-    //     textColor: Colors.white,
-    //     fontSize: 16.0,
-    //     timeInSecForIosWeb: 3,
-    //   );
+    // AppToast.error("Please add required players to both teams");
     //   return;
     // }
     if (_razorpayOrderId == null) {
-      Fluttertoast.showToast(
-        msg: "Match not initialized. Please try again.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
+      AppToast.error("Match not initialized. Please try again.");
       return;
     }
 

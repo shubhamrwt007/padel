@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -480,11 +481,7 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       
       if (status.isDenied) {
         Get.back();
-        Fluttertoast.showToast(
-          msg: "Storage permission denied",
-          toastLength: Toast.LENGTH_SHORT,
-          backgroundColor: Colors.red,
-        );
+        AppToast.error("Storage permission denied");
         return;
       }
 
@@ -510,27 +507,14 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
         await file.writeAsBytes(response.bodyBytes);
 
         Get.back();
-
-        Fluttertoast.showToast(
-          msg: "Invoice downloaded to Downloads folder",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-        );
+        AppToast.error("Invoice downloaded to Downloads folder");
       } else {
         Get.back();
-        Fluttertoast.showToast(
-          msg: "Failed to download invoice",
-          toastLength: Toast.LENGTH_SHORT,
-          backgroundColor: Colors.red,
-        );
+        AppToast.error("Failed to download invoice");
       }
     } catch (e) {
       Get.back();
-      Fluttertoast.showToast(
-        msg: "Error downloading invoice: $e",
-        toastLength: Toast.LENGTH_SHORT,
-        backgroundColor: Colors.red,
-      );
+      AppToast.error("Error downloading invoice: $e");
     }
   }
 

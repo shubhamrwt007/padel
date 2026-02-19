@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_controller.dart';
 import 'package:padel_mobile/presentations/open_match_for_all_court/open_match_for_all_court_controller.dart';
 import 'package:padel_mobile/presentations/openmatchbooking/openmatch_booking_controller.dart';
@@ -55,37 +56,13 @@ class AddPlayerController extends GetxController {
       return;
     }
     if (phoneController.text.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please Enter Phone Number",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please Enter Phone Number");
     }
     else if (nameController.text.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please Enter Full Name",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please Enter Full Name");
     }
     else if (gender.value.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please Select Gender",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please Select Gender");
     }
 
     isLoading.value = true;

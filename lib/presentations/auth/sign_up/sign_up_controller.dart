@@ -1,6 +1,7 @@
 // SignUpController.dart
 import 'dart:developer';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/sign_up_model.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
@@ -114,15 +115,7 @@ class SignUpController extends GetxController {
         if (!userExists) {
           await sendOTP();
         } else {
-          Fluttertoast.showToast(
-            msg: "Phone number ${phoneController.text.trim()} already exists",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0,
-            timeInSecForIosWeb: 3,
-          );
+          AppToast.error("Phone number ${phoneController.text.trim()} already exists");
         }
       } catch (e) {
         log(e.toString());
@@ -134,27 +127,11 @@ class SignUpController extends GetxController {
 
   Future<void> sendOTP() async {
     if (selectedGender.value.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please select your gender",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please select your gender");
       return;
     }
     else if (selectedLocation.value.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please select your Location",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please select your Location");
       return;
     }
     Map<String, dynamic> body = {
@@ -175,15 +152,7 @@ class SignUpController extends GetxController {
         },
       );
     } else {
-      Fluttertoast.showToast(
-        msg: result.message!,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
+      AppToast.error(result.message!);
     }
   }
 
@@ -245,15 +214,7 @@ class SignUpController extends GetxController {
       }
 
     } else {
-      Fluttertoast.showToast(
-        msg: result.message!,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
+      AppToast.error(result.message!);
     }
   }
   Future<String?> getFcmToken() async {
