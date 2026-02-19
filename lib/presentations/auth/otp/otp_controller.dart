@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_controller.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/reset_password_screen.dart';
 import 'package:padel_mobile/presentations/auth/login/login_controller.dart';
@@ -55,15 +56,7 @@ class OtpController extends GetxController {
       if (result.status == "200") {
         getPurpose();
       } else if (result.status == "400") {
-        Fluttertoast.showToast(
-          msg: result.message!,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.error(result.message!);
       }
     } finally {
       isLoading.value = false;
