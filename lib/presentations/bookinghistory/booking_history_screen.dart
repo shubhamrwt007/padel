@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'dart:math' as math;
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
@@ -1358,15 +1359,7 @@ print("invoice--------- $invoiceUrlString");
                     if (invoiceUrl.isNotEmpty) {
                       await controller.downloadInvoice(invoiceUrl);
                     } else {
-                      Fluttertoast.showToast(
-                        msg: "Invoice URL not available",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
-                        backgroundColor: Colors.red,
-                        textColor: Colors.white,
-                        fontSize: 16.0,
-                        timeInSecForIosWeb: 3,
-                      );
+                      AppToast.error("Invoice URL not available");
                     }
                   } else {
                     // Get.snackbar("Access Denied", "You can only download invoices for your own bookings");
@@ -1778,6 +1771,11 @@ print("invoice--------- $invoiceUrlString");
   }
 
   void _navigateToScoreboard(dynamic booking) {
+    if (booking.scoreboard == null) {
+      AppToast.error("Scoreboard not available");
+      return;
+    }
+    
     final bookingId = booking.sId;
     if (bookingId != null && bookingId.isNotEmpty) {
       Get.toNamed(
@@ -1788,7 +1786,7 @@ print("invoice--------- $invoiceUrlString");
         },
       );
     } else {
-      Get.snackbar("Error", "Booking ID not available");
+      AppToast.error("Booking ID not available");
     }
   }
 

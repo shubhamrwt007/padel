@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/login_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -90,15 +91,7 @@ class LoginController extends GetxController {
           CustomLogger.logMessage(msg: result.message!, level: LogLevel.error);
         }
       } else {
-        Fluttertoast.showToast(
-          msg: "Phone number ${phoneController.text.trim()} not found. Please sign up first.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.error("Phone number ${phoneController.text.trim()} not found. Please sign up first.");
       }
     } catch (e) {
       log(e.toString());
@@ -153,15 +146,7 @@ class LoginController extends GetxController {
       final message = e.response?.data?['message'] ?? 'Login failed';
 
       if (code == 404) {
-        Fluttertoast.showToast(
-          msg: message,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.error(message);
         CustomLogger.logMessage(msg: message, level: LogLevel.error);
       }
     }  catch (e) {

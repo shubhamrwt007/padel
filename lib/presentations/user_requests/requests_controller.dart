@@ -1,5 +1,6 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -123,15 +124,7 @@ class RequestsController extends GetxController {
           title: "Match Request",
         ));
       } else if (e.response?.statusCode == 400) {
-        Fluttertoast.showToast(
-          msg: e.response?.data?['message']??"",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.error(e.response?.data?['message']??"");
       }else {
         CustomLogger.logMessage(msg: "Error accepting request: $e", level: LogLevel.error);
         Get.snackbar("Error", "Failed to accept request");
