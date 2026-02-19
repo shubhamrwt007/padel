@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:get/get.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/data/response_models/get_players_level_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -39,7 +40,7 @@ class CreateQuestionsController extends GetxController {
     switch (currentStep.value) {
       case 1:
         if (selectedLevel.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select a level before proceeding");
           return;
         }
@@ -47,7 +48,7 @@ class CreateQuestionsController extends GetxController {
 
       case 2:
         if (selectPlayerLevel.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select player level");
           return;
         }
@@ -56,7 +57,7 @@ class CreateQuestionsController extends GetxController {
       case 3:
       // ✅ Check for at least one selected sport
         if (selectedSports.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select at least one sport before proceeding");
           return;
         }
@@ -64,7 +65,7 @@ class CreateQuestionsController extends GetxController {
 
       case 4:
         if (selectedTraining.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select training before proceeding");
           return;
         }
@@ -72,7 +73,7 @@ class CreateQuestionsController extends GetxController {
 
       case 5:
         if (selectedAgeGroup.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select an age group before proceeding");
           return;
         }
@@ -80,7 +81,7 @@ class CreateQuestionsController extends GetxController {
 
       case 6:
         if (selectedVolley.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select volley option before proceeding");
           return;
         }
@@ -88,7 +89,7 @@ class CreateQuestionsController extends GetxController {
 
       case 7:
         if (selectedReboundSkill.value.isEmpty) {
-          SnackBarUtils.showWarningSnackBar(
+          AppToast.error(
               "Required\nPlease select wall rebound before submitting");
           return;
         }
@@ -115,9 +116,7 @@ class CreateQuestionsController extends GetxController {
   /// ============================
   void onSubmit() {
     if (selectedReboundSkill.value.isEmpty) {
-      SnackBarUtils.showWarningSnackBar(
-          "Required\nPlease select wall rebound before submitting"
-      );
+      CustomLogger.logMessage(msg:  "Required\nPlease select wall rebound before submitting", level: LogLevel.error);
       return;
     }
 

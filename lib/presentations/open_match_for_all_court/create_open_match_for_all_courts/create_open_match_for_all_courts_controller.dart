@@ -8,6 +8,7 @@ import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_m
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/data/response_models/get_locations_model.dart';
 import 'package:padel_mobile/data/response_models/home_models/profile_model.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_controller.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/questions_bottomsheet/questions_bottomsheet_screen.dart';
@@ -438,21 +439,14 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
 
       // ❌ All slots failed (locked)
       if (lockedSlots.isNotEmpty) {
-        // SnackBarUtils.showInfoSnackBar(
-        //   lockedSlots.first.message ??
-        //       "Selected slots are currently locked. Please try again.",
-        // );
+
+        CustomLogger.logMessage(msg: lockedSlots.first.message ?? "Selected slots are currently locked. Please try again.", level: LogLevel.debug);
+
       }
 
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to select slot. Please try again.",
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
       return false;
     }
   }
@@ -486,12 +480,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         realCourtSelections.remove(realCourtKey);
       } else {
         if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString, isHalfSlot: true)) {
-          // Get.snackbar(
-          //   "Selection Limit",
-          //   "You can only select 3 consecutive slots.",
-          //   backgroundColor: Colors.orange,
-          //   colorText: Colors.white,
-          // );
+          CustomLogger.logMessage(msg: "You can only select 3 consecutive slots.", level: LogLevel.debug);
           return;
         }
 
@@ -520,12 +509,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         selectedSlots.removeWhere((s) => s.sId == slotId);
       } else {
         if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString)) {
-          // Get.snackbar(
-          //   "Selection Limit",
-          //   "You can only select 3 consecutive slots.",
-          //   backgroundColor: Colors.orange,
-          //   colorText: Colors.white,
-          // );
+          CustomLogger.logMessage(msg: "You can only select 3 consecutive slots", level: LogLevel.debug);
           return;
         }
 
@@ -597,7 +581,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
 
 
   void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
-    if(Get.isSnackbarOpen) return;
 
     final slotId = slot.sId ?? '';
     final resolvedCourtId = courtId ?? '';
@@ -1032,12 +1015,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     });
 
     if (isTimeAlreadySelected) {
-      // Get.snackbar(
-      //   "Time Conflict",
-      //   "This time slot is already selected in another court.",
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
+      CustomLogger.logMessage(msg: "This time slot is already selected in another court.", level: LogLevel.debug);
       return false;
     }
 
@@ -1729,7 +1707,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       Get.back();
       onNextPayShareOnly();
     } else {
-      Get.snackbar('Error', 'Please select an option');
+      CustomLogger.logMessage(msg: "Please select an option", level: LogLevel.debug);
+
     }
   }
 

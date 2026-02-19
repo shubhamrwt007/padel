@@ -2,6 +2,7 @@ import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
@@ -263,7 +264,7 @@ class OpenMatchForAllCourtController extends GetxController {
       isLoading.value = true;
 
       if (selectedTime == null) {
-        Get.snackbar("Error", "Please select a time slot");
+        CustomLogger.logMessage(msg: "Please select a time slot", level: LogLevel.debug);
         return;
       }
 
@@ -278,10 +279,11 @@ class OpenMatchForAllCourtController extends GetxController {
       final response = await repository.createMatch(data: data);
 
       createdMatch.value = response;
+      CustomLogger.logMessage(msg: "Match created successfully!", level: LogLevel.debug);
 
-      Get.snackbar("Success", "Match created successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomLogger.logMessage(msg: e, level: LogLevel.debug);
+
     } finally {
       isLoading.value = false;
     }
@@ -403,7 +405,6 @@ class OpenMatchForAllCourtController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -422,8 +423,6 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-
-      // SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
 
       // Refresh matches
       await fetchMatchesForSelection();
@@ -447,7 +446,6 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      // SnackBarUtils.showSuccessSnackBar("Request rejected");
     } catch (e) {
       CustomLogger.logMessage(msg: "Error rejecting request: $e", level: LogLevel.error);
     } finally {
@@ -495,14 +493,14 @@ class OpenMatchForAllCourtController extends GetxController {
     try {
       final matchId = matchData.sId ?? '';
       if (matchId.isEmpty) {
-        SnackBarUtils.showErrorSnackBar("Match ID not available");
+        AppToast.error("Match ID not available");
         return;
       }
 
       // Check if logged-in user is part of the match (in teamA or teamB)
       final userId = storage.read('userId');
       if (userId == null) {
-        SnackBarUtils.showErrorSnackBar("User not logged in");
+        AppToast.error("User not logged in");
         return;
       }
 
@@ -528,7 +526,7 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Only proceed if user is part of the match
       if (!isUserInMatch) {
-        SnackBarUtils.showErrorSnackBar("You must be part of the match to create a scoreboard");
+        CustomLogger.logMessage(msg: "You must be part of the match to create a scoreboard", level: LogLevel.debug);
         return;
       }
 
@@ -630,7 +628,6 @@ class OpenMatchForAllCourtController extends GetxController {
     } catch (e) {
       isCheckingScoreboard.value = false;
       CustomLogger.logMessage(msg: "Error creating scoreboard: $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to load or create scoreboard");
     } finally {
       loadingMatchId.value = '';
     }

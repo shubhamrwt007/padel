@@ -155,26 +155,10 @@ class CartController extends GetxController {
         totalPrice.value = result.newTotalAmount!;
       }
 
-      // Get.snackbar(
-      //   "Success",
-      //   result.message ?? "Selected items removed from cart.",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.green,
-      //   colorText: Colors.white,
-      // );
-
       log("Items removed successfully");
     } catch (e) {
       log("Remove cart error: $e");
       await getCartItems();
-
-      Get.snackbar(
-        "Error",
-        "Failed to remove items: ${e.toString()}",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     } finally {
       isLoading.value = false;
       calculateTotals();

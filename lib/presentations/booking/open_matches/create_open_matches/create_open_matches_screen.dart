@@ -758,14 +758,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
 
               // Check if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                // Get.snackbar(
-                //   "Slot Unavailable",
-                //   "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
-                //   backgroundColor: Colors.redAccent,
-                //   colorText: Colors.white,
-                //   snackPosition: SnackPosition.TOP,
-                //   duration: const Duration(seconds: 2),
-                // );
+                CustomLogger.logMessage(msg: "This ${isLeftHalf ? 'left' : 'right'} half is already booked.", level: LogLevel.error);
                 return;
               }
 
@@ -778,14 +771,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
             } else {
               // For slots that don't support 30-min pricing or when selecting full slots
               if (isAnyHalfBooked) {
-                // Get.snackbar(
-                //   "Slot Unavailable",
-                //   "This slot is already booked.",
-                //   backgroundColor: Colors.redAccent,
-                //   colorText: Colors.white,
-                //   snackPosition: SnackPosition.TOP,
-                //   duration: const Duration(seconds: 2),
-                // );
+                CustomLogger.logMessage(msg: "This slot is already booked.d", level: LogLevel.error);
                 return;
               }
 

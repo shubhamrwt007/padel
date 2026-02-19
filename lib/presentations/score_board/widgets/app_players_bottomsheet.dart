@@ -334,12 +334,10 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             try {
               final response = await controller.repository.requestToJoinBookingModel(body: body);
               if (response != null) {
-                // SnackBarUtils.showSuccessSnackBar("Player request sent successfully");
                 success = true;
               }
             } catch (e) {
               print("Error calling API: $e");
-              // SnackBarUtils.showErrorSnackBar("Failed to send request");
             }
           }
           

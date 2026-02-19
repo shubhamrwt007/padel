@@ -68,15 +68,15 @@ class QuestionsBottomsheetController extends GetxController {
   // Validation method
   bool validateSelections() {
     if (selectedGameLevel.value.isEmpty) {
-      SnackBarUtils.showInfoSnackBar("Please select a game level");
+      AppToast.error("Please select a game level");
       return false;
     }
     if (selectedGameType.value.isEmpty) {
-      SnackBarUtils.showInfoSnackBar("Please select a game type");
+      AppToast.error("Please select a game type");
       return false;
     }
     if (selectedMatchType.value.isEmpty) {
-      SnackBarUtils.showInfoSnackBar("Please select a match type");
+      AppToast.error("Please select a match type");
       return false;
     }
     return true;
@@ -138,7 +138,6 @@ class QuestionsBottomsheetController extends GetxController {
       );
     } catch (e) {
       log("Error after payment success: $e");
-      // SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
     } finally {
       isProcessing.value = false;
     }
@@ -153,7 +152,6 @@ class QuestionsBottomsheetController extends GetxController {
       final matchBody = _buildMatchBody();
       if (matchBody == null) {
         Get.back();
-        // Get.snackbar("Error", "Invalid match data");
         return;
       }
 
@@ -184,7 +182,6 @@ class QuestionsBottomsheetController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Match confirmed: ${response.data}");
-        // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
         // Get.offAllNamed(RoutesName.bottomNav);
         Get.to(() => BookingSuccessfulScreen());
         openMatchBookingController.fetchOpenMatchesBooking(type: 'upcoming');
@@ -342,7 +339,6 @@ class QuestionsBottomsheetController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       log("Payment initiation error: $e");
-      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
   }
   void showBookingSuccessDialog() {

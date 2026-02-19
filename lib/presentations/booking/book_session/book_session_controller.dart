@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import '../../../data/request_models/home_models/get_available_court.dart';
@@ -390,13 +391,6 @@ var locationsId = "".obs;
       log("Error occurred: $e");
       log("Stack trace: $stackTrace");
       slots.value = null;
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to load courts. Please try again.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       isLoadingCourts.value = false;
     }
@@ -412,37 +406,13 @@ var locationsId = "".obs;
     return dates;
   }
 
-  /// Check if adding a new slot would violate limits
-  bool _canAddSlot() {
-    final currentCount = multiDateSelections.length;
-    if (currentCount >= maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
-      return false;
-    }
-
-    final uniqueDates = _getUniqueDates();
-    if (uniqueDates.length >= maxDays) {
-      // Get.snackbar(
-      //   "Day Limit Reached",
-      //   "You can book for a maximum of $maxDays days only.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      //   duration: const Duration(seconds: 3),
-      // );
-      return false;
-    }
-
-    return true;
-  }
-
   Future<bool> createAndGetSlotHistory({required List<Map<String, dynamic>> slots}) async {
     try {
       log('createAndGetSlotHistory called with body: $slots');
       final response = await repository.createAndGetSlotHistory(data: slots);
 
       if (response.data.isEmpty) {
-        // SnackBarUtils.showInfoSnackBar("No slot data returned");
+        CustomLogger.logMessage(msg: "No slot data returned", level: LogLevel.error);
         return false;
       }
 
@@ -454,20 +424,13 @@ var locationsId = "".obs;
       }
 
       if (lockedSlots.isNotEmpty) {
-        // SnackBarUtils.showInfoSnackBar(
-        //   lockedSlots.first.message ?? "This slot is currently locked. Please try again.",
-        // );
+        CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
+
       }
 
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to select slot. Please try again.",
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
       return false;
     }
   }
@@ -585,7 +548,8 @@ var locationsId = "".obs;
     
     // Check limits before adding
     if (multiDateSelections.length + slotsToSelect.length > maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
+      CustomLogger.logMessage(msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.", level: LogLevel.error);
+
       return;
     }
     
@@ -1139,13 +1103,6 @@ var locationsId = "".obs;
       await paymentController.createInitialBooking();
     } catch (e) {
       log('proceedToPayment error: $e');
-      // Get.snackbar(
-      //   'Error',
-      //   'Something went wrong. Please try again.',
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       cartLoader.value = false;
     }

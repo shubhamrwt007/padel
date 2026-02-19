@@ -1,3 +1,5 @@
+import 'package:padel_mobile/configs/components/app_toast.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/forgot_password_exports.dart';
 
@@ -75,9 +77,9 @@ class ForgotPasswordController extends GetxController {
             "type": OtpScreenType.forgotPassword,
           },
         );
-        SnackBarUtils.showInfoSnackBar("OTP sent successfully");
+        AppToast.success("OTP sent successfully");
       } else {
-        SnackBarUtils.showErrorSnackBar(result.message!);
+        AppToast.error(result.message??"");
       }
     } finally {
       isOTPLoading.value = false;
@@ -96,12 +98,13 @@ class ForgotPasswordController extends GetxController {
         var response = await signUpRepository.resetPassword(body: body);
         if (response.status == "200") {
           Get.offAll(()=>LoginScreen());
-          SnackBarUtils.showSuccessSnackBar("Password Updated Successfully");
+          AppToast.success("Password Updated Successfully");
         } else {
-          SnackBarUtils.showErrorSnackBar(response.message!);
+          AppToast.error(response.message??"");
+
         }
       } catch (e) {
-        SnackBarUtils.showErrorSnackBar(e.toString());
+        CustomLogger.logMessage(msg: e, level: LogLevel.error);
       } finally {
         isLoading.value = false;
       }

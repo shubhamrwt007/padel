@@ -457,7 +457,7 @@ class CreateOpenMatchesController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+      CustomLogger.logMessage(msg: "Please select at least one slot to continue.", level: LogLevel.error);
       return;
     }
 
@@ -797,18 +797,6 @@ class CreateOpenMatchesController extends GetxController {
     _recalculateTotalAmount();
     log("Selected ${multiDateSelections.length} slots across multiple dates, Total: ₹${totalAmount.value}");
   }
-  /// Check if adding a new slot would violate limits
-  bool _canAddSlot() {
-    final currentCount = getTotalSelectionsCount(); // Use the consolidated count
-    if (currentCount >= maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
-      return false;
-    }
-
-    // For open matches, we only allow single day selection, so skip the day limit check
-    // since we already enforce single date selection in toggleSlotSelection
-    return true;
-  }
 
   /// Get unique dates from selections
   Set<String> _getUniqueDates() {
@@ -855,13 +843,15 @@ class CreateOpenMatchesController extends GetxController {
                                   multiDateSelections.containsKey(fullKey);
     
     if (!isSlotAlreadySelected && getTotalSelectionsCount() >= maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
+      CustomLogger.logMessage(msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.", level: LogLevel.error);
+
       return;
     }
     
     // Check if this selection maintains consecutive slots
     if (!isSlotAlreadySelected && !_isConsecutiveSelectionAllowed(courtId, slotId, dateString)) {
-      // SnackBarUtils.showErrorSnackBar("Please select consecutive time slots only.");
+      CustomLogger.logMessage(msg: "Please select consecutive time slots only.", level: LogLevel.error);
+
       return;
     }
     
@@ -1222,13 +1212,6 @@ class CreateOpenMatchesController extends GetxController {
       log("Stack trace: $stackTrace");
       slots.value = null;
 
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to load courts. Please try again.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       isLoadingCourts.value = false;
     }
@@ -1392,13 +1375,6 @@ class CreateOpenMatchesController extends GetxController {
       cartLoader.value = true;
 
       if (multiDateSelections.isEmpty) {
-        // Get.snackbar(
-        //   "No Slots Selected",
-        //   "Please select at least one slot before adding to cart.",
-        //   backgroundColor: Colors.redAccent,
-        //   colorText: Colors.white,
-        //   snackPosition: SnackPosition.TOP,
-        // );
         return;
       }
 
@@ -1482,22 +1458,8 @@ class CreateOpenMatchesController extends GetxController {
       (data is Map && data['message'] is String) ? data['message'] as String : null;
       final detailed = serverMessage ?? e.message ?? 'Something went wrong.';
       log("Add to cart failed (Dio): status=${e.response?.statusCode}, data=${e.response?.data}");
-      // Get.snackbar(
-      //   "Error",
-      //   detailed,
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } catch (e) {
       log("Error adding to cart: $e");
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to add slots to cart. Please try again.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       cartLoader.value = false;
     }

@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
@@ -126,7 +127,6 @@ class PaymentMethodController extends GetxController {
   void _handlePaymentFailure(PaymentFailureResponse response) {
     isProcessing.value = false;
     // Get.back();
-    // SnackBarUtils.showErrorSnackBar("Payment Failed: ${response.message}");
   }
 
   // Direct booking without payment (for Android)
@@ -539,12 +539,12 @@ class PaymentMethodController extends GetxController {
   final ProfileController profileController = Get.put(ProfileController());
   Future<void> startPayment() async {
     if (option.value.isEmpty) {
-      Get.snackbar("Payment Method", "Please select a payment method");
+      AppToast.error("Please select a payment method");
       return;
     }
 
     if (_razorpayOrderId == null || _razorpayOrderId!.isEmpty) {
-      SnackBarUtils.showErrorSnackBar("Booking not initialized. Please try again.");
+      AppToast.error("Booking not initialized. Please try again.");
       return;
     }
 

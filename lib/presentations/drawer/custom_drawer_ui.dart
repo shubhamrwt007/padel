@@ -250,8 +250,6 @@ class CustomDrawerUi extends GetView<ProfileController> {
               //     onTap: () {
               //       controller.selectedIndex.value = 9;
               //       // Get.toNamed(RoutesName.community);
-              //       if(Get.isSnackbarOpen)return;
-              //      SnackBarUtils.showInfoSnackBar("Community coming soon!");
               //     },
               //   ),
               // ),

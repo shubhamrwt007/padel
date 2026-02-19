@@ -35,9 +35,7 @@ var profileModel = Rxn<ProfileModel>();
         log("PROFILE MODEL => ${profileModel.value}");
         update();
       } else {
-        SnackBarUtils.showErrorSnackBar(
-          result.message ?? 'Failed to fetch profile',
-        );
+        CustomLogger.logMessage(msg: result.message ?? 'Failed to fetch profile', level: LogLevel.error);
       }
     } catch (e, st) {
       CustomLogger.logMessage(msg: e.toString(), level: LogLevel.error, st: st);
@@ -126,7 +124,8 @@ var profileModel = Rxn<ProfileModel>();
     try{
       final response = await profileRepository.deleteCustomer();
       if(response.status == 200){
-        // SnackBarUtils.showSuccessSnackBar(response.message??"User Delete");
+        CustomLogger.logMessage(msg: response.message??"User Delete", level: LogLevel.error);
+
         Get.offAllNamed(RoutesName.login);
       }
     }catch(e){
@@ -218,7 +217,8 @@ var profileModel = Rxn<ProfileModel>();
 
         Get.offAllNamed(RoutesName.login);
       } else {
-        SnackBarUtils.showErrorSnackBar(result.message!);
+        CustomLogger.logMessage(msg: result.message!, level: LogLevel.error);
+
       }
     } catch (e) {
       log(e.toString());

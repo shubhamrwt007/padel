@@ -165,7 +165,7 @@ class OpenMatchesController extends GetxController {
       isLoading.value = true;
 
       if (selectedTime == null) {
-        Get.snackbar("Error", "Please select a time slot");
+        CustomLogger.logMessage(msg: "Please select a time slot", level: LogLevel.error);
         return;
       }
 
@@ -180,10 +180,10 @@ class OpenMatchesController extends GetxController {
       final response = await repository.createMatch(data: data);
 
       createdMatch.value = response;
+      CustomLogger.logMessage(msg: "Match created successfully!", level: LogLevel.error);
 
-      Get.snackbar("Success", "Match created successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomLogger.logMessage(msg: e, level: LogLevel.error);
     } finally {
       isLoading.value = false;
     }
@@ -324,7 +324,6 @@ class OpenMatchesController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -343,9 +342,7 @@ class OpenMatchesController extends GetxController {
       
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      
-      SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
-      
+
       // Refresh matches
       await fetchMatchesForSelection();
     } catch (e) {
@@ -368,7 +365,6 @@ class OpenMatchesController extends GetxController {
       
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      SnackBarUtils.showSuccessSnackBar("Request rejected");
     } catch (e) {
       CustomLogger.logMessage(msg: "Error rejecting request: $e", level: LogLevel.error);
     } finally {

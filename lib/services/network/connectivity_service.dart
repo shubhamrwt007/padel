@@ -126,7 +126,7 @@ class ConnectivityService extends GetxService {
     if (_isShowingNoInternetSnackBar) return;
     
     _isShowingNoInternetSnackBar = true;
-    // SnackBarUtils.showErrorSnackBar('. Please check your network settings.');
+     // AppToast.error('. Please check your network settings.');
     AppToast.error("No internet connection");
     
     // Start cooldown timer

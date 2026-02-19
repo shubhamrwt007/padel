@@ -399,15 +399,15 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       final result = await bookingRepo.updateNewCourtBookingModel(body: body);
       
       if (result?.status == 200) {
-        // Get.snackbar('Success', 'Court booking updated successfully');
         Get.back(); // Close the sheet
         refreshBookings(); // Refresh the bookings list
         CustomLogger.logMessage(msg: "MESSAGE-> ${result?.message??""}", level: LogLevel.debug);
       } else {
-        // Get.snackbar('Error', 'Failed to update court booking');
+        CustomLogger.logMessage(msg: "Failed to update court booking", level: LogLevel.debug);
+
       }
     } catch (e) {
-      // Get.snackbar('Error', 'Failed to update court booking: $e');
+      CustomLogger.logMessage(msg: "Failed to update court booking: $e", level: LogLevel.debug);
     } finally {
       isLoading.value = false;
     }
@@ -428,13 +428,16 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       final result = await bookingRepo.updateRefundAmount(body: body);
       
       if (result?.status == 200) {
-        // Get.snackbar('Success', 'Refund processed successfully');
+        CustomLogger.logMessage(msg: "Refund processed successfully", level: LogLevel.debug);
+
         refreshBookings();
       } else {
-        // Get.snackbar('Error', 'Failed to process refund');
+        CustomLogger.logMessage(msg: "Failed to process refund", level: LogLevel.debug);
+
       }
     } catch (e) {
-      // Get.snackbar('Error', 'Failed to process refund: $e');
+      CustomLogger.logMessage(msg: "Failed to process refund: $e", level: LogLevel.debug);
+
     } finally {
       isLoading.value = false;
     }
