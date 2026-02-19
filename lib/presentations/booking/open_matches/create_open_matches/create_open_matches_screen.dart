@@ -560,10 +560,7 @@ class CreateOpenMatchesScreen extends StatelessWidget {
     final courtName = courtData.courtName ?? 'Unknown Court';
     final slotTimes = courtData.slots ?? [];
     final courtId = courtData.sId ?? '';
-
-
     log("Building court section for: $courtName with ${slotTimes.length} slots");
-
     // Initialize expanded state based on court count and index
     if (!courtExpandedStates.containsKey(courtId)) {
       final totalCourts = controller.slots.value?.data?.length ?? 0;
@@ -571,7 +568,6 @@ class CreateOpenMatchesScreen extends StatelessWidget {
       // If single court, keep it expanded
       courtExpandedStates[courtId] = totalCourts > 1 ? index == 0 : true;
     }
-
     return Container(
       margin: const EdgeInsets.only(bottom: 0),
       padding: EdgeInsets.zero,
@@ -723,19 +719,19 @@ class CreateOpenMatchesScreen extends StatelessWidget {
     final supports30Min = controller.slotSupports30Min(slot);
     final isHalfSlot = supports30Min;
 
+    // Separate past/unavailable from booked status
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
-        (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
         (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
 
-    // Check for booked slots (for all durations)
+    // Check for booked slots (for all durations) - these should be shown in light red
     final isLeftHalfBooked = controller.isLeftHalfBooked(slot);
     final isRightHalfBooked = controller.isRightHalfBooked(slot);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
 
-    // For slots that don't support 30min, if any half is booked, the whole slot is unavailable
+    // For slots that don't support 30min, if any half is booked, the whole slot is unavailable for selection
     final isSlotBookedForFullSlot = !supports30Min && isAnyHalfBooked;
 
     const blueColor = Color(0xff053CFF);
