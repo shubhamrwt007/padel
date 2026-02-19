@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
@@ -432,21 +433,10 @@ class BookACourtController extends GetxController {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      // Get.snackbar(
-      //   "No Selection",
-      //   "Please select at least one slot to continue.",
-      //   backgroundColor: Colors.orange,
-      //   colorText: Colors.white,
-      // );
+      CustomLogger.logMessage(msg: "Please select at least one slot to continue.", level: LogLevel.debug);
       return;
     }
-
-    // Get.snackbar(
-    //   "Success",
-    //   "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}",
-    //   backgroundColor: Colors.green,
-    //   colorText: Colors.white,
-    // );
+    CustomLogger.logMessage(msg: "Selected ${multiDateSelections.length} slots for ₹${totalAmount.value}", level: LogLevel.debug);
   }
 
   void refreshSlots({bool showUnavailable = false}) {
@@ -490,21 +480,12 @@ class BookACourtController extends GetxController {
 
       // ❌ All slots failed (locked)
       if (lockedSlots.isNotEmpty) {
-        // SnackBarUtils.showInfoSnackBar(
-        //   lockedSlots.first.message ??
-        //       "Selected slots are currently locked. Please try again.",
-        // );
+        CustomLogger.logMessage(msg: lockedSlots.first.message ??"Selected slots are currently locked. Please try again.", level: LogLevel.debug);
       }
 
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to select slot. Please try again.",
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
       return false;
     }
   }
@@ -661,7 +642,6 @@ class BookACourtController extends GetxController {
     realCourtSelections.refresh();
   }
   void toggleSlotSelection(Slots slot, {String? courtId, String? courtName, bool? isHalfSlot, bool? isFirstHalf}) {
-    if(Get.isSnackbarOpen) return;
 
     final slotId = slot.sId ?? '';
     final resolvedCourtId = courtId ?? '';

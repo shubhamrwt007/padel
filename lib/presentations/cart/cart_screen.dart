@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
@@ -129,7 +131,7 @@ class CartScreen extends StatelessWidget {
                                     onPressed: (context) async {
                                       final slotTimeId = slot.slotId;
                                       if (slotTimeId == null || slotTimeId.isEmpty) {
-                                        Get.snackbar("Error", "Invalid slot ID");
+                                        AppToast.error("Invalid slot ID");
                                         return;
                                       }
                                       await controller.removeCartItemsFromCart(slotIds: [slotTimeId]);
@@ -217,7 +219,8 @@ class CartScreen extends StatelessWidget {
                                               onTap: () async {
                                                 final slotTimeId = slot.slotId;
                                                 if (slotTimeId == null || slotTimeId.isEmpty) {
-                                                  Get.snackbar("Error", "Invalid slot ID");
+                                                  CustomLogger.logMessage(msg: "Invalid slot ID", level: LogLevel.error);
+
                                                   return;
                                                 }
                                                 await controller.removeCartItemsFromCart(slotIds: [slotTimeId]);
@@ -353,7 +356,8 @@ class CartScreen extends StatelessWidget {
         onTap: () async {
           final cartItems = cartController.cartItems;
           if (cartItems.isEmpty) {
-            Get.snackbar("Empty Cart", "Please add items to cart.");
+            CustomLogger.logMessage(msg: "Please add items to cart.", level: LogLevel.error);
+
             return;
           }
           

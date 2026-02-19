@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import '../../../configs/components/snack_bars.dart';
 import '../../../data/request_models/booking/booking_confermation_model.dart';
@@ -69,7 +70,6 @@ final fromCancelled = ''.obs;
     } catch (e) {
       error.value = e.toString();
       if (kDebugMode) print("Error fetching booking details: $e");
-      // Get.snackbar("Error", "Failed to fetch booking details. Please try again.");
     } finally {
       isLoading.value = false;
     }
@@ -77,15 +77,15 @@ final fromCancelled = ''.obs;
 
   /// Update booking status
   Future<void> updateBookingStatus() async {
-    if (isLoading.value || Get.isSnackbarOpen) return;
+    if (isLoading.value) return;
 
     if (bookingDetails.value == null || bookingDetails.value!.booking == null) {
-      SnackBarUtils.showInfoSnackBar("Booking details not available");
+      AppToast.error("Booking details not available");
       return;
     }
 
     if (otherReasonController.text.trim().isEmpty) {
-      SnackBarUtils.showInfoSnackBar("Please enter the reason");
+      AppToast.error("Please enter the reason");
       return;
     }
 
@@ -121,10 +121,9 @@ final fromCancelled = ''.obs;
           msg: result?.message ?? "Updated",
           level: LogLevel.debug,
         );
-        SnackBarUtils.showSuccessSnackBar("Your booking has been successfully canceled.");
         otherReasonController.clear();
       } else {
-        SnackBarUtils.showErrorSnackBar("Booking update failed");
+        CustomLogger.logMessage(msg: "Booking update failed", level: LogLevel.error);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: e, level: LogLevel.error);
@@ -139,19 +138,19 @@ final fromCancelled = ''.obs;
 
     // ✅ Ensure booking details are available
     if (bookingDetails.value == null || bookingDetails.value!.booking == null) {
-      SnackBarUtils.showInfoSnackBar("Booking details not available");
+      AppToast.error("Booking details not available");
       return;
     }
 
     // ✅ Validate rating
     if (selectedRating.value == 0) {
-      SnackBarUtils.showWarningSnackBar("Please select a rating");
+      AppToast.error("Please select a rating");
       return;
     }
 
     // ✅ Validate message
     if (ratingMessageController.text.trim().isEmpty) {
-      SnackBarUtils.showWarningSnackBar("Please write a message");
+      AppToast.error("Please write a message");
       return;
     }
 
@@ -162,7 +161,7 @@ final fromCancelled = ''.obs;
       final String? clubId = booking.registerClubId?.sId;
 
       if (clubId == null || clubId.isEmpty) {
-        SnackBarUtils.showErrorSnackBar("Club ID not found");
+        AppToast.error("Club ID not found");
         isLoading.value = false;
         return;
       }
@@ -184,9 +183,7 @@ final fromCancelled = ''.obs;
 
       // ✅ Success check
       if (result.review != null) {
-        SnackBarUtils.showSuccessSnackBar(
-          result.message ?? "Thank you for your feedback!",
-        );
+        CustomLogger.logMessage(msg: result.message ?? "Thank you for your feedback!", level: LogLevel.error);
 
         // Reset fields
         selectedRating.value = 0;
@@ -198,17 +195,12 @@ final fromCancelled = ''.obs;
           level: LogLevel.debug,
         );
       } else {
-        SnackBarUtils.showErrorSnackBar(
-          result.message ?? "Failed to submit rating",
-        );
+        CustomLogger.logMessage(msg: result.message ?? "Failed to submit rating", level: LogLevel.error);
       }
     } catch (e) {
       CustomLogger.logMessage(
         msg: "Submit rating error: $e",
         level: LogLevel.error,
-      );
-      SnackBarUtils.showErrorSnackBar(
-        "Failed to submit rating. Please try again.",
       );
     } finally {
       isLoading.value = false;

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
@@ -368,17 +369,17 @@ class ScoreBoardController extends GetxController {
   ///Start Game - Initializes first set and starts timer-----------------------------------
   Future<void> startGame() async {
     if (isCompleted.value) {
-      SnackBarUtils.showErrorSnackBar("Cannot start game. Match is already completed.");
+      AppToast.error("Cannot start game. Match is already completed.");
       return;
     }
 
     if (!allPlayersAdded) {
-      SnackBarUtils.showErrorSnackBar("Please add all 4 players first");
+      AppToast.error("Please add all 4 players first");
       return;
     }
 
     if (!isWithinMatchTime.value) {
-      SnackBarUtils.showErrorSnackBar("Game can only start during match time");
+      AppToast.error("Game can only start during match time");
       return;
     }
 
@@ -420,7 +421,7 @@ class ScoreBoardController extends GetxController {
         remainingSeconds.value = 0;
         timer.cancel();
         isGameStarted.value = false;
-        SnackBarUtils.showInfoSnackBar("Match time is up! Game ended automatically.");
+        AppToast.error("Match time is up! Game ended automatically.");
       }
     });
   }
@@ -460,14 +461,14 @@ class ScoreBoardController extends GetxController {
   ///Add Set--------------------------------------------------------------------
   Future<void> addSet() async {
     if (isCompleted.value) {
-      SnackBarUtils.showErrorSnackBar("Cannot add set. Match is already completed.");
+      AppToast.error("Cannot add set. Match is already completed.");
       return;
     }
     
     if (sets.length < 10) {
       await createSets(_nextAvailableSetNumber());
     } else {
-      SnackBarUtils.showInfoSnackBar("Limit Reached\nYou can add up to 10 sets only");
+      AppToast.error("Limit Reached\nYou can add up to 10 sets only");
     }
   }
 
@@ -688,19 +689,19 @@ class ScoreBoardController extends GetxController {
   Future<void> addScore(int setNumber, int teamAScore, int teamBScore) async {
     // Prevent score addition if game hasn't started
     if (!isGameStarted.value) {
-      SnackBarUtils.showErrorSnackBar("Cannot add score. Please start the match first.");
+      AppToast.error("Cannot add score. Please start the match first.");
       return;
     }
     
     // Validate scores don't exceed 20
     if (teamAScore > 20 || teamBScore > 20) {
-      SnackBarUtils.showErrorSnackBar("Score cannot exceed 20");
+      AppToast.error("Score cannot exceed 20");
       return;
     }
     
     CustomLogger.logMessage(msg: 'addScore API call - set: $setNumber, scores: $teamAScore-$teamBScore', level: LogLevel.info);
     if (teamAScore == 0 && teamBScore == 0) {
-      SnackBarUtils.showErrorSnackBar("Both team scores cannot be zero.");
+      AppToast.error("Both team scores cannot be zero.");
       return;
     }
     isAddingScore.value = true;
@@ -769,7 +770,7 @@ class ScoreBoardController extends GetxController {
       if (response?.success == true) {
         matchType.value = newMatchType;
         matchStatus.value = true;
-        SnackBarUtils.showInfoSnackBar("Match type updated to $newMatchType");
+        AppToast.success("Match type updated to $newMatchType");
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR updating match type-> $e", level: LogLevel.error);
@@ -786,7 +787,7 @@ class ScoreBoardController extends GetxController {
     });
 
     if (hasEmptySet) {
-      SnackBarUtils.showErrorSnackBar("Cannot end game with empty sets. Please add scores first.");
+      AppToast.error("Cannot end game with empty sets. Please add scores first.");
       return;
     }
 
@@ -809,7 +810,7 @@ class ScoreBoardController extends GetxController {
         await fetchScoreBoard(showLoader: false);
         showMatchSummaryDialog(this);
       } else {
-        SnackBarUtils.showErrorSnackBar(response.message ?? "");
+        CustomLogger.logMessage(msg: response.message ?? "", level: LogLevel.debug);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
@@ -888,16 +889,15 @@ class ScoreBoardController extends GetxController {
       final response = await repository.removePlayerFromMatch(body: body);
 
       if (response?.success == true) {
-        SnackBarUtils.showInfoSnackBar("Player removed successfully");
         CustomLogger.logMessage(msg: 'Player removed successfully from server', level: LogLevel.info);
       } else {
-        SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to remove player");
+        CustomLogger.logMessage(msg: response?.message ?? "Failed to remove player", level: LogLevel.debug);
+
         // Revert local changes if API failed
         await fetchScoreBoard(showLoader: false);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: 'Remove player error: $e', level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to remove player");
       // Revert local changes on error
       await fetchScoreBoard(showLoader: false);
     } finally {
@@ -1066,7 +1066,6 @@ class ScoreBoardController extends GetxController {
       if (response.success == true) {
         hasPlayerSwaps.value = false;
         isShuffleMode.value = false;
-        SnackBarUtils.showInfoSnackBar("Players shuffled successfully");
         await fetchScoreBoard();
         CustomLogger.logMessage(msg: 'API call successful - shuffle mode disabled', level: LogLevel.info);
       } else {
@@ -1093,15 +1092,15 @@ class ScoreBoardController extends GetxController {
 
       if (response?.success == true) {
         bookingType.value = "openMatch";
-        SnackBarUtils.showInfoSnackBar(response?.message ?? "Booking converted to open match successfully!");
+        CustomLogger.logMessage(msg: response?.message ?? "Booking converted to open match successfully!", level: LogLevel.debug);
+
         await fetchScoreBoard(showLoader: false);
         await mainHomeController.homeController.fetchBookings();
       } else {
-        SnackBarUtils.showErrorSnackBar(response?.message ?? "Failed to convert booking");
+        CustomLogger.logMessage(msg: response?.message ?? "Failed to convert booking", level: LogLevel.debug);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR converting to open match-> $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to convert booking");
     } finally {
       isConvertingToOpenMatch.value = false;
     }

@@ -112,7 +112,6 @@ class PackagesUi extends GetView<PackagesController> {
                         height: 30,
                         textStyle: Get.textTheme.labelLarge!.copyWith(color: Colors.white),
                         onTap: (){
-                          SnackBarUtils.showInfoSnackBar("Package\n${p.title} selected");
                         }, text: "Buy Now")
                       ],
                     ),

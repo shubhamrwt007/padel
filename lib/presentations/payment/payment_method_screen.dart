@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
@@ -212,7 +214,6 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     return GestureDetector(
       onTap: () {
         if (value.startsWith('visa') || value.contains('card')) {
-          // SnackBarUtils.showInfoSnackBar("Coming Soon");
         } else {
           controller.option.value = value;
         }
@@ -303,7 +304,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                           child: ElevatedButton(
                             onPressed: () async {
                               // if (controller.razorpayAmountUsed.value <= 0) {
-                              //   SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
+                              CustomLogger.logMessage(msg:"Amount cannot be zero", level: LogLevel.error);
+
                               //   return;
                               // }
                               await controller.startPayment();
@@ -364,7 +366,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           width: Get.width,
           onTap: () async {
             if (controller.option.value.isEmpty) {
-              SnackBarUtils.showWarningSnackBar("Please select payment method");
+              AppToast.error("Please select payment method");
               return;
             }
 

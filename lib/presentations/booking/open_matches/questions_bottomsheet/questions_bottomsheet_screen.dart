@@ -122,7 +122,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         //   subtitle: 'Current Balance: ₹0',
                         //   trailingColor: Colors.blue,
                         //   onTap: () {
-                        //     Get.snackbar('Info', 'Wallet payment coming soon!');
                         //   },
                         // ),
                         //   CustomButton(
@@ -131,11 +130,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         //     circleColor: AppColors.primaryColor,
                         //     gradientColors: [Colors.white,Colors.white,Colors.white],
                         //       onTap: () {
-                        //       if(Get.isSnackbarOpen)return;
-                        //         if (!controller.validateSelections()) {
-                        //           return;
-                        //         }
-                        //         SnackBarUtils.showInfoSnackBar("Wallet payment coming soon!");
                         //       },
                         //     child:Column(
                         //       mainAxisAlignment: MainAxisAlignment.center,
@@ -163,7 +157,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                           height: 55,
                           gradientColors: [Colors.white, Colors.white, Colors.white],
                           onTap: controller.isProcessing.value ? null : () {
-                            if (Get.isSnackbarOpen) return;
                             controller.onDirectPaymentTap();
                           },
                           child: controller.isProcessing.value == true

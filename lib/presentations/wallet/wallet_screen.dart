@@ -180,7 +180,6 @@ class _WalletScreenState extends State<WalletScreen> {
         if (text == 'Add') {
           controller.showAddBalanceDialog();
         }else if (text=="Withdraw"){
-          // SnackBarUtils.showInfoSnackBar("Withdraw option coming soon!");
         }
       },
       child: Container(

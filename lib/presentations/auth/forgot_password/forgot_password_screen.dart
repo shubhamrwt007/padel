@@ -1,3 +1,4 @@
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/forgot_password_exports.dart';
 
 import '../../../configs/components/loader_widgets.dart';
@@ -61,7 +62,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                 if (controller.formKey.currentState!.validate()) {
                   controller.sendOTP();
                 } else {
-                  SnackBarUtils.showErrorSnackBar(AppStrings.invalidEmail);
+                  AppToast.error(AppStrings.invalidEmail);
                 }
               },
               text: AppStrings.sendOtp,
