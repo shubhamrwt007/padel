@@ -4,6 +4,7 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 class PaymentForWallet extends StatelessWidget {
@@ -216,7 +217,6 @@ class PaymentForWallet extends StatelessWidget {
     return GestureDetector(
         onTap: () {
           if (value.startsWith('visa') || value.contains('card')) {
-            // SnackBarUtils.showInfoSnackBar("Coming Soon");
           } else {
             option.value = value;
           }
@@ -324,7 +324,8 @@ class PaymentForWallet extends StatelessWidget {
                           }
                           
                           if (amountToPay <= 0) {
-                            Get.snackbar("Error", "Amount cannot be zero or negative");
+                            CustomLogger.logMessage(msg: "Amount cannot be zero or negative", level: LogLevel.error);
+
                             return;
                           }
                           

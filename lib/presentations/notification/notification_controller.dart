@@ -312,12 +312,10 @@ class NotificationController extends GetxController {
       await fetchUnreadNotificationCount();
       await fetchNotifications();
       await profileController.fetCustomerLeaderBoardRank();
-      // Get.snackbar(
-      //   message.notification!.title ?? 'New Message',
-      //   message.notification!.body ?? '',
-      //   snackPosition: SnackPosition.TOP,
-      //   duration: const Duration(seconds: 4),
-      // );
+      CustomLogger.logMessage(
+          msg: "${message.notification!.title ?? 'New Message'}\n"
+          "${message.notification!.body ?? ''}",
+          level: LogLevel.info);
     }
   }
 

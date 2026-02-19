@@ -1,4 +1,5 @@
 
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/success_image.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
@@ -417,7 +418,7 @@ class BookingConfirmAndCancelScreen extends GetView<BookingConfirmAndCancelContr
             PrimaryButton(
                 onTap: (){
                   if (controller.selectedRating.value == 0) {
-                    SnackBarUtils.showWarningSnackBar("Please select a rating");
+                    AppToast.error("Please select a rating");
                     return;
                   }
                   controller.submitRating();
@@ -574,7 +575,7 @@ class BookingConfirmAndCancelScreen extends GetView<BookingConfirmAndCancelContr
         PrimaryButton(
           onTap: () async {
             if (controller.selectedReason.value.isEmpty) {
-              SnackBarUtils.showWarningSnackBar("Please select a reason");
+              AppToast.error("Please select a reason");
               return;
             }
 
@@ -582,7 +583,7 @@ class BookingConfirmAndCancelScreen extends GetView<BookingConfirmAndCancelContr
 
             if (cancellationReason == 'Other') {
               if (controller.otherReasonController.text.trim().isEmpty) {
-                SnackBarUtils.showWarningSnackBar("Please write a reason");
+                AppToast.error("Please write a reason");
                 return;
               }
               cancellationReason = controller.otherReasonController.text.trim();
@@ -593,9 +594,7 @@ class BookingConfirmAndCancelScreen extends GetView<BookingConfirmAndCancelContr
             try {
               await controller.updateBookingStatus();
             } catch (e) {
-              SnackBarUtils.showErrorSnackBar(
-                "Failed to cancel booking. Please try again.",
-              );
+              CustomLogger.logMessage(msg: "Failed to cancel booking. Please try again.", level: LogLevel.error);
             }
           },
           text: AppStrings.submit,

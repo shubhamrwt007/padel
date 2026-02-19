@@ -6,6 +6,7 @@ import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'dart:math' as math;
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/bookinghistory/widgets/court_selection_sheet.dart';
 import 'package:padel_mobile/presentations/bookinghistory/widgets/no_court_available_view.dart';
@@ -486,7 +487,6 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                     //       if (invoiceUrlString.isNotEmpty) {
                     //         await controller.downloadInvoice(invoiceUrlString);
                     //       } else {
-                    //         Get.snackbar("Error", "Invoice URL not available");
                     //       }
                     //     },
                     //     child: Container(
@@ -1362,7 +1362,8 @@ print("invoice--------- $invoiceUrlString");
                       AppToast.error("Invoice URL not available");
                     }
                   } else {
-                    // Get.snackbar("Access Denied", "You can only download invoices for your own bookings");
+                    CustomLogger.logMessage(msg: "You can only download invoices for your own bookings", level: LogLevel.debug);
+
                   }
                 },
                 child: Container(
@@ -1441,7 +1442,7 @@ print("invoice--------- $invoiceUrlString");
     final teamBPlayers = booking.teamB ?? [];
     
     if (teamAPlayers.isEmpty && teamBPlayers.isEmpty) {
-      Get.snackbar("Error", "No team data available");
+      AppToast.error("No team data available");
       return;
     }
 
@@ -1480,7 +1481,7 @@ print("invoice--------- $invoiceUrlString");
   void _showPlayerRequestsBottomSheet(BuildContext context, dynamic booking) {
     final matchId = booking.sId ?? '';
     if (matchId.isEmpty) {
-      Get.snackbar("Error", "Match ID not available");
+      AppToast.error("Match ID not available");
       return;
     }
 
@@ -1546,7 +1547,8 @@ print("invoice--------- $invoiceUrlString");
     final teamBPlayers = booking.teamB ?? [];
     
     if (teamAPlayers.isEmpty && teamBPlayers.isEmpty) {
-      // Get.snackbar("Error", "No player data available");
+      CustomLogger.logMessage(msg: "No player data available", level: LogLevel.debug);
+
       return;
     }
 

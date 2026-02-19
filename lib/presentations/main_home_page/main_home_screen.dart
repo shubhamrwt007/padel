@@ -1089,8 +1089,6 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   void _handleQuickAction(String action) {
-    if (Get.isSnackbarOpen) return;
-
     switch (action) {
       case 'book':
         Get.toNamed(RoutesName.bookACourt,arguments: {});
@@ -1104,10 +1102,10 @@ class MainHomeScreen extends StatelessWidget {
         });
         break;
       case 'americano':
-      // SnackBarUtils.showInfoSnackBar("Americano tournaments coming soon!");
+        CustomLogger.logMessage(msg: "Americano tournaments coming soon!", level: LogLevel.debug);
+
         break;
       case 'player':
-      // SnackBarUtils.showInfoSnackBar("Find a Player feature coming soon!");
         Get.bottomSheet(
           backgroundColor: Colors.transparent,
           SizedBox(

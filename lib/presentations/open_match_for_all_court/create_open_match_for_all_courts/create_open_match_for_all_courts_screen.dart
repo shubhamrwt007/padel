@@ -15,6 +15,7 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
@@ -1969,9 +1970,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     // Simulate payment processing
     Future.delayed(const Duration(seconds: 2), () {
       isProcessing.value = false;
-      // SnackBarUtils.showSuccessSnackBar(
-      //   "Payment successful! Booking confirmed.",
-      // );
+      CustomLogger.logMessage(msg: "Payment successful! Booking confirmed.", level: LogLevel.debug);
       controller.clearAllSelections();
     });
   }

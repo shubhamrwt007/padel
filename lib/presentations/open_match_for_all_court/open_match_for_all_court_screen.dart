@@ -1650,7 +1650,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
             //             onTap: () {
             //               // Only allow if user is in the match
             //               if (!_isLoginUserInMatch(data)) {
-            //                 SnackBarUtils.showInfoSnackBar("You must be part of the match to play");
             //                 return;
             //               }
             //

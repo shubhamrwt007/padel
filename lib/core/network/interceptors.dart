@@ -82,7 +82,7 @@ class LoggerInterceptor extends Interceptor {
     // Check for connectivity before making the request
     final isConnected = await _connectivityService.checkConnectivity();
     if (!isConnected) {
-      // The connectivity service will show the snackbar
+      // The connectivity service will show the Toaster
       return handler.reject(
         DioException(
           requestOptions: options,

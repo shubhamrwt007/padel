@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:padel_mobile/presentations/score_board/score_board_controller.dart';
@@ -417,7 +418,7 @@ class ScoreBoardScreen extends StatelessWidget {
                   await controller.startGame();
                 } else {
                   if (controller.sets.length >= 10) {
-                    SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
+                    AppToast.error("Maximum 10 sets allowed");
                     return;
                   }
                   await controller.addSet();
@@ -2437,12 +2438,12 @@ class ScoreBoardScreen extends StatelessWidget {
           ),
           onPressed: () {
             if (controller.isCompleted.value) {
-              SnackBarUtils.showErrorSnackBar("Game is already completed");
+              AppToast.error("Game is already completed");
               return;
             }
 
             if (controller.sets.length >= 10) {
-              SnackBarUtils.showErrorSnackBar("Maximum 10 sets allowed");
+              AppToast.error("Maximum 10 sets allowed");
               return;
             }
 
@@ -2455,8 +2456,7 @@ class ScoreBoardScreen extends StatelessWidget {
             bool allPlayersAdded = teamAPlayers.length == 2 && teamBPlayers.length == 2;
 
             if (!allPlayersAdded) {
-              if (Get.isSnackbarOpen) return;
-              SnackBarUtils.showErrorSnackBar("Please add all players before adding a set");
+              // AppToast.error("Please add all players before adding a set");
               return;
             }
 
@@ -2481,12 +2481,12 @@ class ScoreBoardScreen extends StatelessWidget {
     final playerCount = controller.currentPlayerIds.length;
 
     if (playerCount == 0) {
-      SnackBarUtils.showErrorSnackBar("Add at least one player to shuffle");
+      AppToast.error("Add at least one player to shuffle");
       return;
     }
 
     if (controller.isGameStarted.value) {
-      SnackBarUtils.showErrorSnackBar("Cannot shuffle after game has started");
+      AppToast.error("Cannot shuffle after game has started");
       return;
     }
 
@@ -2807,7 +2807,7 @@ class ScoreBoardScreen extends StatelessWidget {
             textStyle: Get.textTheme.headlineSmall!.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
             onTap: controller.isAddingScore.value ? () {} : () {
               if (selectedSetNumber == null) {
-                SnackBarUtils.showInfoSnackBar("Please select a set");
+                AppToast.error("Please select a set");
                 return;
               }
               final teamAScore = int.tryParse(teamAController.text) ?? 0;
@@ -3040,7 +3040,7 @@ class ScoreBoardScreen extends StatelessWidget {
                         });
 
                         if (hasEmptySet) {
-                          SnackBarUtils.showErrorSnackBar("Cannot end game with empty sets. Please add scores first.");
+                          AppToast.error("Cannot end game with empty sets. Please add scores first.");
                           return;
                         }
 
@@ -3518,11 +3518,11 @@ class _SetScoreDialogState extends State<SetScoreDialog> {
           final existingTeamBScore = existingSet.isNotEmpty ? (existingSet["teamBScore"] ?? 0) : 0;
 
           if (controller.isUserInTeamA && teamBScore > 0 && existingTeamBScore == 0) {
-            SnackBarUtils.showErrorSnackBar("You can only add scores for Team A");
+            AppToast.error("You can only add scores for Team A");
             return;
           }
           if (controller.isUserInTeamB && teamAScore > 0 && existingTeamAScore == 0) {
-            SnackBarUtils.showErrorSnackBar("You can only add scores for Team B");
+            AppToast.error("You can only add scores for Team B");
             return;
           }
 

@@ -119,12 +119,11 @@ class WalletController extends GetxController {
       if (response.orderId != null && response.amount != null) {
         await _initiateRazorpayPayment(response.orderId!, response.amount!);
       } else {
-        // SnackBarUtils.showErrorSnackBar("Failed to create wallet order");
+        CustomLogger.logMessage(msg: "Failed to create wallet order", level: LogLevel.error);
         isAddingBalance.value = false;
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Something went wrong");
       isAddingBalance.value = false;
     }
   }
@@ -153,7 +152,6 @@ class WalletController extends GetxController {
     } catch (e) {
       CustomLogger.logMessage(
           msg: "Payment initiation error: $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment");
       isAddingBalance.value = false;
     }
   }
@@ -214,7 +212,6 @@ class WalletController extends GetxController {
   }
 
   void _onPaymentError(String error) {
-    // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
     CustomLogger.logMessage(
         msg: "Payment failed: $error", level: LogLevel.error);
     isAddingBalance.value = false;

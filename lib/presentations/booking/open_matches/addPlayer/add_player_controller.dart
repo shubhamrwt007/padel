@@ -48,7 +48,7 @@ class AddPlayerController extends GetxController {
   var isMatchCreator = false.obs;
 
   Future<void> createUser() async {
-    if (isLoading.value || Get.isSnackbarOpen) return;
+    if (isLoading.value) return;
 
     // If login user is adding themselves, skip API call and add directly
     if (isLoginUserAdding.value) {
@@ -306,16 +306,13 @@ class AddPlayerController extends GetxController {
         // Return success to caller so it can refresh immediately
         Get.back(result: true);
         Get.back();
-        // SnackBarUtils.showSuccessSnackBar(
-        //     response?.message ?? "Player added successfully");
         CustomLogger.logMessage(
           msg: "Player Added To the Match $body",
           level: LogLevel.info,
         );
         return true;
       } else {
-        // SnackBarUtils.showInfoSnackBar(
-        //     response?.message ?? "Failed to add player");
+        CustomLogger.logMessage(msg: response?.message ?? "Failed to add player", level: LogLevel.error);
         return false;
       }
     } catch (e) {
@@ -353,19 +350,13 @@ class AddPlayerController extends GetxController {
         await yourMatchRequestsController?.fetchJoinRequests();
 
         // Get.back(result: true);
-        // SnackBarUtils.showSuccessSnackBar(
-        //   "Player request sent successfully",
-        // );
-
         CustomLogger.logMessage(
           msg: "Player Request Sent $body",
           level: LogLevel.info,
         );
         return true;
       } else {
-        // SnackBarUtils.showInfoSnackBar(
-        //   "Failed to send player request",
-        // );
+        CustomLogger.logMessage(msg: "Failed to send player request", level: LogLevel.error);
         return false;
       }
     } on DioException catch (e) {
@@ -381,9 +372,7 @@ class AddPlayerController extends GetxController {
           'requestPrice': price,
         });
       } else {
-        // SnackBarUtils.showErrorSnackBar(
-        //   e.response?.data?['message'] ?? "Something went wrong",
-        // );
+        CustomLogger.logMessage(msg: e.response?.data?['message'] ?? "Something went wrong", level: LogLevel.error);
       }
 
       CustomLogger.logMessage(
@@ -392,9 +381,6 @@ class AddPlayerController extends GetxController {
       );
       return false;
     } catch (e) {
-      // SnackBarUtils.showErrorSnackBar(
-      //   "Unexpected error occurred",
-      // );
       CustomLogger.logMessage(
         msg: "Error :-> $e",
         level: LogLevel.error,
@@ -418,11 +404,6 @@ class AddPlayerController extends GetxController {
       if (response != null) {
         await yourMatchRequestsController?.fetchJoinRequests();
         Get.back(result: true);
-
-        // SnackBarUtils.showSuccessSnackBar(
-        //   "Request accepted successfully",
-        // );
-
         CustomLogger.logMessage(
           msg: "Request Accepted $body",
           level: LogLevel.info,
@@ -437,9 +418,7 @@ class AddPlayerController extends GetxController {
         //   e.response?.data?['message'] ?? "Resource not found",
         // );
       } else {
-        // SnackBarUtils.showErrorSnackBar(
-        //   "Something went wrong",
-        // );
+        CustomLogger.logMessage(msg: "Something went wrong", level: LogLevel.error);
       }
 
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
@@ -460,7 +439,6 @@ class AddPlayerController extends GetxController {
       if (response != null) {
         await yourMatchRequestsController?.fetchJoinRequests();
         Get.back(result: true);
-        // SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
         CustomLogger.logMessage(
           msg: "Booking Request Accepted $body",
           level: LogLevel.info,
@@ -512,16 +490,13 @@ class AddPlayerController extends GetxController {
         // await bookingHistoryController?.fetchBookings();
         Get.back(result: true);
         Get.back();
-        // SnackBarUtils.showSuccessSnackBar(
-        //     response?.message ?? "Player added successfully");
         CustomLogger.logMessage(
           msg: "Player Added To the Match $body",
           level: LogLevel.info,
         );
         return true;
       } else {
-        // SnackBarUtils.showInfoSnackBar(
-        //     response?.message ?? "Failed to add player");
+        CustomLogger.logMessage(msg: response?.message ?? "Failed to add player", level: LogLevel.error);
         return false;
       }
     } catch (e) {

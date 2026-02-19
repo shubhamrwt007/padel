@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
@@ -692,14 +693,7 @@ class BookSession extends StatelessWidget {
 
               // Check if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
+                // AppToast.error("This ${isLeftHalf ? 'left' : 'right'} half is already booked.");
                 return;
               }
 
@@ -712,14 +706,7 @@ class BookSession extends StatelessWidget {
             } else {
               // For slots that don't support 30-min pricing or when selecting full slots
               if (isAnyHalfBooked) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This slot is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
+                // AppToast.error("This slot is already booked.");
                 return;
               }
 
@@ -1158,7 +1145,6 @@ class BookSession extends StatelessWidget {
       final double collapsedHeight = Get.height * .11;
       final double expandedHeight = Get.height * .13;
       void openSelectedSlotsBottomSheet(BuildContext context) {
-        if (Get.isSnackbarOpen) return;
         if (controller.multiDateSelections.isEmpty) return;
 
         showModalBottomSheet(
@@ -1644,8 +1630,7 @@ class BookSession extends StatelessWidget {
                 width: Get.width * 0.9,
                 onTap: () {
                   if (controller.multiDateSelections.isEmpty) {
-                    SnackBarUtils.showInfoSnackBar(
-                        "Please select at least one slot before booking.");
+                    CustomLogger.logMessage(msg: "Please select at least one slot before booking.", level: LogLevel.error);
                     return;
                   }
                   controller.proceedToPayment();

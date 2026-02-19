@@ -13,6 +13,7 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
@@ -1728,8 +1729,6 @@ class BookACourtScreen extends StatelessWidget {
                     height: 55,
                     gradientColors: [Colors.white, Colors.white, Colors.white],
                     onTap: () async {
-                      if (Get.isSnackbarOpen) return;
-
                       isProcessing.value = true;
 
                       // Call API to process slot history
@@ -1760,8 +1759,7 @@ class BookACourtScreen extends StatelessWidget {
                           controller.hasCalledSlotHistoryAPI.value = false;
                         }
                       } catch (e) {
-                        // Handle error (e.g., show snackbar)
-                        // SnackBarUtils.showErrorSnackBar("Failed to prepare booking. Please try again.");
+                        CustomLogger.logMessage(msg: "Failed to prepare booking. Please try again.", level: LogLevel.debug);
                       } finally {
                         isProcessing.value = false;
                       }
@@ -2201,18 +2199,6 @@ class BookACourtScreen extends StatelessWidget {
     }
   }
 
-  void _initiatePayment() {
-    isProcessing.value = true;
-
-    // Simulate payment processing
-    Future.delayed(const Duration(seconds: 2), () {
-      isProcessing.value = false;
-      // SnackBarUtils.showSuccessSnackBar(
-      //   "Payment successful! Booking confirmed.",
-      // );
-      controller.clearAllSelections();
-    });
-  }
 }
 
 class ChangeLocationBottomSheet extends StatelessWidget {
