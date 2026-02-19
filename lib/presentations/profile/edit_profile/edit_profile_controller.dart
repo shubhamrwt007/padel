@@ -218,7 +218,7 @@ class EditProfileController extends GetxController{
       if (updatedProfile.status == "200") {
         await profileController.fetchUserProfile();
         Get.back();
-        AppToast.error("Profile Updated Successfully");
+        AppToast.success("Profile Updated Successfully");
 
       } else {
         CustomLogger.logMessage(msg: "UPDATE PROFILE ERROR",level: LogLevel.error);
