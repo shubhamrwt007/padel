@@ -97,7 +97,7 @@ class MainHomeController extends GetxController{
     _bannerTimer = Timer.periodic(Duration(seconds: 2), (timer) {
       if (pageController.hasClients) {
         pageController.nextPage(
-          duration: Duration(milliseconds: 400),
+          duration: Duration(milliseconds: 800),
           curve: Curves.easeInOut,
         );
       }

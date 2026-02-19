@@ -1859,7 +1859,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
          Text(
-          'App Players',
+          'Find a player',
           style: Get.textTheme.headlineMedium,
         ),
         Transform.translate(
@@ -1869,6 +1869,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
             onPressed: () => Get.back(),
           ),
         ),
+
       ],
     );
   }

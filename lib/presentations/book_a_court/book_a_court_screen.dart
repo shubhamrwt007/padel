@@ -116,7 +116,7 @@ class BookACourtScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                      controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
+                      controller.showMainGrid.value ? 'Prefered Slots' : 'Selected Slots',
                       style: Get.textTheme.labelLarge
                   ),
                   if (!controller.showMainGrid.value && controller.courtsByDuration.value != null)
@@ -142,7 +142,7 @@ class BookACourtScreen extends StatelessWidget {
                             scale: 0.7,
                             child: ToggleButtons(
                               isSelected: [is30, !is30],
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(25),
                               constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
                               fillColor: Colors.transparent, // important
                               selectedColor: Colors.white,
@@ -295,6 +295,25 @@ class BookACourtScreen extends StatelessWidget {
           children: [
             Text('Available Courts', style: Get.textTheme.labelLarge),
             const Spacer(),
+            Tooltip(
+                textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                ),
+                message: "You will not be given XP points\nupon selections of friendly match",
+                waitDuration: Duration(milliseconds: 200),
+                showDuration: Duration(seconds: 3),
+                triggerMode: TooltipTriggerMode.tap,
+                child: Icon(Icons.info_outline,size: 20,)).paddingOnly(right: 5),
+
             Obx(() {
               final isFriendly = controller.matchType.value == "friendly";
 
@@ -316,7 +335,8 @@ class BookACourtScreen extends StatelessWidget {
                   ],
                 ),
               );
-            })
+            }),
+
           ],
         ),
         const SizedBox(height: 16),
@@ -367,7 +387,7 @@ class BookACourtScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(20.0),
             child: Text(
-              'No courts available for the selected time slot.',
+              'No matches available For this time, please create an public open match',
               style: TextStyle(color: Colors.grey),
             ),
           ),
@@ -2338,11 +2358,12 @@ class ChangeLocationBottomSheet extends StatelessWidget {
               }),
             ),
 
-            /// CHANGE BUTTON
+            /// UPDATE BUTTON
             Padding(
               padding: const EdgeInsets.all(16),
               child: Obx(() {
                 final isEnabled = controller.selectedCityId.value.isNotEmpty;
+                final isLoading = controller.isUpdatingLocation.value;
 
                 return SizedBox(
                   width: double.infinity,
@@ -2356,23 +2377,32 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: isEnabled
-                        ? () {
-                      // handle change location
-                      final selectedId =
-                          controller.selectedCityId.value;
-                      print("Selected city: $selectedId");
-                      Navigator.pop(context);
+                    onPressed: (isEnabled && !isLoading)
+                        ? () async {
+                      final selectedId = controller.selectedCityId.value;
+                      final success = await controller.updateUserLocation(selectedId);
+                      if (success) {
+                        Navigator.pop(context);
+                      }
                     }
                         : null,
-                    child: Text(
-                      'Change',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isEnabled ? Colors.white : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Update',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isEnabled ? Colors.white : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 );
               }),

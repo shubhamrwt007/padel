@@ -11,6 +11,7 @@ import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_pl
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 
 import '../../../repositories/openmatches/open_match_repository.dart';
+import '../../widgets/coming_soon_fireworks.dart';
 
 class AppPlayersController extends GetxController {
   RxList<Map<String, dynamic>> nearbyPlayers = <Map<String, dynamic>>[].obs;
@@ -137,9 +138,12 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'App Players',
+          'Find a player',
           style: Get.textTheme.headlineMedium,
         ),
+        ComingSoonFireworks(
+          textStyle: Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor),
+        ).paddingOnly(left: Get.width*.18),
         Transform.translate(
           offset: Offset(8, 0),
           child: IconButton(
@@ -147,6 +151,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             onPressed: () => Get.back(),
           ),
         ),
+
       ],
     );
   }
