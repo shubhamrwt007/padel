@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'dart:math' as math;
@@ -786,7 +785,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                             });
                           },
                           child: CircleAvatar(
-                            radius: 18,
+                            radius: 15,
                             backgroundColor: Colors.white,
                             child: Icon(
                               _expandedStates.length > index && _expandedStates[index]

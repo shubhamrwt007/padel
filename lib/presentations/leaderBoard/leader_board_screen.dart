@@ -553,7 +553,7 @@ class LeaderboardScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // Empty space for drag handle (non-scrollable)
-                      SizedBox(height: 35),
+                      SizedBox(height: 20),
 
                       // Fixed header (non-scrollable)
                       Padding(
@@ -802,7 +802,7 @@ class LeaderboardScreen extends StatelessWidget {
                     child: Text(
                       '${myRank['rank']}',
                       style: Get.textTheme.labelLarge!.copyWith(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryColor,
                       ),
@@ -1044,7 +1044,7 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                           width: 35,
                           child: Text(
                             '${item['rank']}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 12),
                           ),
                         ),
                         Container(
@@ -1122,7 +1122,7 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                         ).paddingOnly(right: 10),
                         Container(
                           color: Colors.transparent,
-                          width: 70,
+                          width: 120,
                           child: Text(
                             item['name'],
                             style: Get.textTheme.labelLarge!.copyWith(fontSize: 12,fontWeight: FontWeight.w500),

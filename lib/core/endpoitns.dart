@@ -104,7 +104,7 @@ class AppEndpoints {
 }
 class PaymentConfig {
   // Toggle this when switching environment
-  static const bool isLive = false;
+  static const bool isLive = true;
 
   // Test Key
   static const String _testKeyId = 'rzp_test_RtRFaVPUzoUtkG';

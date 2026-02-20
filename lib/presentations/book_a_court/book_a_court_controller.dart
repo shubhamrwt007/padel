@@ -11,6 +11,7 @@ import 'package:padel_mobile/presentations/main_home_page/main_home_controller.d
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../repositories/home_repository/home_repository.dart';
 import '../../repositories/authentication_repository/sign_up_repository.dart';
+import '../../repositories/home_repository/profile_repository.dart';
 import '../../data/response_models/get_courts_by_duration_model.dart' hide CourtDurationSlots;
 import '../../data/response_models/get_all_slot_prices_of_court_model.dart';
 import '../../data/response_models/get_locations_model.dart';
@@ -255,6 +256,41 @@ class BookACourtController extends GetxController {
       log('Error fetching locations: $e');
     } finally {
       isLoadingLocations.value = false;
+    }
+  }
+
+  // Update user profile location
+  RxBool isUpdatingLocation = false.obs;
+  Future<bool> updateUserLocation(String cityId) async {
+    try {
+      isUpdatingLocation.value = true;
+      final mainHomeController = Get.find<MainHomeController>();
+      final profile = mainHomeController.profileController.profileModel.value?.response;
+      
+      if (profile == null) return false;
+
+      final profileRepo = ProfileRepository();
+      await profileRepo.updateUserProfile(
+        name: profile.name ?? '',
+        email: profile.email,
+        gender: profile.gender ?? '',
+        dob: profile.dob ?? '',
+        city: cityId,
+        location: profile.location?.toJson() ?? {},
+      );
+
+      // Refresh profile after update
+      await mainHomeController.profileController.fetchUserProfile();
+      locationId.value = cityId;
+      
+      CustomLogger.logMessage(msg: 'Location updated successfully', level: LogLevel.info);
+      return true;
+    } catch (e) {
+      log('Error updating location: $e');
+      CustomLogger.logMessage(msg: 'Failed to update location', level: LogLevel.error);
+      return false;
+    } finally {
+      isUpdatingLocation.value = false;
     }
   }
   RxString selectedCityId = ''.obs;

@@ -684,8 +684,8 @@ class CreateOpenMatchesController extends GetxController {
       final courtId = court.sId ?? '';
       final baseList = _originalSlotsCache[courtId] ?? List<Slots>.from(court.slots ?? []);
       court.slots = baseList.where((s) {
-        // Filter out past slots
-        if (isPastAndUnavailable(s)) return false;
+        // Only filter out past slots, keep booked future slots
+        if (_isPastSlot(s)) return false;
         
         final hour = _parseHour24(s.time);
         if (hour == null) return false;
@@ -703,8 +703,8 @@ class CreateOpenMatchesController extends GetxController {
     nightCount.value = 0;
     _originalSlotsCache.forEach((_, list) {
       for (final s in list) {
-        // Skip past slots in count
-        if (isPastAndUnavailable(s)) continue;
+        // Skip past slots in count, but include booked future slots
+        if (_isPastSlot(s)) continue;
         
         final hour = _parseHour24(s.time);
         if (hour == null) continue;
@@ -1273,13 +1273,8 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
-  bool isPastAndUnavailable(Slots slot) {
-    // Treat booked or explicitly unavailable statuses as unavailable
-    final status = _normalizeStatus(slot.status);
-    if (status == 'booked') return true;
-    if (status.isNotEmpty && status != 'available') return true;
-
-    // If time is missing or malformed, don't mark as past (avoid crashes)
+  // Check if slot is in the past (for filtering)
+  bool _isPastSlot(Slots slot) {
     final rawTime = slot.time;
     if (rawTime == null || rawTime.trim().isEmpty) {
       return false;
@@ -1291,7 +1286,6 @@ class CreateOpenMatchesController extends GetxController {
     try {
       final timeString = rawTime.toLowerCase().trim();
 
-      // Try common formats first
       DateTime? parsed;
       for (final pattern in const ['h:mm a', 'h a', 'HH:mm', 'H:mm', 'HH']) {
         try {
@@ -1306,7 +1300,6 @@ class CreateOpenMatchesController extends GetxController {
         hour = parsed.hour;
         minute = parsed.minute;
       } else {
-        // Fallback manual parse: supports "10", "10:30", with optional am/pm
         String t = timeString;
         String meridiem = '';
         final parts = t.split(' ');
@@ -1337,11 +1330,23 @@ class CreateOpenMatchesController extends GetxController {
         return true;
       }
     } catch (_) {
-
-      // On any parsing error, consider it not past to be safe
-
       return false;
     }
+    return false;
+  }
+
+  bool isPastAndUnavailable(Slots slot) {
+    // Check if slot is in the past
+    if (_isPastSlot(slot)) return true;
+    
+    // Check for maintenance/weather/staff unavailability
+    final availability = _normalizeStatus(slot.availabilityStatus);
+    if (availability == "maintenance" ||
+        availability == "weather conditions" ||
+        availability == "staff unavailability") {
+      return true;
+    }
+    
     return false;
   }
 

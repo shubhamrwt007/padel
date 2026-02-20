@@ -203,7 +203,24 @@ class MainHomeScreen extends StatelessWidget {
                     _quickActions(),
 
                     _bookingSection(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Obx(() {
+                        final profile = controller.profileController.profileModel.value;
+                        final recentMatches = profile?.response?.recentMatches ?? [];
 
+                        if (recentMatches.length >= 5) {
+                          return Column(
+                            children: [
+                              const SizedBox(height: 15),
+                              _recentMatches(),
+                            ],
+                          );
+                        }
+
+                        return const SizedBox.shrink();
+                      }),
+                    ),
                     Obx(() {
                       if (controller.selectedSportTab.value == 0) {
                         return Column(
@@ -294,7 +311,7 @@ class MainHomeScreen extends StatelessWidget {
             child: GestureDetector(
               onTap: () => controller.onSportTabChanged(0),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
                   gradient: controller.selectedSportTab.value == 0
                       ? LinearGradient(
@@ -1551,29 +1568,21 @@ class MainHomeScreen extends StatelessWidget {
 
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(child: _matchPlayedCard()),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    children: [
-                      _leaderboardCard(),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      _xpCard(),
-                    ],
+            Expanded(child: _matchPlayedCard()),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                children: [
+                  _leaderboardCard(),
+                  SizedBox(
+                    height: 10,
                   ),
-                ),
-              ],
+                  _xpCard(),
+                ],
+              ),
             ),
-            if (recentMatches.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              _recentMatches(),
-            ],
           ],
         ),
       );
@@ -2077,7 +2086,7 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
     return Container(
-      width: Get.width*.35,
+      width: Get.width*.37,
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
