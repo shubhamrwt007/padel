@@ -1,9 +1,7 @@
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
@@ -120,7 +118,10 @@ class RequestsController extends GetxController {
         Get.to(() => PaymentForWallet(
           totalAmount: request?.perShare?.toDouble() ?? 0.0,
           title: "Match Request",
-        ));
+        ), arguments: {
+          'acceptRequestId': requestId,
+          'acceptRequestType': requestType,
+        });
       } else if (e.response?.statusCode == 400) {
         AppToast.error(e.response?.data?['message']??"");
       }else {

@@ -27,7 +27,7 @@ class CartController extends GetxController {
   @override
   void onInit() async{
     super.onInit();
-    await getCartItems();
+    // await getCartItems();
   }
 
   // 🔹 Fetch Cart Items

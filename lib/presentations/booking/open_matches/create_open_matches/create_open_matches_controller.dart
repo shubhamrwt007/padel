@@ -782,20 +782,80 @@ class CreateOpenMatchesController extends GetxController {
     
     final supports30Min = slotSupports30Min(slot);
     
-    final multiDateKey = supports30Min && isLeftHalf != null 
+    // Check if this is the first slot being selected
+    final isFirstSlot = multiDateSelections.isEmpty;
+    
+    // If it's the first slot and supports 30min, force full selection (ignore isLeftHalf)
+    final forceFullSelection = isFirstSlot && supports30Min;
+    
+    final multiDateKey = supports30Min && isLeftHalf != null && !forceFullSelection
         ? '${dateString}_${resolvedCourtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}'
         : '${dateString}_${resolvedCourtId}_${slotId}';
 
-    if (multiDateSelections.containsKey(multiDateKey)) {
-      multiDateSelections.remove(multiDateKey);
-      selectedSlots.removeWhere((s) => s.sId == slotId);
-      selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
+    // Check if slot is already selected (check both full key and half keys for 30min slots)
+    bool isAlreadySelected = multiDateSelections.containsKey(multiDateKey);
+    
+    // For 30min slots, also check if full slot is selected (without L/R suffix)
+    if (supports30Min && !isAlreadySelected) {
+      final fullKey = '${dateString}_${resolvedCourtId}_${slotId}';
+      isAlreadySelected = multiDateSelections.containsKey(fullKey);
+      if (isAlreadySelected) {
+        // Remove full slot and all slots after it
+        _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
+        _recalculateTotalAmount();
+        log("Unselected full slot and all after it, remaining: ${multiDateSelections.length}");
+        return;
+      }
+    }
+    
+    if (isAlreadySelected) {
+      // Remove this slot and all slots after it to maintain continuity
+      _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
     } else {
-      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, isLeftHalf);
+      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, forceFullSelection ? null : isLeftHalf);
     }
 
     _recalculateTotalAmount();
     log("Selected ${multiDateSelections.length} slots across multiple dates, Total: ₹${totalAmount.value}");
+  }
+
+  /// Remove a slot and all slots that come after it (to maintain continuous selection)
+  void _removeSlotAndAllAfter(Slots slot, String courtId, String dateString) {
+    final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+    if (slotTimeMinutes == null) return;
+
+    // Find all selections to remove (current slot and all after it)
+    final keysToRemove = <String>[];
+    final slotIdsToRemove = <String>{};
+
+    multiDateSelections.forEach((key, selection) {
+      if (key.startsWith(dateString)) {
+        final selectionSlot = selection['slot'] as Slots;
+        final selectionCourtId = selection['courtId'] as String;
+        final selectionTimeMinutes = _convertTimeToMinutes(selectionSlot.time ?? '');
+
+        // Remove if same court and time >= current slot time
+        if (selectionCourtId == courtId && 
+            selectionTimeMinutes != null && 
+            selectionTimeMinutes >= slotTimeMinutes) {
+          keysToRemove.add(key);
+          slotIdsToRemove.add(selectionSlot.sId ?? '');
+        }
+      }
+    });
+
+    // Remove all identified keys
+    for (final key in keysToRemove) {
+      multiDateSelections.remove(key);
+    }
+
+    // Clean up selectedSlots and selectedSlotsWithCourtInfo
+    for (final slotId in slotIdsToRemove) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+
+    log('Removed ${keysToRemove.length} slots to maintain continuity');
   }
 
   /// Get unique dates from selections
@@ -829,8 +889,6 @@ class CreateOpenMatchesController extends GetxController {
     }
     
     // Check limits before adding - but only if this would be a new slot
-    final currentDate = selectedDate.value ?? DateTime.now();
-    final dateString = _dateFormatter.format(currentDate);
     final slotId = primarySlot.sId ?? '';
     
     // Check if this slot is already partially selected
@@ -844,16 +902,17 @@ class CreateOpenMatchesController extends GetxController {
     
     if (!isSlotAlreadySelected && getTotalSelectionsCount() >= maxSlots) {
       CustomLogger.logMessage(msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.", level: LogLevel.error);
-
       return;
     }
     
     // Check if this selection maintains consecutive slots
     if (!isSlotAlreadySelected && !_isConsecutiveSelectionAllowed(courtId, slotId, dateString)) {
       CustomLogger.logMessage(msg: "Please select consecutive time slots only.", level: LogLevel.error);
-
       return;
     }
+    
+    // Fill any gaps before adding the new selection
+    _fillGapsBeforeSlot(primarySlot, courtId, courtName, dateString, currentDate, isLeftHalf, allSlots);
     
     for (int i = 0; i < slotsToSelect.length; i++) {
       final slotToAdd = slotsToSelect[i];
@@ -903,6 +962,154 @@ class CreateOpenMatchesController extends GetxController {
         'adjustedAmount': adjustedAmount,
       };
     }
+  }
+  
+  /// Fill any gaps between existing selections and the new slot being added
+  void _fillGapsBeforeSlot(Slots targetSlot, String courtId, String courtName, String dateString, DateTime currentDate, bool? isLeftHalf, List<Slots> allSlots) {
+    if (multiDateSelections.isEmpty) return; // No gaps if nothing is selected
+    
+    final targetTimeMinutes = _convertTimeToMinutes(targetSlot.time ?? '');
+    if (targetTimeMinutes == null) return;
+    
+    final supports30Min = slotSupports30Min(targetSlot);
+    final targetSlotId = targetSlot.sId ?? '';
+    
+    // Special case: If selecting right half of a 30-min slot, also select left half
+    if (supports30Min && isLeftHalf == false) {
+      final leftKey = '${dateString}_${courtId}_${targetSlotId}_L';
+      if (!multiDateSelections.containsKey(leftKey)) {
+        final bookingTime = targetSlot.time ?? '';
+        final adjustedAmount = (targetSlot.amount ?? 0) ~/ 2;
+        
+        multiDateSelections[leftKey] = {
+          'slot': targetSlot,
+          'courtId': courtId,
+          'courtName': courtName,
+          'date': dateString,
+          'dateTime': currentDate,
+          'bookingTime': bookingTime,
+          'isLeftHalf': true,
+          'adjustedAmount': adjustedAmount,
+        };
+        
+        if (!selectedSlots.any((s) => s.sId == targetSlotId)) {
+          selectedSlots.add(targetSlot);
+        }
+        
+        log('Auto-selected left half of ${targetSlot.time} to maintain continuity');
+      }
+    }
+    
+    // Find the latest selected slot time for this court
+    int? latestSelectedTimeMinutes;
+    Slots? latestSelectedSlot;
+    
+    multiDateSelections.forEach((key, selection) {
+      if (key.startsWith(dateString)) {
+        final selectionSlot = selection['slot'] as Slots;
+        final selectionCourtId = selection['courtId'] as String;
+        
+        if (selectionCourtId == courtId) {
+          final timeMinutes = _convertTimeToMinutes(selectionSlot.time ?? '');
+          if (timeMinutes != null && (latestSelectedTimeMinutes == null || timeMinutes > latestSelectedTimeMinutes!)) {
+            latestSelectedTimeMinutes = timeMinutes;
+            latestSelectedSlot = selectionSlot;
+          }
+        }
+      }
+    });
+    
+    if (latestSelectedTimeMinutes == null || latestSelectedSlot == null) return;
+    
+    // If target slot is before or equal to latest selected, no need to fill gaps
+    if (targetTimeMinutes <= latestSelectedTimeMinutes!) return;
+    
+    // Find all slots between latest selected and target slot
+    final slotsToFill = <Slots>[];
+    for (final slot in allSlots) {
+      final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+      if (slotTimeMinutes != null && 
+          slotTimeMinutes > latestSelectedTimeMinutes! && 
+          slotTimeMinutes < targetTimeMinutes) {
+        slotsToFill.add(slot);
+      }
+    }
+    
+    // Fill the gaps
+    for (final gapSlot in slotsToFill) {
+      final supports30Min = slotSupports30Min(gapSlot);
+      final gapSlotId = gapSlot.sId ?? '';
+      
+      // Check if left half of latest selected slot needs to be filled
+      if (supports30Min) {
+        final leftKey = '${dateString}_${courtId}_${gapSlotId}_L';
+        final rightKey = '${dateString}_${courtId}_${gapSlotId}_R';
+        
+        // Fill left half if not already selected
+        if (!multiDateSelections.containsKey(leftKey)) {
+          final bookingTime = gapSlot.time ?? '';
+          final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
+          
+          multiDateSelections[leftKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': bookingTime,
+            'isLeftHalf': true,
+            'adjustedAmount': adjustedAmount,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+        
+        // Fill right half if not already selected
+        if (!multiDateSelections.containsKey(rightKey)) {
+          final originalTime = gapSlot.time ?? '';
+          final bookingTime = _addMinutesToTime(originalTime, 30);
+          final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
+          
+          multiDateSelections[rightKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': bookingTime,
+            'isLeftHalf': false,
+            'adjustedAmount': adjustedAmount,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+      } else {
+        // For non-30min slots, fill the full slot
+        final fullKey = '${dateString}_${courtId}_${gapSlotId}';
+        if (!multiDateSelections.containsKey(fullKey)) {
+          multiDateSelections[fullKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': gapSlot.time ?? '',
+            'isLeftHalf': null,
+            'adjustedAmount': gapSlot.amount ?? 0,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+      }
+    }
+    
+    log('Filled ${slotsToFill.length} gap slots to maintain continuity');
   }
   
   void _removeSlotGroup(Slots primarySlot, String courtId, String dateString) {
@@ -1445,8 +1652,8 @@ class CreateOpenMatchesController extends GetxController {
       log("Multi-Date Cart Payload: $cartPayload");
 
       await cartRepository.addCartItems(data: cartPayload).then((v) async {
-        final CartController controller = Get.find<CartController>();
-        await controller.getCartItems();
+        // final CartController controller = Get.find<CartController>();
+        // await controller.getCartItems();
 
         Get.to(() => CartScreen(buttonType: "true"))?.then((_) async {
           // Clear all selections
@@ -1480,7 +1687,11 @@ class CreateOpenMatchesController extends GetxController {
     final supports30Min = slotSupports30Min(slot);
     
     if (supports30Min) {
-      // For slots that support 30min pricing, only return true if BOTH halves are selected
+      // Check if full slot is selected (without L/R suffix - for first slot)
+      final fullKey = '${dateString}_${courtId}_${slot.sId}';
+      if (multiDateSelections.containsKey(fullKey)) return true;
+      
+      // Check if BOTH halves are selected
       final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
       final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
       return multiDateSelections.containsKey(leftKey) && multiDateSelections.containsKey(rightKey);
@@ -1627,11 +1838,18 @@ class CreateOpenMatchesController extends GetxController {
   }
 
   /// Check if both halves of a slot are selected (only for slots that support 30-minute pricing)
+  /// Also returns true if the full slot is selected (without L/R suffix - for first slot)
   bool isBothHalvesSelected(Slots slot, String courtId) {
     if (!slotSupports30Min(slot)) return false;
     
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = _dateFormatter.format(currentDate);
+    
+    // Check if full slot is selected (without L/R suffix - for first slot)
+    final fullKey = '${dateString}_${courtId}_${slot.sId}';
+    if (multiDateSelections.containsKey(fullKey)) return true;
+    
+    // Check if both halves are selected separately
     final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
     final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
     return multiDateSelections.containsKey(leftKey) && multiDateSelections.containsKey(rightKey);

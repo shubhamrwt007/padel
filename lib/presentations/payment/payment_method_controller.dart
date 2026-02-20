@@ -1,22 +1,15 @@
-import 'dart:developer';
-import 'dart:io';
-import 'dart:math';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import '../../data/response_models/cart/carte_booking_model.dart';
 import '../../services/payment_services/razorpay.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import '../booking/successful_screens/booking_successful_screen.dart';
 import '../../repositories/cart/cart_repository.dart';
-import '../cart/cart_controller.dart';
 import '../book_a_court/book_a_court_controller.dart';
 import '../booking/book_session/book_session_controller.dart';
-import '../main_home_page/main_home_controller.dart';
 import '../profile/profile_controller.dart';
 
 class PaymentMethodController extends GetxController {
@@ -38,8 +31,8 @@ class PaymentMethodController extends GetxController {
 
   static final _cartRepository = CartRepository();
 
-  CartController? get _cartController =>
-      Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
+  // CartController? get _cartController =>
+  //     Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
   
   BookACourtController? get bookACourtController {
     try {
@@ -84,7 +77,7 @@ class PaymentMethodController extends GetxController {
     // Extract signature from response
     final signature = response.signature;
     
-    print('Payment Success - PaymentId: ${response.paymentId}, OrderId: ${response.orderId}, Signature: $signature');
+    CustomLogger.logMessage(msg: 'Payment Success - PaymentId: ${response.paymentId}, OrderId: ${response.orderId}, Signature: $signature',level: LogLevel.debug);
 
     Get.generalDialog(
       barrierDismissible: false,
@@ -176,13 +169,13 @@ class PaymentMethodController extends GetxController {
       List<Map<String, dynamic>>? bookingPayload;
 
       if (isFromBookSession && directBookingPayload != null) {
-        print("object------------------------");
+        CustomLogger.logMessage(msg: "object------------------------",level: LogLevel.debug);
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
-        print("From Book A Court PAge----------------------");
+        CustomLogger.logMessage(msg: "From Book A Court PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else if (bookSessionController != null) {
-        print("From Book Session PAge----------------------");
+        CustomLogger.logMessage(msg: "From Book Session PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
@@ -203,7 +196,7 @@ class PaymentMethodController extends GetxController {
         }
       }
 
-      print("Booking payload after payment: $bookingPayload");
+      CustomLogger.logMessage(msg: "Booking payload after payment: $bookingPayload",level: LogLevel.debug);
 
       final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
@@ -211,11 +204,11 @@ class PaymentMethodController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        print("Booking confirmed: ${response.data}");
+        CustomLogger.logMessage(msg: "Booking confirmed: ${response.data}",level: LogLevel.debug);
 
         if (!isFromBookSession) {
-          final cart = _cartController;
-          if (cart != null) await cart.getCartItems();
+          // final cart = _cartController;
+          // if (cart != null) await cart.getCartItems();
         } else {
           directBookingPayload = null;
           if (Get.isRegistered<BookSessionController>()) {
@@ -234,7 +227,7 @@ class PaymentMethodController extends GetxController {
         showBookingErrorDialog();
       }
     } catch (e) {
-      print("Error processing booking after payment: $e");
+      CustomLogger.logMessage(msg: "Error processing booking after payment: $e",level: LogLevel.debug);
       Get.close(2);
       showBookingErrorDialog();
     }
@@ -367,35 +360,28 @@ class PaymentMethodController extends GetxController {
     debugPrint('Verifying payment: $paymentId, $orderId, $signature');
   }
 
-  String _generateRandomPaymentId() {
-    final random = Random();
-    final chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return 'pay_${List.generate(14, (index) => chars[random.nextInt(chars.length)]).join()}';
-  }
-
-
   Future<void> createInitialBooking() async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
-      final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
-      final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
-      final categoryId = mainHomeController?.selectedCategoryId.value;
-      final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      // final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
+      // final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
+      // final categoryId = mainHomeController?.selectedCategoryId.value;
+      // final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
 
       if (isFromBookSession && directBookingPayload != null) {
-        print("Diraect----------------------");
+        CustomLogger.logMessage(msg: "Direct----------------------",level: LogLevel.debug);
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
-        print("From Book A Court PAge----------------------");
+        CustomLogger.logMessage(msg: "From Book A Court PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookACourtController!.buildBookingPayload();
       } else if (bookSessionController != null) {
-        print("From Book Session PAge----------------------");
+        CustomLogger.logMessage(msg: "From Book Session PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
-        print("No booking payload available");
+        CustomLogger.logMessage(msg: "No booking payload available",level: LogLevel.debug);
         return;
       }
 
@@ -403,7 +389,7 @@ class PaymentMethodController extends GetxController {
         payload['initiatePayment'] = false;
       }
 
-      print("Initial booking payload: $bookingPayload");
+      CustomLogger.logMessage(msg: "Initial booking payload: $bookingPayload",level: LogLevel.debug);
 
       final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
@@ -412,7 +398,7 @@ class PaymentMethodController extends GetxController {
 
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;
-        print("Booking API response: $responseData");
+        CustomLogger.logMessage(msg: "Booking API response: $responseData",level: LogLevel.debug);
 
         _razorpayOrderId = responseData['orderId']; // Use razorpayOrderId from backend
         initiatePayment = responseData.containsKey('requiresPayment')
@@ -423,9 +409,9 @@ class PaymentMethodController extends GetxController {
         razorpayAmountUsed.value =
             (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
-        print(
+        CustomLogger.logMessage(msg:
           "Booking created with Razorpay order ID: $_razorpayOrderId\n"
-          "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
+          "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",level: LogLevel.debug
         );
 
         if (initiatePayment == false) {
@@ -435,8 +421,7 @@ class PaymentMethodController extends GetxController {
         }
       }
     } catch (e, st) {
-      print("Error creating initial booking: $e");
-      print(st);
+      CustomLogger.logMessage(msg: "Error creating initial booking: $e,$st",level: LogLevel.debug);
     }
   }
 
@@ -459,7 +444,7 @@ class PaymentMethodController extends GetxController {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
+                  color: Colors.green.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -499,8 +484,8 @@ class PaymentMethodController extends GetxController {
                 child: ElevatedButton(
                   onPressed: () {
                     if (!isFromBookSession) {
-                      final cart = _cartController;
-                      if (cart != null) cart.getCartItems();
+                      // final cart = _cartController;
+                      // if (cart != null) cart.getCartItems();
                     } else {
                       directBookingPayload = null;
                       if (Get.isRegistered<BookSessionController>()) {

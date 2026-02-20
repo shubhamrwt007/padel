@@ -708,8 +708,8 @@ var locationsId = "".obs;
 
   bool isPastAndUnavailable(Slots slot) {
     final status = slot.status?.toLowerCase() ?? '';
-    if (status == 'booked') return true;
-    if (status.isNotEmpty && status != 'available') return true;
+    // Don't filter out booked slots - we want to show them in red
+    if (status.isNotEmpty && status != 'available' && status != 'booked') return true;
 
     final rawTime = slot.time;
     if (rawTime == null || rawTime.trim().isEmpty) {
@@ -812,10 +812,14 @@ var locationsId = "".obs;
 
   /// Check if left half of a 30-minute slot is booked
   bool isLeftHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    // If status is booked, entire slot is booked
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    
+    // Check if bookingTime exists and is not empty
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
     // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
@@ -823,19 +827,26 @@ var locationsId = "".obs;
     // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
       // If booking time equals original time (e.g., both are "5:00 PM"), left half is booked
-      return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedOriginal = _normalizeTime(originalTime);
+      log('Left half check - booking: $normalizedBooking, original: $normalizedOriginal, match: ${normalizedBooking == normalizedOriginal}');
+      return normalizedBooking == normalizedOriginal;
     }
     
-    // Fallback to original logic
+    // Fallback: compare normalized times
     return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
   }
 
   /// Check if right half of a 30-minute slot is booked
   bool isRightHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    // If status is booked, entire slot is booked
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    
+    // Check if bookingTime exists and is not empty
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
     // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
@@ -844,10 +855,13 @@ var locationsId = "".obs;
     if (slot.duration == 30) {
       // If booking time is 30 minutes after original time (e.g., "5:30 PM" vs "5:00 PM"), right half is booked
       final expectedRightTime = _addMinutesToTime(originalTime, 30);
-      return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedExpected = _normalizeTime(expectedRightTime);
+      log('Right half check - booking: $normalizedBooking, expected: $normalizedExpected, match: ${normalizedBooking == normalizedExpected}');
+      return normalizedBooking == normalizedExpected;
     }
     
-    // Fallback to original logic
+    // Fallback: compare with 30 minutes added
     final expectedRightTime = _addMinutesToTime(originalTime, 30);
     return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
   }
@@ -907,17 +921,22 @@ var locationsId = "".obs;
 
   /// Normalize time format for comparison (convert to consistent format)
   String _normalizeTime(String timeString) {
+    if (timeString.isEmpty) return '';
+    
+    final trimmed = timeString.trim();
+    
     try {
-      // Try parsing and reformatting to ensure consistent format
-      final upperTime = timeString.trim().toUpperCase();
-      final time = DateFormat('h a').parseStrict(upperTime);
-      return DateFormat('h:mm a').format(time);
+      // Try parsing with minutes first (e.g., "5:00 PM")
+      final time = DateFormat('h:mm a').parseStrict(trimmed);
+      return DateFormat('h:mm a').format(time).toUpperCase();
     } catch (_) {
       try {
-        final time = DateFormat('h:mm a').parseStrict(timeString.trim());
-        return DateFormat('h:mm a').format(time);
+        // Try parsing without minutes (e.g., "5 PM")
+        final time = DateFormat('h a').parseStrict(trimmed);
+        return DateFormat('h:mm a').format(time).toUpperCase();
       } catch (_) {
-        return timeString.trim().toUpperCase();
+        // Return uppercase trimmed string as fallback
+        return trimmed.toUpperCase();
       }
     }
   }

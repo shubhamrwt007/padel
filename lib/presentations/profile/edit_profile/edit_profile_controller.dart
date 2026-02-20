@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/home/home_controller.dart';
 class EditProfileController extends GetxController{
   ProfileController profileController = Get.put(ProfileController());
     TextEditingController nameController = TextEditingController();
@@ -217,6 +219,24 @@ class EditProfileController extends GetxController{
 
       if (updatedProfile.status == "200") {
         await profileController.fetchUserProfile();
+        
+        // Refresh MainHomeController and HomeController APIs
+        try {
+          final mainHomeController = Get.find<MainHomeController>();
+          final homeController = Get.find<HomeController>();
+          final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+          final categoryId = mainHomeController.selectedCategoryId.value;
+          
+          await Future.wait([
+            homeController.fetchBookings(categoryId: categoryId, locationId: locationId),
+            homeController.fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId),
+            mainHomeController.fetchOpenMatches(),
+            mainHomeController.fetchNearCityPlayers(),
+          ]);
+        } catch (e) {
+          CustomLogger.logMessage(msg: 'Error refreshing home data: $e', level: LogLevel.error);
+        }
+        
         Get.back();
         AppToast.success("Profile Updated Successfully");
 

@@ -208,7 +208,7 @@ class BookACourtScreen extends StatelessWidget {
                 },
                 child: controller.showMainGrid.value
                     ? _buildAllCourtsWithSlots()
-                    : _buildSelectedSlotsList(),
+                    : _buildSelectedSlotsList().paddingOnly(top: 10),
               )),
               Align(
                 alignment: AlignmentGeometry.centerRight,

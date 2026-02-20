@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/app_strings.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
@@ -11,14 +10,11 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/search_field.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
-import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
-import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
-import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
@@ -99,50 +95,6 @@ class HomeScreen extends GetView<HomeController> {
         ),
       ),
     );
-  }
-
-  Widget _buildAppBarTitle(BuildContext context) {
-    return Obx(() {
-      final profile = controller.profileController.profileModel.value;
-      if (controller.profileController.isLoading.value) {
-        return Container(
-          width: 120,
-          height: 20,
-          decoration: BoxDecoration(
-            color: AppColors.textFieldColor.withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
-      }
-
-      final name = profile?.response?.name?.capitalizeFirst??"";
-      final displayName =
-      (name.trim().isEmpty) ? 'Guest' : name;
-
-      return SizedBox(
-        width: Get.width * 0.34,
-        child: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: AppStrings.hello,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              TextSpan(
-                text: displayName,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-        ),
-      ).paddingOnly(left: 5);
-    });
   }
 
   Widget searchField() {

@@ -12,6 +12,7 @@ import 'package:padel_mobile/data/response_models/wallet/transaction_history_mod
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_controller.dart';
+import 'package:padel_mobile/presentations/user_requests/requests_controller.dart';
 import 'package:padel_mobile/repositories/wallet_repository/wallet_repository.dart';
 import 'package:padel_mobile/services/payment_services/razorpay.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
@@ -39,6 +40,8 @@ class WalletController extends GetxController {
   String? pendingBookingId;
   String? pendingTeam;
   dynamic pendingPrice;
+  String? pendingAcceptRequestId;
+  String? pendingAcceptRequestType;
   final storage = GetStorage();
 
   Future<void> fetchTransaction({bool isRefresh = false}) async {
@@ -166,6 +169,11 @@ class WalletController extends GetxController {
       if (pendingMatchId != null && pendingBookingId != null && pendingTeam != null) {
         await _executeRequestAfterPayment();
       }
+      
+      // If there's a pending accept request, call the accept API
+      if (pendingAcceptRequestId != null && pendingAcceptRequestType != null) {
+        await _executeAcceptAfterPayment();
+      }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
     } finally {
@@ -206,6 +214,44 @@ class WalletController extends GetxController {
     } catch (e) {
       CustomLogger.logMessage(
         msg: "Error executing request after payment: $e",
+        level: LogLevel.error,
+      );
+    }
+  }
+
+  Future<void> _executeAcceptAfterPayment() async {
+    try {
+      final requestsController = Get.put(RequestsController());
+      final body = {
+        "requestId": pendingAcceptRequestId!,
+        "action": "accept",
+      };
+
+      if (pendingAcceptRequestType == 'booking_invitation') {
+        await requestsController.repository.respondToBookingRequest(body: body);
+      } else if (pendingAcceptRequestType == 'request') {
+        body["type"] = "MatchCreator";
+        await requestsController.repository.acceptOrRejectRequestPlayer(body: body);
+      } else if (pendingAcceptRequestType == 'invitation') {
+        await requestsController.repository.acceptOrRejectRequestPlayer(body: body);
+      }
+
+      // Refresh requests
+      await requestsController.fetchJoinRequests();
+      await profileController.fetCustomerLeaderBoardRank();
+      
+      Get.back(result: true);
+      CustomLogger.logMessage(
+        msg: "Request accepted successfully after payment",
+        level: LogLevel.info,
+      );
+      
+      // Clear pending context
+      pendingAcceptRequestId = null;
+      pendingAcceptRequestType = null;
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "Error accepting request after payment: $e",
         level: LogLevel.error,
       );
     }

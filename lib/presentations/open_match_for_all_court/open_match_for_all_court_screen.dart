@@ -527,9 +527,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
     // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
-    final timeStr = data.openMatchStatus == "pending"||data.openMatchStatus =="cancelled"
-        ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
-        : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
+    final timeStr ="${data.bookingId?.startTime?.split(' ').first ?? data.startTime?.split(' ').first??""}-${data.bookingId?.endTime ?? data.endTime??""}";
     final clubName = data.clubId?.clubName ?? '-';
 
     final locationName = (data.clubId?.locations?.isNotEmpty ?? false)
@@ -826,12 +824,12 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           // Admin match - direct join flow
           print("Match from Admin----------------------");
           await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
-        } else if(match?.openMatchStatus == "pending"){
+        } else if(match?.openMatchStatus == "pending" && !isLoginUserInMatch){
           print("Match from User Per Share----------------------");
           await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
         } else if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
-        } else {
+        } else if (!isLoginUserInMatch) {
           // Direct API call for login user
           await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.totalAmount/4);
         }
@@ -1024,6 +1022,12 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   }
 
   void _showPlayerDetailsDialog(OpenMatchBookingData matchData) {
+    final userId = storage.read('userId');
+    final hasPlayers = (matchData.teamA ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false)) ||
+                       (matchData.teamB ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false));
+    
+    if (!hasPlayers) return;
+    
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
