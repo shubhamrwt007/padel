@@ -281,7 +281,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                               ),
                             ),
                             Text(
-                              " | ${booking.startTime.split(" ").first??""}-${booking.endTime??""}",
+                              " | ${booking.startTime?.split(" ").first ?? ""}-${booking.endTime ?? ""}",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black87,
@@ -822,7 +822,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     try {
       final dateStr = formatDate(booking.bookingDate);
       // final timeStr = _getTimeString(booking);
-      final timeStr = '${booking.startTime.split(' ').first??""}-${booking.endTime??""}';
+      final timeStr = '${booking.startTime?.split(' ').first ?? ""}-${booking.endTime ?? ""}';
 
       return RichText(
         text: TextSpan(

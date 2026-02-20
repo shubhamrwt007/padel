@@ -271,18 +271,28 @@ class BookACourtController extends GetxController {
 
       final profileRepo = ProfileRepository();
       await profileRepo.updateUserProfile(
-        name: profile.name ?? '',
-        email: profile.email,
-        gender: profile.gender ?? '',
-        dob: profile.dob ?? '',
+        // name: profile.name ?? '',
+        // email: profile.email,
+        // gender: profile.gender ?? '',
+        // dob: profile.dob ?? '',
         city: cityId,
         location: profile.location?.toJson() ?? {},
       );
 
-      // Refresh profile after update
+
+
       await mainHomeController.profileController.fetchUserProfile();
-      locationId.value = cityId;
-      
+      final newLocationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      locationId.value = newLocationId;
+      final categoryId = mainHomeController.selectedCategoryId.value;
+      await Future.wait([
+        mainHomeController.homeController.fetchBookings(categoryId: categoryId, locationId: newLocationId),
+        mainHomeController.homeController.fetchClubs(isRefresh: true, categoryId: categoryId, locationId: newLocationId),
+        mainHomeController.fetchOpenMatches(),
+        mainHomeController.fetchNearCityPlayers(),
+        fetchCourtsByDuration()
+      ]);
+
       CustomLogger.logMessage(msg: 'Location updated successfully', level: LogLevel.info);
       return true;
     } catch (e) {

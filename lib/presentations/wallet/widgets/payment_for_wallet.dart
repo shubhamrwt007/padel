@@ -342,12 +342,19 @@ class PaymentForWallet extends StatelessWidget {
                             final requestBookingId = args?['requestBookingId'];
                             final requestTeam = args?['requestTeam'];
                             final requestPrice = args?['requestPrice'];
+                            final acceptRequestId = args?['acceptRequestId'];
+                            final acceptRequestType = args?['acceptRequestType'];
                             
                             if (requestMatchId != null && requestBookingId != null && requestTeam != null) {
                               walletController.pendingMatchId = requestMatchId;
                               walletController.pendingBookingId = requestBookingId;
                               walletController.pendingTeam = requestTeam;
                               walletController.pendingPrice = requestPrice;
+                            }
+                            
+                            if (acceptRequestId != null && acceptRequestType != null) {
+                              walletController.pendingAcceptRequestId = acceptRequestId;
+                              walletController.pendingAcceptRequestType = acceptRequestType;
                             }
                             
                             walletController.createBalance(amountToPay);

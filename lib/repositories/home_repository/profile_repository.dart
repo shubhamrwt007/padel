@@ -44,29 +44,39 @@ class ProfileRepository {
   }
 
   Future<UpdateProfileModel> updateUserProfile({
-    required String name,
+    String? name,
     String? email,
-    required String gender,
-    required String dob,
-    required String city,
-    required dynamic location,
+    String? gender,
+    String? dob,
+    String? city,
+    dynamic location,
     File? profileImage,
   }) async {
     try {
-      FormData formData = FormData.fromMap({
+      // Step 1: Create raw map
+      final Map<String, dynamic> data = {
         'name': name,
-        'email':email,
+        'email': email,
         'gender': gender,
         'dob': dob,
         'city': city,
         'location': location,
-      });
+      };
+
+      // Step 2: Remove null OR empty string values
+      data.removeWhere((key, value) =>
+      value == null ||
+          (value is String && value.trim().isEmpty));
+
+      // Step 3: Create FormData
+      FormData formData = FormData.fromMap(data);
 
       CustomLogger.logMessage(
         msg: "Form Data: ${formData.fields}",
         level: LogLevel.info,
       );
 
+      // Step 4: Add image only if exists
       if (profileImage != null) {
         String fileName = profileImage.path.split('/').last;
 
@@ -79,8 +89,9 @@ class ProfileRepository {
             ),
           ),
         );
+
         CustomLogger.logMessage(
-          msg: "Profile image added to form data: $fileName",
+          msg: "Profile image added: $fileName",
           level: LogLevel.info,
         );
       }
@@ -88,23 +99,20 @@ class ProfileRepository {
       final response = await dioClient.put(
         AppEndpoints.updateUserProfile,
         data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        options: Options(headers: {
+          'Content-Type': 'multipart/form-data',
+        }),
       );
 
       if (response.statusCode == 200) {
-        CustomLogger.logMessage(
-          msg: "Profile update successful: ${response.data}",
-          level: LogLevel.info,
-        );
         return UpdateProfileModel.fromJson(response.data);
       } else {
         throw Exception(
-          "Profile update failed with status code: ${response.statusCode}",
-        );
+            "Profile update failed: ${response.statusCode}");
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Profile update failed with error: ${e.toString()}",
+        msg: "Profile update error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

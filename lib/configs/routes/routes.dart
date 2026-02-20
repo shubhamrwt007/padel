@@ -10,14 +10,10 @@ import 'package:padel_mobile/presentations/book_a_court/book_a_court_binding.dar
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_screen.dart';
 import 'package:padel_mobile/presentations/booking/americano/americano_binding.dart';
 import 'package:padel_mobile/presentations/booking/americano/americano_screen.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_binding.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_binding.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/create_open_matches/create_open_matches_binding.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/create_open_matches/create_open_matches_screen.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_binding.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_screen.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_binding.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/booking/booking_binding.dart';
@@ -66,7 +62,6 @@ import 'package:padel_mobile/presentations/user_requests/requests_binding.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_binding.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_screen.dart';
-import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 import 'package:padel_mobile/presentations/xp_points/xp_points_binding.dart';
 import 'package:padel_mobile/presentations/xp_points/xp_points_screen.dart';
 import '../../presentations/auth/login/login_binding.dart';
@@ -344,13 +339,7 @@ class Routes {
       transitionDuration: defaultDuration,
     ),
     ///Requests-----------------------------------------------------------------
-    GetPage(
-      name: RoutesName.yourMatchRequest,
-      page: () => YourMatchRequestsScreen(),
-      binding: YourMatchRequestsBinding(),
-      transition: Transition.rightToLeft,
-      transitionDuration: defaultDuration,
-    ),   GetPage(
+   GetPage(
       name: RoutesName.requests,
       page: () => RequestsScreen(),
       binding: RequestsBinding(),
@@ -366,13 +355,7 @@ class Routes {
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
-    GetPage(
-      name: RoutesName.paymentForWallet,
-      page: () => PaymentForWallet(),
-      binding: WalletBinding(),
-      transition: Transition.rightToLeft,
-      transitionDuration: defaultDuration,
-    ),
+
 
     ///XP Points----------------------------------------------------------------
     GetPage(

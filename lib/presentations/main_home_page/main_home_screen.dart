@@ -154,7 +154,7 @@ class MainHomeScreen extends StatelessWidget {
                   children: [
                     SvgPicture.asset(Assets.imagesIcWallet2,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      formatWalletAmount(walletController.walletBalance.value ?? 0),
+                      formatWalletAmount(walletController.walletBalance.value),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -516,9 +516,8 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       final bookings = homeController.bookings.value?.data ?? [];
-      final filteredBookings = bookings.where((b) => b.isOpenMatch != true).toList();
 
-      if (filteredBookings.isEmpty) {
+      if (bookings.isEmpty) {
         return SizedBox.shrink();
       } else {
         return Column(
@@ -562,9 +561,8 @@ class MainHomeScreen extends StatelessWidget {
   Widget _clubTicketList() {
     return Obx(() {
       final allBookings = controller.homeController.bookings.value?.data ?? [];
-      final booking = allBookings.where((b) => b.isOpenMatch != true).toList();
       
-      if (booking.isEmpty) {
+      if (allBookings.isEmpty) {
         return SizedBox.shrink();
       }
       
@@ -573,9 +571,9 @@ class MainHomeScreen extends StatelessWidget {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 16),
-          itemCount: booking.length,
+          itemCount: allBookings.length,
           itemBuilder: (context, index) =>
-              _buildBookingCard(context, booking[index]),
+              _buildBookingCard(context, allBookings[index]),
         ),
       );
     });
@@ -1227,7 +1225,7 @@ class MainHomeScreen extends StatelessWidget {
     final features = courtDetails?.features ?? [];
     final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
     final city = locationDetails?.city ?? court.city ?? "";
-    final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
+    // final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
     
     return GestureDetector(
       onTap: () {
@@ -1562,31 +1560,26 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget statsDashboard() {
-    return Obx(() {
-      final profile = controller.profileController.profileModel.value;
-      final recentMatches = profile?.response?.recentMatches ?? [];
-
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Expanded(child: _matchPlayedCard()),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                children: [
-                  _leaderboardCard(),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  _xpCard(),
-                ],
-              ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(child: _matchPlayedCard()),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              children: [
+                _leaderboardCard(),
+                SizedBox(
+                  height: 10,
+                ),
+                _xpCard(),
+              ],
             ),
-          ],
-        ),
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _matchPlayedCard() {
@@ -2176,7 +2169,7 @@ class MainHomeScreen extends StatelessWidget {
                 firstLetter,
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.primaryColor.withOpacity(0.5),
+                  color: AppColors.primaryColor.withValues(alpha: 0.5),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2221,25 +2214,5 @@ class MainHomeScreen extends StatelessWidget {
         child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
       ),
     );
-  }
-
-  String _getDay(String? ymd) {
-    if (ymd == null || ymd.isEmpty) return '';
-    try {
-      final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
-      return DateFormat('EEEE').format(parsed);
-    } catch (_) {
-      return ymd;
-    }
-  }
-
-  String _getDate(String? ymd) {
-    if (ymd == null || ymd.isEmpty) return '';
-    try {
-      final parsed = DateFormat('yyyy-MM-dd').parse(ymd);
-      return DateFormat('dd MMM').format(parsed);
-    } catch (_) {
-      return ymd;
-    }
   }
 }
