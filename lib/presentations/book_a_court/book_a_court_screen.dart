@@ -418,9 +418,9 @@ class BookACourtScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             color: Colors.grey.shade200,
-                            child: clubData.registerClub?.courtImage != null && clubData.registerClub!.courtImage!.isNotEmpty
+                            child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
-                              imageUrl: clubData.registerClub!.courtImage!.first,
+                              imageUrl: clubData.registerClub!.logo!,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Icon(Icons.sports_tennis),
                               errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),

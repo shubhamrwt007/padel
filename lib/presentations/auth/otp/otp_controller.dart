@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:otp_autofill/otp_autofill.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_controller.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/reset_password_screen.dart';
@@ -26,6 +27,8 @@ class OtpController extends GetxController {
   final FocusNode pinFocusNode = FocusNode();
   final arguments = Get.arguments;
   RxBool isLoading = false.obs;
+  late OTPTextEditController otpController;
+  late OTPInteractor otpInteractor;
 
   String getMaskedPhoneNumber() {
     final phoneNumber = arguments['phoneNumber'] ?? '';
@@ -109,6 +112,17 @@ class OtpController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    otpInteractor = OTPInteractor();
+    otpController = OTPTextEditController(
+      codeLength: 4,
+      onCodeReceive: (code) {
+        valueController.text = code;
+        onOtpChanged(code);
+      },
+    )..startListenUserConsent((code) {
+      final exp = RegExp(r'(\d{4})');
+      return exp.stringMatch(code ?? '') ?? '';
+    });
     startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       pinFocusNode.requestFocus();
@@ -118,7 +132,7 @@ class OtpController extends GetxController {
   @override
   void onClose() {
     _timer?.cancel();
-    // pinFocusNode.dispose();
+    otpController.stopListen();
     super.onClose();
   }
 }

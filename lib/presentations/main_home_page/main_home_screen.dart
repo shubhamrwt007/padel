@@ -720,10 +720,9 @@ class MainHomeScreen extends StatelessWidget {
         border: Border.all(color: AppColors.greyColor),
       ),
       child: ClipOval(
-        child: (club?.courtImage != null &&
-            club!.courtImage!.isNotEmpty)
+        child: (club?.logo != null && club!.logo!.isNotEmpty)
             ? CachedNetworkImage(
-          imageUrl: club.courtImage![0],
+          imageUrl: club.logo!,
           fit: BoxFit.cover,
           placeholder: (_, __) =>
               LoadingWidget(color: AppColors.primaryColor),
@@ -793,45 +792,40 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _bookingTimeInfo(BuildContext context, BookingHistoryData b, bool isOngoing) {
+    String formattedDateTime = '';
+    if (b.bookingDate != null) {
+      try {
+        final date = DateTime.parse(b.bookingDate!);
+        final dateStr = DateFormat('dd MMM').format(date);
+        final timeRange = (b.startTime != null && b.endTime != null) 
+            ? '${b.startTime} – ${b.endTime}' 
+            : '';
+        formattedDateTime = timeRange.isNotEmpty ? '$dateStr, $timeRange' : dateStr;
+      } catch (e) {
+        formattedDateTime = '';
+      }
+    }
+
     return Container(
       color: Colors.transparent,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                controller.homeController.formatDate(b.bookingDate),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 11,
-                  color: isOngoing
-                      ? Colors.red.shade700
-                      : AppColors.blackColor,
-                ),
+          Expanded(
+            child: Text(
+              formattedDateTime,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                color: isOngoing ? Colors.red.shade700 : AppColors.blackColor,
               ),
-              if (b.startTime != null && b.endTime != null)
-                Container(
-                  color: Colors.transparent,
-                  width: Get.width*0.25,
-                  child: Text(
-                    overflow: TextOverflow.ellipsis,
-                    "${b.startTime ?? ""} - ${b.endTime ?? ""}",
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: isOngoing
-                          ? Colors.red.shade700
-                          : AppColors.blackColor,
-                      fontSize: 11,
-                    ),
-                  ).paddingOnly(left: 5),
-                ),
-            ],
+            ),
           ),
           Text(
-            "(${b.duration ?? 0}m)",
+            "(${b.totalTime ?? 0}m)",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color:
-              isOngoing ? Colors.red.shade700 : AppColors.blackColor,
+              color: isOngoing ? Colors.red.shade700 : AppColors.blackColor,
               fontSize: 11,
             ),
           ),

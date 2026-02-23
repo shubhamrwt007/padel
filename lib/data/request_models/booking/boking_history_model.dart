@@ -64,6 +64,7 @@ class BookingHistoryData {
   String? invoiceUrl;
   int? iV;
   int? duration;
+  int? totalTime;
   dynamic customerReview;
   OpenMatchId? openMatchId;
   Scoreboard? scoreboard;
@@ -92,6 +93,7 @@ class BookingHistoryData {
     this.invoiceUrl,
     this.iV,
     this.duration,
+    this.totalTime,
     this.customerReview,
     this.openMatchId,
     this.scoreboard,
@@ -127,6 +129,7 @@ class BookingHistoryData {
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
     duration = json['duration'];
+    totalTime = json['totalTime'];
     isOpenMatch = json['isOpenMatch'];
     invoiceUrl = json['invoiceUrl'];
     customerReview = json['customerReview'];
@@ -192,6 +195,7 @@ class BookingHistoryData {
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
     data['duration'] = duration;
+    data['totalTime'] = totalTime;
     data['isOpenMatch'] = isOpenMatch;
     data['invoiceUrl'] = invoiceUrl;
     data['customerReview'] = customerReview;
@@ -637,6 +641,7 @@ class RegisterClubId {
   String? zipCode;
   String? description;
   List<BookingLocation>? locations;
+  String? logo;
 
   RegisterClubId({
     this.sId,
@@ -661,6 +666,7 @@ class RegisterClubId {
     this.zipCode,
     this.description,
     this.locations,
+    this.logo,
   });
 
   RegisterClubId.fromJson(Map<String, dynamic> json) {
@@ -711,6 +717,7 @@ class RegisterClubId {
     updatedAt = json['updatedAt']?.toString();
     zipCode = json['zipCode']?.toString();
     description = json['description']?.toString();
+    logo = json['logo']?.toString();
     
     if (json['locations'] != null) {
       locations = <BookingLocation>[];
@@ -747,6 +754,7 @@ class RegisterClubId {
     data['updatedAt'] = updatedAt;
     data['zipCode'] = zipCode;
     data['description'] = description;
+    data['logo'] = logo;
     return data;
   }
 }
