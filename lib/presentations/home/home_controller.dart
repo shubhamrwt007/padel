@@ -301,10 +301,11 @@ class HomeController extends GetxController {
   final openMatchId = "".obs;
   final RxMap<String, String> scoreboardIds = <String, String>{}.obs;
   final RxMap<String, String> openMatchToBookingMap = <String, String>{}.obs;
+  final RxSet<String> inProgressBookingIds = <String>{}.obs;
 
   /// Public method to check if booking is ongoing (accessible from UI)
   bool isBookingOngoing(BookingHistoryData booking) {
-    return _isBookingOngoing(booking);
+    return inProgressBookingIds.contains(booking.sId);
   }
 
   Future<void> fetchBookings({String? categoryId, String? locationId}) async {
@@ -329,16 +330,14 @@ class HomeController extends GetxController {
       );
 
       final allBookings = <BookingHistoryData>[];
+      inProgressBookingIds.clear();
 
       if (ongoingResponse.success == true && ongoingResponse.data != null) {
         allBookings.addAll(ongoingResponse.data!);
-        // Debug first booking
-        if (ongoingResponse.data!.isNotEmpty) {
-          final firstBooking = ongoingResponse.data!.first;
-          log("📦 First Booking registerClubId:");
-          log("   clubName: ${firstBooking.registerClubId?.clubName}");
-          log("   city: ${firstBooking.registerClubId?.city}");
-          log("   courtImage: ${firstBooking.registerClubId?.courtImage}");
+        for (var booking in ongoingResponse.data!) {
+          if (booking.sId != null) {
+            inProgressBookingIds.add(booking.sId!);
+          }
         }
       }
 
@@ -348,8 +347,8 @@ class HomeController extends GetxController {
 
       if (allBookings.isNotEmpty) {
         allBookings.sort((a, b) {
-          final aIsOngoing = _isBookingOngoing(a);
-          final bIsOngoing = _isBookingOngoing(b);
+          final aIsOngoing = inProgressBookingIds.contains(a.sId);
+          final bIsOngoing = inProgressBookingIds.contains(b.sId);
 
           if (aIsOngoing && !bIsOngoing) return -1;
           if (!aIsOngoing && bIsOngoing) return 1;
@@ -381,7 +380,7 @@ class HomeController extends GetxController {
 
         scoreboardIds.clear();
         openMatchToBookingMap.clear();
-        allBookings.forEach((booking) {
+        for (var booking in allBookings) {
           final actualBookingId = booking.sId;
           final openMatchIdValue = booking.openMatchId?.sId;
 
@@ -395,7 +394,7 @@ class HomeController extends GetxController {
           if (bookingId != null && booking.scoreboard?.sId != null) {
             scoreboardIds[bookingId] = booking.scoreboard!.sId!;
           }
-        });
+        }
 
         CustomLogger.logMessage(msg: "Booking fetched and sorted", level: LogLevel.debug);
       }
@@ -406,82 +405,8 @@ class HomeController extends GetxController {
     }
   }
 
-  // Helper method to check if booking is ongoing
-  bool _isBookingOngoing(BookingHistoryData booking) {
-    // First check if API explicitly marks it as in-progress
-    if (booking.bookingStatus?.toLowerCase() == "in-progress") {
-      return true;
-    }
 
-    // Fallback to time-based check
-    try {
-      if (booking.bookingDate == null ||
-          booking.slot == null ||
-          booking.slot!.isEmpty) {
-        return false;
-      }
 
-      final bookingDate = DateTime.parse(booking.bookingDate!);
-      final now = DateTime.now();
-
-      // Check if booking is today
-      if (bookingDate.year != now.year ||
-          bookingDate.month != now.month ||
-          bookingDate.day != now.day) {
-        return false;
-      }
-
-      // Get slot times
-      final slotTimes = booking.slot![0].slotTimes;
-      if (slotTimes == null || slotTimes.isEmpty) {
-        return false;
-      }
-
-      // Parse start and end times
-      final startTime = _parseTimeString(slotTimes.first.time);
-      final endTime = slotTimes.length > 1
-          ? _parseTimeString(slotTimes.last.time)
-          : startTime?.add(Duration(minutes: booking.duration ?? 60));
-
-      if (startTime == null || endTime == null) {
-        return false;
-      }
-
-      // Check if current time is between start and end
-      final currentTime =
-      DateTime(now.year, now.month, now.day, now.hour, now.minute);
-      return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
-    } catch (e) {
-      log("Error checking ongoing booking: $e");
-      return false;
-    }
-  }
-
-  DateTime? _parseTimeString(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return null;
-
-    try {
-      // Handle format like "09:00 AM" or "21:00"
-      final now = DateTime.now();
-
-      if (timeStr.contains('AM') || timeStr.contains('PM')) {
-        final format = DateFormat('hh:mm a');
-        final time = format.parse(timeStr);
-        return DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      } else {
-        final parts = timeStr.split(':');
-        if (parts.length == 2) {
-          final hour = int.parse(parts[0]);
-          final minute = int.parse(parts[1]);
-          return DateTime(now.year, now.month, now.day, hour, minute);
-        }
-      }
-    } catch (e) {
-      log("Error parsing time: $e");
-    }
-
-    return null;
-  }
 
   String formatDate(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) return '';
@@ -581,6 +506,7 @@ class HomeController extends GetxController {
     scoreboardIds.clear();
     openMatchToBookingMap.clear();
     openMatchId.value = '';
+    inProgressBookingIds.clear();
   }
 
   @override

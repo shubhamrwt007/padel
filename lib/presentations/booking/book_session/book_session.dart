@@ -727,8 +727,8 @@ class BookSession extends StatelessWidget {
                     ? Colors.grey.shade100
                     : Colors.white,
                 border: Border.all(
-                  color: (isUnavailable || (isBothHalvesBooked && supports30Min) || isSlotBookedForFullSlot)
-                      ? Colors.grey.shade300
+                  color: (isUnavailable || isAnyHalfBooked)
+                      ? Colors.transparent
                       : (isSelected || isPartOfGroup)
                       ? Colors.transparent
                       : Colors.grey.shade300,
@@ -833,6 +833,17 @@ class BookSession extends StatelessWidget {
                       ),
                     ),
 
+                  /// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
+                  if (isUnavailable && !isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
                   if (supports30Min && isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
                     Positioned(
@@ -888,7 +899,7 @@ class BookSession extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED)
+                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE)
                   if (!isSelected && !isPartOfGroup)
                     Positioned.fill(
                       left: 0,
@@ -897,7 +908,7 @@ class BookSession extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: isAnyHalfBooked ? Colors.red : blueColor,
+                            color: (isAnyHalfBooked || isUnavailable) ? Colors.red : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
@@ -1067,7 +1078,7 @@ class BookSession extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: isUnavailable
+                              color: (isUnavailable || isAnyHalfBooked)
                                   ? Colors.grey.shade500
                                   : (isSelected || isPartOfGroup)
                                   ? Colors.white
@@ -1080,7 +1091,7 @@ class BookSession extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: isUnavailable
+                                color: (isUnavailable || isAnyHalfBooked)
                                     ? Colors.grey.shade400
                                     : (isSelected || isPartOfGroup)
                                     ? Colors.white70

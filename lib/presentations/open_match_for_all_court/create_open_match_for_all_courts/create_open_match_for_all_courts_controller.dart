@@ -56,6 +56,45 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     return location.name ?? 'Change Location';
   }
 
+  // Update user profile location
+  RxBool isUpdatingLocation = false.obs;
+  Future<bool> updateUserLocation(String cityId) async {
+    try {
+      isUpdatingLocation.value = true;
+      final mainHomeController = Get.find<MainHomeController>();
+      final profile = mainHomeController.profileController.profileModel.value?.response;
+      
+      if (profile == null) return false;
+
+      await _profileRepository.updateUserProfile(
+        city: cityId,
+        location: profile.location?.toJson() ?? {},
+      );
+
+      await mainHomeController.profileController.fetchUserProfile();
+      selectedCityId.value = cityId;
+      
+      final locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+      final categoryId = mainHomeController.selectedCategoryId.value;
+      await Future.wait([
+        mainHomeController.homeController.fetchBookings(categoryId: categoryId, locationId: locationId),
+        mainHomeController.homeController.fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId),
+        mainHomeController.fetchOpenMatches(),
+        mainHomeController.fetchNearCityPlayers(),
+        fetchCourtsByDuration(),
+      ]);
+
+      CustomLogger.logMessage(msg: 'Location updated successfully', level: LogLevel.info);
+      return true;
+    } catch (e) {
+      log('Error updating location: $e');
+      CustomLogger.logMessage(msg: 'Failed to update location', level: LogLevel.error);
+      return false;
+    } finally {
+      isUpdatingLocation.value = false;
+    }
+  }
+
 
   ///Available Slots------------------------------------------------------------
   final selectedDuration = '60 min'.obs;
@@ -472,42 +511,164 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
     
-    if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId)) {
+    final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId';
+    final firstHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
+    final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
+    
+    // Check if this slot time is already selected in a different court within the same club
+    final currentClubData = courtsByDuration.value?.data?.firstWhere(
+      (club) => club.courts?.any((court) => court.id == resolvedCourtId) ?? false,
+      orElse: () => GetCourtsByDurationData(),
+    );
+    final currentClubId = currentClubData?.registerClub?.id;
+    
+    for (var entry in realCourtSelections.entries) {
+      final existingCourtId = entry.value['courtId'] as String;
+      final existingSlot = entry.value['slot'] as Slots;
+      
+      // Find club for existing court
+      final existingClubData = courtsByDuration.value?.data?.firstWhere(
+        (club) => club.courts?.any((court) => court.id == existingCourtId) ?? false,
+        orElse: () => GetCourtsByDurationData(),
+      );
+      final existingClubId = existingClubData?.registerClub?.id;
+      
+      // If same club but different court, check if same slot time
+      if (currentClubId == existingClubId && existingCourtId != resolvedCourtId && existingSlot.sId == slotId) {
+        CustomLogger.logMessage(msg: "This slot time is already selected in another court", level: LogLevel.debug);
+        return;
+      }
+    }
+    
+    // Check if this is the first selection for this court
+    final isFirstSelectionForCourt = realCourtSelections.entries
+        .where((e) => (e.value['courtId'] as String) == resolvedCourtId)
+        .isEmpty;
+    
+    // Handle half slot selection for subsequent selections
+    if (isHalfSlot == true && clubSupports30MinSlots(resolvedCourtId) && !isFirstSelectionForCourt) {
       final halfSlotSuffix = isFirstHalf == true ? '_first_half' : '_second_half';
-      final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
+      final halfKey = '${dateString}_${resolvedCourtId}_$slotId$halfSlotSuffix';
+      final otherHalfSuffix = isFirstHalf == true ? '_second_half' : '_first_half';
+      final otherHalfKey = '${dateString}_${resolvedCourtId}_$slotId$otherHalfSuffix';
 
-      if (realCourtSelections.containsKey(realCourtKey)) {
-        realCourtSelections.remove(realCourtKey);
+      // Check if this specific half is already selected - toggle it
+      if (realCourtSelections.containsKey(halfKey)) {
+        realCourtSelections.remove(halfKey);
+        // After removing, check if gap is created and remove slots after the gap
+        _removeSlotsThatCreateGap(resolvedCourtId, dateString);
       } else {
-        if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString, isHalfSlot: true)) {
-          CustomLogger.logMessage(msg: "You can only select 3 consecutive slots.", level: LogLevel.debug);
-          return;
+        // Check if other half of same slot is already selected
+        final hasOtherHalf = realCourtSelections.containsKey(otherHalfKey);
+        
+        if (hasOtherHalf) {
+          // Other half already selected - convert to full slot
+          realCourtSelections.remove(otherHalfKey);
+          
+          if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString)) {
+            // Can't add full slot, restore other half
+            final halfSlot = Slots(
+              sId: slotId,
+              time: slot.time,
+              amount: slot.amount ?? 0,
+            );
+            realCourtSelections[otherHalfKey] = {
+              'slot': halfSlot,
+              'courtId': resolvedCourtId,
+              'courtName': courtName ?? '',
+              'date': dateString,
+              'dateTime': currentDate,
+              'amount': slot.amount ?? 0,
+              'isHalfSlot': true,
+              'isFirstHalf': !(isFirstHalf ?? true),
+            };
+            CustomLogger.logMessage(msg: "You can only select 3 consecutive slots", level: LogLevel.debug);
+            return;
+          }
+          
+          // Add full slot
+          realCourtSelections[realCourtKey] = {
+            'slot': slot,
+            'courtId': resolvedCourtId,
+            'courtName': courtName ?? '',
+            'date': dateString,
+            'dateTime': currentDate,
+            'amount': slot.amount ?? 0,
+          };
+
+          if (!selectedSlots.any((s) => s.sId == slotId)) {
+            selectedSlots.add(slot);
+          }
+        } else {
+          // Other half not selected - check if we should select full slot to avoid gap
+          final shouldSelectFullSlot = _shouldSelectFullSlotToAvoidGap(
+            slot, resolvedCourtId, dateString, isFirstHalf ?? true
+          );
+          
+          if (shouldSelectFullSlot) {
+            // Select full slot to avoid gap
+            if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString)) {
+              CustomLogger.logMessage(msg: "You can only select 3 consecutive slots", level: LogLevel.debug);
+              return;
+            }
+
+            realCourtSelections[realCourtKey] = {
+              'slot': slot,
+              'courtId': resolvedCourtId,
+              'courtName': courtName ?? '',
+              'date': dateString,
+              'dateTime': currentDate,
+              'amount': slot.amount ?? 0,
+            };
+
+            if (!selectedSlots.any((s) => s.sId == slotId)) {
+              selectedSlots.add(slot);
+            }
+          } else {
+            // Normal half slot selection
+            if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString, isHalfSlot: true)) {
+              CustomLogger.logMessage(msg: "You can only select 3 consecutive slots.", level: LogLevel.debug);
+              return;
+            }
+
+            final halfSlot = Slots(
+              sId: slotId,
+              time: slot.time,
+              amount: slot.amount ?? 0,
+            );
+
+            realCourtSelections[halfKey] = {
+              'slot': halfSlot,
+              'courtId': resolvedCourtId,
+              'courtName': courtName ?? '',
+              'date': dateString,
+              'dateTime': currentDate,
+              'amount': slot.amount ?? 0,
+              'isHalfSlot': true,
+              'isFirstHalf': isFirstHalf,
+            };
+          }
         }
-
-        final halfSlot = Slots(
-          sId: slotId,
-          time: slot.time,
-          amount: slot.amount ?? 0,
-        );
-
-        realCourtSelections[realCourtKey] = {
-          'slot': halfSlot,
-          'courtId': resolvedCourtId,
-          'courtName': courtName ?? '',
-          'date': dateString,
-          'dateTime': currentDate,
-          'amount': slot.amount ?? 0,
-          'isHalfSlot': true,
-          'isFirstHalf': isFirstHalf,
-        };
       }
     } else {
-      final realCourtKey = '${dateString}_${resolvedCourtId}_$slotId';
-
+      // Handle full slot selection (first selection OR not 30-min support)
+      // Check if full slot is already selected
       if (realCourtSelections.containsKey(realCourtKey)) {
+        // Unselect full slot
         realCourtSelections.remove(realCourtKey);
         selectedSlots.removeWhere((s) => s.sId == slotId);
+        // After removing, check if gap is created and remove slots after the gap
+        _removeSlotsThatCreateGap(resolvedCourtId, dateString);
       } else {
+        // Check if any half is selected - if so, remove them first
+        if (realCourtSelections.containsKey(firstHalfKey)) {
+          realCourtSelections.remove(firstHalfKey);
+        }
+        if (realCourtSelections.containsKey(secondHalfKey)) {
+          realCourtSelections.remove(secondHalfKey);
+        }
+        
+        // Select full slot
         if (!_canAddRealCourtSlot(slot, resolvedCourtId, dateString)) {
           CustomLogger.logMessage(msg: "You can only select 3 consecutive slots", level: LogLevel.debug);
           return;
@@ -587,8 +748,11 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
 
-    // Handle half slot selection for 30 minutes
-    if (is30Slots.value && isHalfSlot == true) {
+    // Check if this is the first slot being selected
+    final isFirstSelection = multiDateSelections.isEmpty;
+
+    // Handle half slot selection for 30 minutes (only if NOT first selection)
+    if (is30Slots.value && isHalfSlot == true && !isFirstSelection) {
       final firstHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
       final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
       final fullSlotKey = '${dateString}_${resolvedCourtId}_$slotId';
@@ -709,7 +873,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         };
       }
     } else {
-      // Handle full slot selection for 60 minutes
+      // Handle full slot selection for 60 minutes OR first selection (always full)
       final multiDateKey = '${dateString}_${resolvedCourtId}_$slotId';
 
       if (multiDateSelections.containsKey(multiDateKey)) {
@@ -1005,19 +1169,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   }
 
   bool _canAddRealCourtSlot(Slots newSlot, String courtId, String dateString, {bool isHalfSlot = false}) {
-    // Check if this time slot is already selected in any other court
-    final newSlotTime = newSlot.time;
-    final isTimeAlreadySelected = realCourtSelections.entries.any((entry) {
-      final selection = entry.value;
-      final existingCourtId = selection['courtId'] as String;
-      final existingSlot = selection['slot'] as Slots;
-      return existingCourtId != courtId && existingSlot.time == newSlotTime;
-    });
-
-    if (isTimeAlreadySelected) {
-      CustomLogger.logMessage(msg: "This time slot is already selected in another court.", level: LogLevel.debug);
-      return false;
-    }
+    // Get club ID for current court
+    final currentClubData = courtsByDuration.value?.data?.firstWhere(
+      (club) => club.courts?.any((court) => court.id == courtId) ?? false,
+      orElse: () => GetCourtsByDurationData(),
+    );
+    final currentClubId = currentClubData?.registerClub?.id;
 
     // For half slots, if we're selecting the other half of the same slot, always allow it
     if (isHalfSlot && clubSupports30MinSlots(courtId)) {
@@ -1040,33 +1197,276 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       }
     }
 
-    // Get unique slots (consolidate half-slots of the same slot ID)
-    final Map<String, Slots> uniqueSlots = {};
+    // Count FULL slots only across all courts in the same club
+    int fullSlotsCount = 0;
+    final processedSlotIds = <String>{};
+    
     for (var entry in realCourtSelections.entries) {
-      if (!entry.key.startsWith('${dateString}_${courtId}_')) continue;
+      if (!entry.key.startsWith(dateString)) continue;
       
       final selection = entry.value;
+      final entryCourtId = selection['courtId'] as String;
+      
+      // Check if this entry belongs to the same club
+      final entryClubData = courtsByDuration.value?.data?.firstWhere(
+        (club) => club.courts?.any((court) => court.id == entryCourtId) ?? false,
+        orElse: () => GetCourtsByDurationData(),
+      );
+      final entryClubId = entryClubData?.registerClub?.id;
+      
+      if (entryClubId != currentClubId) continue;
+      
       final slot = selection['slot'] as Slots;
       final slotId = slot.sId ?? '';
+      final isHalf = selection['isHalfSlot'] as bool? ?? false;
       
-      if (!uniqueSlots.containsKey(slotId)) {
-        uniqueSlots[slotId] = slot;
+      // Skip if already processed
+      if (processedSlotIds.contains(slotId)) continue;
+      processedSlotIds.add(slotId);
+      
+      // Check if this is a full slot OR both halves are selected
+      if (!isHalf) {
+        fullSlotsCount++;
+      } else {
+        // Check if both halves exist for any court in the club
+        final hasBothHalves = realCourtSelections.entries.any((e1) {
+          if (!e1.key.startsWith(dateString)) return false;
+          final s1 = e1.value;
+          final c1 = s1['courtId'] as String;
+          final slot1 = s1['slot'] as Slots;
+          final isFirst1 = s1['isFirstHalf'] as bool? ?? true;
+          
+          // Check if this court belongs to same club
+          final c1ClubData = courtsByDuration.value?.data?.firstWhere(
+            (club) => club.courts?.any((court) => court.id == c1) ?? false,
+            orElse: () => GetCourtsByDurationData(),
+          );
+          if (c1ClubData?.registerClub?.id != currentClubId) return false;
+          
+          return realCourtSelections.entries.any((e2) {
+            if (e1.key == e2.key || !e2.key.startsWith(dateString)) return false;
+            final s2 = e2.value;
+            final c2 = s2['courtId'] as String;
+            final slot2 = s2['slot'] as Slots;
+            final isFirst2 = s2['isFirstHalf'] as bool? ?? true;
+            
+            return c1 == c2 && slot1.sId == slot2.sId && slot1.sId == slotId && isFirst1 != isFirst2;
+          });
+        });
+        
+        if (hasBothHalves) {
+          fullSlotsCount++;
+        }
       }
     }
-
-    final currentSelections = uniqueSlots.values.toList();
     
-    // Add new slot if it's not already in the unique slots
+    // Check if adding new slot would exceed 3 full slots
     final newSlotId = newSlot.sId ?? '';
-    if (!uniqueSlots.containsKey(newSlotId)) {
-      if (currentSelections.length >= 3) return false;
-      currentSelections.add(newSlot);
+    if (!processedSlotIds.contains(newSlotId)) {
+      if (fullSlotsCount >= 3) return false;
     }
 
-    if (currentSelections.isEmpty) return true;
-    if (currentSelections.length == 1) return true;
+    // Check consecutiveness across all courts in the club
+    final allSlots = <Slots>[];
+    final slotDetails = <String, bool>{}; // slotId -> isFull
+    
+    for (var entry in realCourtSelections.entries) {
+      if (!entry.key.startsWith(dateString)) continue;
+      
+      final selection = entry.value;
+      final entryCourtId = selection['courtId'] as String;
+      
+      // Check if this entry belongs to the same club
+      final entryClubData = courtsByDuration.value?.data?.firstWhere(
+        (club) => club.courts?.any((court) => court.id == entryCourtId) ?? false,
+        orElse: () => GetCourtsByDurationData(),
+      );
+      final entryClubId = entryClubData?.registerClub?.id;
+      
+      if (entryClubId != currentClubId) continue;
+      
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final isHalf = selection['isHalfSlot'] as bool? ?? false;
+      
+      if (!allSlots.any((s) => s.sId == slot.sId)) {
+        allSlots.add(slot);
+        
+        // Check if this slot is full or half
+        if (!isHalf) {
+          slotDetails[slotId] = true; // Full slot
+        } else {
+          // Check if both halves exist
+          final hasBothHalves = realCourtSelections.entries.any((e1) {
+            if (!e1.key.startsWith(dateString)) return false;
+            final s1 = e1.value;
+            final c1 = s1['courtId'] as String;
+            final slot1 = s1['slot'] as Slots;
+            final isFirst1 = s1['isFirstHalf'] as bool? ?? true;
+            
+            final c1ClubData = courtsByDuration.value?.data?.firstWhere(
+              (club) => club.courts?.any((court) => court.id == c1) ?? false,
+              orElse: () => GetCourtsByDurationData(),
+            );
+            if (c1ClubData?.registerClub?.id != currentClubId) return false;
+            
+            return realCourtSelections.entries.any((e2) {
+              if (e1.key == e2.key || !e2.key.startsWith(dateString)) return false;
+              final s2 = e2.value;
+              final c2 = s2['courtId'] as String;
+              final slot2 = s2['slot'] as Slots;
+              final isFirst2 = s2['isFirstHalf'] as bool? ?? true;
+              
+              return c1 == c2 && slot1.sId == slot2.sId && slot1.sId == slotId && isFirst1 != isFirst2;
+            });
+          });
+          
+          slotDetails[slotId] = hasBothHalves; // True if both halves, false if only one half
+        }
+      }
+    }
+    
+    if (!allSlots.any((s) => s.sId == newSlotId)) {
+      allSlots.add(newSlot);
+    }
 
-    return _areConsecutive(currentSelections);
+    if (allSlots.isEmpty) return true;
+    if (allSlots.length == 1) return true;
+
+    // Check if all slots are consecutive
+    if (!_areConsecutive(allSlots)) return false;
+    
+    // Additional check: if last slot before new slot is half, don't allow new slot
+    final sortedSlots = allSlots.toList()..sort((a, b) => _getSlotHour(a.time).compareTo(_getSlotHour(b.time)));
+    final newSlotHour = _getSlotHour(newSlot.time);
+    
+    for (int i = 0; i < sortedSlots.length - 1; i++) {
+      final currentSlot = sortedSlots[i];
+      final nextSlot = sortedSlots[i + 1];
+      final currentHour = _getSlotHour(currentSlot.time);
+      final nextHour = _getSlotHour(nextSlot.time);
+      
+      // If we're adding a slot after a half slot, don't allow
+      if (nextSlot.sId == newSlotId && nextHour == currentHour + 1) {
+        final currentSlotId = currentSlot.sId ?? '';
+        final isCurrentFull = slotDetails[currentSlotId] ?? false;
+        if (!isCurrentFull) {
+          CustomLogger.logMessage(msg: "Cannot select next slot when previous slot is half", level: LogLevel.debug);
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+
+  // Check if selecting a half slot would create a gap with adjacent selections
+  bool _shouldSelectFullSlotToAvoidGap(Slots slot, String courtId, String dateString, bool isFirstHalf) {
+    final slotHour = _getSlotHour(slot.time);
+    
+    // Get club ID for current court
+    final currentClubData = courtsByDuration.value?.data?.firstWhere(
+      (club) => club.courts?.any((court) => court.id == courtId) ?? false,
+      orElse: () => GetCourtsByDurationData(),
+    );
+    final currentClubId = currentClubData?.registerClub?.id;
+    
+    // Get all selected slots for this club on this date (across all courts)
+    final selectedSlotsInClub = <Slots>[];
+    for (var entry in realCourtSelections.entries) {
+      final entryCourtId = entry.value['courtId'] as String;
+      final entryClubData = courtsByDuration.value?.data?.firstWhere(
+        (club) => club.courts?.any((court) => court.id == entryCourtId) ?? false,
+        orElse: () => GetCourtsByDurationData(),
+      );
+      final entryClubId = entryClubData?.registerClub?.id;
+      
+      if (entryClubId == currentClubId && entry.key.startsWith(dateString)) {
+        selectedSlotsInClub.add(entry.value['slot'] as Slots);
+      }
+    }
+    
+    if (selectedSlotsInClub.isEmpty) return false;
+    
+    // Check if there's an adjacent slot selected
+    for (var selectedSlot in selectedSlotsInClub) {
+      final selectedHour = _getSlotHour(selectedSlot.time);
+      
+      // If selecting right half (isFirstHalf = false) and previous hour is selected
+      if (!isFirstHalf && selectedHour == slotHour - 1) {
+        return true; // Select full slot to avoid gap
+      }
+      
+      // If selecting left half (isFirstHalf = true) and next hour is selected
+      if (isFirstHalf && selectedHour == slotHour + 1) {
+        return true; // Select full slot to avoid gap
+      }
+    }
+    
+    return false;
+  }
+
+  // Remove slots that would create a gap after unselecting a slot
+  void _removeSlotsThatCreateGap(String courtId, String dateString) {
+    // Get club ID for current court
+    final currentClubData = courtsByDuration.value?.data?.firstWhere(
+      (club) => club.courts?.any((court) => court.id == courtId) ?? false,
+      orElse: () => GetCourtsByDurationData(),
+    );
+    final currentClubId = currentClubData?.registerClub?.id;
+    
+    // Get all selected slots for this club (across all courts)
+    final selectedEntries = realCourtSelections.entries
+        .where((e) {
+          if (!e.key.startsWith(dateString)) return false;
+          final entryCourtId = e.value['courtId'] as String;
+          final entryClubData = courtsByDuration.value?.data?.firstWhere(
+            (club) => club.courts?.any((court) => court.id == entryCourtId) ?? false,
+            orElse: () => GetCourtsByDurationData(),
+          );
+          return entryClubData?.registerClub?.id == currentClubId;
+        })
+        .toList();
+    
+    if (selectedEntries.isEmpty) return;
+    
+    // Get unique slot hours
+    final slotHours = <int>{};
+    for (var entry in selectedEntries) {
+      final slot = entry.value['slot'] as Slots;
+      slotHours.add(_getSlotHour(slot.time));
+    }
+    
+    // Sort hours
+    final sortedHours = slotHours.toList()..sort();
+    
+    // Find first gap
+    int? gapStartHour;
+    for (int i = 1; i < sortedHours.length; i++) {
+      if (sortedHours[i] - sortedHours[i - 1] > 1) {
+        gapStartHour = sortedHours[i];
+        break;
+      }
+    }
+    
+    // If gap found, remove all slots from gap onwards
+    if (gapStartHour != null) {
+      final keysToRemove = <String>[];
+      for (var entry in selectedEntries) {
+        final slot = entry.value['slot'] as Slots;
+        final slotHour = _getSlotHour(slot.time);
+        if (slotHour >= gapStartHour) {
+          keysToRemove.add(entry.key);
+        }
+      }
+      
+      for (var key in keysToRemove) {
+        realCourtSelections.remove(key);
+        // Also remove from selectedSlots
+        final slotId = key.split('_').last.replaceAll('_first_half', '').replaceAll('_second_half', '');
+        selectedSlots.removeWhere((s) => s.sId == slotId);
+      }
+    }
   }
 
   bool _areConsecutive(List<Slots> slots) {

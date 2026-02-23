@@ -46,6 +46,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
             _buildDropdown('Select game type'),
             const SizedBox(height: 6),
             _buildRadioButtons('Select match type'),
+            Row(
+              children: [
+                Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
+                Text("You will not be given XP points upon selections of friendly match",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
+              ],
+            ),
             const SizedBox(height: 20),
             // ---------- PAYMENT PANEL ----------
             Stack(
@@ -291,7 +297,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
           label,
           style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor),
         ),
-        const SizedBox(height: 8),
         Obx(() => Row(
           children: items.map((item) {
             final isSelected = selectedValue.value == item;
