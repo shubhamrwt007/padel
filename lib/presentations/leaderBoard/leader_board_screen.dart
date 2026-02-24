@@ -117,13 +117,7 @@ class LeaderboardScreen extends StatelessWidget {
         child: Center(child: Text('No data available', style: TextStyle(color: Colors.white))),
       );
     }
-    
     if (top3.length < 3) {
-
-
-
-
-
       return const SizedBox(
         height: 300,
         child: Center(child: Text('Not enough entries for podium', style: TextStyle(color: Colors.white))),

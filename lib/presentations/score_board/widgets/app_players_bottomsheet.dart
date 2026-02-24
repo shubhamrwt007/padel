@@ -240,7 +240,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       children: [
                         Text(
                           '${(player['name'] ?? '').toString().capitalizeFirstChar()} ',
-                          style: Get.textTheme.labelLarge!
+                          style: Get.textTheme.headlineMedium!
                               .copyWith(fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
@@ -270,9 +270,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0} Played',
+                              ' • ${player['totalMatchesPlayed'] ?? 0}Games Played',
                               style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, color: Colors.grey),
+                                  .copyWith(fontSize: 12, color: Colors.grey),
                             ),
                           ],
                         ),
@@ -370,7 +370,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               : Text(
                   isRequested ? 'Request Sent' : 'Send Request',
                   style: Get.textTheme.bodyLarge!.copyWith(
-                    color: isRequested ? Colors.grey : AppColors.primaryColor,
+                    color: isRequested ? Colors.grey : AppColors.primaryColor,fontSize: 12
                   ),
                 ),
         ),
