@@ -741,22 +741,33 @@ class HomeContent extends StatelessWidget {
         );
       }
       
-      final clubData = controller.registerClubResponse.value?.data;
-      final courtImages = clubData?.courtImage ?? [];
+      // Get court images from nested courts array
+      final List<String> imageUrls = [];
+      if (controller.argument.courts != null && controller.argument.courts!.isNotEmpty) {
+        for (var courtDetail in controller.argument.courts!) {
+          if (courtDetail.courtImage != null) {
+            imageUrls.addAll(courtDetail.courtImage!);
+          }
+        }
+      }
       
-      // Fallback to dummy images if no court images available
-      final List<String> imageUrls = courtImages.isNotEmpty ? courtImages : [
-        Assets.imagesImgDummy1,
-        Assets.imagesImgDummy2,
-        Assets.imagesImgDummy3,
-        Assets.imagesImgDummy4,
-        Assets.imagesImgDummy5,
-      ];
+      // Debug: Print court images
+      print('Court Images Count: ${imageUrls.length}');
+      print('Court Images: $imageUrls');
 
       final bool isExpanded = controller.isShowAllPhotos.value;
       
       if (imageUrls.isEmpty) {
-        return const Center(child: Text("No images available"));
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+              SizedBox(height: 10),
+              Text("No images available"),
+            ],
+          ),
+        );
       }
 
       return SizedBox(
@@ -768,10 +779,10 @@ class HomeContent extends StatelessWidget {
               flex: 2,
               child: Row(
                 children: [
-                  Expanded(flex: 2, child: _buildImage(imageUrls[0], courtImages.isNotEmpty)),
+                  Expanded(flex: 2, child: _buildImage(imageUrls[0], true)),
                   SizedBox(width: 10),
                   if (imageUrls.length > 1)
-                    Expanded(flex: 1, child: _buildImage(imageUrls[1], courtImages.isNotEmpty)),
+                    Expanded(flex: 1, child: _buildImage(imageUrls[1], true)),
                 ],
               ),
             ),
@@ -784,14 +795,14 @@ class HomeContent extends StatelessWidget {
                 child: Row(
                   children: [
                     if (imageUrls.length > 2)
-                      Expanded(child: _buildImage(imageUrls[2], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[2], true)),
                     if (imageUrls.length > 3) ...[
                       SizedBox(width: 10),
-                      Expanded(child: _buildImage(imageUrls[3], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[3], true)),
                     ],
                     if (imageUrls.length > 4) ...[
                       SizedBox(width: 10),
-                      Expanded(child: _buildImage(imageUrls[4], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[4], true)),
                     ],
                   ],
                 ),
@@ -804,9 +815,9 @@ class HomeContent extends StatelessWidget {
                 flex: 2,
                 child: Row(
                   children: [
-                    Expanded(flex: 2, child: _buildImage(imageUrls[0], courtImages.isNotEmpty)),
+                    Expanded(flex: 2, child: _buildImage(imageUrls[0], true)),
                     SizedBox(width: 10),
-                    Expanded(flex: 1, child: _buildImage(imageUrls[1], courtImages.isNotEmpty)),
+                    Expanded(flex: 1, child: _buildImage(imageUrls[1], true)),
                   ],
                 ),
               ),
@@ -815,11 +826,11 @@ class HomeContent extends StatelessWidget {
                 flex: 1,
                 child: Row(
                   children: [
-                    Expanded(child: _buildImage(imageUrls[2], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[2], true)),
                     SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[3], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[3], true)),
                     SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[4], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[4], true)),
                   ],
                 ),
               ),
@@ -872,8 +883,8 @@ class HomeContent extends StatelessWidget {
         ),
         children: [
           TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: ['a', 'b', 'c'],
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.padel.mobile',
           ),
           MarkerLayer(
             markers: [

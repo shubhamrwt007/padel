@@ -1239,35 +1239,24 @@ class MainHomeScreen extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              /// IMAGE
+              /// LOGO
               Positioned.fill(
-                child: courtImage != null
-                    ? CachedNetworkImage(
-                  imageUrl: courtImage,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: LoadingWidget(color: AppColors.primaryColor),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.broken_image,
-                          color: Colors.grey, size: 40),
-                    ),
-                  ),
-                )
-                    : Container(
+                child: Container(
                   color: Colors.grey[300],
-                  child: const Center(
-                    child: Icon(Icons.photo, color: Colors.grey, size: 40),
+                  child: Center(
+                    child: court.logo != null && court.logo!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: court.logo!,
+                            fit: BoxFit.contain,
+                            placeholder: (_, __) => const LoadingWidget(color: AppColors.primaryColor),
+                            errorWidget: (_, __, ___) => Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
+                          )
+                        : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
                   ),
                 ),
               ),

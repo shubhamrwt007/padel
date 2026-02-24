@@ -317,20 +317,30 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                           ),
                       ],
                     ),
-                    Container(
-                      height: 36,
-                      width: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff1c46a0),
-                        shape: BoxShape.circle
-                        // borderRadius: BorderRadius.circular(8),
-                      ),
-                      // padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.chat_outlined,
-                        color: Colors.white,
-                        size: 17,
-                      ),
+
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.share,
+                          size: 16,
+                          color: Color(0xff1c46a0),
+                        ),
+                        Container(
+                          height: 36,
+                          width: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle
+                            // borderRadius: BorderRadius.circular(8),
+                          ),
+                          // padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.chat_outlined,
+                            color:AppColors.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                      ],
                     ),
 
                   ],
@@ -396,11 +406,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                                 ),
                               ),
                               SizedBox(width: 6),
-                              Icon(
-                                Icons.share,
-                                size: 16,
-                                color: Color(0xff1c46a0),
-                              ),
+
                             ],
                           ),
                         ),
@@ -582,7 +588,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
     return SizedBox(
       width: 80,
-      height: 50,
+      height: 55,
       child: Stack(
         alignment: Alignment.center,
         children: [
