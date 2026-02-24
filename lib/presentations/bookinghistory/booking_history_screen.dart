@@ -317,20 +317,30 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                           ),
                       ],
                     ),
-                    Container(
-                      height: 36,
-                      width: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff1c46a0),
-                        shape: BoxShape.circle
-                        // borderRadius: BorderRadius.circular(8),
-                      ),
-                      // padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.chat_outlined,
-                        color: Colors.white,
-                        size: 17,
-                      ),
+
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.share,
+                          size: 16,
+                          color: Color(0xff1c46a0),
+                        ),
+                        Container(
+                          height: 36,
+                          width: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            shape: BoxShape.circle
+                            // borderRadius: BorderRadius.circular(8),
+                          ),
+                          // padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.chat_outlined,
+                            color:AppColors.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                      ],
                     ),
 
                   ],
@@ -396,11 +406,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                                 ),
                               ),
                               SizedBox(width: 6),
-                              Icon(
-                                Icons.share,
-                                size: 16,
-                                color: Color(0xff1c46a0),
-                              ),
+
                             ],
                           ),
                         ),
@@ -582,7 +588,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
     return SizedBox(
       width: 80,
-      height: 50,
+      height: 55,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -761,9 +767,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                               width: 36,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: !isBlueTheme ? AppColors.primaryColor : AppColors.secondaryColor,
+                                color: !isBlueTheme ? Colors.transparent : Colors.transparent,
                               ),
-                              child: Icon(Icons.chat_outlined, color: Colors.white, size: 18)
+                              child: Icon(Icons.chat_outlined, color: AppColors.primaryColor, size: 18)
                           ),
                         ).paddingOnly(right: 10),
                       Container(
@@ -1235,25 +1241,25 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 14, color: AppColors.primaryColor),
+                      const Icon(Icons.location_on, size: 16, color: AppColors.primaryColor),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           address,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
+                          style:  TextStyle(
+                            fontSize: 12,
+                            color: AppColors.blackColor,
                           ),
                         ),
                       ),
                     ],
-                  ),
+                  )
                 ],
-              ),
+              ).paddingOnly(top: 10),
             ),
             Transform.translate(
-              offset: Offset(0, 2),
+              offset: Offset(0, 5),
               child: Text(
                 "₹ $price",
                 style: const TextStyle(
@@ -1410,8 +1416,8 @@ print("invoice--------- $invoiceUrlString");
                             address,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey,
+                                fontSize: 12,
+                                color: AppColors.blackColor
                             ),
                           ),
                         ),

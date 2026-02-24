@@ -720,10 +720,9 @@ class MainHomeScreen extends StatelessWidget {
         border: Border.all(color: AppColors.greyColor),
       ),
       child: ClipOval(
-        child: (club?.courtImage != null &&
-            club!.courtImage!.isNotEmpty)
+        child: (club?.logo != null && club!.logo!.isNotEmpty)
             ? CachedNetworkImage(
-          imageUrl: club.courtImage![0],
+          imageUrl: club.logo!,
           fit: BoxFit.cover,
           placeholder: (_, __) =>
               LoadingWidget(color: AppColors.primaryColor),
@@ -793,45 +792,40 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _bookingTimeInfo(BuildContext context, BookingHistoryData b, bool isOngoing) {
+    String formattedDateTime = '';
+    if (b.bookingDate != null) {
+      try {
+        final date = DateTime.parse(b.bookingDate!);
+        final dateStr = DateFormat('dd MMM').format(date);
+        final timeRange = (b.startTime != null && b.endTime != null) 
+            ? '${b.startTime} – ${b.endTime}' 
+            : '';
+        formattedDateTime = timeRange.isNotEmpty ? '$dateStr, $timeRange' : dateStr;
+      } catch (e) {
+        formattedDateTime = '';
+      }
+    }
+
     return Container(
       color: Colors.transparent,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                controller.homeController.formatDate(b.bookingDate),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 11,
-                  color: isOngoing
-                      ? Colors.red.shade700
-                      : AppColors.blackColor,
-                ),
+          Expanded(
+            child: Text(
+              formattedDateTime,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                color: isOngoing ? Colors.red.shade700 : AppColors.blackColor,
               ),
-              if (b.startTime != null && b.endTime != null)
-                Container(
-                  color: Colors.transparent,
-                  width: Get.width*0.25,
-                  child: Text(
-                    overflow: TextOverflow.ellipsis,
-                    "${b.startTime ?? ""} - ${b.endTime ?? ""}",
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: isOngoing
-                          ? Colors.red.shade700
-                          : AppColors.blackColor,
-                      fontSize: 11,
-                    ),
-                  ).paddingOnly(left: 5),
-                ),
-            ],
+            ),
           ),
           Text(
-            "(${b.duration ?? 0}m)",
+            "(${b.totalTime ?? 0}m)",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color:
-              isOngoing ? Colors.red.shade700 : AppColors.blackColor,
+              color: isOngoing ? Colors.red.shade700 : AppColors.blackColor,
               fontSize: 11,
             ),
           ),
@@ -1245,35 +1239,24 @@ class MainHomeScreen extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              /// IMAGE
+              /// LOGO
               Positioned.fill(
-                child: courtImage != null
-                    ? CachedNetworkImage(
-                  imageUrl: courtImage,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: LoadingWidget(color: AppColors.primaryColor),
-                    ),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.broken_image,
-                          color: Colors.grey, size: 40),
-                    ),
-                  ),
-                )
-                    : Container(
+                child: Container(
                   color: Colors.grey[300],
-                  child: const Center(
-                    child: Icon(Icons.photo, color: Colors.grey, size: 40),
+                  child: Center(
+                    child: court.logo != null && court.logo!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: court.logo!,
+                            fit: BoxFit.contain,
+                            placeholder: (_, __) => const LoadingWidget(color: AppColors.primaryColor),
+                            errorWidget: (_, __, ___) => Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
+                          )
+                        : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
                   ),
                 ),
               ),

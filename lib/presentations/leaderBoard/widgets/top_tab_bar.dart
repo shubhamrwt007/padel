@@ -10,7 +10,7 @@ class TopTabBar extends StatelessWidget {
     return Container(
       alignment: Alignment.center,
       child: Text(
-        'Player',
+        '',
         style: Get.textTheme.headlineSmall!.copyWith(
           fontWeight: FontWeight.w900,
           color: Colors.white,

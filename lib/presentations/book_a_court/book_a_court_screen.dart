@@ -418,9 +418,9 @@ class BookACourtScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             color: Colors.grey.shade200,
-                            child: clubData.registerClub?.courtImage != null && clubData.registerClub!.courtImage!.isNotEmpty
+                            child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
-                              imageUrl: clubData.registerClub!.courtImage!.first,
+                              imageUrl: clubData.registerClub!.logo!,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Icon(Icons.sports_tennis),
                               errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),
@@ -945,6 +945,32 @@ class BookACourtScreen extends StatelessWidget {
       final court = slotsData.data!.first;
       var slotTimes = court.slots ?? [];
 
+      // Filter out past time slots if selected date is today
+      final now = DateTime.now();
+      final selectedDate = controller.selectedDate.value;
+      final isToday = selectedDate?.year == now.year &&
+          selectedDate?.month == now.month &&
+          selectedDate?.day == now.day;
+
+      if (isToday) {
+        slotTimes = slotTimes.where((slot) {
+          final slotTime = slot.time ?? '';
+          final slotMinutes = _parseTimeToMinutes(slotTime);
+          final currentMinutes = now.hour * 60 + now.minute;
+          
+          // For half slots (30 min), check if either half is still available
+          if (controller.is30Slots.value) {
+            // First half ends 30 minutes after slot start
+            final firstHalfEnd = slotMinutes + 30;
+            // Keep slot if first half hasn't ended OR second half hasn't started
+            return firstHalfEnd > currentMinutes;
+          }
+          
+          // For full slots (60 min), keep if slot time hasn't passed
+          return slotMinutes > currentMinutes;
+        }).toList();
+      }
+
       // Filter to show only the row containing selected slot when collapsed
       if (controller.isSlotsCollapsed.value && controller.selectedSearchSlotId.value != null) {
         final selectedSlotId = controller.selectedSearchSlotId.value!;
@@ -1421,6 +1447,21 @@ class BookACourtScreen extends StatelessWidget {
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
         (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
 
+    // Check if first half is past for today
+    final now = DateTime.now();
+    final selectedDate = controller.selectedDate.value;
+    final isToday = selectedDate?.year == now.year &&
+        selectedDate?.month == now.month &&
+        selectedDate?.day == now.day;
+    
+    bool isLeftHalfPast = false;
+    if (isToday && supports30Min) {
+      final slotMinutes = _parseTimeToMinutes(slot.time ?? '');
+      final currentMinutes = now.hour * 60 + now.minute;
+      final firstHalfEnd = slotMinutes + 30;
+      isLeftHalfPast = currentMinutes >= firstHalfEnd;
+    }
+
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
 
@@ -1433,6 +1474,11 @@ class BookACourtScreen extends StatelessWidget {
             if (box != null) {
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
+
+              // Prevent selection of past left half
+              if (isLeftHalf && isLeftHalfPast) {
+                return;
+              }
 
               controller.toggleSlotSelection(
                 slot,
@@ -1498,33 +1544,49 @@ class BookACourtScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT HALF GRADIENT FOR 30MIN LEFT SELECTION
-                  if (supports30Min && controller.isLeftHalfSelectedInMainGrid(slot, courtId) && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        width: 44, // Fixed width for simplicity
-                        height: 34,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(radius),
-                            bottomLeft: Radius.circular(radius),
+                  /// LEFT HALF - PAST OVERLAY (grayed) OR SELECTED GRADIENT
+                  if (supports30Min && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    if (isLeftHalfPast && !controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 44,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(radius),
+                              bottomLeft: Radius.circular(radius),
+                            ),
+                            color: Colors.grey.shade300.withValues(alpha: 0.8),
                           ),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                        ),
+                      )
+                    else if (controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 44,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(radius),
+                              bottomLeft: Radius.circular(radius),
+                            ),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
                   /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION
                   if (supports30Min && controller.isRightHalfSelectedInMainGrid(slot, courtId) && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
-                        width: 44, // Fixed width for simplicity
+                        width: 44,
                         height: 34,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -1585,16 +1647,18 @@ class BookACourtScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Left half white text overlay
-                        if (supports30Min && controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                        // Left half text overlay (white if selected, gray if past)
+                        if (supports30Min && (controller.isLeftHalfSelectedInMainGrid(slot, courtId) || isLeftHalfPast))
                           ClipRect(
                             clipper: LeftHalfClipper(),
                             child: Text(
                               controller.formatTimeForDisplay(slot.time),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                                color: controller.isLeftHalfSelectedInMainGrid(slot, courtId)
+                                    ? Colors.white
+                                    : Colors.grey.shade600,
                               ),
                             ),
                           ),

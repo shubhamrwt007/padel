@@ -84,6 +84,7 @@ class RegisterClub {
   int? totalAmount;
   String? zipCode;
   String? city;
+  String? logo;
   List<String>? courtImage;
   List<Location>? locations;
 
@@ -97,6 +98,7 @@ class RegisterClub {
     this.totalAmount,
     this.zipCode,
     this.city,
+    this.logo,
     this.courtImage,
     this.locations,
   });
@@ -110,6 +112,7 @@ class RegisterClub {
     totalAmount = json['totalAmount'];
     zipCode = json['zipCode'];
     city = json['city'];
+    logo = json['logo'];
     courtImage = json['courtImage']?.cast<String>();
 
     if (json['businessHours'] != null) {

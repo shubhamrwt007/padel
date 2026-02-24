@@ -1119,6 +1119,43 @@ class BookACourtController extends GetxController {
     return multiDateSelections.length;
   }
 
+  // Helper to parse time string to comparable integer (minutes from midnight)
+  int _parseTimeToMinutes(String timeStr) {
+    try {
+      final timeString = timeStr.toLowerCase().trim();
+      DateTime? parsed;
+      for (final pattern in const ['h:mm a', 'h a', 'HH:mm', 'H:mm', 'HH']) {
+        try {
+          parsed = DateFormat(pattern).parseStrict(timeString);
+          break;
+        } catch (_) {}
+      }
+
+      int hour;
+      int minute;
+      if (parsed != null) {
+        hour = parsed.hour;
+        minute = parsed.minute;
+      } else {
+        String t = timeString;
+        String meridiem = '';
+        final parts = t.split(' ');
+        if (parts.length == 2) {
+          t = parts[0];
+          meridiem = parts[1];
+        }
+        final timePieces = t.split(':');
+        hour = int.tryParse(timePieces[0]) ?? 0;
+        minute = timePieces.length > 1 ? int.tryParse(timePieces[1]) ?? 0 : 0;
+        if (meridiem == 'pm' && hour != 12) hour += 12;
+        if (meridiem == 'am' && hour == 12) hour = 0;
+      }
+      return hour * 60 + minute;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   Map<String, List<Map<String, dynamic>>> getSelectionsByDate() {
     final Map<String, List<Map<String, dynamic>>> result = {};
     multiDateSelections.forEach((key, selection) {

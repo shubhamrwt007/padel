@@ -22,20 +22,7 @@ class LeaderboardScreen extends StatelessWidget {
     return name.split(' ').map((word) => word.isNotEmpty ? word[0] : '').take(2).join().toUpperCase();
   }
 
-  String _formatName(String name) {
-    final words = name.split(' ');
-    if (words.length <= 1) return name;
-    return '${words[0]} ${words[1][0]}.';
-  }
 
-  String _getFirstName(String name) {
-    return name.split(' ').first;
-  }
-
-  String _getLastName(String name) {
-    final words = name.split(' ');
-    return words.length > 1 ? words.sublist(1).join(' ') : '';
-  }
 
   String _truncateName(String name, int maxLength) {
     if (name.length <= maxLength) return name;
@@ -123,203 +110,6 @@ class LeaderboardScreen extends StatelessWidget {
     );
   }
 
-
-
-
-  Widget _buildTabBar() {
-    return Obx(() {
-      final titles = ['All Time', 'Weekly', 'Monthly'];
-      return Container(
-        width: Get.width,
-        padding: const EdgeInsets.all(4),
-        margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-        decoration: BoxDecoration(
-          // color: const Color(0xFF4F6DF6),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: List.generate(titles.length, (i) {
-            final selected = controller.selectedTab.value == i;
-
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => controller.selectedTab.value = i,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    color: selected ? const Color(0xFF0B3BA7) : Colors
-                        .transparent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    titles[i],
-                    style: Get.textTheme.headlineSmall!.copyWith(
-                      color: selected ? AppColors.whiteColor : AppColors
-                          .primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-      );
-    });
-  }
-  Widget _buildTournamentFilters() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-      child: Row(
-        children: [
-          // 🔍 Location Search Field
-          Expanded(
-            flex: 3,
-            child: Container(
-              height: 39, // decrease height here
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        cursorHeight: 15,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.done,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: 'Location',
-                          hintStyle: const TextStyle(
-                            color: AppColors.primaryColor,
-                            fontSize: 14,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding:
-                          const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 24,
-                    width: 1,
-                    color: Colors.grey.shade300,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(
-                      Icons.search,
-                      color: Color(0xFF4F6DF6),
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // 🔹 Gender Dropdown
-        Expanded(
-          flex: 2,
-          child: Container(
-            height: 39,
-            padding: const EdgeInsets.only(left: 10, right: 5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Obx(() {
-              return PopupMenuButton<String>(
-                padding: EdgeInsets.zero,
-                offset: Offset(10, 39),
-                onSelected: (value) {
-                  controller.selectedGender.value = value;
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(value: 'Male', child: Text('Male',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
-                  PopupMenuItem(value: 'Female', child: Text('Female',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
-                  PopupMenuItem(value: 'Others', child: Text('Others',style: Get.textTheme.bodyLarge!.copyWith(fontSize: 12),)),
-                ],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      controller.selectedGender.value.isEmpty
-                          ? "Gender"
-                          : controller.selectedGender.value,
-                      style: const TextStyle(
-                        color: AppColors.primaryColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
-          const SizedBox(width: 8),
-
-          // 🔹 Year Dropdown
-      Expanded(
-        flex: 2,
-        child: Container(
-          height: 39,
-          padding: const EdgeInsets.only(left: 10, right: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Obx(() {
-            return PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              offset: Offset(10, 39),
-              onSelected: (value) {
-                controller.selectedYear.value = value;
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(value: '2023', child: Text('2023',style: Get.textTheme.bodyLarge,)),
-                PopupMenuItem(value: '2024', child: Text('2024',style: Get.textTheme.bodyLarge,)),
-                PopupMenuItem(value: '2025', child: Text('2025',style: Get.textTheme.bodyLarge,)),
-              ],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    controller.selectedYear.value.isEmpty
-                        ? "Year"
-                        : controller.selectedYear.value,
-                    style: const TextStyle(
-                      color: AppColors.primaryColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-                ],
-              ),
-            );
-          }),
-        ),
-      )
-        ],
-      ),
-    );
-  }
-
   Widget _buildPodiumSectionFor(List<Player> top3) {
     if (top3.isEmpty) {
       return const SizedBox(
@@ -327,7 +117,6 @@ class LeaderboardScreen extends StatelessWidget {
         child: Center(child: Text('No data available', style: TextStyle(color: Colors.white))),
       );
     }
-    
     if (top3.length < 3) {
       return const SizedBox(
         height: 300,
@@ -341,7 +130,7 @@ class LeaderboardScreen extends StatelessWidget {
       child: Stack(
         children: [
           Transform.scale(
-            scale: 1.2,
+            scale: 1.25,
             child: SvgPicture.asset(
               Assets.imagesImgLeaderBoardBg,
               fit: BoxFit.cover,
