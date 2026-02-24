@@ -4,6 +4,8 @@ class Assets {
 
   static const String assetsImagesIcBookACourt = 'assets/images/ic_book_a_court.svg';
   static const String imagesAppLogo = 'assets/images/app_logo.png';
+  static const String imagesDotsFipPromises = 'assets/images/dots_fip_promises.svg';
+  static const String imagesFipPromesisBg = 'assets/images/fip_promesis_bg.svg';
   static const String imagesGirl = 'assets/images/girl.png';
   static const String imagesGirls = 'assets/images/girls.png';
   static const String imagesIcAmericano = 'assets/images/ic_americano.svg';
