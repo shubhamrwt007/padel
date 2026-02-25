@@ -1246,19 +1246,25 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               /// LOGO
               Positioned.fill(
-                child: Container(
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: court.logo != null && court.logo!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: court.logo!,
-                            fit: BoxFit.contain,
-                            placeholder: (_, __) => const LoadingWidget(color: AppColors.primaryColor),
-                            errorWidget: (_, __, ___) => Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
-                          )
-                        : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.contain),
-                  ),
-                ),
+                child: court.logo != null && court.logo!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: court.logo!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: LoadingWidget(color: AppColors.primaryColor),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Image.asset(
+                          Assets.imagesImgHomeLogo,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        Assets.imagesImgHomeLogo,
+                        fit: BoxFit.cover,
+                      ),
               ),
 
               /// BLACK GRADIENT
