@@ -991,8 +991,12 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           selected.month == now.month &&
           selected.day == now.day;
 
-      if (isToday && now.isAfter(slotDateTime)) {
-        return true;
+      if (isToday) {
+        // Add 15 minutes grace period to slot time
+        final slotWithGrace = slotDateTime.add(Duration(minutes: 15));
+        if (now.isAfter(slotWithGrace)) {
+          return true;
+        }
       }
     } catch (_) {
 

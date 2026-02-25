@@ -960,8 +960,12 @@ class BookACourtController extends GetxController {
           selected.month == now.month &&
           selected.day == now.day;
 
-      if (isToday && now.isAfter(slotDateTime)) {
-        return true;
+      if (isToday) {
+        // Add 15 minute buffer - slot is available until 15 minutes past start time
+        final slotWithBuffer = slotDateTime.add(Duration(minutes: 15));
+        if (now.isAfter(slotWithBuffer)) {
+          return true;
+        }
       }
     } catch (_) {
 

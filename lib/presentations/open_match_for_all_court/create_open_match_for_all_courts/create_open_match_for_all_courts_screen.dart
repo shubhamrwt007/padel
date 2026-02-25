@@ -35,6 +35,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Fetch wallet balance when screen builds
     walletController.fetchWallet();
+    
+    // Start periodic timer to check and remove expired slots
+    _startSlotExpiryCheck();
 
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
@@ -229,7 +232,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   ),
                 )
                     : SizedBox.shrink()),
-              ).paddingOnly(bottom: 10),
+              ).paddingOnly(bottom: 10,top: 10),
               Obx(() => !controller.showMainGrid.value
                   ? availableCourts(context)
                   : SizedBox.shrink()),
@@ -333,9 +336,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             color: Colors.grey.shade200,
-                            child: clubData.registerClub?.courtImage != null && clubData.registerClub!.courtImage!.isNotEmpty
+                            child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
-                              imageUrl: clubData.registerClub!.courtImage!.first,
+                              imageUrl: clubData.registerClub!.logo!,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Icon(Icons.sports_tennis),
                               errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),
@@ -864,6 +867,25 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
       final court = slotsData.data!.first;
       var slotTimes = court.slots ?? [];
+
+      // Filter out past time slots if selected date is today
+      final now = DateTime.now();
+      final selectedDate = controller.selectedDate.value;
+      final isToday = selectedDate?.year == now.year &&
+          selectedDate?.month == now.month &&
+          selectedDate?.day == now.day;
+
+      if (isToday) {
+        slotTimes = slotTimes.where((slot) {
+          final slotTime = slot.time ?? '';
+          final slotMinutes = _parseTimeToMinutes(slotTime);
+          final currentMinutes = now.hour * 60 + now.minute;
+          
+          // Keep slot available until AFTER 15 minutes past start time
+          // User can select at 5:15 for a 5:00 slot, removed at 5:16
+          return currentMinutes < slotMinutes + 16;
+        }).toList();
+      }
 
       // Filter to show only the row containing selected slot when collapsed
       if (controller.isSlotsCollapsed.value && controller.selectedSearchSlotId.value != null) {
@@ -2017,6 +2039,83 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       return hour * 60 + minute;
     } catch (e) {
       return 0;
+    }
+  }
+
+  bool _isSlotPastExpiry(dynamic slot) {
+    final now = DateTime.now();
+    final selectedDate = controller.selectedDate.value;
+    
+    // If no date selected or not today, slot is not expired
+    if (selectedDate == null) return false;
+    
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
+
+    if (!isToday) return false;
+
+    final slotTime = slot.time ?? '';
+    if (slotTime.isEmpty) return false;
+    
+    final slotMinutes = _parseTimeToMinutes(slotTime);
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    // Slot is expired if current time is MORE than 15 minutes past slot time
+    return currentMinutes > slotMinutes + 15;
+  }
+
+  void _startSlotExpiryCheck() {
+    // Check every minute for expired slots
+    Stream.periodic(const Duration(minutes: 1)).listen((_) {
+      _removeExpiredSlots();
+    });
+  }
+
+  void _removeExpiredSlots() {
+    final now = DateTime.now();
+    final selectedDate = controller.selectedDate.value;
+    final isToday = selectedDate?.year == now.year &&
+        selectedDate?.month == now.month &&
+        selectedDate?.day == now.day;
+
+    if (!isToday) return;
+
+    final currentMinutes = now.hour * 60 + now.minute;
+    final keysToRemove = <String>[];
+
+    controller.multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotTime = slot.time ?? '';
+      final slotMinutes = _parseTimeToMinutes(slotTime);
+
+      if (currentMinutes > slotMinutes + 15) {
+        keysToRemove.add(key);
+      }
+    });
+
+    for (var key in keysToRemove) {
+      controller.multiDateSelections.remove(key);
+    }
+
+    // Also remove from realCourtSelections
+    final realKeysToRemove = <String>[];
+    controller.realCourtSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotTime = slot.time ?? '';
+      final slotMinutes = _parseTimeToMinutes(slotTime);
+
+      if (currentMinutes > slotMinutes + 15) {
+        realKeysToRemove.add(key);
+      }
+    });
+
+    for (var key in realKeysToRemove) {
+      controller.realCourtSelections.remove(key);
+    }
+
+    if (keysToRemove.isNotEmpty || realKeysToRemove.isNotEmpty) {
+      controller.recalculateRealCourtTotalAmount();
     }
   }
 

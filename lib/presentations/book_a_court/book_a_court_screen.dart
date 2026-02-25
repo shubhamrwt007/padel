@@ -229,7 +229,7 @@ class BookACourtScreen extends StatelessWidget {
                   ),
                 )
                     : SizedBox.shrink()),
-              ).paddingOnly(bottom: 10),
+              ).paddingOnly(bottom: 10,top: 10),
               Obx(() => !controller.showMainGrid.value
                   ? availableCourts()
                   : SizedBox.shrink()),
@@ -958,16 +958,8 @@ class BookACourtScreen extends StatelessWidget {
           final slotMinutes = _parseTimeToMinutes(slotTime);
           final currentMinutes = now.hour * 60 + now.minute;
           
-          // For half slots (30 min), check if either half is still available
-          if (controller.is30Slots.value) {
-            // First half ends 30 minutes after slot start
-            final firstHalfEnd = slotMinutes + 30;
-            // Keep slot if first half hasn't ended OR second half hasn't started
-            return firstHalfEnd > currentMinutes;
-          }
-          
-          // For full slots (60 min), keep if slot time hasn't passed
-          return slotMinutes > currentMinutes;
+          // Keep slot available until 15 minutes past start time
+          return currentMinutes <= slotMinutes + 15;
         }).toList();
       }
 
@@ -1447,7 +1439,7 @@ class BookACourtScreen extends StatelessWidget {
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
         (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
 
-    // Check if first half is past for today
+    // Check if first half is past for today (with 15 min buffer)
     final now = DateTime.now();
     final selectedDate = controller.selectedDate.value;
     final isToday = selectedDate?.year == now.year &&
@@ -1458,8 +1450,9 @@ class BookACourtScreen extends StatelessWidget {
     if (isToday && supports30Min) {
       final slotMinutes = _parseTimeToMinutes(slot.time ?? '');
       final currentMinutes = now.hour * 60 + now.minute;
-      final firstHalfEnd = slotMinutes + 30;
-      isLeftHalfPast = currentMinutes >= firstHalfEnd;
+      // First half ends at slot start + 30 min, add 15 min buffer
+      final firstHalfEndWithBuffer = slotMinutes + 30 + 15;
+      isLeftHalfPast = currentMinutes > firstHalfEndWithBuffer;
     }
 
     const blueColor = Color(0xff053CFF);

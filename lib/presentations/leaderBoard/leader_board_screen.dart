@@ -10,7 +10,6 @@ import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/widgets/top_tab_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
 import 'leader_board_controller.dart';
 class LeaderboardScreen extends StatelessWidget {
   final String? buttonType;
@@ -191,7 +190,7 @@ class LeaderboardScreen extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 CircleAvatar(
-                  radius: position == 1 ? 37 : 32,
+                  radius: position == 1 ? 36 : 31,
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
                     radius: position == 1 ? 35 : 30,
@@ -250,7 +249,7 @@ class LeaderboardScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Container(
-                width: 100,
+                width: Get.width*.26,
                 color: Colors.transparent,
                 child: Text(
                   _truncateName(player.name, 15),
@@ -267,9 +266,8 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 4),
+            // SizedBox(height: Get.height * 0.012),
 
-            // Score box
             Container(
               height: 16,
               width: 55,
@@ -288,7 +286,7 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: Get.height * 0.015),
+            SizedBox(height: Get.height * 0.038,),
 
             // Position text (1, 2, 3)
             Text(
@@ -298,14 +296,14 @@ class LeaderboardScreen extends StatelessWidget {
                 color: AppColors.whiteColor,
                 fontSize: 40,
               ),
-            ).paddingOnly(top: 10),
+            ),
           ],
         ),
       ),
     );
   }
   Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
-    final double minSize = buttonType == "drawer" ? 0.56 : 0.50;
+    final double minSize = buttonType == "drawer" ? 0.65 : 0.52;
     const double maxSize = 1.0;
 
     return NotificationListener<DraggableScrollableNotification>(
@@ -488,7 +486,8 @@ class LeaderboardScreen extends StatelessWidget {
         },
       ),
     );
-  }  Widget _buildStateLevelFilters() {
+  }
+  Widget _buildStateLevelFilters() {
     return Row(
       children: [
         // All Location Dropdown
@@ -600,34 +599,45 @@ class LeaderboardScreen extends StatelessWidget {
                   Container(
                     color: Colors.transparent,
                     width: 30,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${myRank['change'] > 0 ? '+' : ''}${myRank['change']}',
-                          style: TextStyle(
-                            color: myRank['change'] > 0
-                                ? Colors.green
-                                : (myRank['change'] < 0 ? Colors.red : Colors.grey),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        if (myRank['change'] > 0)
-                          SvgPicture.asset(
-                            Assets.imagesIcTreadingUp,
-                            height: 14,
-                            width: 14,
+                    child: myRank['change'] != 0
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${myRank['change'] > 0 ? '+' : ''}${myRank['change']}',
+                                style: TextStyle(
+                                  color: myRank['change'] > 0
+                                      ? Colors.green
+                                      : Colors.red,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              if (myRank['change'] > 0)
+                                SvgPicture.asset(
+                                  Assets.imagesIcTreadingUp,
+                                  height: 14,
+                                  width: 14,
+                                )
+                              else
+                                SvgPicture.asset(
+                                  Assets.imagesIcTradingDown,
+                                  height: 14,
+                                  width: 14,
+                                ),
+                            ],
                           )
-                        else if (myRank['change'] < 0)
-                          SvgPicture.asset(
-                            Assets.imagesIcTradingDown,
-                            height: 14,
-                            width: 14,
+                        : Center(
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.circleColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                           ),
-                      ],
-                    ),
                   ),
                   CircleAvatar(
                     radius: 15,
@@ -839,34 +849,44 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                         Container(
                           color: Colors.transparent,
                           width: 30,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '${item['change'] > 0 ? '+' : ''}${item['change']}',
-                                style: TextStyle(
-                                  color: item['change'] > 0
-                                      ? Colors.green
-                                      : (item['change'] < 0 ? Colors.red : Colors.grey),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              if (item['change'] > 0)
-                                SvgPicture.asset(
-                                  Assets.imagesIcTreadingUp,
-                                  height: 14,
-                                  width: 14,
+                          child: item['change'] != 0
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '${item['change'] > 0 ? '+' : ''}${item['change']}',
+                                      style: TextStyle(
+                                        color: item['change'] > 0
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    if (item['change'] > 0)
+                                      SvgPicture.asset(
+                                        Assets.imagesIcTreadingUp,
+                                        height: 14,
+                                        width: 14,
+                                      )
+                                    else
+                                      SvgPicture.asset(
+                                        Assets.imagesIcTradingDown,
+                                        height: 14,
+                                        width: 14,
+                                      ),
+                                  ],
                                 )
-                              else if (item['change'] < 0)
-                                SvgPicture.asset(
-                                  Assets.imagesIcTradingDown,
-                                  height: 14,
-                                  width: 14,
+                              : Center(
+                                  child: Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.circleColor,                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 ),
-                            ],
-                          ),
                         ),
                         CircleAvatar(
                           radius: 15,

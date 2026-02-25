@@ -128,6 +128,12 @@ class BookSession extends StatelessWidget {
                           final now = DateTime.now();
                           final today = DateTime(now.year, now.month, now.day);
                           final currentDate = DateTime(date.year, date.month, date.day);
+                          
+                          // Hide current date if time is 11 PM or later
+                          if (now.hour >= 23 && currentDate.isAtSameMomentAs(today)) {
+                            return const SizedBox.shrink();
+                          }
+                          
                           if (currentDate.isBefore(today)) return const SizedBox.shrink();
 
                           final dayName = DateFormat('E').format(date);
