@@ -440,22 +440,27 @@ class TournamentCard extends StatelessWidget {
               )
             ],
           ),
-          Container(
-            height: 50,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryColor,
-            ),
-            alignment: Alignment.center,
-            child:  Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "JOIN TOURNAMENT",
-                  style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white)).paddingOnly(right: 4),
-                Icon(Icons.arrow_forward,color: Colors.white,size: 18,)
-              ],
-            ),
-            ),
+          GestureDetector(
+            onTap: (){
+              Get.toNamed(RoutesName.joinTournament);
+            },
+            child: Container(
+              height: 50,
+              decoration: const BoxDecoration(
+                color: AppColors.primaryColor,
+              ),
+              alignment: Alignment.center,
+              child:  Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "JOIN TOURNAMENT",
+                    style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white)).paddingOnly(right: 4),
+                  Icon(Icons.arrow_forward,color: Colors.white,size: 18,)
+                ],
+              ),
+              ),
+          ),
         ],
       ),
     ));

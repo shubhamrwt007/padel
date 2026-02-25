@@ -58,6 +58,8 @@ import 'package:padel_mobile/presentations/support/support_binding.dart';
 import 'package:padel_mobile/presentations/support/support_screen.dart';
 import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_binding.dart';
 import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_screen.dart';
 import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_binding.dart';
 import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_screen.dart';
 import 'package:padel_mobile/presentations/tournaments/tournaments_binding.dart';
@@ -399,6 +401,13 @@ class Routes {
       name: RoutesName.liveTournament,
       page: () => LiveTournamentScreen(),
       binding: LiveTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.joinTournament,
+      page: () => JoinTournamentScreen(),
+      binding: JoinTournamentBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

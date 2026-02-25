@@ -12,6 +12,7 @@ class Assets {
   static const String imagesIcAmericanoNew = 'assets/images/ic_americano_new.svg';
   static const String imagesIcApple = 'assets/images/ic_apple.svg';
   static const String imagesIcBalanceWallet = 'assets/images/ic_balance_wallet.png';
+  static const String imagesIcBall = 'assets/images/ic_ball.svg';
   static const String imagesIcBookACourt = 'assets/images/ic_book_a_court.png';
   static const String imagesIcBookACourtNew = 'assets/images/ic_book_a_court_new.svg';
   static const String imagesIcBookingcancellation = 'assets/images/ic_bookingcancellation.svg';
@@ -30,6 +31,7 @@ class Assets {
   static const String imagesIcFilter = 'assets/images/ic_filter.png';
   static const String imagesIcFindAGame = 'assets/images/ic_find_a_game.svg';
   static const String imagesIcFindAPlayer = 'assets/images/ic_find_a_player.svg';
+  static const String imagesIcFirstPlace = 'assets/images/ic_first_place.svg';
   static const String imagesIcGooglePayment = 'assets/images/ic_google_payment.svg';
   static const String imagesIcHomeBottomBar = 'assets/images/ic_home_bottomBar.svg';
   static const String imagesIcLocation = 'assets/images/ic_location.png';
@@ -50,7 +52,9 @@ class Assets {
   static const String imagesIcPrivacy = 'assets/images/ic_privacy.png';
   static const String imagesIcReview = 'assets/images/ic_review.svg';
   static const String imagesIcSearch = 'assets/images/ic_search.png';
+  static const String imagesIcSecondPlace = 'assets/images/ic_second_place.svg';
   static const String imagesIcShareBooking = 'assets/images/ic_share_booking.svg';
+  static const String imagesIcThirdPlace = 'assets/images/ic_third_place.svg';
   static const String imagesIcTradingDown = 'assets/images/ic_trading_down.svg';
   static const String imagesIcTreadingUp = 'assets/images/ic_treading_up.svg';
   static const String imagesIcWallet = 'assets/images/ic_wallet.svg';

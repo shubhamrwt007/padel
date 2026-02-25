@@ -4,11 +4,11 @@ class AppEndpoints {
   static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
   static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
    /// -----------------------New Live URL-------------------------------------------
-  static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
-  static const String socketUrl = "https://apimobile.swootapp.com";
+  // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
+  // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://192.168.0.123:5070/api/customer/";
-  // static const String socketUrl = "http://192.168.0.123:5070";
+  // static const String baseUrl = "http://192.168.1.11:5070/api/customer/";
+  // static const String socketUrl = "http://192.168.1.11:5070";
 
 
   // static const String login = "${baseUrl}customerLogin";
@@ -104,7 +104,7 @@ class AppEndpoints {
 }
 class PaymentConfig {
   // Toggle this when switching environment
-  static const bool isLive = true;
+  static const bool isLive = false;
 
   // Test Key
   static const String _testKeyId = 'rzp_test_RtRFaVPUzoUtkG';
