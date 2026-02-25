@@ -258,8 +258,8 @@ var locationsId = "".obs;
     locationsId.value = Get.arguments['locationsId']??"";
     selectedDate.value = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await fetchAllSlotPrices();
       await getAvailableCourtsById(locationID.value,categoryId.value,sId.value,argument.id!, showUnavailable: true);
+      await fetchAllSlotPrices();
     });
   }
 
@@ -1336,9 +1336,11 @@ var locationsId = "".obs;
     try {
       isSlotPricesLoading.value = true;
 
+
+
       final result = await repository.getAllSlotPricesOfCourt(
         registerClubId: argument.id!,
-        duration: '', // Get all durations
+        duration: '',
         day: '', // Get all days
         timePeriod: '', // Get all time periods
         locationId: locationID.value,

@@ -3,7 +3,8 @@ import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 
 class BookingSuccessfulScreen extends StatelessWidget {
-  const BookingSuccessfulScreen({super.key});
+  final String? buttonType;
+  const BookingSuccessfulScreen({super.key,this.buttonType});
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +15,14 @@ class BookingSuccessfulScreen extends StatelessWidget {
             child: Image.asset(Assets.imagesImgBookingSuccessful, scale: 4),
           ).paddingOnly(top: Get.height * 0.2,bottom: Get.height*0.02),
           Text(
-            AppStrings.bookingSuccessful,
+            buttonType== "tournament"?"Registration Complete":AppStrings.bookingSuccessful,
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
               color: AppColors.blackColor,
               fontWeight: FontWeight.w600,
             ),
           ).paddingOnly(bottom: Get.height * 0.02),
           Text(
-            AppStrings.yourSlotBooked,
+            buttonType == "tournament"?"Your Registration complete successfully.":AppStrings.yourSlotBooked,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
               color: AppColors.blackColor,
               fontWeight: FontWeight.w400,
@@ -40,7 +41,8 @@ class BookingSuccessfulScreen extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ).paddingOnly(bottom: Get.height * 0.02),
-          GestureDetector(
+          if(buttonType=="")
+            GestureDetector(
             onTap: () => Get.to(BookingHistoryUi(buttonType: "drawer",)),
             child: Container(
               color: Colors.transparent,
