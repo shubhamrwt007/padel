@@ -56,6 +56,14 @@ import 'package:padel_mobile/presentations/scoreview/score_view_binding.dart';
 import 'package:padel_mobile/presentations/splash/splash_screen.dart';
 import 'package:padel_mobile/presentations/support/support_binding.dart';
 import 'package:padel_mobile/presentations/support/support_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/tournaments_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/tournaments_screen.dart';
 import 'package:padel_mobile/presentations/tutorial/tutorial_binding.dart';
 import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_binding.dart';
@@ -365,11 +373,41 @@ class Routes {
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
-    ///tutorial----------------------------------------------------------------
+    ///Tutorial----------------------------------------------------------------
     GetPage(
       name: RoutesName.tutorial,
       page: () => TutorialScreen(),
       binding: TutorialBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///Tournaments----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.tournaments,
+      page: () => TournamentsScreen(),
+      binding: TournamentsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.fipPromises,
+      page: () => FipPromisesScreen(),
+      binding: FipPromisesBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveTournament,
+      page: () => LiveTournamentScreen(),
+      binding: LiveTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.joinTournament,
+      page: () => JoinTournamentScreen(),
+      binding: JoinTournamentBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

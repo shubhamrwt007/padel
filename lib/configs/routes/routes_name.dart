@@ -70,9 +70,15 @@ class RoutesName {
   //Wallet----------------------------------------------------------------------
   static const String wallet = '/wallet';
 
-  //Xp Points----------------------------------------------------------------------
+  //Xp Points-------------------------------------------------------------------
   static const String xpPoints = '/xpPoints';
 
   //Tutorial--------------------------------------------------------------------
- static const String tutorial = '/tutorial';
+  static const String tutorial = '/tutorial';
+
+  //Tournaments-----------------------------------------------------------------
+  static const String tournaments = '/tournaments';
+  static const String fipPromises = '/fipPromises';
+  static const String liveTournament = '/liveTournament';
+  static const String joinTournament = '/joinTournament';
 }
