@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
@@ -53,10 +54,14 @@ class BookSessionController extends GetxController {
   Future<void> openDatePicker(BuildContext context) async {
 
     final DateTime today = DateTime.now();
+    final DateTime firstSelectableDate = today.hour >= 23 
+        ? DateTime(today.year, today.month, today.day).add(const Duration(days: 1))
+        : today;
+    
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate.value ?? today,
-      firstDate: today,
+      initialDate: selectedDate.value ?? firstSelectableDate,
+      firstDate: firstSelectableDate,
       lastDate: today.add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
@@ -256,10 +261,31 @@ var locationsId = "".obs;
     categoryId.value = Get.arguments['categoryId']??"";
     locationID.value = Get.arguments['location']??"";
     locationsId.value = Get.arguments['locationsId']??"";
-    selectedDate.value = DateTime.now();
+    selectedDate.value = _getInitialDate();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await getAvailableCourtsById(locationID.value,categoryId.value,sId.value,argument.id!, showUnavailable: true);
       await fetchAllSlotPrices();
+      await getAvailableCourtsById(locationID.value,categoryId.value,sId.value,argument.id!, showUnavailable: true);
+      _startDateAutoSwitchTimer();
+    });
+  }
+
+  DateTime _getInitialDate() {
+    final now = DateTime.now();
+    if (now.hour >= 23) {
+      return DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    }
+    return now;
+  }
+
+  void _startDateAutoSwitchTimer() {
+    Timer.periodic(const Duration(minutes: 1), (timer) {
+      final now = DateTime.now();
+      if (now.hour == 23 && now.minute == 0) {
+        final nextDay = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+        selectedDate.value = nextDay;
+        dateTimelineController.animateToDate(nextDay);
+        getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+      }
     });
   }
 
@@ -654,16 +680,19 @@ var locationsId = "".obs;
   void _recalculateTotalAmount() {
     int total = 0;
     multiDateSelections.forEach((key, selection) {
-      // Use adjusted amount if available, otherwise use original slot amount
       final adjustedAmount = selection['adjustedAmount'] as int?;
       if (adjustedAmount != null) {
         total += adjustedAmount;
+        log('Adding adjustedAmount: $adjustedAmount for key: $key');
       } else {
         final slot = selection['slot'] as Slots;
-        total += slot.amount ?? 0;
+        final slotAmount = slot.amount ?? 0;
+        total += slotAmount;
+        log('Adding slot.amount: $slotAmount for key: $key');
       }
     });
     totalAmount.value = total;
+    log('Total amount recalculated: $total');
   }
 
   Map<String, String>? _findCourtInfoForSlot(Slots targetSlot) {
@@ -762,8 +791,11 @@ var locationsId = "".obs;
           selected.month == now.month &&
           selected.day == now.day;
 
-      if (isToday && now.isAfter(slotDateTime)) {
-        return true;
+      if (isToday) {
+        final slotEndTime = slotDateTime.add(const Duration(minutes: 15));
+        if (now.isAfter(slotEndTime)) {
+          return true;
+        }
       }
     } catch (_) {
       return false;

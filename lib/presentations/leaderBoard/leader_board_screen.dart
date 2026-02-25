@@ -249,7 +249,7 @@ class LeaderboardScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Container(
-                width: Get.width*.29,
+                width: Get.width*.26,
                 color: Colors.transparent,
                 child: Text(
                   _truncateName(player.name, 15),
@@ -303,7 +303,7 @@ class LeaderboardScreen extends StatelessWidget {
     );
   }
   Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
-    final double minSize = buttonType == "drawer" ? 0.56 : 0.50;
+    final double minSize = buttonType == "drawer" ? 0.65 : 0.52;
     const double maxSize = 1.0;
 
     return NotificationListener<DraggableScrollableNotification>(
