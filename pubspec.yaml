@@ -2,8 +2,8 @@ name: padel_mobile
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.8
-#version: 1.0.3+15
+#version: 1.0.8
+version: 1.0.4+16
 
 environment:
   sdk: ^3.8.1
