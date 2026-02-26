@@ -605,7 +605,7 @@ class MainHomeScreen extends StatelessWidget {
                 border: Border.all(
                   color: isOngoing
                       ? Colors.transparent
-                      : b.bookingType == "normal"
+                      : b.bookingType == "regular"
                       ? Color(0xffC6F6D5)
                       : Color(0xff9EBAFF),
                   width: isOngoing ? 2 : 1,
@@ -616,7 +616,7 @@ class MainHomeScreen extends StatelessWidget {
                     Color(0xffFFEBEE),
                     Color(0xffFFCDD2).withValues(alpha: 0.3)
                   ]
-                      : b.bookingType == "normal"
+                      : b.bookingType == "regular"
                       ? [
                     Color(0xffF0FFF4),
                     Color(0xffC6F6D5).withValues(alpha: 0.3)
@@ -798,7 +798,7 @@ class MainHomeScreen extends StatelessWidget {
         final date = DateTime.parse(b.bookingDate!);
         final dateStr = DateFormat('dd MMM').format(date);
         final timeRange = (b.startTime != null && b.endTime != null) 
-            ? '${b.startTime} – ${b.endTime}' 
+            ? '${b.startTime?.split(' ').first}–${b.endTime}'
             : '';
         formattedDateTime = timeRange.isNotEmpty ? '$dateStr, $timeRange' : dateStr;
       } catch (e) {

@@ -258,7 +258,7 @@ class ScoreBoardController extends GetxController {
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
         matchBookingId.value = item.bookingId?.sId ?? "";
-        bookingType.value = item.bookingId?.bookingType ?? "normal";
+        bookingType.value = item.bookingId?.bookingType ?? "regular";
         CustomLogger.logMessage(
             msg: "Booking Type from API: ${item.bookingId?.bookingType}", level: LogLevel.info);
         CustomLogger.logMessage(

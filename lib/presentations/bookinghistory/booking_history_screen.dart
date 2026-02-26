@@ -225,7 +225,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final price = (booking.totalAmount ?? 2000).toString();
     final score = _getMatchScore(booking);
     final bookingType = booking.bookingType ?? "";
-    final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "regular";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -681,7 +681,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         : '';
     final price = (booking.totalAmount ?? 2000).toString();
     final bookingType = booking.bookingType ?? "";
-    final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "regular" ;
     final isSlotBooked =  booking?.openMatchId?.openMatchStatus =="cancelled";
 
     // Get real players from scoreboard
@@ -967,7 +967,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
   Widget _buildFilledPlayerFromScoreboard(String? imageUrl, String name, String lastName, String bookingType, int index, {dynamic booking}) {
     final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
-    final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "regular";
     final initials = controller.getInitials(name);
     final isSlotBooked = booking?.openMatchId?.openMatchStatus =="cancelled";
 
@@ -1067,7 +1067,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _buildAvailableCircleFromScoreboard(String bookingType, {dynamic booking, int? slotIndex, String? teamName}) {
-    final isBlueTheme = bookingType.toLowerCase() == "normal";
+    final isBlueTheme = bookingType.toLowerCase() == "regular";
     final isSlotBooked = booking?.openMatchId?.openMatchStatus =="cancelled";
     
     return GestureDetector(

@@ -38,7 +38,7 @@ class ScoreBoardScreen extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return controller.bookingType.value == "normal"
+        return controller.bookingType.value == "regular"
             ? GestureDetector(
           onTap: () {
             _showFindAPlayerDialog();

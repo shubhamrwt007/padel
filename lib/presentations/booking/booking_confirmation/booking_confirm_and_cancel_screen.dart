@@ -238,7 +238,7 @@ class BookingConfirmAndCancelScreen extends GetView<BookingConfirmAndCancelContr
     final booking = controller.bookingDetails.value!.booking!;
     final status = booking.bookingStatus?.toLowerCase();
     final displayBookingType = 
-    (booking.bookingType == "normal") ? "Online" : booking.bookingType;
+    (booking.bookingType == "regular") ? "Online" : booking.bookingType;
     return Container(
       padding: const EdgeInsets.only(left: 10,right: 10,bottom: 5,top: 5),
       decoration: BoxDecoration(
