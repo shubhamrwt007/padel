@@ -1437,7 +1437,8 @@ class BookACourtScreen extends StatelessWidget {
         (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability')||
+        (slot.availabilityStatus?.toLowerCase() == 'tournament');
 
     // Check if first half is past for today (with 15 min buffer)
     final now = DateTime.now();

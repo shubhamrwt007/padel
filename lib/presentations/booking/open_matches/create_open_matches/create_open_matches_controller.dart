@@ -1550,7 +1550,9 @@ class CreateOpenMatchesController extends GetxController {
     final availability = _normalizeStatus(slot.availabilityStatus);
     if (availability == "maintenance" ||
         availability == "weather conditions" ||
-        availability == "staff unavailability") {
+        availability == "staff unavailability"||
+        availability == "tournament"
+    ) {
       return true;
     }
     
@@ -1562,7 +1564,9 @@ class CreateOpenMatchesController extends GetxController {
     final availability = _normalizeStatus(slot.availabilityStatus);
     final isBlocked = availability == "maintenance" ||
         availability == "weather conditions" ||
-        availability == "staff unavailability";
+        availability == "staff unavailability"||
+        availability == "tournament";
+
     final isBooked = (_normalizeStatus(slot.status) == 'booked');
     final isPast = isPastAndUnavailable(slot);
     return isPast || isBlocked || isBooked;

@@ -808,7 +808,8 @@ var locationsId = "".obs;
     final availability = slot.availabilityStatus?.toLowerCase();
     final isBlocked = availability == "maintenance" ||
         availability == "weather conditions" ||
-        availability == "staff unavailability";
+        availability == "staff unavailability"||
+        availability == "tournament";
     final isBooked = (slot.status?.toLowerCase() == 'booked');
     final isPast = isPastAndUnavailable(slot);
     
@@ -835,6 +836,7 @@ var locationsId = "".obs;
           slot.availabilityStatus?.toLowerCase() != "maintenance" &&
           slot.availabilityStatus?.toLowerCase() != "weather conditions" &&
           slot.availabilityStatus?.toLowerCase() != "staff unavailability" &&
+          slot.availabilityStatus?.toLowerCase() != "tournament" &&
           slot.status?.toLowerCase() != 'booked';
       return isNotBlocked && (!leftBooked || !rightBooked);
     }
