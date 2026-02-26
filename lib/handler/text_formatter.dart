@@ -1,6 +1,19 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+class PhoneNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isNotEmpty && RegExp(r'^[1-5]').hasMatch(newValue.text)) {
+      return oldValue;
+    }
+    return newValue;
+  }
+}
+
 class EmojiFilteringTextInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

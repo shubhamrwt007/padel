@@ -303,7 +303,7 @@ class LeaderboardScreen extends StatelessWidget {
     );
   }
   Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
-    final double minSize = buttonType == "drawer" ? 0.65 : 0.52;
+    final double minSize = buttonType == "drawer" ? 0.57 : 0.51;
     const double maxSize = 1.0;
 
     return NotificationListener<DraggableScrollableNotification>(

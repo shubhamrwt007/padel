@@ -670,7 +670,8 @@ class BookSession extends StatelessWidget {
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability')||
+        (slot.availabilityStatus?.toLowerCase() == 'tournament');
 
     // Check for booked slots
     final isLeftHalfBooked = controller.isLeftHalfBooked(slot);
