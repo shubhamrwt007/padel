@@ -1412,7 +1412,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability'||
+        (slot.availabilityStatus?.toLowerCase() == 'tournament'));
 
     // Check if this is the first selection
     final isFirstSelection = controller.multiDateSelections.isEmpty;

@@ -47,6 +47,8 @@ class SignUpController extends GetxController {
       return "Phone number is required";
     } else if (!GetUtils.isPhoneNumber(phoneController.text)) {
       return "Invalid phone number";
+    } else if (phoneController.text.startsWith(RegExp(r'[1-5]'))) {
+      return "Phone number cannot start with 1, 2, 3, 4, or 5";
     }
     return null;
   }
