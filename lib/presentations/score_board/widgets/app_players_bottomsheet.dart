@@ -382,20 +382,20 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     final style = Get.textTheme.labelLarge!.copyWith(color: Colors.white);
     return Column(
       children: [
-        OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(45),
-            side: const BorderSide(color: Colors.green),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: Text(
-            'Invite Player',
-            style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
-          ),
-        ),
+        // OutlinedButton(
+        //   onPressed: () {},
+        //   style: OutlinedButton.styleFrom(
+        //     minimumSize: const Size.fromHeight(45),
+        //     side: const BorderSide(color: Colors.green),
+        //     shape: RoundedRectangleBorder(
+        //       borderRadius: BorderRadius.circular(5),
+        //     ),
+        //   ),
+        //   child: Text(
+        //     'Invite Player',
+        //     style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
+        //   ),
+        // ),
         const SizedBox(height: 4),
         // ElevatedButton(
         //   onPressed: () {},

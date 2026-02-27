@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import '../../widgets/booking_exports.dart';
 
 class AddPlayerBottomSheet extends StatelessWidget {
@@ -69,8 +70,9 @@ class AddPlayerBottomSheet extends StatelessWidget {
                         controller.phoneController,
                         context,
                         action: TextInputAction.next,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.phone,
                         maxLength: 10,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         readOnly: controller.isLoginUserAdding.value,
                         onChanged: (value) {
                           if (value.length < 10) {
@@ -198,7 +200,8 @@ class AddPlayerBottomSheet extends StatelessWidget {
         TextCapitalization? textCapitalization,
         dynamic Function(String)? onChanged,
         Color? color,
-        String? labelText
+        String? labelText,
+        List<TextInputFormatter>? inputFormatters,
 
       }) {
     return Column(
@@ -222,6 +225,7 @@ class AddPlayerBottomSheet extends StatelessWidget {
           maxLength: maxLength,
           onChanged: onChanged,
           color: color,
+          formatter: inputFormatters,
         ).paddingOnly(top: 20),
       ],
     );
