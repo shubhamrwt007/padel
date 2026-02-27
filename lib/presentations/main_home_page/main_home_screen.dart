@@ -948,8 +948,8 @@ class MainHomeScreen extends StatelessWidget {
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
-        "title": "Americano",
-        "action": "americano",
+        "title": "Tournament",
+        "action": "tournament",
         "boxSize": 70.0,
         "iconSize": 34.0,
         "offset": Offset(0, 3)
@@ -1010,7 +1010,7 @@ class MainHomeScreen extends StatelessWidget {
                       ),
                     ),
 // Coming Soon overlay
-                    if (e["action"] == "americano")
+                    if (e["action"] == "tournament")
                       Positioned.fill(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
@@ -1110,8 +1110,8 @@ class MainHomeScreen extends StatelessWidget {
           'location': locationId,
         });
         break;
-      case 'americano':
-        CustomLogger.logMessage(msg: "Americano tournaments coming soon!", level: LogLevel.debug);
+      case 'tournament':
+        CustomLogger.logMessage(msg: "tournaments coming soon!", level: LogLevel.debug);
 
         break;
       case 'player':

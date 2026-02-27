@@ -1276,10 +1276,13 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   Widget _expandedCard(BuildContext context, int index, dynamic booking, List<Widget> playerAvatars, List<Widget> addButtons, String clubName, String address, String price, String type) {
-    // final isUpcoming = type == "upcoming";
-    // final timeStr = _getTimeString(booking);
     final invoiceUrlString = booking.invoiceUrl??"";
+    final bookingType = booking.bookingType ?? "";
+    final isRegularBooking = bookingType.toLowerCase() == "regular";
+    final showCrossIcon = type == "upcoming" && isRegularBooking;
 print("invoice--------- $invoiceUrlString");
+print("bookingType--------- $bookingType");
+print("showCrossIcon--------- $showCrossIcon");
     // Count actual players from scoreboard
     int totalPlayers = 0;
     final scoreboard = booking.scoreboard;
@@ -1316,10 +1319,42 @@ print("invoice--------- $invoiceUrlString");
           // ),
           // const SizedBox(height: 12),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.group, size: 18),
-              SizedBox(width: 8),
-              Text("${playerAvatars.length} attendee", style: Get.textTheme.bodySmall),
+              Row(
+                children: [
+                  Icon(Icons.group, size: 18),
+                  SizedBox(width: 8),
+                  Text("${playerAvatars.length} attendee", style: Get.textTheme.bodySmall),
+                ],
+              ),
+              if (showCrossIcon)
+                GestureDetector(
+                  onTap: () {
+                    Get.toNamed(RoutesName.bookingConfirmAndCancel, arguments: {
+                      'id': booking.sId ?? '',
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1355,42 +1390,40 @@ print("invoice--------- $invoiceUrlString");
               ),
               if (booking.userId == storage.read('userId'))
                 GestureDetector(
-                onTap: () async {
-                  // Only allow download if user is the booking owner
-                  if (booking.userId == storage.read('userId')) {
-                    final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
-                    final invoiceUrl = invoiceUrlString;
-                    
-                    if (invoiceUrl.isNotEmpty) {
-                      await controller.downloadInvoice(invoiceUrl);
+                  onTap: () async {
+                    if (booking.userId == storage.read('userId')) {
+                      final BookingHistoryController controller = Get.find<BookingHistoryController>(tag: 'booking_history');
+                      final invoiceUrl = invoiceUrlString;
+                      
+                      if (invoiceUrl.isNotEmpty) {
+                        await controller.downloadInvoice(invoiceUrl);
+                      } else {
+                        AppToast.error("Invoice URL not available");
+                      }
                     } else {
-                      AppToast.error("Invoice URL not available");
+                      CustomLogger.logMessage(msg: "You can only download invoices for your own bookings", level: LogLevel.debug);
                     }
-                  } else {
-                    CustomLogger.logMessage(msg: "You can only download invoices for your own bookings", level: LogLevel.debug);
-
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    color: booking.userId == storage.read('userId') ? AppColors.textFieldColor : Colors.grey.shade300
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: booking.userId == storage.read('userId') ? AppColors.textFieldColor : Colors.grey.shade300
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Invoice", style: Get.textTheme.labelMedium?.copyWith(
+                          color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
+                        )),
+                        const SizedBox(width: 6),
+                        Icon(Icons.file_download, size: 18, 
+                          color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Invoice", style: Get.textTheme.labelMedium?.copyWith(
-                        color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
-                      )),
-                      const SizedBox(width: 6),
-                      Icon(Icons.file_download, size: 18, 
-                        color: booking.userId == storage.read('userId') ? null : Colors.grey.shade600
-                      ),
-                    ],
-                  ),
-                ),
-              )
+                )
             ],
           ),
           const SizedBox(height: 16),
