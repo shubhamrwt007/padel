@@ -1,4 +1,4 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_binding.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_screen.dart';
@@ -302,7 +302,7 @@ class Routes {
     ///New UI-------------------------------------------------------------------
     GetPage(
       name: RoutesName.openMatchForAllCourts,
-      page: () => OpenMatchForAllCourtScreen(),
+      page: () => const OpenMatchForAllCourtScreen(),
       binding: OpenMatchForAllCourtBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,

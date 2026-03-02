@@ -22,16 +22,12 @@ import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
-
 class BookACourtScreen extends StatelessWidget {
   final BookACourtController controller = Get.put(BookACourtController());
   final WalletController walletController = Get.put(WalletController());
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
-
   BookACourtScreen({super.key});
-
-
   @override
   Widget build(BuildContext context) {
     // Fetch wallet balance after build completes
@@ -523,7 +519,8 @@ class BookACourtScreen extends StatelessWidget {
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
-  }) {
+  })
+  {
     // Show all slots from API
     final displaySlots = availableSlots?.isNotEmpty == true
         ? availableSlots!.map((slot) => Slots(
@@ -1147,7 +1144,8 @@ class BookACourtScreen extends StatelessWidget {
       int slotIndex, {
         String? courtId,
         List<Slots>? availableSlots,
-      }) {
+      })
+  {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
@@ -2169,7 +2167,6 @@ class BookACourtScreen extends StatelessWidget {
       final courtId = selection['courtId'] as String;
       final formattedDate = DateFormat('dd, MMM').format(dateTime);
       final key = '${formattedDate}_$courtId';
-
       if (!groupedSelections.containsKey(key)) {
         groupedSelections[key] = [];
       }

@@ -88,12 +88,14 @@ class AppEndpoints {
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
   static const String testWalletCreate = "${baseUrl}wallet/order";
+  static const String appVersions= "${baseUrl}app-version/check";
 
   ///LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
   static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
   static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
+
 
   ///XP Points------------------------------------------------------------------
   static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";

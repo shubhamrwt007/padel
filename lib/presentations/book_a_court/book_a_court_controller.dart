@@ -1719,12 +1719,86 @@ class BookACourtController extends GetxController {
       String formattedTime = '';
       if (multiDateSelections.isNotEmpty) {
         final selectedSlotTimes = <String>{};
+        final selectedSlotMinutes = <int>{};
+        
         multiDateSelections.forEach((key, selection) {
           final slot = selection['slot'] as Slots;
           if (slot.time != null && slot.time!.isNotEmpty) {
-            selectedSlotTimes.add(_formatTimeForAPI(slot.time!));
+            selectedSlotMinutes.add(_parseTimeToMinutes(slot.time!));
           }
         });
+        
+        if (selectedSlotMinutes.isNotEmpty) {
+          final earliestMinutes = selectedSlotMinutes.reduce((a, b) => a < b ? a : b);
+          final allSlots = slots.value?.data?.first.slots ?? [];
+          
+          final now = DateTime.now();
+          final isToday = selectedDate.value?.year == now.year &&
+              selectedDate.value?.month == now.month &&
+              selectedDate.value?.day == now.day;
+          final currentMinutes = now.hour * 60 + now.minute;
+          
+          // Filter available slots (not past)
+          final availableSlots = <int>[];
+          for (int i = 0; i < allSlots.length; i++) {
+            if (allSlots[i].time != null) {
+              final slotMinutes = _parseTimeToMinutes(allSlots[i].time!);
+              if (!isToday || slotMinutes + 15 > currentMinutes) {
+                availableSlots.add(i);
+              }
+            }
+          }
+          
+          // Find selected slot index in available slots
+          int selectedIndex = -1;
+          for (int i = 0; i < allSlots.length; i++) {
+            if (allSlots[i].time != null && _parseTimeToMinutes(allSlots[i].time!) == earliestMinutes) {
+              selectedIndex = i;
+              break;
+            }
+          }
+          
+          if (selectedIndex != -1 && availableSlots.contains(selectedIndex)) {
+            final selectedPosInAvailable = availableSlots.indexOf(selectedIndex);
+            
+            // Check how many available slots after selected
+            final slotsAfter = availableSlots.length - selectedPosInAvailable - 1;
+            final slotsBefore = selectedPosInAvailable;
+            
+            // Show 2 before + selected + 2 after (max 5 slots) to center selected slot
+            int startPos;
+            int slotsToAdd;
+            
+            if (slotsBefore >= 2 && slotsAfter >= 2) {
+              // Has 2+ before and 2+ after: show 2 before + selected + 2 after (centered)
+              startPos = selectedPosInAvailable - 2;
+              slotsToAdd = 5;
+            } else if (slotsBefore >= 2 && slotsAfter < 2) {
+              // Has 2+ before but less after: shift to show more before
+              startPos = availableSlots.length - 5;
+              if (startPos < 0) startPos = 0;
+              slotsToAdd = 5;
+            } else if (slotsBefore < 2 && slotsAfter >= 2) {
+              // Less before but 2+ after: start from beginning
+              startPos = 0;
+              slotsToAdd = 5;
+            } else {
+              // Not enough on either side: show all available
+              startPos = 0;
+              slotsToAdd = availableSlots.length;
+            }
+            
+            int added = 0;
+            for (int i = startPos; i < availableSlots.length && added < slotsToAdd; i++) {
+              final slotIndex = availableSlots[i];
+              if (allSlots[slotIndex].time != null) {
+                selectedSlotTimes.add(_formatTimeForAPI(allSlots[slotIndex].time!));
+                added++;
+              }
+            }
+          }
+        }
+        
         formattedTime = selectedSlotTimes.join(',');
       }
 
