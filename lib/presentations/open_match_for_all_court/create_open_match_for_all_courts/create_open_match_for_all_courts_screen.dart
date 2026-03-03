@@ -420,6 +420,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
                             courtId: court.id ?? '',
+                            slotDuration: court.slotDuration,
                           ),
                         )
                             : const SizedBox.shrink(),
@@ -445,6 +446,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
+    List<int>? slotDuration,
   })
   {
     // Show all slots from API
@@ -465,11 +467,24 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
             /// LEFT TEXT
             SizedBox(
               width: 80,
-              child: Text(
-                courtName,
-                style: Get.textTheme.headlineLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    courtName,
+                    style: Get.textTheme.headlineLarge,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (slotDuration != null && slotDuration.isNotEmpty)
+                    Text(
+                      '${slotDuration.first} min',
+                      style: Get.textTheme.labelSmall!.copyWith(
+                        color: Colors.grey,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
               ),
             ),
             SizedBox(width: 15),
