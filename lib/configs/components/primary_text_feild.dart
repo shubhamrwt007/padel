@@ -67,7 +67,7 @@ class PrimaryTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      contextMenuBuilder: readOnly == true ? (context, editableTextState) => const SizedBox.shrink() : null,
+      enableInteractiveSelection: true,
       initialValue: initialValue,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: validator,

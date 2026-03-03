@@ -669,8 +669,7 @@ class OpenMatchForAllCourtController extends GetxController {
           _pendingMatch = match;
           _pendingPrefferedTeam = prefferedTeam;
           _pendingOrderId = orderId;
-          
-          // Navigate to payment page with order ID
+          //
           final result = await Get.to(
             () => PaymentForWallet(),
             arguments: {

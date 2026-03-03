@@ -30,7 +30,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return Scaffold(
       bottomNavigationBar: _bottomButton(context),
       appBar: primaryAppBar(
-          title: Text("Find a Game"), context: context,centerTitle: true,
+        title: Text("Find a Game"), context: context,centerTitle: true,
         action: [
           GestureDetector(
             onTap: () {
@@ -536,7 +536,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
 
     final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
-    
+
     // Show yourShare if openMatchStatus is pending, otherwise show totalAmount
     final price = data.openMatchStatus == "pending"
         ? "${data.yourShare ?? 0}"
@@ -672,34 +672,34 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     children: [
                       if (_isLoginUserInMatch(data) && controller.getTotalPlayersCount(data) > 1)
                         GestureDetector(
-                          onTap: (){
-                            final teamAData = (data.teamA ?? []).map((p) => {
-                              'userId': p.userId?.sId ?? '',
-                              'name': p.userId?.name ?? '',
-                              'lastName': p.userId?.lastName ?? '',
-                            }).toList();
-                            final teamBData = (data.teamB ?? []).map((p) => {
-                              'userId': p.userId?.sId ?? '',
-                              'name': p.userId?.name ?? '',
-                              'lastName': p.userId?.lastName ?? '',
-                            }).toList();
+                            onTap: (){
+                              final teamAData = (data.teamA ?? []).map((p) => {
+                                'userId': p.userId?.sId ?? '',
+                                'name': p.userId?.name ?? '',
+                                'lastName': p.userId?.lastName ?? '',
+                              }).toList();
+                              final teamBData = (data.teamB ?? []).map((p) => {
+                                'userId': p.userId?.sId ?? '',
+                                'name': p.userId?.name ?? '',
+                                'lastName': p.userId?.lastName ?? '',
+                              }).toList();
 
-                            Get.toNamed(RoutesName.chat, arguments: {
-                              "matchID": data.sId ?? "",
-                              "teamA": teamAData,
-                              "teamB": teamBData,
-                            });
-                          },
-                          child:Container(
-                              height: 36,
-                              width: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                // borderRadius: BorderRadius.circular(10),
-                                color:AppColors.primaryColor,
-                              ),
-                              child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
-                          )
+                              Get.toNamed(RoutesName.chat, arguments: {
+                                "matchID": data.sId ?? "",
+                                "teamA": teamAData,
+                                "teamB": teamBData,
+                              });
+                            },
+                            child:Container(
+                                height: 36,
+                                width: 36,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  // borderRadius: BorderRadius.circular(10),
+                                  color:AppColors.primaryColor,
+                                ),
+                                child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
+                            )
                         ).paddingOnly(right: 10),
                       Container(
                         decoration: BoxDecoration(
@@ -841,8 +841,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           radius: 20,
           backgroundColor: hasActiveRequest ? Colors.grey.withOpacity(0.3) : const Color(0xffeaf0ff),
           child: Icon(
-            Icons.add, 
-            color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
+              Icons.add,
+              color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
           ),
         ),
       ),
@@ -883,7 +883,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     // Find the match data to check isRequest
     final matchData = controller.matchesBySelection.value?.data?.firstWhere(
-      (match) => match.sId == matchId,
+          (match) => match.sId == matchId,
       orElse: () => OpenMatchBookingData(),
     );
 
@@ -939,18 +939,18 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     }
     try {
       final addPlayerController = Get.put(AddPlayerController());
-      
+
       // Set required values
       addPlayerController.matchId.value = matchId;
       addPlayerController.selectedTeam.value = team;
       addPlayerController.playerId.value = userId;
       addPlayerController.openMatchForAllCourtController = controller;
-      
+
       // Call the request API directly
       final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId,price: price);
       if (success) {
-    
-        
+
+
         Get.dialog(
           Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -996,9 +996,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
               ),
             ),
           ),
-          
+
         );
-            // Refresh matches without showing loader
+        // Refresh matches without showing loader
         final currentLoading = controller.isLoading.value;
         controller.isLoading.value = false;
         await controller.fetchMatchesForSelection();
@@ -1024,10 +1024,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   void _showPlayerDetailsDialog(OpenMatchBookingData matchData) {
     final userId = storage.read('userId');
     final hasPlayers = (matchData.teamA ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false)) ||
-                       (matchData.teamB ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false));
-    
+        (matchData.teamB ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false));
+
     if (!hasPlayers) return;
-    
+
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1872,12 +1872,12 @@ class AppPlayersBottomSheet extends StatelessWidget {
     final controller = Get.find<OpenMatchForAllCourtController>();
     log("BookingID___> $bookingId");
     controller.fetchNearByPlayers(bookingId: bookingId??"");
-    
+
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
-    
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Container(

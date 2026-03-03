@@ -3,14 +3,14 @@ class AppEndpoints {
   /// -----------------------Staging URL-------------------------------------------
   static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
   static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
-   /// -----------------------New Live URL-------------------------------------------
+
+   /// -----------------------New Live URL--------------------------------------
   // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
 
   // static const String baseUrl = "http://192.168.1.26:5070/api/customer/";
   // static const String socketUrl = "http://192.168.1.26:5070";
-
 
 
   // static const String login = "${baseUrl}customerLogin";
@@ -88,12 +88,14 @@ class AppEndpoints {
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
   static const String testWalletCreate = "${baseUrl}wallet/order";
+  static const String appVersions= "${baseUrl}app-version/check";
 
   ///LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
   static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
   static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
+
 
   ///XP Points------------------------------------------------------------------
   static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";

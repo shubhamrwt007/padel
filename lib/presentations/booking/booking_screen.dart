@@ -11,7 +11,7 @@ class BookingScreen extends GetView<BookingController> {
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       body: DefaultTabController(
-        length: 4,
+        length: 3,
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
@@ -391,13 +391,13 @@ PreferredSizeWidget myTabBar(
     ),
     dividerHeight: 0.5,
     dividerColor: AppColors.textColor.withValues(alpha: 0.1),
-    labelPadding: const EdgeInsets.only(left: 0, right: 30),
+    labelPadding: const EdgeInsets.only(left: 20, right: 40),
     automaticIndicatorColorAdjustment: true,
     indicatorWeight: 1,
     tabs: const [
       Tab(child: Text("Home")),
       Tab(child: Text("Book")),
       Tab(child: Text("Open Matches")),
-      Tab(child: Text("Americano")),
+      // Tab(child: Text("Americano")),
     ],
   );}

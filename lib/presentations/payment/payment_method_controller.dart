@@ -10,6 +10,7 @@ import '../booking/successful_screens/booking_successful_screen.dart';
 import '../../repositories/cart/cart_repository.dart';
 import '../book_a_court/book_a_court_controller.dart';
 import '../booking/book_session/book_session_controller.dart';
+import '../booking/booking_controller.dart';
 import '../profile/profile_controller.dart';
 
 class PaymentMethodController extends GetxController {
@@ -496,6 +497,10 @@ class PaymentMethodController extends GetxController {
                       bookACourtController!.clearAllSelections();
                     }
                     Get.back();
+                  // Call deleteSlotHistory when returning from payment
+                  if (Get.isRegistered<BookingController>()) {
+                    Get.find<BookingController>().onPageResumed();
+                  }
                     Get.offAllNamed(RoutesName.bottomNav);
                   },
                   style: ElevatedButton.styleFrom(
@@ -556,8 +561,8 @@ class PaymentMethodController extends GetxController {
   }
 
   @override
-  void dispose() {
+  void onClose() {
     _paymentService?.dispose();
-    super.dispose();
+    super.onClose();
   }
 }

@@ -5,6 +5,7 @@ publish_to: 'none'
 #version: 1.0.9
 version: 1.0.5+17
 
+
 environment:
   sdk: ^3.8.1
 
@@ -58,6 +59,7 @@ dependencies:
   sms_autofill:
   otp_autofill: ^4.1.0
   pretty_dio_logger:
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_launcher_icons:

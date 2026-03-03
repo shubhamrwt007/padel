@@ -33,6 +33,18 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     _loadBookingData();
   }
 
+  // Call this method when returning from payment or any other page
+  Future<void> onPageResumed() async {
+    // Get selected slots from BookSessionController if available
+    if (Get.isRegistered<BookSessionController>()) {
+      final bookSessionController = Get.find<BookSessionController>();
+      await bookSessionController.cleanupOnBack();
+    } else {
+      // Fallback: call with empty slots
+      await _callDeleteSlotHistoryAPI();
+    }
+  }
+
   Future<void> _callDeleteSlotHistoryAPI() async {
     try {
       final repository = HomeRepository();
@@ -55,9 +67,6 @@ class BookingController extends GetxController with GetSingleTickerProviderState
       log("Data Fetch Successfully -> ${courtsData.value}");
       profileController.fetchUserProfile();
       _refreshChildControllers();
-      
-      // Call delete slot history API when page loads
-      _callDeleteSlotHistoryAPI();
     }
   }
 

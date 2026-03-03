@@ -7,6 +7,7 @@ import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
+import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 
 class PaymentMethodScreen extends GetView<PaymentMethodController> {
   const PaymentMethodScreen({super.key});
@@ -16,7 +17,13 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     final CartController? cartController =
         Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
 
-    return Scaffold(
+    return PopScope(
+      onPopInvoked: (didPop) {
+        if (didPop && Get.isRegistered<BookingController>()) {
+          Get.find<BookingController>().onPageResumed();
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.whiteColor,
       appBar: primaryAppBar(
         centerTitle: true,
@@ -56,7 +63,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildPaymentSummary(BuildContext context, CartController? cartController) {
