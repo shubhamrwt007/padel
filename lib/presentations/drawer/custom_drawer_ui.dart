@@ -217,18 +217,18 @@ class CustomDrawerUi extends GetView<ProfileController> {
                   },
                 ),
               ),
-              Obx(
-                    () => ProfileRow(
-                  icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 8 ? AppColors.primaryColor : AppColors.labelBlackColor),
-                  title: "Tournaments",
-                  isSelected: controller.selectedIndex.value == 8,
-                  onTap: () {
-                    controller.selectedIndex.value = 8;
-                    Get.toNamed(RoutesName.tournaments);
-                  },
-
-                ),
-              ),
+              // Obx(
+              //       () => ProfileRow(
+              //     icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 8 ? AppColors.primaryColor : AppColors.labelBlackColor),
+              //     title: "Tournaments",
+              //     isSelected: controller.selectedIndex.value == 8,
+              //     onTap: () {
+              //       controller.selectedIndex.value = 8;
+              //       Get.toNamed(RoutesName.tournaments);
+              //     },
+              //
+              //   ),
+              // ),
               // Obx(
               //   () => ProfileRow(
               //     icon: SvgPicture.asset(
