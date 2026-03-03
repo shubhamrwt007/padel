@@ -53,17 +53,20 @@ class GetCourtsByDurationData {
 class Court {
   String? id;
   String? courtName;
+  List<int>? slotDuration;
   List<CourtSlot>? slots;
 
   Court({
     this.id,
     this.courtName,
+    this.slotDuration,
     this.slots,
   });
 
   Court.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
     courtName = json['courtName'];
+    slotDuration = json['slotDuration']?.cast<int>();
 
     if (json['slots'] != null) {
       slots = <CourtSlot>[];

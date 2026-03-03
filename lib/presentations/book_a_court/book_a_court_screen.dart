@@ -80,6 +80,7 @@ class BookACourtScreen extends StatelessWidget {
                   //   style: BorderStyle.solid, // dotted simulated below
                   //   width: 1.2,
                   // ),
+
                 ),
                 child: Row(
                   children: [
@@ -490,7 +491,7 @@ class BookACourtScreen extends StatelessWidget {
                           child: _courtRow(
                             context: context,
                             courtName: court.courtName ?? 'Court ${courtIndex + 1}',
-                            // type: clubData.registerClub?.courtType?.join(', ') ?? '',
+                            slotDuration: court.slotDuration,
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
                             courtId: court.id ?? '',
@@ -515,7 +516,7 @@ class BookACourtScreen extends StatelessWidget {
   Widget _courtRow({
     required BuildContext context,
     required String courtName,
-    // required String type,
+    List<int>? slotDuration,
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
@@ -539,11 +540,24 @@ class BookACourtScreen extends StatelessWidget {
             /// LEFT TEXT
             SizedBox(
               width: 80,
-              child: Text(
-                courtName,
-                style: Get.textTheme.headlineLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    courtName,
+                    style: Get.textTheme.headlineLarge,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (slotDuration != null && slotDuration.isNotEmpty)
+                    Text(
+                      slotDuration.map((d) => '${d}min').join(', '),
+                      style: Get.textTheme.labelSmall!.copyWith(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
               ),
             ),
             SizedBox(width: 15),
