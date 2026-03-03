@@ -926,7 +926,8 @@ class DetailsScreen extends StatelessWidget {
     final data = controller.localMatchData;
 
     return Container(
-      alignment: Alignment.center,
+      alignment: Alignment
+          .center,
       height: Get.height * .12,
       decoration: const BoxDecoration(
         color: Colors.white,

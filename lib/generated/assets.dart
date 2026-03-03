@@ -85,6 +85,7 @@ class Assets {
   static const String imagesImgRoundBackground = 'assets/images/img_round_background.svg';
   static const String imagesImgScoreView = 'assets/images/img_score_view.svg';
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
+  static const String imagesImgTournamentLeaderboard = 'assets/images/img_tournament_leaderboard.svg';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
   static const String imagesNewHomeBanner = 'assets/images/new_home_banner.jpg';
   static const String imagesNewHomeBanner2 = 'assets/images/new_home_banner_2.jpg';
