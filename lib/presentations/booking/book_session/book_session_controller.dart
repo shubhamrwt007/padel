@@ -306,25 +306,67 @@ var locationsId = "".obs;
     try {
       final slots = [];
       
+      // Group selections by slot ID to detect both halves
+      final Map<String, List<MapEntry<String, Map<String, dynamic>>>> slotGroups = {};
       for (var entry in multiDateSelections.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
         final slotId = slot.sId ?? '';
         final courtId = selection['courtId'] as String;
         final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final isLeftHalf = selection['isLeftHalf'] as bool?;
-        final supports30Min = slotSupports30Min(slot);
-        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final groupKey = '${dateString}_${courtId}_${slotId}';
         
-        slots.add({
-          "slotId": slotId,
-          "courtId": courtId,
-          "bookingDate": dateString,
-          "time": bookingTime,
-          "bookingTime": bookingTime,
-          "duration": duration,
-        });
+        if (!slotGroups.containsKey(groupKey)) {
+          slotGroups[groupKey] = [];
+        }
+        slotGroups[groupKey]!.add(entry);
+      }
+      
+      // Process each group
+      for (var group in slotGroups.values) {
+        if (group.isEmpty) continue;
+        
+        final firstEntry = group.first;
+        final selection = firstEntry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final supports30Min = slotSupports30Min(slot);
+        
+        // Check if both halves are selected
+        final hasLeftHalf = group.any((e) => e.value['isLeftHalf'] == true);
+        final hasRightHalf = group.any((e) => e.value['isLeftHalf'] == false);
+        final bothHalvesSelected = hasLeftHalf && hasRightHalf;
+        
+        if (supports30Min && bothHalvesSelected) {
+          // Both halves selected - create ONE entry with 60 minutes
+          slots.add({
+            "slotId": slotId,
+            "courtId": courtId,
+            "bookingDate": dateString,
+            "time": slot.time ?? '',
+            "bookingTime": slot.time ?? '',
+            "duration": 60,
+          });
+        } else {
+          // Single half or full slot - create entries as is
+          for (var entry in group) {
+            final sel = entry.value;
+            final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
+            final isLeftHalf = sel['isLeftHalf'] as bool?;
+            final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            
+            slots.add({
+              "slotId": slotId,
+              "courtId": courtId,
+              "bookingDate": dateString,
+              "time": bookingTime,
+              "bookingTime": bookingTime,
+              "duration": duration,
+            });
+          }
+        }
       }
       
       await repository.deleteSlotHistory(data: {"slots": slots});
@@ -450,6 +492,7 @@ var locationsId = "".obs;
       }
 
       if (lockedSlots.isNotEmpty) {
+        AppToast.error(lockedSlots.first.message ?? "This slot is currently locked. Please try again.");
         CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
 
       }
@@ -476,29 +519,74 @@ var locationsId = "".obs;
 
     try {
       final slots = <Map<String, dynamic>>[];
+      final processedSlots = <String>{}; // Track processed slot IDs to avoid duplicates
       
+      // Group selections by slot ID to detect both halves
+      final Map<String, List<MapEntry<String, Map<String, dynamic>>>> slotGroups = {};
       for (var entry in multiDateSelections.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
         final slotId = slot.sId ?? '';
         final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final groupKey = '${dateString}_${courtId}_${slotId}';
+        
+        if (!slotGroups.containsKey(groupKey)) {
+          slotGroups[groupKey] = [];
+        }
+        slotGroups[groupKey]!.add(entry);
+      }
+      
+      // Process each group
+      for (var group in slotGroups.values) {
+        if (group.isEmpty) continue;
+        
+        final firstEntry = group.first;
+        final selection = firstEntry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
         final courtName = selection['courtName'] as String;
         final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final isLeftHalf = selection['isLeftHalf'] as bool?;
         final supports30Min = slotSupports30Min(slot);
-        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
         
-        slots.add({
-          "slotId": slotId,
-          "courtId": courtId,
-          "courtName": courtName,
-          "bookingDate": dateString,
-          "time": bookingTime,
-          "bookingTime": bookingTime,
-          "duration": duration,
-          "totalTime": duration,
-        });
+        // Check if both halves are selected
+        final hasLeftHalf = group.any((e) => e.value['isLeftHalf'] == true);
+        final hasRightHalf = group.any((e) => e.value['isLeftHalf'] == false);
+        final bothHalvesSelected = hasLeftHalf && hasRightHalf;
+        
+        if (supports30Min && bothHalvesSelected) {
+          // Both halves selected - create ONE entry with 60 minutes
+          slots.add({
+            "slotId": slotId,
+            "courtId": courtId,
+            "courtName": courtName,
+            "bookingDate": dateString,
+            "time": slot.time ?? '',
+            "bookingTime": slot.time ?? '',
+            "duration": 60,
+            "totalTime": 60,
+          });
+        } else {
+          // Single half or full slot - create entries as is
+          for (var entry in group) {
+            final sel = entry.value;
+            final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
+            final isLeftHalf = sel['isLeftHalf'] as bool?;
+            final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            
+            slots.add({
+              "slotId": slotId,
+              "courtId": courtId,
+              "courtName": courtName,
+              "bookingDate": dateString,
+              "time": bookingTime,
+              "bookingTime": bookingTime,
+              "duration": duration,
+              "totalTime": duration,
+            });
+          }
+        }
       }
       
       final success = await createAndGetSlotHistory(slots: slots);
@@ -1167,32 +1255,79 @@ var locationsId = "".obs;
     try {
       final slots = <Map<String, dynamic>>[];
       
+      // Group selections by slot ID to detect both halves
+      final Map<String, List<MapEntry<String, Map<String, dynamic>>>> slotGroups = {};
       for (var entry in multiDateSelections.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
         final slotId = slot.sId ?? '';
         final courtId = selection['courtId'] as String;
-        final courtName = selection['courtName'] as String;
         final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final isLeftHalf = selection['isLeftHalf'] as bool?;
-        final supports30Min = slotSupports30Min(slot);
-        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final groupKey = '${dateString}_${courtId}_${slotId}';
         
-        slots.add({
-          "slotId": slotId,
-          "courtId": courtId,
-          "courtName": courtName,
-          "bookingDate": dateString,
-          "userId": "",
-          "time": bookingTime,
-          "bookingTime": bookingTime,
-          "duration": duration,
-          "totalTime": duration,
-        });
+        if (!slotGroups.containsKey(groupKey)) {
+          slotGroups[groupKey] = [];
+        }
+        slotGroups[groupKey]!.add(entry);
       }
       
-      return await createAndGetSlotHistory(slots: slots);
+      // Process each group
+      for (var group in slotGroups.values) {
+        if (group.isEmpty) continue;
+        
+        final firstEntry = group.first;
+        final selection = firstEntry.value;
+        final slot = selection['slot'] as Slots;
+        final slotId = slot.sId ?? '';
+        final courtId = selection['courtId'] as String;
+        final courtName = selection['courtName'] as String;
+        final dateString = selection['date'] as String;
+        final supports30Min = slotSupports30Min(slot);
+        
+        // Check if both halves are selected
+        final hasLeftHalf = group.any((e) => e.value['isLeftHalf'] == true);
+        final hasRightHalf = group.any((e) => e.value['isLeftHalf'] == false);
+        final bothHalvesSelected = hasLeftHalf && hasRightHalf;
+        
+        if (supports30Min && bothHalvesSelected) {
+          // Both halves selected - create ONE entry with 60 minutes
+          slots.add({
+            "slotId": slotId,
+            "courtId": courtId,
+            "courtName": courtName,
+            "bookingDate": dateString,
+            "time": slot.time ?? '',
+            "bookingTime": slot.time ?? '',
+            "duration": 60,
+            "totalTime": 60,
+          });
+        } else {
+          // Single half or full slot - create entries as is
+          for (var entry in group) {
+            final sel = entry.value;
+            final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
+            final isLeftHalf = sel['isLeftHalf'] as bool?;
+            final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            
+            slots.add({
+              "slotId": slotId,
+              "courtId": courtId,
+              "courtName": courtName,
+              "bookingDate": dateString,
+              "time": bookingTime,
+              "bookingTime": bookingTime,
+              "duration": duration,
+              "totalTime": duration,
+            });
+          }
+        }
+      }
+      
+      final success = await createAndGetSlotHistory(slots: slots);
+      if (success) {
+        hasCalledSlotHistoryAPI.value = true;
+      }
+      return success;
     } catch (e) {
       log('Error processing slot history: $e');
       return false;

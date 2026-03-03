@@ -8,14 +8,25 @@ import 'package:padel_mobile/presentations/booking/book_session/widgets/court_sl
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import '../../../handler/text_formatter.dart';
-class BookSession extends StatelessWidget {
-  BookSession({super.key});
+import 'book_session_controller.dart';
+
+class BookSession extends StatefulWidget {
+  const BookSession({super.key});
+
+  @override
+  State<BookSession> createState() => _BookSessionState();
+}
+
+class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClientMixin {
   final BookSessionController controller = Get.put(BookSessionController());
-  
-  // Map to track expanded state for each court
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Stack(  // Change from Scaffold to Stack
       children: [
         SingleChildScrollView(
