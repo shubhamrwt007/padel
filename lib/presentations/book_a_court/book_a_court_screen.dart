@@ -27,7 +27,19 @@ class BookACourtScreen extends StatelessWidget {
   final WalletController walletController = Get.put(WalletController());
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
-  BookACourtScreen({super.key});
+  final ScrollController mainScrollController = ScrollController();
+  final RxInt displayedCourtsCount = 10.obs;
+  final GlobalKey availableCourtsKey = GlobalKey();
+  
+  BookACourtScreen({super.key}) {
+    mainScrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (mainScrollController.position.pixels >= mainScrollController.position.maxScrollExtent - 200) {
+      _loadMoreCourts();
+    }
+  }
   @override
   Widget build(BuildContext context) {
     // Fetch wallet balance after build completes
@@ -101,6 +113,7 @@ class BookACourtScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
+        controller: mainScrollController,
         child: Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 0),
           child: Column(
@@ -211,7 +224,14 @@ class BookACourtScreen extends StatelessWidget {
                 alignment: AlignmentGeometry.centerRight,
                 child: Obx(() => controller.showMainGrid.value
                     ? GestureDetector(
-                  onTap: () => controller.fetchClubs(),
+                  onTap: () {
+                    displayedCourtsCount.value = 10; // Reset to initial count
+                    controller.fetchClubs();
+                    // Scroll to available courts section after a short delay
+                    Future.delayed(Duration(milliseconds: 300), () {
+                      _scrollToAvailableCourts();
+                    });
+                  },
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 10,horizontal: 14),
                     decoration: BoxDecoration(
@@ -285,6 +305,7 @@ class BookACourtScreen extends StatelessWidget {
 
   Widget availableCourts() {
     return Column(
+      key: availableCourtsKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Always show header with match type buttons
@@ -392,13 +413,16 @@ class BookACourtScreen extends StatelessWidget {
       }
 
       final clubsData = courtsByDuration.data!;
+      final displayCount = displayedCourtsCount.value.clamp(0, clubsData.length);
+      final displayedClubs = clubsData.take(displayCount).toList();
+      final hasMore = displayCount < clubsData.length;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...List.generate(clubsData.length, (clubIndex) {
-            final clubData = clubsData[clubIndex];
-            final isLastItem = clubIndex == clubsData.length - 1;
+          ...List.generate(displayedClubs.length, (clubIndex) {
+            final clubData = displayedClubs[clubIndex];
+            final isLastItem = clubIndex == displayedClubs.length - 1;
 
             return Column(
               children: [
@@ -508,6 +532,29 @@ class BookACourtScreen extends StatelessWidget {
               ],
             );
           }),
+          if (hasMore)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: TextButton(
+                  onPressed: _loadMoreCourts,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Load More Courts',
+                    style: Get.textTheme.labelMedium!.copyWith(
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       );
     });
@@ -2285,6 +2332,27 @@ class BookACourtScreen extends StatelessWidget {
       return '$hour$period';
     } catch (e) {
       return time;
+    }
+  }
+
+  void _loadMoreCourts() {
+    final courtsByDuration = controller.courtsByDuration.value;
+    if (courtsByDuration?.data != null) {
+      final totalCourts = courtsByDuration!.data!.length;
+      if (displayedCourtsCount.value < totalCourts) {
+        displayedCourtsCount.value = (displayedCourtsCount.value + 10).clamp(0, totalCourts);
+      }
+    }
+  }
+
+  void _scrollToAvailableCourts() {
+    final context = availableCourtsKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
