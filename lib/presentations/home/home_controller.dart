@@ -121,6 +121,10 @@ class HomeController extends GetxController {
   /// Fetch clubs with pagination and comprehensive error handling
   Future<void> fetchClubs({bool isRefresh = false, String? categoryId, String? locationId}) async {
     try {
+      if (isRefresh) {
+        currentPage.value = 1;
+      }
+      
       log("Fetching clubs - Page: ${currentPage.value}, Search: ${searchQuery.value}, CategoryId: $categoryId, LocationId: $locationId");
 
       if (isRefresh || currentPage.value == 1) {

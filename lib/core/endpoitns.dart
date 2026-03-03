@@ -23,7 +23,6 @@ class AppEndpoints {
   static const String verifyOTP = "${baseUrl}verifyOtp";
   static const String resetPassword = "${baseUrl}forgotPassword";
   ///Home Register Club---------------------------------------------------------
-
   static const String getRegisterClub = "${baseUrl}court/registerCourt/getClubById?";
   static const String getClub ="${baseUrl}court/registerCourt/getAllRegisteredCourts?limit=";
   static const String getAllActiveCourtsForSlotWise = "${baseUrl}court/saveCourt/getAllActiveCourtsForSlotWise?";
