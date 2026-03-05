@@ -1837,6 +1837,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         time: formattedTime,
         categoryId: categoryId,
         locationId: selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
+        page: 1,
+        limit: 15,
       );
 
       courtsByDuration.value = response;
