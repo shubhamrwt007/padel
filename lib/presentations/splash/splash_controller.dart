@@ -74,7 +74,6 @@
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
-
 import '../../configs/components/snack_bars.dart';
 import '../../handler/logger.dart';
 import '../../services/network/connectivity_service.dart';
