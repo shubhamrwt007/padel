@@ -1183,24 +1183,53 @@ class CreateOpenMatchesController extends GetxController {
     if (candidateSlot == null) return false;
     if (candidateSlot.time == null) return false;
 
-    // Create a list of all slot times (existing + candidate)
-    final allTimes = existingSlotTimes.toList()..add(candidateSlot.time!);
-
-    // Convert times to comparable format and sort
-    final List<int> timeMinutes = [];
-    for (final timeStr in allTimes) {
+    // Find latest selected slot time
+    int? latestSelectedTimeMinutes;
+    for (final timeStr in existingSlotTimes) {
       final minutes = _convertTimeToMinutes(timeStr);
-      if (minutes != null) timeMinutes.add(minutes);
+      if (minutes != null && (latestSelectedTimeMinutes == null || minutes > latestSelectedTimeMinutes)) {
+        latestSelectedTimeMinutes = minutes;
+      }
     }
     
-    if (timeMinutes.length != allTimes.length) return false; // Some times couldn't be parsed
+    if (latestSelectedTimeMinutes == null) return false;
     
-    timeMinutes.sort();
-
-    // Check if all times are consecutive (60-minute intervals)
-    for (int i = 1; i < timeMinutes.length; i++) {
-      if (timeMinutes[i] - timeMinutes[i - 1] != 60) {
-        return false; // Gap found
+    final candidateTimeMinutes = _convertTimeToMinutes(candidateSlot.time ?? '');
+    if (candidateTimeMinutes == null) return false;
+    
+    // If candidate is before latest, allow (filling gaps)
+    if (candidateTimeMinutes < latestSelectedTimeMinutes) return true;
+    
+    // Candidate is after latest selected, check all slots between them
+    final allSlots = _originalSlotsCache[courtId] ?? [];
+    
+    // Check every slot from latest+60 to candidate (inclusive)
+    for (int checkTime = latestSelectedTimeMinutes + 60; checkTime <= candidateTimeMinutes; checkTime += 60) {
+      for (final slot in allSlots) {
+        final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+        if (slotTimeMinutes == checkTime) {
+          // If left half is booked, cannot select this or any slot after it
+          if (isLeftHalfBooked(slot)) {
+            CustomLogger.logMessage(
+              msg: "Cannot select further slots. Next slot's left half is already booked.",
+              level: LogLevel.error,
+            );
+            return false;
+          }
+          
+          // If only right half is booked, can select this slot but nothing beyond
+          if (isRightHalfBooked(slot) && !isLeftHalfBooked(slot)) {
+            // Allow if candidate is this exact slot, block if beyond
+            if (candidateTimeMinutes > checkTime) {
+              CustomLogger.logMessage(
+                msg: "Cannot select slots beyond a slot with right half booked.",
+                level: LogLevel.error,
+              );
+              return false;
+            }
+          }
+          break;
+        }
       }
     }
     
@@ -1801,42 +1830,42 @@ class CreateOpenMatchesController extends GetxController {
 
   /// Check if left half of a 30-minute slot is booked
   bool isLeftHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
-    // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
     
-    // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
-      // If booking time equals original time (e.g., both are "5:00 PM"), left half is booked
-      return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedOriginal = _normalizeTime(originalTime);
+      return normalizedBooking == normalizedOriginal;
     }
     
-    // Fallback to original logic
     return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
   }
 
   /// Check if right half of a 30-minute slot is booked
   bool isRightHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
-    // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
     
-    // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
-      // If booking time is 30 minutes after original time (e.g., "5:30 PM" vs "5:00 PM"), right half is booked
       final expectedRightTime = _addMinutesToTime(originalTime, 30);
-      return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedExpected = _normalizeTime(expectedRightTime);
+      return normalizedBooking == normalizedExpected;
     }
     
-    // Fallback to original logic
     final expectedRightTime = _addMinutesToTime(originalTime, 30);
     return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
   }
@@ -1861,59 +1890,67 @@ class CreateOpenMatchesController extends GetxController {
 
   /// Normalize time format for comparison (convert to consistent format)
   String _normalizeTime(String timeString) {
+    if (timeString.isEmpty) return '';
+    
+    final trimmed = timeString.trim().toLowerCase();
+    
     try {
-      // Try parsing and reformatting to ensure consistent format
-      final upperTime = timeString.trim().toUpperCase();
-      final time = DateFormat('h a').parseStrict(upperTime);
-      return DateFormat('h:mm a').format(time);
+      // Try parsing with minutes first (e.g., "5:00 pm")
+      final time = DateFormat('h:mm a').parse(trimmed);
+      return DateFormat('h:mm a').format(time).toUpperCase();
     } catch (_) {
       try {
-        final time = DateFormat('h:mm a').parseStrict(timeString.trim());
-        return DateFormat('h:mm a').format(time);
+        // Try parsing without minutes (e.g., "5 pm")
+        final time = DateFormat('h a').parse(trimmed);
+        return DateFormat('h:mm a').format(time).toUpperCase();
       } catch (_) {
-        return timeString.trim().toUpperCase();
+        // Return uppercase trimmed string as fallback
+        return trimmed.toUpperCase();
       }
     }
   }
 
   /// Add minutes to a time string (e.g., "3:00 PM" + 30 minutes = "3:30 PM")
   String _addMinutesToTime(String timeString, int minutesToAdd) {
-    log('_addMinutesToTime: input="$timeString", adding $minutesToAdd minutes');
+    if (timeString.isEmpty) return timeString;
+    
     try {
-      final cleanTime = timeString.trim();
-      DateTime? parsedTime;
+      // Manual parsing for formats like "1 pm", "12 pm", "1:30 pm"
+      final trimmed = timeString.trim().toLowerCase();
+      final parts = trimmed.split(' ');
       
-      // Try different parsing formats
-      final formats = ['h:mm a', 'h a', 'H:mm', 'HH:mm'];
+      if (parts.length != 2) return timeString;
       
-      for (final format in formats) {
-        try {
-          parsedTime = DateFormat(format).parseStrict(cleanTime);
-          log('_addMinutesToTime: successfully parsed with format "$format"');
-          break;
-        } catch (_) {
-          // Try with case-insensitive parsing
-          try {
-            parsedTime = DateFormat(format).parseStrict(cleanTime.toUpperCase());
-            log('_addMinutesToTime: successfully parsed with uppercase format "$format"');
-            break;
-          } catch (_) {
-            continue;
-          }
-        }
+      final timePart = parts[0];
+      final meridiem = parts[1]; // "am" or "pm"
+      
+      int hour;
+      int minute = 0;
+      
+      if (timePart.contains(':')) {
+        final timePieces = timePart.split(':');
+        hour = int.parse(timePieces[0]);
+        minute = int.parse(timePieces[1]);
+      } else {
+        hour = int.parse(timePart);
       }
       
-      if (parsedTime != null) {
-        final newTime = parsedTime.add(Duration(minutes: minutesToAdd));
-        final result = DateFormat('h:mm a').format(newTime);
-        log('_addMinutesToTime: final result="$result"');
-        return result;
+      // Convert to 24-hour format
+      if (meridiem == 'pm' && hour != 12) {
+        hour += 12;
+      } else if (meridiem == 'am' && hour == 12) {
+        hour = 0;
       }
       
-      log('_addMinutesToTime: all parsing failed, returning original');
-      return timeString;
+      // Create DateTime and add minutes
+      final now = DateTime.now();
+      final time = DateTime(now.year, now.month, now.day, hour, minute);
+      final newTime = time.add(Duration(minutes: minutesToAdd));
+      
+      // Format back to "h:mm a"
+      return DateFormat('h:mm a').format(newTime);
     } catch (e) {
-      log('_addMinutesToTime: error occurred: $e, returning original');
+      log('ERROR: Failed to parse "$timeString": $e');
       return timeString;
     }
   }

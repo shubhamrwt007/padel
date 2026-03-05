@@ -624,12 +624,45 @@ var locationsId = "".obs;
     
     final supports30Min = slotSupports30Min(slot);
     
+    // Check if this is the first slot being selected for half slot selection
+    if (supports30Min && isLeftHalf != null && multiDateSelections.isEmpty) {
+      final isLeftBooked = isLeftHalfBooked(slot);
+      final isRightBooked = isRightHalfBooked(slot);
+      
+      // If any half is booked, don't allow selection at all for first slot
+      if (isLeftBooked || isRightBooked) {
+        AppToast.error("First slot must be fully available. Please select a complete slot.");
+        log("First slot selection blocked - slot has booked half");
+        return;
+      }
+      
+      // First slot must be full (both halves) - only if completely available
+      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, true);
+      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, false);
+      _recalculateTotalAmount();
+      log("First slot selected as FULL (both halves)");
+      return;
+    }
+    
     final multiDateKey = supports30Min && isLeftHalf != null 
         ? '${dateString}_${resolvedCourtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}'
         : '${dateString}_${resolvedCourtId}_${slotId}';
 
     if (multiDateSelections.containsKey(multiDateKey)) {
-      multiDateSelections.remove(multiDateKey);
+      // Check if both halves are selected (first slot case)
+      final leftKey = '${dateString}_${resolvedCourtId}_${slotId}_L';
+      final rightKey = '${dateString}_${resolvedCourtId}_${slotId}_R';
+      final bothHalvesSelected = multiDateSelections.containsKey(leftKey) && multiDateSelections.containsKey(rightKey);
+      
+      if (supports30Min && bothHalvesSelected && multiDateSelections.length == 2) {
+        // This is the first full slot - remove both halves
+        multiDateSelections.remove(leftKey);
+        multiDateSelections.remove(rightKey);
+        log("First slot unselected - removed BOTH halves");
+      } else {
+        // Normal unselect - remove only the tapped half
+        multiDateSelections.remove(multiDateKey);
+      }
       selectedSlots.removeWhere((s) => s.sId == slotId);
       selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
     } else {
@@ -975,10 +1008,11 @@ var locationsId = "".obs;
     
     // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
-      // If booking time is 30 minutes after original time (e.g., "5:30 PM" vs "5:00 PM"), right half is booked
+      // If booking time is 30 minutes after original time (e.g., "12:30 PM" vs "12 PM"), right half is booked
       final expectedRightTime = _addMinutesToTime(originalTime, 30);
       final normalizedBooking = _normalizeTime(bookingTime);
       final normalizedExpected = _normalizeTime(expectedRightTime);
+      log('Right half check - originalTime: $originalTime, expectedRightTime: $expectedRightTime');
       log('Right half check - booking: $normalizedBooking, expected: $normalizedExpected, match: ${normalizedBooking == normalizedExpected}');
       return normalizedBooking == normalizedExpected;
     }
@@ -1021,23 +1055,48 @@ var locationsId = "".obs;
 
   /// Add minutes to a time string
   String _addMinutesToTime(String timeString, int minutesToAdd) {
+    if (timeString.isEmpty) return timeString;
+    
     try {
-      // Parse the time string
-      final time = DateFormat('h:mm a').parseStrict(timeString.trim());
-      // Add minutes
-      final newTime = time.add(Duration(minutes: minutesToAdd));
-      // Format back to string
-      return DateFormat('h:mm a').format(newTime);
-    } catch (_) {
-      try {
-        // Try parsing without minutes (e.g., "3 PM")
-        final time = DateFormat('h a').parseStrict(timeString.trim());
-        final newTime = time.add(Duration(minutes: minutesToAdd));
-        return DateFormat('h:mm a').format(newTime);
-      } catch (_) {
-        // If parsing fails, return original string
-        return timeString;
+      // Manual parsing for formats like "1 pm", "12 pm", "1:30 pm"
+      final trimmed = timeString.trim().toLowerCase();
+      final parts = trimmed.split(' ');
+      
+      if (parts.length != 2) return timeString;
+      
+      final timePart = parts[0];
+      final meridiem = parts[1]; // "am" or "pm"
+      
+      int hour;
+      int minute = 0;
+      
+      if (timePart.contains(':')) {
+        final timePieces = timePart.split(':');
+        hour = int.parse(timePieces[0]);
+        minute = int.parse(timePieces[1]);
+      } else {
+        hour = int.parse(timePart);
       }
+      
+      // Convert to 24-hour format
+      if (meridiem == 'pm' && hour != 12) {
+        hour += 12;
+      } else if (meridiem == 'am' && hour == 12) {
+        hour = 0;
+      }
+      
+      // Create DateTime and add minutes
+      final now = DateTime.now();
+      final time = DateTime(now.year, now.month, now.day, hour, minute);
+      final newTime = time.add(Duration(minutes: minutesToAdd));
+      
+      // Format back to "h:mm a"
+      final result = DateFormat('h:mm a').format(newTime);
+      log('_addMinutesToTime SUCCESS: "$timeString" + $minutesToAdd min = "$result"');
+      return result;
+    } catch (e) {
+      log('ERROR: Failed to parse "$timeString": $e');
+      return timeString;
     }
   }
 
@@ -1045,16 +1104,16 @@ var locationsId = "".obs;
   String _normalizeTime(String timeString) {
     if (timeString.isEmpty) return '';
     
-    final trimmed = timeString.trim();
+    final trimmed = timeString.trim().toLowerCase(); // Convert to lowercase
     
     try {
-      // Try parsing with minutes first (e.g., "5:00 PM")
-      final time = DateFormat('h:mm a').parseStrict(trimmed);
+      // Try parsing with minutes first (e.g., "5:00 pm")
+      final time = DateFormat('h:mm a').parse(trimmed);
       return DateFormat('h:mm a').format(time).toUpperCase();
     } catch (_) {
       try {
-        // Try parsing without minutes (e.g., "5 PM")
-        final time = DateFormat('h a').parseStrict(trimmed);
+        // Try parsing without minutes (e.g., "5 pm")
+        final time = DateFormat('h a').parse(trimmed);
         return DateFormat('h:mm a').format(time).toUpperCase();
       } catch (_) {
         // Return uppercase trimmed string as fallback
