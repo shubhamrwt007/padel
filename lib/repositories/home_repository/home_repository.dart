@@ -161,9 +161,11 @@ class HomeRepository {
     required String time,
     String? locationId,
     String? categoryId,
+    int? page=1,
+    int? limit=15,
   }) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&location=$locationId&categoryId=$categoryId",);
+      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&location=$locationId&categoryId=$categoryId&page=$page&limit=$limit",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get Courts By Durationt Data: ${response.data}",

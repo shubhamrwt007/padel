@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 
 class AppVersionRepository {
   final DioClient dioClient = DioClient();
-
   // Future<AppVersionModel> checkAppVersion({required Map<String, dynamic> body}) async {
   //   try {
   //     CustomLogger.logMessage(msg: "APP VERSION BODY:-> $body", level: LogLevel.info);
