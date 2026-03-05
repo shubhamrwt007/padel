@@ -289,6 +289,9 @@ class NotificationController extends GetxController {
         case '/Scoreboard':
           Get.to(BookingHistoryUi(buttonType: "drawer",));
           break;
+        case '/user/bookings':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
+          break;
         default:
           if (kDebugMode) {
             print('⚠️ Unknown notification URL: $notificationUrl');
