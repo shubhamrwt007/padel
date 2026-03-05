@@ -907,12 +907,12 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                     ),
 
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
+                  if (isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -921,16 +921,23 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                           ),
                           color: AppColors.lightred,
                         ),
+                        // child: Center(
+                        //   child: Icon(
+                        //     Icons.block,
+                        //     size: 16,
+                        //     color: Colors.red.shade600,
+                        //   ),
+                        // ),
                       ),
                     ),
 
                   /// RIGHT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY RIGHT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
+                  if (isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -939,6 +946,13 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                           ),
                           color: AppColors.lightred,
                         ),
+                        // child: Center(
+                        //   child: Icon(
+                        //     Icons.block,
+                        //     size: 16,
+                        //     color: Colors.red.shade600,
+                        //   ),
+                        // ),
                       ),
                     ),
 

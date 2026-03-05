@@ -689,6 +689,11 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
     final isRightHalfBooked = controller.isRightHalfBooked(slot);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
+    
+    // Debug logs - ALWAYS print for debugging
+    log('UI DEBUG - Slot: ${slot.time}, bookingTime: ${slot.bookingTime}, duration: ${slot.duration}, status: ${slot.status}');
+    log('UI DEBUG - supports30Min: $supports30Min, has30MinPrice: ${slot.has30MinPrice}');
+    log('UI DEBUG - isLeftHalfBooked: $isLeftHalfBooked, isRightHalfBooked: $isRightHalfBooked');
 
     // For slots that don't support 30min, if any half is booked, the whole slot is unavailable
     final isSlotBookedForFullSlot = !supports30Min && isAnyHalfBooked;
@@ -863,12 +868,12 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                     ),
 
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
+                  if (isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -877,16 +882,23 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                           ),
                           color: AppColors.lightred,
                         ),
+                        // child: Center(
+                        //   child: Icon(
+                        //     Icons.block,
+                        //     size: 16,
+                        //     color: Colors.red.shade600,
+                        //   ),
+                        // ),
                       ),
                     ),
 
                   /// RIGHT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY RIGHT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
+                  if (isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -895,13 +907,13 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                           ),
                           color: AppColors.lightred,
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.block,
-                            size: 16,
-                            color: Colors.red.shade600,
-                          ),
-                        ),
+                        // child: Center(
+                        //   child: Icon(
+                        //     Icons.block,
+                        //     size: 16,
+                        //     color: Colors.red.shade600,
+                        //   ),
+                        // ),
                       ),
                     ),
 
