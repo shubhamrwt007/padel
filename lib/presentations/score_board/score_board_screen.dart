@@ -2935,7 +2935,7 @@ class ScoreBoardScreen extends StatelessWidget {
                               final teamAScore = set["teamAScore"] ?? 0;
                               final teamBScore = set["teamBScore"] ?? 0;
                               bool hasScores = teamAScore > 0 || teamBScore > 0;
-                              bool canEdit = hasScores && (controller.isUserInTeamA || controller.isUserInTeamB);
+                              bool canEdit = hasScores && (controller.isUserInTeamA || controller.isUserInTeamB) && !controller.isCompleted.value;
 
                               if (canEdit) {
                                 return GestureDetector(
