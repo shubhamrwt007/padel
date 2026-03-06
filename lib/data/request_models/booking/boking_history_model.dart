@@ -51,7 +51,7 @@ class BookingHistoryData {
   String? sId;
   String? userId;
   RegisterClubId? registerClubId;
-  int? totalAmount;
+  num? totalAmount;
   String? bookingDate;
   String? bookingStatus;
   String? bookingType;
@@ -862,7 +862,7 @@ class Slot {
 
 class SlotTimes {
   String? time;
-  int? amount;
+  num? amount;
   String? status;
   String? availabilityStatus;
 

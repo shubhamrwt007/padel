@@ -103,7 +103,7 @@ class BookingId {
   final String? id;
   final String? userId;
   final String? registerClubId;
-  final int? totalAmount;
+  final num? totalAmount;
   final String? bookingDate;
   final String? bookingStatus;
   final String? bookingType;
@@ -226,7 +226,7 @@ class Slot {
 
 class SlotTime {
   final String? time;
-  final int? amount;
+  final num? amount;
   final String? status;
   final String? availabilityStatus;
 

@@ -221,7 +221,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   // NEW: Completed booking card matching the screenshot design
   Widget _buildCompletedBookingCard(BuildContext context, dynamic booking, dynamic club, int index) {
     final clubName = club?.clubName ?? "The Good Club";
-    final address = "${club?.locations[0].city ?? ''}";
+    final address = (club?.locations?.isNotEmpty ?? false)
+        ? club!.locations[0].city ?? ''
+        : '';
     final price = (booking.totalAmount ?? 2000).toString();
     final score = _getMatchScore(booking);
     final bookingType = booking.bookingType ?? "";
@@ -318,30 +320,30 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                       ],
                     ),
 
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.share,
-                          size: 16,
-                          color: Color(0xff1c46a0),
-                        ),
-                        Container(
-                          height: 36,
-                          width: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            shape: BoxShape.circle
-                            // borderRadius: BorderRadius.circular(8),
-                          ),
-                          // padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.chat_outlined,
-                            color:AppColors.primaryColor,
-                            size: 18,
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     Icon(
+                    //       Icons.share,
+                    //       size: 16,
+                    //       color: Color(0xff1c46a0),
+                    //     ),
+                    //     Container(
+                    //       height: 36,
+                    //       width: 36,
+                    //       decoration: BoxDecoration(
+                    //         color: Colors.transparent,
+                    //         shape: BoxShape.circle
+                    //         // borderRadius: BorderRadius.circular(8),
+                    //       ),
+                    //       // padding: const EdgeInsets.all(6),
+                    //       child: const Icon(
+                    //         Icons.chat_outlined,
+                    //         color:AppColors.primaryColor,
+                    //         size: 18,
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
 
                   ],
                 ).paddingOnly(bottom: 5),
@@ -757,19 +759,19 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   ),
                   Row(
                     children: [
-                      if (isUpcoming  && getTotalPlayersCount(booking) > 1)
+                      if (isUpcoming && bookingType.toLowerCase() != "regular" && getTotalPlayersCount(booking) > 1)
                         GestureDetector(
                           onTap: isSlotBooked ? null : () {
                             _navigateToChat(booking);
                           },
                           child: Container(
-                              height: 36,
-                              width: 36,
+                              height: 30,
+                              width: 30,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: !isBlueTheme ? Colors.transparent : Colors.transparent,
+                                color: AppColors.primaryColor,
                               ),
-                              child: Icon(Icons.chat_outlined, color: AppColors.primaryColor, size: 18)
+                              child: Icon(Icons.chat_outlined, color: AppColors.whiteColor, size: 16)
                           ),
                         ).paddingOnly(right: 10),
                       Container(
@@ -1280,9 +1282,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final bookingType = booking.bookingType ?? "";
     final isRegularBooking = bookingType.toLowerCase() == "regular";
     final showCrossIcon = type == "upcoming" && isRegularBooking;
-print("invoice--------- $invoiceUrlString");
-print("bookingType--------- $bookingType");
-print("showCrossIcon--------- $showCrossIcon");
+    CustomLogger.logMessage(msg: "invoice--------- $invoiceUrlString",level: LogLevel.debug);
+    CustomLogger.logMessage(msg: "bookingType--------- $bookingType",level: LogLevel.debug);
+    CustomLogger.logMessage(msg: "showCrossIcon--------- $showCrossIcon",level: LogLevel.debug);
     // Count actual players from scoreboard
     int totalPlayers = 0;
     final scoreboard = booking.scoreboard;
@@ -1629,9 +1631,9 @@ print("showCrossIcon--------- $showCrossIcon");
     for (var teamPlayer in teamAPlayers) {
       final userId = teamPlayer.userId;
       final name = userId?.name ?? '';
-      final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
       final xpPoints = userId?.xpPoints??0.0;
-      final countryCode = '+91';
+      // final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
       final gender = userId?.gender ??'';
       final level = userId?.level?.split(' ').first ??'';
@@ -1708,9 +1710,9 @@ print("showCrossIcon--------- $showCrossIcon");
     for (var teamPlayer in teamBPlayers) {
       final userId = teamPlayer.userId;
       final name = userId?.name ?? '';
-      final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+      // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
       final xpPoints = userId?.xpPoints??0.0;
-      final countryCode = '+91';
+      // final countryCode = '+91';
       final profilePic = userId?.profilePic ?? '';
       final gender = userId?.gender ?? "";
       final level = userId?.level ?? "";

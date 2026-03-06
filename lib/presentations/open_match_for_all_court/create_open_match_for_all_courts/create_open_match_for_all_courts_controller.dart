@@ -570,7 +570,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
             final halfSlot = Slots(
               sId: slotId,
               time: slot.time,
-              amount: slot.amount ?? 0,
+              amount: (slot.amount ?? 0) ~/ 2,  // Divide by 2 for half slot
             );
             realCourtSelections[otherHalfKey] = {
               'slot': halfSlot,
@@ -578,7 +578,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
               'courtName': courtName ?? '',
               'date': dateString,
               'dateTime': currentDate,
-              'amount': slot.amount ?? 0,
+              'amount': (slot.amount ?? 0) ~/ 2,  // Divide by 2 for half slot
               'isHalfSlot': true,
               'isFirstHalf': !(isFirstHalf ?? true),
             };
@@ -634,7 +634,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
             final halfSlot = Slots(
               sId: slotId,
               time: slot.time,
-              amount: slot.amount ?? 0,
+              amount: (slot.amount ?? 0) ~/ 2,  // Divide by 2 for half slot
             );
 
             realCourtSelections[halfKey] = {
@@ -643,7 +643,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
               'courtName': courtName ?? '',
               'date': dateString,
               'dateTime': currentDate,
-              'amount': slot.amount ?? 0,
+              'amount': (slot.amount ?? 0) ~/ 2,  // Divide by 2 for half slot
               'isHalfSlot': true,
               'isFirstHalf': isFirstHalf,
             };
@@ -1900,7 +1900,6 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           "courtId": courtId,
           "courtName": courtName,
           "bookingDate": dateString,
-          "userId": "",
           "time": bookingTime,
           "bookingTime": bookingTime,
           "duration": duration,
