@@ -575,6 +575,7 @@ class BookACourtScreen extends StatelessWidget {
       sId: slot.id ?? 'slot_${selectedIndex}_${slot.time}',
       time: slot.time ?? '',
       amount: slot.amount ?? 0,
+      duration: slot.duration,
     )).toList()
         : <Slots>[];
 
@@ -592,13 +593,13 @@ class BookACourtScreen extends StatelessWidget {
                 children: [
                   Text(
                     courtName,
-                    style: Get.textTheme.headlineLarge,
+                    style: Get.textTheme.headlineLarge!.copyWith(fontSize: 13,fontWeight: FontWeight.w500),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (slotDuration != null && slotDuration.isNotEmpty)
                     Text(
-                      slotDuration.map((d) => '${d}min').join(', '),
+                      "(${slotDuration.map((d) => '${d}min').join(', ')})",
                       style: Get.textTheme.labelSmall!.copyWith(
                         color: Colors.grey.shade600,
                         fontSize: 11,

@@ -455,6 +455,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       sId: slot.id ?? 'slot_${selectedIndex}_${slot.time}',
       time: slot.time ?? '',
       amount: slot.amount ?? 0,
+      duration: slot.duration,
     )).toList()
         : <Slots>[];
 
@@ -472,13 +473,13 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 children: [
                   Text(
                     courtName,
-                    style: Get.textTheme.headlineLarge,
+                    style: Get.textTheme.headlineLarge!.copyWith(fontSize: 13,fontWeight: FontWeight.w500),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (slotDuration != null && slotDuration.isNotEmpty)
                     Text(
-                      '${slotDuration.first} min',
+                      '(${slotDuration.first} min)',
                       style: Get.textTheme.labelSmall!.copyWith(
                         color: Colors.grey,
                         fontSize: 11,
