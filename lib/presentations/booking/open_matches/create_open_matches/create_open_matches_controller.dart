@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
@@ -206,6 +207,7 @@ class CreateOpenMatchesController extends GetxController {
         final isLeftHalf = selection['isLeftHalf'] as bool?;
         final supports30Min = slotSupports30Min(slot);
         final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
         
         slots.add({
           "slotId": slotId,
@@ -213,7 +215,7 @@ class CreateOpenMatchesController extends GetxController {
           "bookingDate": dateString,
           "time": bookingTime,
           "bookingTime": bookingTime,
-          "duration": duration,
+          "duration": finalDuration,
         });
       }
       
@@ -245,6 +247,7 @@ class CreateOpenMatchesController extends GetxController {
         final isLeftHalf = selection['isLeftHalf'] as bool?;
         final supports30Min = slotSupports30Min(slot);
         final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
         
         slots.add({
           "slotId": slotId,
@@ -253,8 +256,8 @@ class CreateOpenMatchesController extends GetxController {
           "bookingDate": dateString,
           "time": bookingTime,
           "bookingTime": bookingTime,
-          "duration": duration,
-          "totalTime": duration,
+          "duration": finalDuration,
+          "totalTime": finalDuration,
         });
       }
       
@@ -781,9 +784,37 @@ class CreateOpenMatchesController extends GetxController {
     final dateString = _dateFormatter.format(currentDate);
     
     final supports30Min = slotSupports30Min(slot);
+    final is90MinSlot = slot.duration == 90;
     
     // Check if this is the first slot being selected
     final isFirstSlot = multiDateSelections.isEmpty;
+    
+    // Check for duration mismatch if not the first slot
+    if (!isFirstSlot) {
+      bool has90MinSlot = false;
+      bool hasNon90MinSlot = false;
+      
+      multiDateSelections.forEach((key, selection) {
+        final existingSlot = selection['slot'] as Slots;
+        if (existingSlot.duration == 90) {
+          has90MinSlot = true;
+        } else {
+          hasNon90MinSlot = true;
+        }
+      });
+      
+      if (is90MinSlot && hasNon90MinSlot) {
+        AppToast.error("Cannot mix 90-minute slots with 30/60-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 90-minute slots with 30/60-minute slots", level: LogLevel.error);
+        return;
+      }
+      
+      if (!is90MinSlot && has90MinSlot) {
+        AppToast.error("Cannot mix 30/60-minute slots with 90-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 30/60-minute slots with 90-minute slots", level: LogLevel.error);
+        return;
+      }
+    }
     
     // If it's the first slot and supports 30min, force full selection (ignore isLeftHalf)
     final forceFullSelection = isFirstSlot && supports30Min;

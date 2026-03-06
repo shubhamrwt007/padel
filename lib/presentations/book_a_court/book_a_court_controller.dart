@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
@@ -456,6 +457,7 @@ class BookACourtController extends GetxController {
             ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
 
         slots.add({
           "slotId": slotId,
@@ -463,7 +465,7 @@ class BookACourtController extends GetxController {
           "bookingDate": dateString,
           "time": bookingTime,
           "bookingTime": bookingTime,
-          "duration": duration,
+          "duration": finalDuration,
         });
       }
       log('Bulk delete slot history on back: $slots');
@@ -552,6 +554,35 @@ class BookACourtController extends GetxController {
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+
+    final is90MinSlot = slot.duration == 90;
+    
+    // Check for duration mismatch if not the first slot
+    if (realCourtSelections.isNotEmpty) {
+      bool has90MinSlot = false;
+      bool hasNon90MinSlot = false;
+      
+      realCourtSelections.forEach((key, selection) {
+        final existingSlot = selection['slot'] as Slots;
+        if (existingSlot.duration == 90) {
+          has90MinSlot = true;
+        } else {
+          hasNon90MinSlot = true;
+        }
+      });
+      
+      if (is90MinSlot && hasNon90MinSlot) {
+        AppToast.error("Cannot mix 90-minute slots with 30/60-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 90-minute slots with 30/60-minute slots", level: LogLevel.error);
+        return;
+      }
+      
+      if (!is90MinSlot && has90MinSlot) {
+        AppToast.error("Cannot mix 30/60-minute slots with 90-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 30/60-minute slots with 90-minute slots", level: LogLevel.error);
+        return;
+      }
+    }
 
     // Filter selections for this specific court and date only
     final allDateSelections = realCourtSelections.entries
@@ -693,6 +724,33 @@ class BookACourtController extends GetxController {
     final resolvedCourtId = courtId ?? '';
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+
+    final is90MinSlot = slot.duration == 90;
+    
+    // Check for duration mismatch if not the first slot
+    if (multiDateSelections.isNotEmpty) {
+      bool has90MinSlot = false;
+      bool hasNon90MinSlot = false;
+      
+      multiDateSelections.forEach((key, selection) {
+        final existingSlot = selection['slot'] as Slots;
+        if (existingSlot.duration == 90) {
+          has90MinSlot = true;
+        } else {
+          hasNon90MinSlot = true;
+        }
+      });
+      
+      if (is90MinSlot && hasNon90MinSlot) {
+        CustomLogger.logMessage(msg: "Cannot mix 90-minute slots with 30/60-minute slots", level: LogLevel.error);
+        return;
+      }
+      
+      if (!is90MinSlot && has90MinSlot) {
+        CustomLogger.logMessage(msg: "Cannot mix 30/60-minute slots with 90-minute slots", level: LogLevel.error);
+        return;
+      }
+    }
 
     // Only set selected time slot, don't fetch courts yet
     selectedTimeSlot.value = slot.time ?? '';
@@ -1907,6 +1965,9 @@ class BookACourtController extends GetxController {
             ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
+        
+        // Use slot's duration from API if it's 90, otherwise use calculated duration
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
 
         slots.add({
           "slotId": slotId,
@@ -1915,8 +1976,8 @@ class BookACourtController extends GetxController {
           "bookingDate": dateString,
           "time": bookingTime,
           "bookingTime": bookingTime,
-          "duration": duration,
-          "totalTime": duration,
+          "duration": finalDuration,
+          "totalTime": finalDuration,
         });
       }
 
@@ -1933,6 +1994,7 @@ class BookACourtController extends GetxController {
 
   // Build booking payload from realCourtSelections
   List<Map<String, dynamic>>? buildBookingPayload() {
+    print("From Book A Court Payload------------");
     if (realCourtSelections.isEmpty || courtsByDuration.value == null) {
       return null;
     }
@@ -2061,6 +2123,9 @@ class BookACourtController extends GetxController {
 
           // Calculate full slot amount
           final fullAmount = selections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
+          
+          // Use slot's duration from API if it's 90, otherwise use 60
+          final finalDuration = (slot.duration == 90) ? 90 : 60;
 
           slotData.add({
             "slotId": slotId,
@@ -2074,8 +2139,8 @@ class BookACourtController extends GetxController {
             "courtId": courtId,
             "courtName": courtName,
             "bookingDate": dateString,
-            "duration": 60,
-            "totalTime": 60,
+            "duration": finalDuration,
+            "totalTime": finalDuration,
             "bookingTime": slot.time ?? "",
           });
         } else {
@@ -2092,6 +2157,10 @@ class BookACourtController extends GetxController {
             final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
             final durationMinutes = isHalfSlot ? 30 : 60;
             final totalTimeMinutes = isHalfSlot ? 30 : 60;
+            
+            // Use slot's duration from API if it's 90, otherwise use calculated duration
+            final finalDuration = (slot.duration == 90) ? 90 : durationMinutes;
+            final finalTotalTime = (slot.duration == 90) ? 90 : totalTimeMinutes;
 
             final bookingTime = isHalfSlot
                 ? getHalfSlotTime(slot.time ?? '', isFirstHalf)
@@ -2109,8 +2178,8 @@ class BookACourtController extends GetxController {
               "courtId": courtId,
               "courtName": courtName,
               "bookingDate": dateString,
-              "duration": durationMinutes,
-              "totalTime": totalTimeMinutes,
+              "duration": finalDuration,
+              "totalTime": finalTotalTime,
               "bookingTime": bookingTime,
             });
           }

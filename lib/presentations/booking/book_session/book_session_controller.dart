@@ -341,13 +341,15 @@ var locationsId = "".obs;
         
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
+          final finalDuration = (slot.duration == 90) ? 90 : 60;
+          
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
             "bookingDate": dateString,
             "time": slot.time ?? '',
             "bookingTime": slot.time ?? '',
-            "duration": 60,
+            "duration": finalDuration,
           });
         } else {
           // Single half or full slot - create entries as is
@@ -356,6 +358,7 @@ var locationsId = "".obs;
             final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            final finalDuration = (slot.duration == 90) ? 90 : duration;
             
             slots.add({
               "slotId": slotId,
@@ -363,7 +366,7 @@ var locationsId = "".obs;
               "bookingDate": dateString,
               "time": bookingTime,
               "bookingTime": bookingTime,
-              "duration": duration,
+              "duration": finalDuration,
             });
           }
         }
@@ -557,6 +560,8 @@ var locationsId = "".obs;
         
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
+          final finalDuration = (slot.duration == 90) ? 90 : 60;
+          
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -564,8 +569,8 @@ var locationsId = "".obs;
             "bookingDate": dateString,
             "time": slot.time ?? '',
             "bookingTime": slot.time ?? '',
-            "duration": 60,
-            "totalTime": 60,
+            "duration": finalDuration,
+            "totalTime": finalDuration,
           });
         } else {
           // Single half or full slot - create entries as is
@@ -574,6 +579,7 @@ var locationsId = "".obs;
             final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            final finalDuration = (slot.duration == 90) ? 90 : duration;
             
             slots.add({
               "slotId": slotId,
@@ -582,8 +588,8 @@ var locationsId = "".obs;
               "bookingDate": dateString,
               "time": bookingTime,
               "bookingTime": bookingTime,
-              "duration": duration,
-              "totalTime": duration,
+              "duration": finalDuration,
+              "totalTime": finalDuration,
             });
           }
         }
@@ -623,9 +629,35 @@ var locationsId = "".obs;
     final dateString = _dateFormatter.format(currentDate);
     
     final supports30Min = slotSupports30Min(slot);
+    final is90MinSlot = slot.duration == 90;
     
     // Check if this is the first slot being selected
     final isFirstSlot = multiDateSelections.isEmpty;
+    
+    // Check for duration mismatch if not the first slot
+    if (!isFirstSlot) {
+      bool has90MinSlot = false;
+      bool hasNon90MinSlot = false;
+      
+      multiDateSelections.forEach((key, selection) {
+        final existingSlot = selection['slot'] as Slots;
+        if (existingSlot.duration == 90) {
+          has90MinSlot = true;
+        } else {
+          hasNon90MinSlot = true;
+        }
+      });
+      
+      if (is90MinSlot && hasNon90MinSlot) {
+        AppToast.error("Cannot mix 90-minute slots with 30/60-minute slots");
+        return;
+      }
+      
+      if (!is90MinSlot && has90MinSlot) {
+        AppToast.error("Cannot mix 30/60-minute slots with 90-minute slots");
+        return;
+      }
+    }
     
     // If it's the first slot and supports 30min, force full selection
     final forceFullSelection = isFirstSlot && supports30Min;
@@ -1401,6 +1433,10 @@ var locationsId = "".obs;
           ?.where((bh) => bh.day == bookingDay)
           .map((bh) => {'time': bh.time ?? '', 'day': bh.day ?? ''})
           .toList() ?? [];
+      
+      // Use slot's duration from API if it's 90, otherwise use calculated duration
+      final finalDuration = (slot.duration == 90) ? 90 : duration;
+      
       slotData.add({
         'slotId': slot.sId ?? '',
         'businessHours': selectedBusinessHour,
@@ -1410,8 +1446,8 @@ var locationsId = "".obs;
         'courtId': courtId,
         'courtName': courtName,
         'bookingDate': dateString,
-        'duration': duration,
-        'totalTime': duration,
+        'duration': finalDuration,
+        'totalTime': finalDuration,
         'bookingTime': bookingTime,
         'type':"booked"
       });
@@ -1563,6 +1599,8 @@ var locationsId = "".obs;
         
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
+          final finalDuration = (slot.duration == 90) ? 90 : 60;
+          
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -1570,8 +1608,8 @@ var locationsId = "".obs;
             "bookingDate": dateString,
             "time": slot.time ?? '',
             "bookingTime": slot.time ?? '',
-            "duration": 60,
-            "totalTime": 60,
+            "duration": finalDuration,
+            "totalTime": finalDuration,
           });
         } else {
           // Single half or full slot - create entries as is
@@ -1580,6 +1618,7 @@ var locationsId = "".obs;
             final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+            final finalDuration = (slot.duration == 90) ? 90 : duration;
             
             slots.add({
               "slotId": slotId,
@@ -1588,8 +1627,8 @@ var locationsId = "".obs;
               "bookingDate": dateString,
               "time": bookingTime,
               "bookingTime": bookingTime,
-              "duration": duration,
-              "totalTime": duration,
+              "duration": finalDuration,
+              "totalTime": finalDuration,
             });
           }
         }
@@ -1939,6 +1978,9 @@ var locationsId = "".obs;
       final isLeftHalf = selection['isLeftHalf'] as bool?;
       final supports30Min = slotSupports30Min(slot);
       final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+      
+      // Use slot's duration from API if it's 90, otherwise use calculated duration
+      final finalDuration = (slot.duration == 90) ? 90 : duration;
 
       final bookingDay = _getWeekday(DateTime.parse(dateString).weekday);
       final selectedBusinessHour = slot.businessHours
@@ -1955,8 +1997,8 @@ var locationsId = "".obs;
         'courtId': courtId,
         'courtName': courtName,
         'bookingDate': dateString,
-        'duration': duration,
-        'totalTime': duration,
+        'duration': finalDuration,
+        'totalTime': finalDuration,
         'bookingTime': bookingTime,
       });
     });
