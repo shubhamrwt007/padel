@@ -2017,7 +2017,7 @@ class BookACourtScreen extends StatelessWidget {
       for (var slotGroup in slotGroups.entries) {
         final slotSelections = slotGroup.value;
         if (slotSelections.length == 2) {
-          // Both halves selected - create one consolidated entry
+          // Both halves selected - create one consolidated entry with full slot info
           final firstSelection = slotSelections.first;
           final totalAmount = slotSelections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
           consolidatedSelections.add({
@@ -2026,6 +2026,8 @@ class BookACourtScreen extends StatelessWidget {
             'dateTime': firstSelection['dateTime'],
             'courtId': firstSelection['courtId'],
             'date': firstSelection['date'],
+            'isHalfSlot': false, // Mark as full slot since both halves are selected
+            'isFirstHalf': true,
           });
         } else {
           // Single half or full slot - add as is
@@ -2046,12 +2048,38 @@ class BookACourtScreen extends StatelessWidget {
         final consecutiveGroup = [consolidatedSelections[i]];
         var totalAmount = consolidatedSelections[i]['amount'] as int? ?? 0;
 
-        // Find consecutive slots
+        // Find consecutive slots (considering half-slots)
         for (var j = i + 1; j < consolidatedSelections.length; j++) {
-          final currentTime = _parseTimeToMinutes((consolidatedSelections[j - 1]['slot'] as Slots).time ?? '');
-          final nextTime = _parseTimeToMinutes((consolidatedSelections[j]['slot'] as Slots).time ?? '');
-
-          if (nextTime - currentTime == 60) { // 1 hour difference
+          final currentSelection = consolidatedSelections[j - 1];
+          final nextSelection = consolidatedSelections[j];
+          
+          final currentSlot = currentSelection['slot'] as Slots;
+          final nextSlot = nextSelection['slot'] as Slots;
+          
+          final currentIsHalf = currentSelection['isHalfSlot'] as bool? ?? false;
+          final currentIsFirst = currentSelection['isFirstHalf'] as bool? ?? true;
+          final nextIsHalf = nextSelection['isHalfSlot'] as bool? ?? false;
+          final nextIsFirst = nextSelection['isFirstHalf'] as bool? ?? true;
+          
+          final currentTime = _parseTimeToMinutes(currentSlot.time ?? '');
+          final nextTime = _parseTimeToMinutes(nextSlot.time ?? '');
+          
+          // Calculate actual end time of current slot
+          int currentEndTime = currentTime;
+          if (currentIsHalf) {
+            currentEndTime += currentIsFirst ? 30 : 60; // First half ends at +30, second half ends at +60
+          } else {
+            currentEndTime += 60; // Full slot
+          }
+          
+          // Calculate actual start time of next slot
+          int nextStartTime = nextTime;
+          if (nextIsHalf && !nextIsFirst) {
+            nextStartTime += 30; // Second half starts at +30
+          }
+          
+          // Check if slots are consecutive
+          if (currentEndTime == nextStartTime) {
             consecutiveGroup.add(consolidatedSelections[j]);
             totalAmount += consolidatedSelections[j]['amount'] as int? ?? 0;
           } else {
@@ -2065,26 +2093,83 @@ class BookACourtScreen extends StatelessWidget {
 
         String timeRange;
         if (consecutiveGroup.length == 1) {
-          // For single slot, check if it's a half slot and display correct time
+          // For single slot, check if it's a half slot and display start-end time
           final selection = consecutiveGroup.first;
           final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
           final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
 
-          if (isHalfSlot) {
-            // Use the controller's method to get the correct half slot time
-            final correctTime = controller.getHalfSlotTime(firstSlot.time ?? '', isFirstHalf);
-            timeRange = correctTime;
-          } else {
-            timeRange = formatTimeSlot(firstSlot.time ?? '');
-          }
+          // Use the new method to format time range with duration
+          timeRange = controller.formatTimeRangeWithDuration(
+            firstSlot.time ?? '',
+            isHalfSlot: isHalfSlot,
+            isFirstHalf: isFirstHalf,
+          );
         } else {
-          final startTime = _formatTimeForDisplay(firstSlot.time ?? '');
-          final endTime = _formatTimeForDisplay(lastSlot.time ?? '');
-          // Extract period from end time and use it for the range
-          final endPeriod = endTime.contains('pm') ? 'pm' : 'am';
-          final startHour = startTime.replaceAll(RegExp(r'[ap]m'), '');
-          final endHour = endTime.replaceAll(RegExp(r'[ap]m'), '');
-          timeRange = '$startHour-$endHour$endPeriod';
+          // For consecutive slots, calculate total duration from all selections
+          final startTime = firstSlot.time ?? '';
+          final firstSelection = consecutiveGroup.first;
+          final lastSelection = consecutiveGroup.last;
+          
+          final firstIsHalf = firstSelection['isHalfSlot'] as bool? ?? false;
+          final firstIsFirst = firstSelection['isFirstHalf'] as bool? ?? true;
+          final lastIsHalf = lastSelection['isHalfSlot'] as bool? ?? false;
+          final lastIsFirst = lastSelection['isFirstHalf'] as bool? ?? true;
+          
+          // Calculate total duration
+          int totalDuration = 0;
+          for (var selection in consecutiveGroup) {
+            final isHalf = selection['isHalfSlot'] as bool? ?? false;
+            totalDuration += isHalf ? 30 : 60;
+          }
+          
+          // Parse start time
+          try {
+            final cleanTime = startTime.trim().toLowerCase();
+            final parts = cleanTime.split(' ');
+            if (parts.length == 2) {
+              final timePart = parts[0];
+              final period = parts[1];
+              final timeParts = timePart.split(':');
+              int hour = int.tryParse(timeParts[0]) ?? 0;
+              int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+              if (period == 'pm' && hour != 12) hour += 12;
+              if (period == 'am' && hour == 12) hour = 0;
+              
+              // Adjust start time if first selection is second half
+              if (firstIsHalf && !firstIsFirst) {
+                minute += 30;
+                if (minute >= 60) {
+                  hour += 1;
+                  minute -= 60;
+                }
+              }
+
+              // Calculate end time
+              int endHour = hour;
+              int endMinute = minute + totalDuration;
+              while (endMinute >= 60) {
+                endHour += 1;
+                endMinute -= 60;
+              }
+
+              // Format start time
+              String startPeriod = hour >= 12 ? 'PM' : 'AM';
+              int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+              String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+              // Format end time
+              String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+              int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+              String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+              timeRange = '$formattedStart - $formattedEnd';
+            } else {
+              timeRange = startTime;
+            }
+          } catch (e) {
+            timeRange = startTime;
+          }
         }
 
         processedEntries.add({
@@ -2129,6 +2214,15 @@ class BookACourtScreen extends StatelessWidget {
                           fontSize: 13,
                         ),
                       ),
+                      // const SizedBox(height: 2),
+                      // Text(
+                      //   '',
+                      //   style: Get.textTheme.labelSmall!.copyWith(
+                      //     color: Colors.white.withValues(alpha: 0.9),
+                      //     fontWeight: FontWeight.w500,
+                      //     fontSize: 12,
+                      //   ),
+                      // ),
                       const SizedBox(height: 2),
                       Text(
                         '${entry['clubName']} - ${entry['courtName']}',

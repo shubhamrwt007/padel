@@ -1124,6 +1124,60 @@ class BookACourtController extends GetxController {
     return multiDateSelections.length;
   }
 
+  // Helper to format time range with start and end time
+  String formatTimeRangeWithDuration(String startTime, {bool isHalfSlot = false, bool isFirstHalf = true}) {
+    try {
+      final cleanTime = startTime.trim().toLowerCase();
+      final parts = cleanTime.split(' ');
+      if (parts.length != 2) return startTime;
+
+      final timePart = parts[0];
+      final period = parts[1];
+
+      final timeParts = timePart.split(':');
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+      if (period == 'pm' && hour != 12) hour += 12;
+      if (period == 'am' && hour == 12) hour = 0;
+
+      // Calculate end time based on duration
+      int durationMinutes = 60; // Default full slot
+      if (isHalfSlot) {
+        durationMinutes = 30;
+        // If it's second half, start from 30 minutes later
+        if (!isFirstHalf) {
+          minute += 30;
+          if (minute >= 60) {
+            hour += 1;
+            minute -= 60;
+          }
+        }
+      }
+
+      int endHour = hour;
+      int endMinute = minute + durationMinutes;
+      if (endMinute >= 60) {
+        endHour += 1;
+        endMinute -= 60;
+      }
+
+      // Format start time
+      String startPeriod = hour >= 12 ? 'PM' : 'AM';
+      int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+      // Format end time
+      String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+      int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+      String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+      return '$formattedStart - $formattedEnd';
+    } catch (e) {
+      return startTime;
+    }
+  }
+
   // Helper to parse time string to comparable integer (minutes from midnight)
   int _parseTimeToMinutes(String timeStr) {
     try {
