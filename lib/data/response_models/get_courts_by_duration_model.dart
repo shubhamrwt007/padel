@@ -186,6 +186,7 @@ class CourtSlot {
   String? id;
   String? time;
   int? amount;
+
   int? duration;
   String? status;
   String? bookingTime;

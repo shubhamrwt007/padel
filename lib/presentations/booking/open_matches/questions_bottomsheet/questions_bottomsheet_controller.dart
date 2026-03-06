@@ -561,7 +561,11 @@ class QuestionsBottomsheetController extends GetxController {
         duration = 30;
       }
       
-      int totalTime = slotData.length * duration; // Total time for all slots
+      // Use slot's duration from API if it's 90
+      final slotDuration = firstSlotTime["duration"] as int?;
+      final finalDuration = (slotDuration == 90) ? 90 : duration;
+      
+      int totalTime = finalDuration;
       String bookingTime = slotTime;
       
       // For half slots, adjust the booking time based on which half is selected
@@ -582,7 +586,7 @@ class QuestionsBottomsheetController extends GetxController {
         "courtName": slotEntry["courtName"]?.toString() ?? courtName,
         "courtId": slotCourtId,
         "bookingDate": slotEntry["bookingDate"]?.toString() ?? formattedBookingDate,
-        "duration": duration,
+        "duration": finalDuration,
         "totalTime": totalTime,
         "bookingTime": bookingTime
       };

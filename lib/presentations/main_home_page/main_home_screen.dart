@@ -516,8 +516,9 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       final bookings = homeController.bookings.value?.data ?? [];
+      final filteredBookings = bookings.where((b) => b.openMatchId?.openMatchStatus != "pending").toList();
 
-      if (bookings.isEmpty) {
+      if (filteredBookings.isEmpty) {
         return SizedBox.shrink();
       } else {
         return Column(
@@ -561,8 +562,9 @@ class MainHomeScreen extends StatelessWidget {
   Widget _clubTicketList() {
     return Obx(() {
       final allBookings = controller.homeController.bookings.value?.data ?? [];
+      final filteredBookings = allBookings.where((b) => b.openMatchId?.openMatchStatus != "pending").toList();
       
-      if (allBookings.isEmpty) {
+      if (filteredBookings.isEmpty) {
         return SizedBox.shrink();
       }
       
@@ -571,9 +573,9 @@ class MainHomeScreen extends StatelessWidget {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 16),
-          itemCount: allBookings.length,
+          itemCount: filteredBookings.length,
           itemBuilder: (context, index) =>
-              _buildBookingCard(context, allBookings[index]),
+              _buildBookingCard(context, filteredBookings[index]),
         ),
       );
     });
