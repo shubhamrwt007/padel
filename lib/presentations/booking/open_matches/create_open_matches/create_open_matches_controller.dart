@@ -1410,7 +1410,7 @@ class CreateOpenMatchesController extends GetxController {
       }
 
       // Update slot prices from fetchAllSlotPrices API
-      _updateSlotPrices(result, formattedDay);
+      // _updateSlotPrices(result, formattedDay); // Commented out - use prices from getAllActiveCourtsForSlotWise API
 
       // Store ALL slots (both available and unavailable)
       _allSlotsCache.clear();

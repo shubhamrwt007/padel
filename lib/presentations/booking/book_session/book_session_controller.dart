@@ -422,7 +422,7 @@ var locationsId = "".obs;
       }
 
       // Update slot prices from fetchAllSlotPrices API
-      _updateSlotPrices(result, formattedDay);
+      // _updateSlotPrices(result, formattedDay); // Commented out - use prices from getAllActiveCourtsForSlotWise API
 
       // Store ALL slots (both available and unavailable)
       _allSlotsCache.clear();
@@ -1776,9 +1776,6 @@ var locationsId = "".obs;
   Future<void> fetchAllSlotPrices() async {
     try {
       isSlotPricesLoading.value = true;
-
-
-
       final result = await repository.getAllSlotPricesOfCourt(
         registerClubId: argument.id!,
         duration: '',
