@@ -371,28 +371,37 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
-                      children: [
-                        TextSpan(
-                          text: '$formattedDate ${group['timeRange']} ',
-                          style: Get.textTheme.labelSmall!.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$formattedDate ${group['timeRange']}",
+                        style: Get.textTheme.labelSmall!.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                        TextSpan(
-                          text: controller.localMatchData["courtName"]?.toString() ?? 'Court',
-                          style: Get.textTheme.labelSmall!.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                      ),
+                      // const SizedBox(height: 2),
+                      // Text(
+                      //   ,
+                      //   style: Get.textTheme.labelSmall!.copyWith(
+                      //     color: Colors.white.withValues(alpha: 0.9),
+                      //     fontWeight: FontWeight.w500,
+                      //     fontSize: 12,
+                      //   ),
+                      // ),
+                      const SizedBox(height: 2),
+                      Text(
+                        controller.localMatchData["courtName"]?.toString() ?? 'Court',
+                        style: Get.textTheme.labelSmall!.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Text(
@@ -402,12 +411,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                // const SizedBox(width: 8),
+                // const Icon(
+                //   Icons.delete_outline,
+                //   color: Colors.white,
+                //   size: 18,
+                // ),
               ],
             ),
           );

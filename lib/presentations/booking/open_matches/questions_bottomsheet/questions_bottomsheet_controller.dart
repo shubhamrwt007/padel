@@ -698,33 +698,214 @@ class QuestionsBottomsheetController extends GetxController {
     final slots = (localMatchData["slot"] as List?)?.cast<Map<String, dynamic>>() ?? [];
     if (slots.isEmpty) return [];
 
-    final List<Map<String, dynamic>> groups = [];
-    
+    // First, consolidate half-slots and prepare data
+    final Map<String, List<Map<String, dynamic>>> slotGroups = {};
     for (var slotEntry in slots) {
       final slotTimes = (slotEntry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      if (slotTimes.isNotEmpty) {
-        final slotTime = slotTimes.first;
-        var time = slotTime["time"]?.toString() ?? '';
-        final amount = (slotTime["amount"] as int?) ?? 0;
-        
-        // Check if this is a half slot and adjust time display
-        final isHalfSlot = slotEntry["isHalfSlot"] as bool? ?? false;
-        final isFirstHalf = slotEntry["isFirstHalf"] as bool? ?? true;
-        
-        if (isHalfSlot && !isFirstHalf) {
-          // For right half, add 30 minutes to the display time
-          time = _addMinutesToTime(time, 30);
-        }
-        
-        groups.add({
-          'timeRange': _formatTimeSlot(time),
-          'totalAmount': amount,
-          'slots': [slotEntry], // Keep original structure for compatibility
+      if (slotTimes.isEmpty) continue;
+      
+      final slotId = slotEntry["slotId"]?.toString() ?? '';
+      final cleanSlotId = slotId.contains('_') ? slotId.split('_')[0] : slotId;
+      
+      if (!slotGroups.containsKey(cleanSlotId)) {
+        slotGroups[cleanSlotId] = [];
+      }
+      slotGroups[cleanSlotId]!.add(slotEntry);
+    }
+
+    // Consolidate half-slots
+    final consolidatedSlots = <Map<String, dynamic>>[];
+    for (var group in slotGroups.entries) {
+      final slotEntries = group.value;
+      if (slotEntries.length == 2) {
+        // Both halves selected - merge into one
+        final first = slotEntries.first;
+        final slotTimes = (first["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final totalAmount = slotEntries.fold<int>(0, (sum, entry) {
+          final times = (entry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          return sum + (times.isNotEmpty ? (times.first["amount"] as int? ?? 0) : 0);
         });
+        
+        consolidatedSlots.add({
+          'time': slotTimes.isNotEmpty ? slotTimes.first["time"]?.toString() ?? '' : '',
+          'amount': totalAmount,
+          'isHalfSlot': false,
+          'isFirstHalf': true,
+          'original': first,
+        });
+      } else {
+        // Single half or full slot
+        for (var entry in slotEntries) {
+          final slotTimes = (entry["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          if (slotTimes.isNotEmpty) {
+            consolidatedSlots.add({
+              'time': slotTimes.first["time"]?.toString() ?? '',
+              'amount': slotTimes.first["amount"] as int? ?? 0,
+              'isHalfSlot': entry["isHalfSlot"] as bool? ?? false,
+              'isFirstHalf': entry["isFirstHalf"] as bool? ?? true,
+              'original': entry,
+            });
+          }
+        }
       }
     }
 
+    // Sort by time
+    consolidatedSlots.sort((a, b) {
+      final timeA = _parseTimeToMinutes(a['time'] as String);
+      final timeB = _parseTimeToMinutes(b['time'] as String);
+      return timeA.compareTo(timeB);
+    });
+
+    // Group consecutive slots
+    final List<Map<String, dynamic>> groups = [];
+    var i = 0;
+    
+    while (i < consolidatedSlots.length) {
+      final consecutiveGroup = [consolidatedSlots[i]];
+      var totalAmount = consolidatedSlots[i]['amount'] as int;
+      
+      // Find consecutive slots
+      for (var j = i + 1; j < consolidatedSlots.length; j++) {
+        final current = consolidatedSlots[j - 1];
+        final next = consolidatedSlots[j];
+        
+        final currentIsHalf = current['isHalfSlot'] as bool;
+        final currentIsFirst = current['isFirstHalf'] as bool;
+        final nextIsHalf = next['isHalfSlot'] as bool;
+        final nextIsFirst = next['isFirstHalf'] as bool;
+        
+        final currentTime = _parseTimeToMinutes(current['time'] as String);
+        final nextTime = _parseTimeToMinutes(next['time'] as String);
+        
+        // Calculate actual end time of current slot
+        int currentEndTime = currentTime;
+        if (currentIsHalf) {
+          currentEndTime += currentIsFirst ? 30 : 60;
+        } else {
+          currentEndTime += 60;
+        }
+        
+        // Calculate actual start time of next slot
+        int nextStartTime = nextTime;
+        if (nextIsHalf && !nextIsFirst) {
+          nextStartTime += 30;
+        }
+        
+        // Check if consecutive
+        if (currentEndTime == nextStartTime) {
+          consecutiveGroup.add(consolidatedSlots[j]);
+          totalAmount += next['amount'] as int;
+        } else {
+          break;
+        }
+      }
+      
+      // Create time range for this group
+      String timeRange;
+      if (consecutiveGroup.length == 1) {
+        final slot = consecutiveGroup.first;
+        timeRange = formatTimeRangeWithDuration(
+          slot['time'] as String,
+          isHalfSlot: slot['isHalfSlot'] as bool,
+          isFirstHalf: slot['isFirstHalf'] as bool,
+        );
+      } else {
+        // Multiple consecutive slots
+        final firstSlot = consecutiveGroup.first;
+        final firstTime = firstSlot['time'] as String;
+        final firstIsHalf = firstSlot['isHalfSlot'] as bool;
+        final firstIsFirst = firstSlot['isFirstHalf'] as bool;
+        
+        // Calculate total duration
+        int totalDuration = 0;
+        for (var slot in consecutiveGroup) {
+          final isHalf = slot['isHalfSlot'] as bool;
+          totalDuration += isHalf ? 30 : 60;
+        }
+        
+        // Parse and format
+        try {
+          final cleanTime = firstTime.trim().toLowerCase();
+          final parts = cleanTime.split(' ');
+          if (parts.length == 2) {
+            final timePart = parts[0];
+            final period = parts[1];
+            final timeParts = timePart.split(':');
+            int hour = int.tryParse(timeParts[0]) ?? 0;
+            int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+            if (period == 'pm' && hour != 12) hour += 12;
+            if (period == 'am' && hour == 12) hour = 0;
+            
+            // Adjust start if first is second half
+            if (firstIsHalf && !firstIsFirst) {
+              minute += 30;
+              if (minute >= 60) {
+                hour += 1;
+                minute -= 60;
+              }
+            }
+
+            // Calculate end time
+            int endHour = hour;
+            int endMinute = minute + totalDuration;
+            while (endMinute >= 60) {
+              endHour += 1;
+              endMinute -= 60;
+            }
+
+            // Format
+            String startPeriod = hour >= 12 ? 'PM' : 'AM';
+            int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+            String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+            String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+            int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+            String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+            timeRange = '$formattedStart - $formattedEnd';
+          } else {
+            timeRange = firstTime;
+          }
+        } catch (e) {
+          timeRange = firstTime;
+        }
+      }
+      
+      groups.add({
+        'timeRange': timeRange,
+        'totalAmount': totalAmount,
+        'slots': consecutiveGroup,
+      });
+      
+      i += consecutiveGroup.length;
+    }
+
     return groups;
+  }
+  
+  // Helper to parse time to minutes
+  int _parseTimeToMinutes(String timeStr) {
+    try {
+      final cleanTime = timeStr.trim().toLowerCase();
+      final parts = cleanTime.split(' ');
+      if (parts.length != 2) return 0;
+
+      final timePart = parts[0];
+      final period = parts[1];
+
+      final timeParts = timePart.split(':');
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+      if (period == 'pm' && hour != 12) hour += 12;
+      if (period == 'am' && hour == 12) hour = 0;
+
+      return hour * 60 + minute;
+    } catch (e) {
+      return 0;
+    }
   }
 
   // Get hour from time string
@@ -759,6 +940,60 @@ class QuestionsBottomsheetController extends GetxController {
   String _formatTimeSlot(String time) {
     if (time.isEmpty) return time;
     return time.contains(':') ? time : time;
+  }
+  
+  // Format time range with duration (similar to BookACourtController)
+  String formatTimeRangeWithDuration(String startTime, {bool isHalfSlot = false, bool isFirstHalf = true}) {
+    try {
+      final cleanTime = startTime.trim().toLowerCase();
+      final parts = cleanTime.split(' ');
+      if (parts.length != 2) return startTime;
+
+      final timePart = parts[0];
+      final period = parts[1];
+
+      final timeParts = timePart.split(':');
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+      if (period == 'pm' && hour != 12) hour += 12;
+      if (period == 'am' && hour == 12) hour = 0;
+
+      // Calculate end time based on duration
+      int durationMinutes = 60; // Default full slot
+      if (isHalfSlot) {
+        durationMinutes = 30;
+        // If it's second half, start from 30 minutes later
+        if (!isFirstHalf) {
+          minute += 30;
+          if (minute >= 60) {
+            hour += 1;
+            minute -= 60;
+          }
+        }
+      }
+
+      int endHour = hour;
+      int endMinute = minute + durationMinutes;
+      if (endMinute >= 60) {
+        endHour += 1;
+        endMinute -= 60;
+      }
+
+      // Format start time
+      String startPeriod = hour >= 12 ? 'PM' : 'AM';
+      int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+      // Format end time
+      String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+      int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+      String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+      return '$formattedStart - $formattedEnd';
+    } catch (e) {
+      return startTime;
+    }
   }
   String _addMinutesToTime(String timeStr, int minutes) {
     try {
