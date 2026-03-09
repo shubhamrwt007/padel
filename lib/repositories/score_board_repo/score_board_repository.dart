@@ -5,6 +5,8 @@ import 'package:padel_mobile/data/request_models/score_board_models/scoreboard_m
 import 'package:padel_mobile/data/request_models/score_board_models/update_booking_model.dart';
 import 'package:padel_mobile/data/request_models/score_board_models/update_scoreboard_model.dart';
 import 'package:padel_mobile/data/response_models/score_board_models/get_score_board_model.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:get_storage/get_storage.dart';
 
 import '../../core/endpoitns.dart';
 import '../../core/network/dio_client.dart';
@@ -12,6 +14,8 @@ import '../../handler/logger.dart';
 class ScoreBoardRepository {
   static final ScoreBoardRepository _instance = ScoreBoardRepository._internal();
   final DioClient dioClient = DioClient();
+  static IO.Socket? _socket;
+  final storage = GetStorage();
 
   factory ScoreBoardRepository() {
     return _instance;
@@ -307,6 +311,59 @@ class ScoreBoardRepository {
       );
       rethrow;
     }
+  }
+
+  //Socket Methods--------------------------------------------------------------
+  void _connectSocket() {
+    if (_socket != null && _socket!.connected) return;
+    
+    final userId = storage.read('userId')?.toString() ?? '';
+    _socket = IO.io(
+      AppEndpoints.socketUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .setAuth({'userId': userId})
+          .build(),
+    );
+    
+    _socket!.onAny((event, data) {
+      print('🔔 SOCKET EVENT: $event -> $data');
+    });
+    
+    _socket!.connect();
+  }
+
+  void joinScoreboard(String scoreboardId) {
+    _connectSocket();
+    print('🔵 SOCKET: Connecting to scoreboard with ID: $scoreboardId');
+    _socket?.emit('joinScoreboard', {'scoreboardId': scoreboardId});
+    CustomLogger.logMessage(
+      msg: '🚪 Joined scoreboard: $scoreboardId',
+      level: LogLevel.info,
+    );
+  }
+
+  void leaveScoreboard(String scoreboardId) {
+    _socket?.emit('leaveScoreboard', {'scoreboardId': scoreboardId});
+    CustomLogger.logMessage(
+      msg: '🚪 Left scoreboard: $scoreboardId',
+      level: LogLevel.info,
+    );
+  }
+
+  void onScoreboardUpdate(Function(dynamic) callback) {
+    _socket?.on('scoreboardUpdate', (data) {
+      print('🔔 SOCKET: scoreboardUpdate received: $data');
+      callback(data);
+    });
+  }
+
+  void onMatchCompleted(Function(dynamic) callback) {
+    _socket?.on('matchCompleted', (data) {
+      print('🏆 SOCKET: matchCompleted received: $data');
+      callback(data);
+    });
   }
 
 }
