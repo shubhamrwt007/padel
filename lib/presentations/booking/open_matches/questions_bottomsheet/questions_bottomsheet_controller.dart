@@ -523,13 +523,19 @@ class QuestionsBottomsheetController extends GetxController {
       }
     }
 
+    log("🔍 slotData length: ${slotData.length}");
+    
     final slotsJson = slotData.asMap().entries.map((entry) {
       final index = entry.key;
       final slotEntry = entry.value;
-
-      String slotCourtId = slotEntry["courtId"]?.toString() ?? courtId;
-      if (courtIds.isNotEmpty && index < courtIds.length) {
+      
+      // Use courtId from individual slot entry, not from localMatchData
+      String slotCourtId = slotEntry["courtId"]?.toString() ?? "";
+      if (slotCourtId.isEmpty && courtIds.isNotEmpty && index < courtIds.length) {
         slotCourtId = courtIds[index];
+      }
+      if (slotCourtId.isEmpty) {
+        slotCourtId = courtId; // Fallback
       }
 
       final businessHours = (slotEntry["businessHours"] as List?)?.cast<Map<String, dynamic>>() ?? [];
@@ -573,7 +579,7 @@ class QuestionsBottomsheetController extends GetxController {
         bookingTime = _addMinutesToTime(slotTime, 30);
       }
 
-      return {
+      final slotJson = {
         "slotId": cleanSlotId,
         "businessHours": cleanBusinessHours,
         "slotTimes": [
@@ -590,6 +596,8 @@ class QuestionsBottomsheetController extends GetxController {
         "totalTime": totalTime,
         "bookingTime": bookingTime
       };
+      
+      return slotJson;
     }).toList();
 
     final body = {

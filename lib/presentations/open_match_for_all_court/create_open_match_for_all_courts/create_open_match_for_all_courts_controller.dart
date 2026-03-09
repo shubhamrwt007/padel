@@ -2138,15 +2138,19 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       final dateString = selection['date'] as String;
       final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
       
+      // Get courtId and courtName from this specific selection
+      final slotCourtId = selection['courtId'] as String? ?? selectedCourtId;
+      final slotCourtName = selection['courtName'] as String? ?? selectedCourtName;
+      
       // Create unique key for this slot
-      final slotKey = '${dateString}_${selectedCourtId}_${slotId}';
+      final slotKey = '${dateString}_${slotCourtId}_${slotId}';
       
       // Skip if we've already processed this slot
       if (processedSlots.contains(slotKey)) continue;
       
       // Check if both halves of this slot are selected
-      final firstHalfKey = '${dateString}_${selectedCourtId}_${slotId}_first_half';
-      final secondHalfKey = '${dateString}_${selectedCourtId}_${slotId}_second_half';
+      final firstHalfKey = '${dateString}_${slotCourtId}_${slotId}_first_half';
+      final secondHalfKey = '${dateString}_${slotCourtId}_${slotId}_second_half';
       final hasFirstHalf = realCourtSelections.containsKey(firstHalfKey);
       final hasSecondHalf = realCourtSelections.containsKey(secondHalfKey);
       
@@ -2182,8 +2186,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         "slotId": slotId,
         "businessHours": businessHours,
         "slotTimes": [{"time": slotTime, "amount": totalAmount, "duration": finalDuration}],
-        "courtId": selectedCourtId,
-        "courtName": selectedCourtName,
+        "courtId": slotCourtId,
+        "courtName": slotCourtName,
         "bookingDate": dateString,
         "duration": finalDuration,
         "totalTime": finalDuration,
@@ -2345,15 +2349,19 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       final dateString = selection['date'] as String;
       final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
       
+      // Get courtId and courtName from this specific selection
+      final slotCourtId = selection['courtId'] as String? ?? selectedCourtId;
+      final slotCourtName = selection['courtName'] as String? ?? selectedCourtName;
+      
       // Create unique key for this slot
-      final slotKey = '${dateString}_${selectedCourtId}_${slotId}';
+      final slotKey = '${dateString}_${slotCourtId}_${slotId}';
       
       // Skip if we've already processed this slot
       if (processedSlots.contains(slotKey)) continue;
       
       // Check if both halves of this slot are selected
-      final firstHalfKey = '${dateString}_${selectedCourtId}_${slotId}_first_half';
-      final secondHalfKey = '${dateString}_${selectedCourtId}_${slotId}_second_half';
+      final firstHalfKey = '${dateString}_${slotCourtId}_${slotId}_first_half';
+      final secondHalfKey = '${dateString}_${slotCourtId}_${slotId}_second_half';
       final hasFirstHalf = realCourtSelections.containsKey(firstHalfKey);
       final hasSecondHalf = realCourtSelections.containsKey(secondHalfKey);
       
@@ -2389,8 +2397,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         "slotId": slotId,
         "businessHours": businessHours,
         "slotTimes": [{"time": slotTime, "amount": totalAmount, "duration": finalDuration}],
-        "courtId": selectedCourtId,
-        "courtName": selectedCourtName,
+        "courtId": slotCourtId,
+        "courtName": slotCourtName,
         "bookingDate": dateString,
         "duration": finalDuration,
         "totalTime": finalDuration,
