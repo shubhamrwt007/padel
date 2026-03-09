@@ -403,7 +403,7 @@ var locationsId = "".obs;
         date: formattedDate,
         sID: sID,
         categoryId: categoryId,
-        location: locationId,
+        // location: locationId,
         locId: locationsId.value
         // duration: selectedDuration.value.split(' ').first
       );

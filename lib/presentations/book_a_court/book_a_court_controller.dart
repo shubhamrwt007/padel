@@ -1859,7 +1859,7 @@ class BookACourtController extends GetxController {
         date: dateString,
         time: formattedTime,
         categoryId: categoryId,
-        locationId: locationId.value,
+        // locationId: locationId.value,
         page:1,
         limit: 15
       );

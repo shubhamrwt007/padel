@@ -1591,14 +1591,44 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   bool _areConsecutive(List<Slots> slots) {
     if (slots.length <= 1) return true;
 
-    final sortedSlots = slots.toList()..sort((a, b) => _getSlotHour(a.time).compareTo(_getSlotHour(b.time)));
+    final sortedSlots = slots.toList()..sort((a, b) => _parseTimeToMinutes(a.time ?? '').compareTo(_parseTimeToMinutes(b.time ?? '')));
     
     for (int i = 1; i < sortedSlots.length; i++) {
-      final prevHour = _getSlotHour(sortedSlots[i - 1].time);
-      final currentHour = _getSlotHour(sortedSlots[i].time);
-      if (currentHour - prevHour != 1) return false;
+      final prevSlot = sortedSlots[i - 1];
+      final currentSlot = sortedSlots[i];
+      final prevTime = _parseTimeToMinutes(prevSlot.time ?? '');
+      final currentTime = _parseTimeToMinutes(currentSlot.time ?? '');
+      
+      // Calculate expected gap based on previous slot's duration
+      final prevDuration = prevSlot.duration ?? 60;
+      final expectedGap = prevDuration; // 60 for 60-min, 90 for 90-min
+      
+      final actualGap = currentTime - prevTime;
+      if (actualGap != expectedGap) return false;
     }
     return true;
+  }
+
+  int _parseTimeToMinutes(String timeStr) {
+    try {
+      final cleanTime = timeStr.trim().toLowerCase();
+      final parts = cleanTime.split(' ');
+      if (parts.length != 2) return 0;
+
+      final timePart = parts[0];
+      final period = parts[1];
+
+      final timeParts = timePart.split(':');
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+      if (period == 'pm' && hour != 12) hour += 12;
+      if (period == 'am' && hour == 12) hour = 0;
+
+      return hour * 60 + minute;
+    } catch (e) {
+      return 0;
+    }
   }
 
   int _getSlotHour(String? timeStr) {
@@ -1950,7 +1980,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         date: dateString,
         time: formattedTime,
         categoryId: categoryId,
-        locationId: selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
+        // locationId: selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
         page: 1,
         limit: 15,
       );
