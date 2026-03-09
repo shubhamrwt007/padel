@@ -12,11 +12,6 @@ class AppEndpoints {
   static const String baseUrl = "http://192.168.0.126:5070/api/customer/";
   static const String socketUrl = "http://192.168.0.126:5070";
   //
-
-  // // //
-
-
-
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
   static const String logout = "${baseUrl}logout";
@@ -51,7 +46,6 @@ class AppEndpoints {
   static const String createAndGetSlotHistory = "${baseUrl}court/booking/createOrGetSlotHistory";
   static const String deleteSlotHistory = "${baseUrl}court/booking/deleteSlotHistory";
   static const String deleteBulkSlotHistory = "${baseUrl}court/booking/deleteBluckSlotHistory";
-
   ///Review---------------------------------------------------------------------
   static const String getReview = "${baseUrl}court/review/getReviews";
   static const String createReview = "${baseUrl}court/review/saveCustomerReview";
@@ -85,7 +79,6 @@ class AppEndpoints {
   static const String createScoreBoard = "${baseUrl}court/scoreboard/createScoreboard";
   static const String getScoreBoard = "${baseUrl}court/scoreboard/getScoreboards";
   static const String updateScoreBoard = "${baseUrl}court/scoreboard/updateScoreboard";
-
   ///Google Maps Api------------------------------------------------------------
   static const String getLocationMaps = "${baseUrl}GetgoogleMap?";
   ///Wallet---------------------------------------------------------------------
@@ -100,26 +93,20 @@ class AppEndpoints {
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
   static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
 
-
   ///XP Points------------------------------------------------------------------
   static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";
-
   /// Get Category
   static const String getCategory = "${baseUrl}court/category/list";
-
   ///FCM Token------------------------------------------------------------------
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
 }
 class PaymentConfig {
   // Toggle this when switching environment
   static const bool isLive = false;
-
   // Test Key
   static const String _testKeyId = 'rzp_test_RtRFaVPUzoUtkG';
-
   // Live Key
   static const String _liveKeyId = 'rzp_live_RtOIWe2johK6H7';
-
   // Getter
   static String get keyId => isLive ? _liveKeyId : _testKeyId;
 }
