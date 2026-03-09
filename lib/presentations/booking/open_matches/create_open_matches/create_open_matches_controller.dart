@@ -69,7 +69,8 @@ class CreateOpenMatchesController extends GetxController {
   }
   final EasyDatePickerController dateTimelineController = EasyDatePickerController();
   // Booking limits
-  static const int maxSlots = 3; // Limit for open matches
+  static const int maxSlots = 3; // Limit for open matches (60-min slots)
+  static const int maxSlots90Min = 2; // Limit for 90-minute slots (1.5 + 1.5 = 3 hours)
   static const int maxDays = 1; // Single day for open matches
   final focusedMonth = DateTime.now().obs;
   
@@ -931,8 +932,15 @@ class CreateOpenMatchesController extends GetxController {
                                   multiDateSelections.containsKey(rightKey) || 
                                   multiDateSelections.containsKey(fullKey);
     
-    if (!isSlotAlreadySelected && getTotalSelectionsCount() >= maxSlots) {
-      CustomLogger.logMessage(msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.", level: LogLevel.error);
+    // Check slot limit based on duration
+    final is90MinSlot = primarySlot.duration == 90;
+    final currentLimit = is90MinSlot ? maxSlots90Min : maxSlots;
+    
+    if (!isSlotAlreadySelected && getTotalSelectionsCount() >= currentLimit) {
+      final limitMessage = is90MinSlot 
+          ? "Booking Limit Reached\nYou can select a maximum of $maxSlots90Min slots (90 minutes each)."
+          : "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.";
+      CustomLogger.logMessage(msg: limitMessage, level: LogLevel.error);
       return;
     }
     
@@ -1420,7 +1428,7 @@ class CreateOpenMatchesController extends GetxController {
         date: formattedDate,
         sID: sId.value,
         categoryId: categoryId.value,
-        location: locationID.value,
+        // location: locationID.value,
         locId: locationsId.value
       );
 

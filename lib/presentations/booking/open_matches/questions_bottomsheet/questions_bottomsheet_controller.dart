@@ -783,8 +783,14 @@ class QuestionsBottomsheetController extends GetxController {
         final nextTime = _parseTimeToMinutes(next['time'] as String);
         
         // Calculate actual end time of current slot
+        final currentOriginal = current['original'] as Map<String, dynamic>;
+        final currentSlotTimes = (currentOriginal["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final currentSlotDuration = currentSlotTimes.isNotEmpty ? (currentSlotTimes.first["duration"] as int? ?? 60) : 60;
+        
         int currentEndTime = currentTime;
-        if (currentIsHalf) {
+        if (currentSlotDuration == 90) {
+          currentEndTime += 90; // 90-minute slot
+        } else if (currentIsHalf) {
           currentEndTime += currentIsFirst ? 30 : 60;
         } else {
           currentEndTime += 60;
@@ -809,11 +815,58 @@ class QuestionsBottomsheetController extends GetxController {
       String timeRange;
       if (consecutiveGroup.length == 1) {
         final slot = consecutiveGroup.first;
-        timeRange = formatTimeRangeWithDuration(
-          slot['time'] as String,
-          isHalfSlot: slot['isHalfSlot'] as bool,
-          isFirstHalf: slot['isFirstHalf'] as bool,
-        );
+        final original = slot['original'] as Map<String, dynamic>;
+        final slotTimes = (original["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final slotDuration = slotTimes.isNotEmpty ? (slotTimes.first["duration"] as int? ?? 60) : 60;
+        
+        // Handle 90-minute slots
+        if (slotDuration == 90) {
+          final time = slot['time'] as String;
+          try {
+            final cleanTime = time.trim().toLowerCase();
+            final parts = cleanTime.split(' ');
+            if (parts.length == 2) {
+              final timePart = parts[0];
+              final period = parts[1];
+              final timeParts = timePart.split(':');
+              int hour = int.tryParse(timeParts[0]) ?? 0;
+              int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+              if (period == 'pm' && hour != 12) hour += 12;
+              if (period == 'am' && hour == 12) hour = 0;
+
+              // Calculate end time (90 minutes later)
+              int endHour = hour;
+              int endMinute = minute + 90;
+              while (endMinute >= 60) {
+                endHour += 1;
+                endMinute -= 60;
+              }
+
+              // Format start time
+              String startPeriod = hour >= 12 ? 'PM' : 'AM';
+              int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+              String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+              // Format end time
+              String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+              int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+              String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+              timeRange = '$formattedStart - $formattedEnd';
+            } else {
+              timeRange = time;
+            }
+          } catch (e) {
+            timeRange = time;
+          }
+        } else {
+          timeRange = formatTimeRangeWithDuration(
+            slot['time'] as String,
+            isHalfSlot: slot['isHalfSlot'] as bool,
+            isFirstHalf: slot['isFirstHalf'] as bool,
+          );
+        }
       } else {
         // Multiple consecutive slots
         final firstSlot = consecutiveGroup.first;
@@ -825,7 +878,15 @@ class QuestionsBottomsheetController extends GetxController {
         int totalDuration = 0;
         for (var slot in consecutiveGroup) {
           final isHalf = slot['isHalfSlot'] as bool;
-          totalDuration += isHalf ? 30 : 60;
+          final original = slot['original'] as Map<String, dynamic>;
+          final slotTimes = (original["slotTimes"] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          final slotDuration = slotTimes.isNotEmpty ? (slotTimes.first["duration"] as int? ?? 60) : 60;
+          
+          if (slotDuration == 90) {
+            totalDuration += 90;
+          } else {
+            totalDuration += isHalf ? 30 : 60;
+          }
         }
         
         // Parse and format

@@ -2066,8 +2066,11 @@ class BookACourtScreen extends StatelessWidget {
           final nextTime = _parseTimeToMinutes(nextSlot.time ?? '');
           
           // Calculate actual end time of current slot
+          final currentSlotDuration = currentSlot.duration ?? 60;
           int currentEndTime = currentTime;
-          if (currentIsHalf) {
+          if (currentSlotDuration == 90) {
+            currentEndTime += 90; // 90-minute slot
+          } else if (currentIsHalf) {
             currentEndTime += currentIsFirst ? 30 : 60; // First half ends at +30, second half ends at +60
           } else {
             currentEndTime += 60; // Full slot
@@ -2096,15 +2099,59 @@ class BookACourtScreen extends StatelessWidget {
         if (consecutiveGroup.length == 1) {
           // For single slot, check if it's a half slot and display start-end time
           final selection = consecutiveGroup.first;
+          final slot = selection['slot'] as Slots;
           final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
           final isFirstHalf = selection['isFirstHalf'] as bool? ?? true;
+          final slotDuration = slot.duration ?? 60;
 
-          // Use the new method to format time range with duration
-          timeRange = controller.formatTimeRangeWithDuration(
-            firstSlot.time ?? '',
-            isHalfSlot: isHalfSlot,
-            isFirstHalf: isFirstHalf,
-          );
+          // Handle 90-minute slots
+          if (slotDuration == 90) {
+            try {
+              final cleanTime = (slot.time ?? '').trim().toLowerCase();
+              final parts = cleanTime.split(' ');
+              if (parts.length == 2) {
+                final timePart = parts[0];
+                final period = parts[1];
+                final timeParts = timePart.split(':');
+                int hour = int.tryParse(timeParts[0]) ?? 0;
+                int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+
+                if (period == 'pm' && hour != 12) hour += 12;
+                if (period == 'am' && hour == 12) hour = 0;
+
+                // Calculate end time (90 minutes later)
+                int endHour = hour;
+                int endMinute = minute + 90;
+                while (endMinute >= 60) {
+                  endHour += 1;
+                  endMinute -= 60;
+                }
+
+                // Format start time
+                String startPeriod = hour >= 12 ? 'PM' : 'AM';
+                int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+                String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+
+                // Format end time
+                String endPeriod = endHour >= 12 ? 'PM' : 'AM';
+                int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
+                String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+
+                timeRange = '$formattedStart - $formattedEnd';
+              } else {
+                timeRange = slot.time ?? '';
+              }
+            } catch (e) {
+              timeRange = slot.time ?? '';
+            }
+          } else {
+            // Use the existing method for 30/60 minute slots
+            timeRange = controller.formatTimeRangeWithDuration(
+              firstSlot.time ?? '',
+              isHalfSlot: isHalfSlot,
+              isFirstHalf: isFirstHalf,
+            );
+          }
         } else {
           // For consecutive slots, calculate total duration from all selections
           final startTime = firstSlot.time ?? '';
@@ -2119,8 +2166,15 @@ class BookACourtScreen extends StatelessWidget {
           // Calculate total duration
           int totalDuration = 0;
           for (var selection in consecutiveGroup) {
+            final slot = selection['slot'] as Slots;
             final isHalf = selection['isHalfSlot'] as bool? ?? false;
-            totalDuration += isHalf ? 30 : 60;
+            final slotDuration = slot.duration ?? 60;
+            
+            if (slotDuration == 90) {
+              totalDuration += 90;
+            } else {
+              totalDuration += isHalf ? 30 : 60;
+            }
           }
           
           // Parse start time
