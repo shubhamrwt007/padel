@@ -141,7 +141,7 @@ class HomeController extends GetxController {
         page: currentPage.value.toString(),
         search: searchQuery.value,
         categoryId: categoryId,
-        locationId: locationId,
+        // locationId: locationId,
       );
 
       log("Courts length ${result.data?.courts?.length ?? 0}");

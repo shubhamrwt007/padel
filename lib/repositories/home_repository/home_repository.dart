@@ -21,7 +21,13 @@ import '../../presentations/auth/forgot_password/widgets/forgot_password_exports
 
 class HomeRepository {
   final DioClient dioClient = DioClient();
-  Future<CourtsModel> fetchClubData({String limit = "10", required String page, String search = "", String? categoryId, String? locationId}) async {
+  Future<CourtsModel> fetchClubData({
+    String limit = "10",
+    required String page,
+    String search = "",
+    String? categoryId,
+    // String? locationId
+  }) async {
      try {
       String url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
       
@@ -29,9 +35,9 @@ class HomeRepository {
         url += "&categoryId=$categoryId";
       }
       
-      if (locationId != null && locationId.isNotEmpty) {
-        url += "&location=$locationId";
-      }
+      // if (locationId != null && locationId.isNotEmpty) {
+      //   url += "&location=$locationId";
+      // }
       
       final response = await dioClient.get(url);
       if (response.statusCode == 200) {
@@ -58,12 +64,12 @@ class HomeRepository {
     required String day,
      String? date,
     String? sID,
-    String? location,
+    // String? location,
     String? categoryId,
     String? locId
     // String? duration
   }) async {
-    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID&location=$location&categoryId=$categoryId&locId=$locId";
+    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID&categoryId=$categoryId&locId=$locId";
 
     try {
       final response = await dioClient.get(url);
@@ -159,13 +165,13 @@ class HomeRepository {
     required String duration,
     required String date,
     required String time,
-    String? locationId,
+    // String? locationId,
     String? categoryId,
     int? page=1,
     int? limit=15,
   }) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&location=$locationId&categoryId=$categoryId&page=$page&limit=$limit",);
+      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&categoryId=$categoryId&page=$page&limit=$limit",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get Courts By Durationt Data: ${response.data}",
