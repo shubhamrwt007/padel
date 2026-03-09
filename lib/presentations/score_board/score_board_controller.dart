@@ -506,8 +506,10 @@ class ScoreBoardController extends GetxController {
       });
       repository.onMatchCompleted((data) {
         print('🏆 Match completed received: $data');
-        fetchScoreBoard(showLoader: false);
-        _showMatchResultDialog();
+        isCompleted.value = true;
+        fetchScoreBoard(showLoader: false).then((_) {
+          showMatchSummaryDialog(this);
+        });
       });
     } else {
       print('⚠️ Scoreboard ID is empty, cannot join socket');
@@ -812,7 +814,7 @@ class ScoreBoardController extends GetxController {
         isCompleted.value = true;
         await profileController.fetchUserProfile();
         await fetchScoreBoard(showLoader: false);
-        _showMatchResultDialog();
+        showMatchSummaryDialog(this);
       } else {
         CustomLogger.logMessage(msg: response.message ?? "", level: LogLevel.debug);
       }
@@ -820,28 +822,6 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
     } finally {
       isEndGame.value = false;
-    }
-  }
-
-  void _showMatchResultDialog() {
-    final isWinner = (isUserInTeamA && winner.value.toLowerCase() == "team a") ||
-                     (isUserInTeamB && winner.value.toLowerCase() == "team b");
-    
-    if (isWinner) {
-      showMatchSummaryDialog(this);
-    } else {
-      Get.dialog(
-        AlertDialog(
-          title: const Text('Match Completed'),
-          content: Text('Better luck next time!\n\nWinner: ${winner.value}'),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
     }
   }
 
