@@ -1,4 +1,3 @@
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
@@ -19,6 +18,7 @@ class EditProfileController extends GetxController{
 
   RxBool isLoading = false.obs;
   RxString selectedGender = ''.obs;
+  final RxString lockedGender = ''.obs; // gender is display-only on edit profile
   Rx<XFile?> profileImage = Rx<XFile?>(null);
   RxBool isProfileUpdated = false.obs;
     RxString profileImageUrl = ''.obs;
@@ -29,6 +29,7 @@ class EditProfileController extends GetxController{
     emailController.text = model?.response?.email ?? '';
     phoneController.text = model?.response?.phoneNumber?.toString() ?? '';
     selectedGender.value = model?.response?.gender ?? "";
+    lockedGender.value = selectedGender.value;
     profileImageUrl.value = model?.response?.profilePic?.toString() ?? '';
     // Format DOB
     final dob = model?.response?.dob;
@@ -210,7 +211,7 @@ class EditProfileController extends GetxController{
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         // lastName: lastNameController.text.trim(),
-        gender: selectedGender.value,
+        gender: lockedGender.value,
         dob: formattedDate,
         city: locationId,
         location: locationJson,
