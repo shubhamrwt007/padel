@@ -495,6 +495,26 @@ class ScoreBoardController extends GetxController {
 
     _scoreboardStreamController = StreamController<Map<String, dynamic>>.broadcast();
     await fetchScoreBoard();
+    
+    // Connect socket and join scoreboard
+    print('🔵 SCOREBOARD ID: ${scoreboardId.value}');
+    if (scoreboardId.value.isNotEmpty) {
+      repository.joinScoreboard(scoreboardId.value);
+      repository.onScoreboardUpdate((data) {
+        print('🔔 Scoreboard update received in controller: $data');
+        fetchScoreBoard(showLoader: false);
+      });
+      repository.onMatchCompleted((data) {
+        print('🏆 Match completed received: $data');
+        isCompleted.value = true;
+        fetchScoreBoard(showLoader: false).then((_) {
+          showMatchSummaryDialog(this);
+        });
+      });
+    } else {
+      print('⚠️ Scoreboard ID is empty, cannot join socket');
+    }
+    
     _startPeriodicUpdates();
     _startMatchTimeCheck();
     
@@ -596,7 +616,7 @@ class ScoreBoardController extends GetxController {
   }
 
   void _startPeriodicUpdates() {
-    _periodicTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       await _fetchScoreBoardForStream();
     });
   }
@@ -682,6 +702,8 @@ class ScoreBoardController extends GetxController {
     if (!_scoreboardStreamController.isClosed) {
       _scoreboardStreamController.close();
     }
+    // Disconnect socket when leaving screen
+    // repository.leaveScoreboard(scoreboardId.value);
     super.onClose();
   }
 
@@ -706,11 +728,11 @@ class ScoreBoardController extends GetxController {
     }
     isAddingScore.value = true;
     try {
-      // Only send the score for the team that actually scored
       final Map<String, dynamic> setData = {
         "setNumber": setNumber,
       };
 
+      // Only send score for the team that is updating
       if (teamAScore > 0) {
         setData["teamAScore"] = teamAScore;
       }
@@ -718,31 +740,15 @@ class ScoreBoardController extends GetxController {
         setData["teamBScore"] = teamBScore;
       }
 
-      // Only determine winner if both teams have scores
-      final currentSet = sets.firstWhere((s) => s["setNumber"] == setNumber, orElse: () => {});
-      final currentTeamAScore = currentSet["teamAScore"] ?? 0;
-      final currentTeamBScore = currentSet["teamBScore"] ?? 0;
-
-      final finalTeamAScore = teamAScore > 0 ? teamAScore : currentTeamAScore;
-      final finalTeamBScore = teamBScore > 0 ? teamBScore : currentTeamBScore;
-
-      if (finalTeamAScore > 0 && finalTeamBScore > 0) {
-        if (finalTeamAScore > finalTeamBScore) {
-          setData["winner"] = "Team A";
-        } else if (finalTeamBScore > finalTeamAScore) {
-          setData["winner"] = "Team B";
-        }
-      }
-
       final body = {
         "scoreboardId": scoreboardId.value,
         "sets": [setData]
       };
 
+      print('🎯 Updating score: $body');
       final response = await repository.updateScoreBoard(data: body);
       if (response.success == true) {
         CustomLogger.logMessage(msg: "Score Added Successfully", level: LogLevel.info);
-        await fetchScoreBoard(showLoader: false);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error-> $e", level: LogLevel.error);
