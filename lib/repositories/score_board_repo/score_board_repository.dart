@@ -312,7 +312,6 @@ class ScoreBoardRepository {
       rethrow;
     }
   }
-
   //Socket Methods--------------------------------------------------------------
   void _connectSocket() {
     if (_socket != null && _socket!.connected) return;
