@@ -298,7 +298,7 @@ class MainHomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.creamColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: const Color(0xFFE8E8E8),
           width: 1,
@@ -376,7 +376,7 @@ class MainHomeScreen extends StatelessWidget {
             child: GestureDetector(
               onTap: () => controller.onSportTabChanged(1),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
                   gradient: controller.selectedSportTab.value == 1
                       ? LinearGradient(
@@ -837,88 +837,105 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _banner() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 140,
-        width: Get.width,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: PageView.builder(
-            controller: controller.pageController,
-            onPageChanged: (index) {
-              controller.currentBannerIndex.value = index % controller.bannerImages.length;
-            },
-            itemBuilder: (context, index) {
-              final actualIndex = index % controller.bannerImages.length;
-              return Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(controller.bannerImages[actualIndex]),
+    return Obx(() => CarouselSlider.builder(
+      itemCount: controller.bannerImages.length,
+      itemBuilder: (context, index, realIndex) {
+        return Container(
+          width: Get.width,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryColor.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    controller.bannerImages[index],
                     fit: BoxFit.cover,
                     alignment: Alignment(0, -0.3),
                   ),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.1),
-                        Colors.black.withValues(alpha: 0.4),
-                        Colors.black.withValues(alpha: 0.65),
+                Positioned.fill(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.4),
+                          Colors.black.withValues(alpha: 0.65),
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Transform.translate(
+                            offset: Offset(0, -5),
+                            child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
+                        Transform.translate(
+                            offset: Offset(0, -10),
+                            child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => controller.onBannerTap(index),
+                          child: Container(
+                            width: Get.width * 0.35,
+                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(40),
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "BOOK NOW!",
+                                  style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
+                                ).paddingOnly(left: 10),
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: AppColors.primaryColor,
+                                  child: const Icon(Icons.arrow_forward, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Transform.translate(
-                          offset: Offset(0, -5),
-                          child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-                      Transform.translate(
-                          offset: Offset(0, -10),
-                          child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => controller.onBannerTap(actualIndex),
-                        child: Container(
-                          width: Get.width * 0.35,
-                          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(40),
-                            color: Colors.white,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "BOOK NOW!",
-                                style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
-                              ).paddingOnly(left: 10),
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppColors.primaryColor,
-                                child: const Icon(Icons.arrow_forward, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
+        );
+      },
+      options: CarouselOptions(
+        height: 140,
+        viewportFraction: 1.0,
+        enlargeCenterPage: false,
+        autoPlay: true,
+        autoPlayInterval: const Duration(seconds: 4),
+        autoPlayAnimationDuration: const Duration(milliseconds: 800),
+        autoPlayCurve: Curves.easeInOutCubic,
+        pageSnapping: true,
+        onPageChanged: (index, reason) {
+          controller.currentBannerIndex.value = index;
+        },
       ),
-    );
+    ));
   }
 
   /// QUICK ACTIONS
