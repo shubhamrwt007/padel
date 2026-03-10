@@ -365,7 +365,6 @@ class ScoreBoardController extends GetxController {
       }
     }
   }
-
   ///Start Game - Initializes first set and starts timer-----------------------------------
   Future<void> startGame() async {
     if (isCompleted.value) {
