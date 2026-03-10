@@ -26,6 +26,8 @@ import 'package:padel_mobile/presentations/home/home_binding.dart';
 import 'package:padel_mobile/presentations/home/home_screen.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_binding.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/league/league_binding.dart';
+import 'package:padel_mobile/presentations/league/league_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_binding.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_screen.dart';
 import 'package:padel_mobile/presentations/notification/notification_binding.dart';
@@ -408,6 +410,15 @@ class Routes {
       name: RoutesName.joinTournament,
       page: () => JoinTournamentScreen(),
       binding: JoinTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///League-------------------------------------------------------------------
+    GetPage(
+      name: RoutesName.league,
+      page: () => LeagueScreen(),
+      binding: LeagueBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

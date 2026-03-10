@@ -201,7 +201,8 @@ class MainHomeScreen extends StatelessWidget {
                     _banner(),
                     const SizedBox(height: 16),
                     _quickActions(),
-
+                    _buildLeagueComingSoon(),
+                    // _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -249,8 +250,6 @@ class MainHomeScreen extends StatelessWidget {
                         ],
                       );
                     }),
-
-
                     Obx(() {
                       if (controller.selectedSportTab.value == 0) {
                         return Column(
@@ -501,6 +500,313 @@ class MainHomeScreen extends StatelessWidget {
       ).paddingOnly(left: 5);
     });
   }
+
+  Widget _buildSwootTitle(){
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            "Swoot Premier League",
+            style: Get.textTheme.headlineMedium,
+          ),
+
+        ],
+      ),
+    );
+  }
+  /// LEAGUE SECTION
+  Widget _buildLeagueComingSoon(){
+    return Column(
+      children: [
+        _buildSwootTitle(),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: (){
+            Get.toNamed(RoutesName.league);
+          },
+          child: Container(
+            width: Get.width,
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Image.asset(Assets.imagesImgLeagueComingSoon),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildPresentedBy()
+
+      ],
+    ).paddingOnly(top: 10);
+  }
+  Widget _buildPresentedBy(){
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+      child: Column(
+        children: [
+          Text(
+              "Presented by",
+              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                Assets.imagesImgDummyLogo1,
+                height: 28,
+              ),
+
+              const SizedBox(width: 20),
+
+              _divider(),
+
+              const SizedBox(width: 20),
+
+              Image.asset(
+                Assets.imagesImgDummyLogo2,
+                height: 40,
+              ),
+
+              const SizedBox(width: 20),
+
+              _divider(),
+
+              const SizedBox(width: 20),
+
+              Image.asset(
+                Assets.imagesImgDummyLogo3,
+                height: 28,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _divider() {
+    return Container(
+      height: 30,
+      width: 1,
+      color: Colors.black26,
+    );
+  }
+  Widget _buildLeagueLiveMatch(){
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSwootTitle(),
+        const SizedBox(height: 12),
+        _liveMatchCard(),
+        _buildPresentedBy(),
+        Row(
+          children: [
+            Text(
+                "Upcoming  Matches",
+                style: Get.textTheme.headlineMedium
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: () {
+                final bottomNavController =
+                Get.find<BottomNavigationController>();
+                bottomNavController.updateIndex(1);
+              },
+              child: Container(
+                color: Colors.transparent,
+                child: Text(
+                  "See all",
+                  style: Get.textTheme.labelLarge!
+                      .copyWith(color: AppColors.primaryColor),
+                ),
+              ),
+            ),
+          ],
+        ).paddingOnly(left: 16,top: 10,bottom: 10,right: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: 3,
+          physics: NeverScrollableScrollPhysics(),
+          itemBuilder: (context,index){
+            return UpcomingMatchCard();
+          },
+        ),
+      ],
+    ).paddingOnly(top: 10);
+  }
+  Widget _liveMatchCard() {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          decoration:  BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,)),
+              Column(
+                children: [
+                  /// LIVE TAG
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFCD3529),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(radius: 4, backgroundColor: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          "LIVE",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ).paddingOnly(top: 10),
+                  /// SCORE ROW
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _teamColumn("Team A",
+                        "https://i.pravatar.cc/150?img=1",
+                        "https://i.pravatar.cc/150?img=2",
+                        "Eleanor Pena",
+                        "Kristin Watson",
+                        AppColors.primaryColor,),
+
+                      Transform.translate(
+                        offset: Offset(0, 8),
+                        child: Text(
+                            "2 : 0",
+                            style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                      ),
+                      _teamColumn("Team B",
+                          "https://i.pravatar.cc/150?img=3",
+                          "https://i.pravatar.cc/150?img=4",
+                          "Theresa Webb",
+                          "Ronald Richards",
+                          AppColors.secondaryColor),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: (){
+                      Get.toNamed(RoutesName.liveTournament);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                          color: const Color(0xff27AE60),
+                          borderRadius:
+                          BorderRadius.circular(30)),
+                      child:  Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 11,
+                            backgroundColor: AppColors.primaryColor,
+                            child: Icon(Icons.play_arrow,
+                                color: Colors.white, size: 18),
+                          ),
+                          SizedBox(width: 8),
+                          Text("Watch Live",
+                              style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _teamColumn(
+      String team,
+      String img1,
+      String img2,
+      String name1,
+      String name2,
+      Color color,
+      ) {
+    return SizedBox(
+      width: 130,
+      child: Column(
+        children: [
+          /// TEAM LABEL
+          Text(
+            team,
+            style:Get.textTheme.headlineMedium!.copyWith(color: color)
+          ),
+
+          const SizedBox(height: 15),
+
+          /// STACKED AVATARS
+          SizedBox(
+            height: 40,
+            width: 60,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _avatar(img1, 0),
+                _avatar(img2, 24),
+              ],
+            ),
+          ),
+
+
+          /// NAMES
+          Text(
+              "$name1 &\n$name2",
+              textAlign: TextAlign.center,
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _avatar(String url, double left) {
+    return Positioned(
+      left: left,
+      child: Container(
+        height: 36,
+        width: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          image: DecorationImage(
+            image: NetworkImage(url),
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+  }
+
 
   /// BOOKING SECTION
   Widget _bookingSection() {
@@ -2220,6 +2526,159 @@ class MainHomeScreen extends StatelessWidget {
         radius: 20,
         backgroundColor: const Color(0xffeaf0ff),
         child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
+      ),
+    );
+  }
+}
+
+
+class UpcomingMatchCard extends StatelessWidget {
+  const UpcomingMatchCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+
+          /// MAIN Container
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xffF2F4F9),
+                  Color(0xffDCE4F7),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  left: -40,
+                  top: -10,
+                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                ),
+                Positioned(
+                  right: -30,
+                  bottom: -20,
+                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                ),
+                Column(
+                  children: [
+                    /// DATE + UPCOMING
+                    Row(
+                      children: [
+                        Text(
+                            "Team A",
+                            style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                        ),
+                        const Spacer(),
+                        Text(
+                            "Team B",
+                            style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                        ),
+                      ],
+                    ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            SizedBox(
+                              height: 30,
+                              width: 40,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  _avatar("https://i.pravatar.cc/150?img=1", 0,0),
+                                  _avatar("https://i.pravatar.cc/150?img=1", 12,8),
+                                ],
+                              ),
+                            ).paddingOnly(right: 5),
+                            Text(
+                                "Eleanor Pena \nKristin Watson",
+                                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                            ),
+                          ],
+                        ),
+
+                        Text(
+                          "vs",
+                          style: TextStyle(
+                            fontSize: 28,
+                            color: Colors.grey,
+                          ),
+                        ),
+
+                        Row(
+                          children: [
+                            Text(
+                                "Theresa Webb \nRonald Richards",
+                                textAlign: TextAlign.right,
+                                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                            ),
+                            SizedBox(
+                              height: 30,
+                              width: 40,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  _avatar("https://i.pravatar.cc/150?img=1", 12,0),
+                                  _avatar("https://i.pravatar.cc/150?img=1", 0,8),
+                                ],
+                              ),
+                            ).paddingOnly(left: 5),
+                          ],
+                        ),
+                      ],
+                    )
+                  ],
+                ).paddingOnly(top: 10,left: 15,bottom: 10,right: 15),
+              ],
+            ),
+          ),
+          Container(
+            height: 25,
+            width: 100,
+            decoration: const BoxDecoration(
+              color: Color(0xff2E4DB7),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+                "05Jun, 2025",
+                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _avatar(String url, double left,double top) {
+    return Positioned(
+      left: left,
+      top: top,
+      child: Container(
+        height: 25,
+        width: 25,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          image: DecorationImage(
+            image: NetworkImage(url),
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }
