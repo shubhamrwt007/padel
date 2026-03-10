@@ -69,16 +69,17 @@ class _TutorialScreenState extends State<TutorialScreen> {
                       },
                     ),
                   const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      _pageController.animateToPage(
-                        images.length - 1, // last page
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: const Text("Skip"),
-                  ),
+                  if (currentIndex != images.length - 1)
+                    TextButton(
+                      onPressed: () {
+                        _pageController.animateToPage(
+                          images.length - 1, // last page
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: const Text("Skip"),
+                    ),
                 ],
               ),
             ),

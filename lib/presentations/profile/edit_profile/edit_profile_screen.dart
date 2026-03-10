@@ -54,12 +54,12 @@ class EditProfileUi extends StatelessWidget {
                   // readOnly: true,
                   // color: Colors.grey.shade100,
                   context,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return "Email is not allowed to be empty";
-                    }
-                    return null;
-                  },
+                  // validator: (v) {
+                  //   if (v == null || v.trim().isEmpty) {
+                  //     return "Email is not allowed to be empty";
+                  //   }
+                  //   return null;
+                  // },
                  ),
                 _textFieldWithLabel(
                   "Phone",
@@ -256,33 +256,36 @@ class EditProfileUi extends StatelessWidget {
           ),
         ).paddingOnly(top: Get.height * .02),
         Obx(
-          () => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: ["Female", "Male", "Other"].map((gender) {
-              return GestureDetector(
-                onTap: () => controller.selectedGender.value = gender,
-                child: Row(
-                  children: [
-                    Icon(
-                      controller.selectedGender.value == gender
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      size: 15,
-                      color: Colors.grey,
-                    ),
-                    Text(
-                      gender,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall!.copyWith(
-                        fontSize: 14,
+          () => AbsorbPointer(
+            absorbing: true,
+            child: Opacity(
+              opacity: 0.75,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: ["Female", "Male", "Other"].map((gender) {
+                  return Row(
+                    children: [
+                      Icon(
+                        controller.selectedGender.value == gender
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        size: 15,
                         color: Colors.grey,
                       ),
-                    ).paddingOnly(left: 5),
-                  ],
-                ),
-              );
-            }).toList(),
+                      Text(
+                        gender,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineSmall!.copyWith(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ).paddingOnly(left: 5),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ).paddingOnly(top: 10),
       ],
@@ -371,7 +374,7 @@ class EditProfileUi extends StatelessWidget {
               );
             }
             return DropdownButtonFormField<String>(
-              value: controller.selectedLocation.value.isEmpty
+              initialValue: controller.selectedLocation.value.isEmpty
                   ? null
                   : controller.selectedLocation.value,
               style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.textColor,fontWeight: FontWeight.w500),

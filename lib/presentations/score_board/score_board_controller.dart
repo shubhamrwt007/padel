@@ -236,6 +236,7 @@ class ScoreBoardController extends GetxController {
   var bookingType = ''.obs;
   var scoreboardId = ''.obs;
   var openMatchId = ''.obs;
+  final registerClubId = ''.obs;
   ScoreBoardRepository repository = Get.put(ScoreBoardRepository());
   final isLoading = true.obs;
   final isAddingSet = false.obs;
@@ -258,13 +259,14 @@ class ScoreBoardController extends GetxController {
         scoreboardId.value = item.sId ?? "";
         openMatchId.value = item.bookingId?.openMatchId ?? "";
         matchBookingId.value = item.bookingId?.sId ?? "";
+        registerClubId.value = item.bookingId?.registerClubId ?? "";
         bookingType.value = item.bookingId?.bookingType ?? "regular";
         CustomLogger.logMessage(
             msg: "Booking Type from API: ${item.bookingId?.bookingType}", level: LogLevel.info);
         CustomLogger.logMessage(
             msg: "Booking Type set to: ${bookingType.value}", level: LogLevel.info);
-        matchType.value = (item?.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
-        matchStatus.value = item?.matchStatus ?? false;
+        matchType.value = (item.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
+        matchStatus.value = item.matchStatus ?? false;
         CustomLogger.logMessage(
             msg: "Using scoreboard ID: ${item.sId}", level: LogLevel.info);
         CustomLogger.logMessage(
@@ -1088,10 +1090,17 @@ class ScoreBoardController extends GetxController {
   Future<void> convertToOpenMatch() async {
     isConvertingToOpenMatch.value = true;
     try {
+      final clubLocationId = _resolveClubLocationId();
+      final profileLocationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId
+          ?? "68c94a94d72a6f9769712ff0";
+      final categoryId = mainHomeController.selectedCategoryId.value;
       final body = {
         "bookingId": matchBookingId.value,
         "matchType": matchType.value.toLowerCase(),
-        "bookingType": "openMatch"
+        "bookingType": "openMatch",
+        "categoryId": categoryId,
+        "location": clubLocationId,
+        "stateId": profileLocationId,
       };
 
       final response = await repository.convertBookingToOpenMatch(body: body);
@@ -1109,6 +1118,25 @@ class ScoreBoardController extends GetxController {
       CustomLogger.logMessage(msg: "ERROR converting to open match-> $e", level: LogLevel.error);
     } finally {
       isConvertingToOpenMatch.value = false;
+    }
+  }
+
+  String _resolveClubLocationId() {
+    try {
+      final clubId = registerClubId.value;
+      if (clubId.isEmpty) return "";
+
+      final clubs = mainHomeController.homeController.courtsData.value?.data?.courts;
+      if (clubs == null || clubs.isEmpty) return "";
+
+      final club = clubs.firstWhere(
+        (c) => (c.id ?? "") == clubId,
+        orElse: () => clubs.first,
+      );
+
+      return (club.locations?.isNotEmpty == true) ? (club.locations![0].id ?? "") : "";
+    } catch (_) {
+      return "";
     }
   }
 
