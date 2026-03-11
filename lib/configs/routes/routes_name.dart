@@ -84,5 +84,7 @@ class RoutesName {
 
   //League----------------------------------------------------------------------
   static const String league = '/league';
+  static const String leagueMatchLists = '/leagueMatchLists';
+  static const String liveAndCompleteLeagueMatch = '/liveAndCompleteLeagueMatch';
 
 }

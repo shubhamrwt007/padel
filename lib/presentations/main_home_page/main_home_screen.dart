@@ -9,6 +9,8 @@ import 'package:padel_mobile/data/response_models/openmatch_model/open_match_boo
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
+import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
@@ -202,7 +204,7 @@ class MainHomeScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     _quickActions(),
                     _buildLeagueComingSoon(),
-                    // _buildLeagueLiveMatch(),
+                    _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -532,8 +534,9 @@ class MainHomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryColor.withValues(alpha: 0.2),
+                  color: Colors.grey.shade300,
                   blurRadius: 8,
+                  spreadRadius: 2.3,
                   offset: const Offset(0, 3),
                 ),
               ],
@@ -542,50 +545,78 @@ class MainHomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _buildPresentedBy()
-
+        _buildTitleSponsor(),
+        BuildMoreSponsor()
       ],
     ).paddingOnly(top: 10);
   }
-  Widget _buildPresentedBy(){
+  Widget _buildTitleSponsor(){
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           Text(
-              "Presented by",
+              "Title Sponsor",
               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)
+          ).paddingOnly(bottom: 6),
+          Image.asset(
+            Assets.imagesImgDummyLogo2,
+            height: 40,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Expanded(
+                child: Divider(
+                  color: Colors.black26,
+                  thickness: 1,
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              Text(
+                "Sub Sponsors",
+                style: Get.textTheme.bodySmall!
+                    .copyWith(fontWeight: FontWeight.w400),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Expanded(
+                child: Divider(
+                  color: Colors.black26,
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
 
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Image.asset(
                 Assets.imagesImgDummyLogo1,
-                height: 28,
+                height: 25,
               ),
 
-              const SizedBox(width: 20),
 
               _divider(),
 
-              const SizedBox(width: 20),
 
               Image.asset(
-                Assets.imagesImgDummyLogo2,
-                height: 40,
+                Assets.imagesImgDummyLogo4,
+                height: 25,
               ),
 
-              const SizedBox(width: 20),
 
               _divider(),
 
-              const SizedBox(width: 20),
 
               Image.asset(
                 Assets.imagesImgDummyLogo3,
-                height: 28,
+                height: 25,
               ),
             ],
           ),
@@ -593,6 +624,7 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _divider() {
     return Container(
       height: 30,
@@ -606,40 +638,10 @@ class MainHomeScreen extends StatelessWidget {
       children: [
         _buildSwootTitle(),
         const SizedBox(height: 12),
-        _liveMatchCard(),
-        _buildPresentedBy(),
-        Row(
-          children: [
-            Text(
-                "Upcoming  Matches",
-                style: Get.textTheme.headlineMedium
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                final bottomNavController =
-                Get.find<BottomNavigationController>();
-                bottomNavController.updateIndex(1);
-              },
-              child: Container(
-                color: Colors.transparent,
-                child: Text(
-                  "See all",
-                  style: Get.textTheme.labelLarge!
-                      .copyWith(color: AppColors.primaryColor),
-                ),
-              ),
-            ),
-          ],
-        ).paddingOnly(left: 16,top: 10,bottom: 10,right: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          itemCount: 3,
-          physics: NeverScrollableScrollPhysics(),
-          itemBuilder: (context,index){
-            return UpcomingMatchCard();
-          },
-        ),
+        // _liveMatchCard(),
+        _upcomingMatchCard(),
+        _buildTitleSponsor(),
+        BuildMoreSponsor(),
       ],
     ).paddingOnly(top: 10);
   }
@@ -709,7 +711,9 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: (){
-                      Get.toNamed(RoutesName.liveTournament);
+                      Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                        "matchType":"live"
+                      });
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
@@ -741,6 +745,83 @@ class MainHomeScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+  Widget _upcomingMatchCard(){
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      decoration:  BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Stack(
+        children: [
+          Image.asset(Assets.imagesImgLeagueUpcomingMatch,fit: BoxFit.cover,width: Get.width,),
+          Column(
+            children: [
+              /// UPCOMING TAG
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child:  Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
+                    SizedBox(width: 6),
+                    Text(
+                      "Upcoming",
+                      style:Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: AppColors.primaryColor),
+                    ),
+                  ],
+                ),
+              ).paddingOnly(top: 10),
+              /// SCORE ROW
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _teamColumn("Team A",
+                    "https://i.pravatar.cc/150?img=1",
+                    "https://i.pravatar.cc/150?img=2",
+                    "Eleanor Pena",
+                    "Kristin Watson",
+                    AppColors.primaryColor,),
+
+                  Transform.translate(
+                      offset: Offset(0, 0),
+                      child: SvgPicture.asset(Assets.imagesImgVsUpcoming)),
+                  _teamColumn("Team B",
+                      "https://i.pravatar.cc/150?img=3",
+                      "https://i.pravatar.cc/150?img=4",
+                      "Theresa Webb",
+                      "Ronald Richards",
+                      AppColors.primaryColor),
+                ],
+              ),
+              GestureDetector(
+                onTap: (){
+                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                    "matchType":"live"
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 15, vertical: 8),
+                  decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius:
+                      BorderRadius.circular(30)),
+                  child:  Text("05 Jun, 2025",
+                      style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).paddingOnly(bottom: 10);
   }
   Widget _teamColumn(
       String team,
@@ -1273,10 +1354,10 @@ class MainHomeScreen extends StatelessWidget {
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
-        "title": "Tournament",
-        "action": "tournament",
+        "title": "League",
+        "action": "league",
         "boxSize": 70.0,
-        "iconSize": 34.0,
+        "iconSize": 40.0,
         "offset": Offset(0, 3)
       },
     ];
@@ -1335,78 +1416,39 @@ class MainHomeScreen extends StatelessWidget {
                       ),
                     ),
 // Coming Soon overlay
-                    if (e["action"] == "tournament")
-                      Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              decoration:  BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                  colors: [
-                                    Color(0xFF3DBE64).withValues(alpha: 0.5), // green tint
-                                    Color(0xFF1F41BB).withValues(alpha: 0.5), // blue tint
-                                  ],
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                "Coming\nSoon",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    // 🎀 Perfect corner ribbon
-                    // if (e["action"] == "americano" || e["action"] == "player")
-                    //   Positioned(
-                    //     top: 0,
-                    //     left: 0,
-                    //     child: SizedBox(
-                    //       width: boxSize,
-                    //       height: boxSize,
-                    //       child: ClipRRect(
-                    //         borderRadius: BorderRadius.circular(20),
-                    //         child: Stack(
-                    //           children: [
-                    //             // Diagonal strip
-                    //             Positioned(
-                    //               top: 6,
-                    //               left: -28,
-                    //               child: Transform.rotate(
-                    //                 angle: -0.685398, // -45°
-                    //                 child: Container(
-                    //                   width: 90,
-                    //                   height: 14,
-                    //                   alignment: Alignment.center,
-                    //                   color: Colors.orange,
-                    //                   child: const Text(
-                    //                     "COMING SOON",
-                    //                     style: TextStyle(
-                    //                       color: Colors.white,
-                    //                       fontSize: 5,
-                    //                       fontWeight: FontWeight.w700,
-                    //                       letterSpacing: 0.6,
-                    //                     ),
-                    //                   ),
-                    //                 ),
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
+//                     if (e["action"] == "tournament")
+//                       Positioned.fill(
+//                         child: ClipRRect(
+//                           borderRadius: BorderRadius.circular(20),
+//                           child: BackdropFilter(
+//                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+//                             child: Container(
+//                               decoration:  BoxDecoration(
+//                                 gradient: LinearGradient(
+//                                   begin: Alignment.centerLeft,
+//                                   end: Alignment.centerRight,
+//                                   colors: [
+//                                     Color(0xFF3DBE64).withValues(alpha: 0.5), // green tint
+//                                     Color(0xFF1F41BB).withValues(alpha: 0.5), // blue tint
+//                                   ],
+//                                 ),
+//                               ),
+//                               alignment: Alignment.center,
+//                               child: const Text(
+//                                 "Coming\nSoon",
+//                                 textAlign: TextAlign.center,
+//                                 style: TextStyle(
+//                                   color: Colors.white,
+//                                   fontSize: 11,
+//                                   fontWeight: FontWeight.w600,
+//                                   height: 1.2,
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+
                   ],
                 ),
               ),
@@ -1435,8 +1477,8 @@ class MainHomeScreen extends StatelessWidget {
           'location': locationId,
         });
         break;
-      case 'tournament':
-        CustomLogger.logMessage(msg: "tournaments coming soon!", level: LogLevel.debug);
+      case 'league':
+       Get.toNamed(RoutesName.league);
 
         break;
       case 'player':
@@ -2526,159 +2568,6 @@ class MainHomeScreen extends StatelessWidget {
         radius: 20,
         backgroundColor: const Color(0xffeaf0ff),
         child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
-      ),
-    );
-  }
-}
-
-
-class UpcomingMatchCard extends StatelessWidget {
-  const UpcomingMatchCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-
-          /// MAIN Container
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xffF2F4F9),
-                  Color(0xffDCE4F7),
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: -40,
-                  top: -10,
-                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
-                ),
-                Positioned(
-                  right: -30,
-                  bottom: -20,
-                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
-                ),
-                Column(
-                  children: [
-                    /// DATE + UPCOMING
-                    Row(
-                      children: [
-                        Text(
-                            "Team A",
-                            style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
-                        ),
-                        const Spacer(),
-                        Text(
-                            "Team B",
-                            style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
-                        ),
-                      ],
-                    ),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SizedBox(
-                              height: 30,
-                              width: 40,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  _avatar("https://i.pravatar.cc/150?img=1", 0,0),
-                                  _avatar("https://i.pravatar.cc/150?img=1", 12,8),
-                                ],
-                              ),
-                            ).paddingOnly(right: 5),
-                            Text(
-                                "Eleanor Pena \nKristin Watson",
-                                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
-                            ),
-                          ],
-                        ),
-
-                        Text(
-                          "vs",
-                          style: TextStyle(
-                            fontSize: 28,
-                            color: Colors.grey,
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            Text(
-                                "Theresa Webb \nRonald Richards",
-                                textAlign: TextAlign.right,
-                                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
-                            ),
-                            SizedBox(
-                              height: 30,
-                              width: 40,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  _avatar("https://i.pravatar.cc/150?img=1", 12,0),
-                                  _avatar("https://i.pravatar.cc/150?img=1", 0,8),
-                                ],
-                              ),
-                            ).paddingOnly(left: 5),
-                          ],
-                        ),
-                      ],
-                    )
-                  ],
-                ).paddingOnly(top: 10,left: 15,bottom: 10,right: 15),
-              ],
-            ),
-          ),
-          Container(
-            height: 25,
-            width: 100,
-            decoration: const BoxDecoration(
-              color: Color(0xff2E4DB7),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-                "05Jun, 2025",
-                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _avatar(String url, double left,double top) {
-    return Positioned(
-      left: left,
-      top: top,
-      child: Container(
-        height: 25,
-        width: 25,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 2,
-          ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
-          ),
-        ),
       ),
     );
   }

@@ -77,10 +77,13 @@ class Assets {
   static const String imagesImgDummyLogo1 = 'assets/images/img_dummy_logo_1.png';
   static const String imagesImgDummyLogo2 = 'assets/images/img_dummy_logo_2.png';
   static const String imagesImgDummyLogo3 = 'assets/images/img_dummy_logo_3.png';
+  static const String imagesImgDummyLogo4 = 'assets/images/img_dummy_logo_4.png';
   static const String imagesImgGooglePay = 'assets/images/img_google_pay.png';
   static const String imagesImgHomeLogo = 'assets/images/img_home_logo.png';
   static const String imagesImgLeaderBoardBg = 'assets/images/img_leaderBoard_bg.svg';
   static const String imagesImgLeagueComingSoon = 'assets/images/img_league_coming_soon.png';
+  static const String imagesImgLeagueSponsor = 'assets/images/img_league_sponsor.jpg';
+  static const String imagesImgLeagueUpcomingMatch = 'assets/images/img_league_upcoming_match.png';
   static const String imagesImgOpenMatchBg = 'assets/images/img_open_match_bg.svg';
   static const String imagesImgOpenMatchGreenBg = 'assets/images/img_open_match_green_bg.svg';
   static const String imagesImgOtherUpi = 'assets/images/img_other_upi.png';
@@ -90,7 +93,9 @@ class Assets {
   static const String imagesImgScoreView = 'assets/images/img_score_view.svg';
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
   static const String imagesImgTournamentLeaderboard = 'assets/images/img_tournament_leaderboard.svg';
+  static const String imagesImgVs = 'assets/images/img_vs.svg';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
+  static const String imagesImgVsUpcoming = 'assets/images/img_vs_upcoming.svg';
   static const String imagesNewHomeBanner = 'assets/images/new_home_banner.jpg';
   static const String imagesNewHomeBanner2 = 'assets/images/new_home_banner_2.jpg';
   static const String imagesNewHomeBanner4 = 'assets/images/new_home_banner_4.jpg';
