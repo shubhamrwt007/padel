@@ -30,7 +30,7 @@ class BookACourtScreen extends StatelessWidget {
   final ScrollController mainScrollController = ScrollController();
   final RxInt displayedCourtsCount = 10.obs;
   final GlobalKey availableCourtsKey = GlobalKey();
-  
+
   BookACourtScreen({super.key}) {
     mainScrollController.addListener(_onScroll);
   }
@@ -1016,7 +1016,7 @@ class BookACourtScreen extends StatelessWidget {
           final slotTime = slot.time ?? '';
           final slotMinutes = _parseTimeToMinutes(slotTime);
           final currentMinutes = now.hour * 60 + now.minute;
-          
+
           // Keep slot available until 15 minutes past start time
           return currentMinutes <= slotMinutes + 15;
         }).toList();
@@ -1251,7 +1251,7 @@ class BookACourtScreen extends StatelessWidget {
             if (isLeftHalfBooked || isRightHalfBooked) {
               return;
             }
-            
+
             controller.toggleCourtRowSlotSelection(
               slot,
               courtId: resolvedCourtId,
@@ -1506,7 +1506,7 @@ class BookACourtScreen extends StatelessWidget {
     final isToday = selectedDate?.year == now.year &&
         selectedDate?.month == now.month &&
         selectedDate?.day == now.day;
-    
+
     bool isLeftHalfPast = false;
     if (isToday && supports30Min) {
       final slotMinutes = _parseTimeToMinutes(slot.time ?? '');
@@ -2053,18 +2053,18 @@ class BookACourtScreen extends StatelessWidget {
         for (var j = i + 1; j < consolidatedSelections.length; j++) {
           final currentSelection = consolidatedSelections[j - 1];
           final nextSelection = consolidatedSelections[j];
-          
+
           final currentSlot = currentSelection['slot'] as Slots;
           final nextSlot = nextSelection['slot'] as Slots;
-          
+
           final currentIsHalf = currentSelection['isHalfSlot'] as bool? ?? false;
           final currentIsFirst = currentSelection['isFirstHalf'] as bool? ?? true;
           final nextIsHalf = nextSelection['isHalfSlot'] as bool? ?? false;
           final nextIsFirst = nextSelection['isFirstHalf'] as bool? ?? true;
-          
+
           final currentTime = _parseTimeToMinutes(currentSlot.time ?? '');
           final nextTime = _parseTimeToMinutes(nextSlot.time ?? '');
-          
+
           // Calculate actual end time of current slot
           final currentSlotDuration = currentSlot.duration ?? 60;
           int currentEndTime = currentTime;
@@ -2075,13 +2075,13 @@ class BookACourtScreen extends StatelessWidget {
           } else {
             currentEndTime += 60; // Full slot
           }
-          
+
           // Calculate actual start time of next slot
           int nextStartTime = nextTime;
           if (nextIsHalf && !nextIsFirst) {
             nextStartTime += 30; // Second half starts at +30
           }
-          
+
           // Check if slots are consecutive
           if (currentEndTime == nextStartTime) {
             consecutiveGroup.add(consolidatedSelections[j]);
@@ -2157,26 +2157,26 @@ class BookACourtScreen extends StatelessWidget {
           final startTime = firstSlot.time ?? '';
           final firstSelection = consecutiveGroup.first;
           final lastSelection = consecutiveGroup.last;
-          
+
           final firstIsHalf = firstSelection['isHalfSlot'] as bool? ?? false;
           final firstIsFirst = firstSelection['isFirstHalf'] as bool? ?? true;
           final lastIsHalf = lastSelection['isHalfSlot'] as bool? ?? false;
           final lastIsFirst = lastSelection['isFirstHalf'] as bool? ?? true;
-          
+
           // Calculate total duration
           int totalDuration = 0;
           for (var selection in consecutiveGroup) {
             final slot = selection['slot'] as Slots;
             final isHalf = selection['isHalfSlot'] as bool? ?? false;
             final slotDuration = slot.duration ?? 60;
-            
+
             if (slotDuration == 90) {
               totalDuration += 90;
             } else {
               totalDuration += isHalf ? 30 : 60;
             }
           }
-          
+
           // Parse start time
           try {
             final cleanTime = startTime.trim().toLowerCase();
@@ -2190,7 +2190,7 @@ class BookACourtScreen extends StatelessWidget {
 
               if (period == 'pm' && hour != 12) hour += 12;
               if (period == 'am' && hour == 12) hour = 0;
-              
+
               // Adjust start time if first selection is second half
               if (firstIsHalf && !firstIsFirst) {
                 minute += 30;
@@ -2674,21 +2674,21 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                         : null,
                     child: isLoading
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
                         : Text(
-                            'Update',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isEnabled ? Colors.white : Colors.grey.shade600,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      'Update',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isEnabled ? Colors.white : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 );
               }),
