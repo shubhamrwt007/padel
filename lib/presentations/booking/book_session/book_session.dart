@@ -705,18 +705,20 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
     return Builder(
       builder: (BuildContext slotContext) {
         return GestureDetector(
-          onTapDown: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
-              ? null
-              : (details) {
+          onTapDown: (details) {
+            // Prevent selection if slot is unavailable or booked
+            if (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) {
+              return;
+            }
+
             if (supports30Min) {
               // For slots that support 30-min pricing, detect left/right half tap
               final RenderBox box = slotContext.findRenderObject() as RenderBox;
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Check if the tapped half is already booked
+              // Prevent selection if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                // AppToast.error("This ${isLeftHalf ? 'left' : 'right'} half is already booked.");
                 return;
               }
 
@@ -727,9 +729,8 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                 isLeftHalf: isLeftHalf,
               );
             } else {
-              // For slots that don't support 30-min pricing or when selecting full slots
+              // For full slots, prevent selection if any part is booked
               if (isAnyHalfBooked) {
-                // AppToast.error("This slot is already booked.");
                 return;
               }
 

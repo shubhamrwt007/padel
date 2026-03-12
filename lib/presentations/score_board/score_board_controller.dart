@@ -509,7 +509,13 @@ class ScoreBoardController extends GetxController {
         print('🏆 Match completed received: $data');
         isCompleted.value = true;
         fetchScoreBoard(showLoader: false).then((_) {
-          showMatchSummaryDialog(this);
+          // Only show dialog from socket if not already showing
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!isShowingMatchSummary.value) {
+              isShowingMatchSummary.value = true;
+              showMatchSummaryDialog(this);
+            }
+          });
         });
       });
     } else {
@@ -784,6 +790,9 @@ class ScoreBoardController extends GetxController {
     }
   }
 
+  // Add flag to prevent multiple dialog calls
+  RxBool isShowingMatchSummary = false.obs;
+
   Future<void> endGame() async {
     CustomLogger.logMessage(msg: 'endGame API call', level: LogLevel.info);
     // Check if any set is empty (no scores)
@@ -815,7 +824,14 @@ class ScoreBoardController extends GetxController {
         isCompleted.value = true;
         await profileController.fetchUserProfile();
         await fetchScoreBoard(showLoader: false);
-        showMatchSummaryDialog(this);
+        
+        // Show dialog with delay to ensure proper state
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (!isShowingMatchSummary.value) {
+            isShowingMatchSummary.value = true;
+            showMatchSummaryDialog(this);
+          }
+        });
       } else {
         CustomLogger.logMessage(msg: response.message ?? "", level: LogLevel.debug);
       }

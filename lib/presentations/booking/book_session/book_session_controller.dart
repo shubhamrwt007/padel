@@ -873,6 +873,12 @@ var locationsId = "".obs;
     if (supports30Min && isLeftHalf == false) {
       final leftKey = '${dateString}_${courtId}_${targetSlotId}_L';
       if (!multiDateSelections.containsKey(leftKey)) {
+        // Check if left half is booked before auto-selecting
+        if (isLeftHalfBooked(targetSlot)) {
+          log('Cannot auto-select left half of ${targetSlot.time} - it is booked');
+          return;
+        }
+        
         final bookingTime = targetSlot.time ?? '';
         final adjustedAmount = (targetSlot.amount ?? 0) ~/ 2;
         
@@ -922,7 +928,13 @@ var locationsId = "".obs;
       if (slotTimeMinutes != null && 
           slotTimeMinutes > latestSelectedTimeMinutes! && 
           slotTimeMinutes < targetTimeMinutes) {
-        slotsToFill.add(slot);
+        // CRITICAL FIX: Check if slot is booked before adding to fill list
+        final isSlotBooked = isLeftHalfBooked(slot) || isRightHalfBooked(slot);
+        if (!isSlotBooked) {
+          slotsToFill.add(slot);
+        } else {
+          log('Skipping booked slot ${slot.time} in gap filling');
+        }
       }
     }
     
@@ -934,7 +946,7 @@ var locationsId = "".obs;
         final leftKey = '${dateString}_${courtId}_${gapSlotId}_L';
         final rightKey = '${dateString}_${courtId}_${gapSlotId}_R';
         
-        if (!multiDateSelections.containsKey(leftKey)) {
+        if (!multiDateSelections.containsKey(leftKey) && !isLeftHalfBooked(gapSlot)) {
           final bookingTime = gapSlot.time ?? '';
           final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
           
@@ -954,7 +966,7 @@ var locationsId = "".obs;
           }
         }
         
-        if (!multiDateSelections.containsKey(rightKey)) {
+        if (!multiDateSelections.containsKey(rightKey) && !isRightHalfBooked(gapSlot)) {
           final originalTime = gapSlot.time ?? '';
           final bookingTime = _addMinutesToTime(originalTime, 30);
           final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
@@ -995,7 +1007,7 @@ var locationsId = "".obs;
       }
     }
     
-    log('Filled ${slotsToFill.length} gap slots to maintain continuity');
+    log('Filled ${slotsToFill.length} gap slots to maintain continuity (skipped booked slots)');
   }
   
   void _removeSlotGroup(Slots primarySlot, String courtId, String dateString) {

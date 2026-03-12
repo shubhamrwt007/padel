@@ -4,12 +4,24 @@ import 'package:padel_mobile/presentations/score_board/score_board_controller.da
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 void showMatchSummaryDialog(ScoreBoardController controller) {
-  final isUserWinner = _isUserWinner(controller);
+  // Close any existing dialogs first
+  if (Get.isDialogOpen == true) {
+    Get.back();
+  }
+  
+  // Add a small delay to ensure previous dialog is closed
+  Future.delayed(const Duration(milliseconds: 100), () {
+    final isUserWinner = _isUserWinner(controller);
+    _showResultDialog(
+      isWinner: isUserWinner,
+      controller: controller,
+    );
+  });
+}
 
-  _showResultDialog(
-    isWinner: isUserWinner,
-    controller: controller,
-  );
+// Helper function to reset the dialog flag
+void _resetDialogFlag(ScoreBoardController controller) {
+  controller.isShowingMatchSummary.value = false;
 }
 
 bool _isUserWinner(ScoreBoardController controller) {
@@ -155,16 +167,29 @@ void _showResultDialog({
           Positioned(
             top: 6,
             right: 6,
-            child: IconButton(
-              icon: const Icon(Icons.close, size: 22),
-              onPressed: () => Get.back(),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  _resetDialogFlag(controller);
+                  Get.back();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: const Icon(Icons.close, size: 22),
+                ),
+              ),
             ),
           ),
         ],
       ),
     ),
-    barrierDismissible: false,
-  );
+    barrierDismissible: true,
+  ).then((_) {
+    // Reset flag when dialog is dismissed by any means
+    _resetDialogFlag(controller);
+  });
 }
 
 /// XP TEXT
