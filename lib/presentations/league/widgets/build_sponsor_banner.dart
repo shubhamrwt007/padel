@@ -68,3 +68,90 @@ class BuildMoreSponsor extends StatelessWidget {
     ).paddingOnly(top: 10);
   }
 }
+class BuildTitleSponsor extends StatelessWidget {
+  const BuildTitleSponsor({super.key});
+
+  @override
+  Widget build(BuildContext context){
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          Text(
+              "Sponsors",
+              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)
+          ).paddingOnly(bottom: 6),
+          Image.asset(
+            Assets.imagesImgDummyLogo2,
+            height: 40,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Expanded(
+                child: Divider(
+                  color: Colors.black26,
+                  thickness: 1,
+                ),
+              ),
+              //
+              // const SizedBox(width: 8),
+              //
+              // Text(
+              //   "Other Sponsors",
+              //   style: Get.textTheme.bodySmall!
+              //       .copyWith(fontWeight: FontWeight.w400),
+              // ),
+              //
+              // const SizedBox(width: 8),
+              //
+              // const Expanded(
+              //   child: Divider(
+              //     color: Colors.black26,
+              //     thickness: 1,
+              //   ),
+              // ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Image.asset(
+                Assets.imagesImgDummyLogo1,
+                height: 25,
+              ),
+
+
+              _divider(),
+
+
+              Image.asset(
+                Assets.imagesImgDummyLogo4,
+                height: 25,
+              ),
+
+
+              _divider(),
+
+
+              Image.asset(
+                Assets.imagesImgDummyLogo3,
+                height: 25,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _divider() {
+    return Container(
+      height: 30,
+      width: 1,
+      color: Colors.black26,
+    );
+  }
+
+}

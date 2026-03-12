@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_matches_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
@@ -232,100 +233,132 @@ class LeagueScreen extends StatelessWidget {
     );
   }
   Widget _liveMatchCard() {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 0),
-          child: Stack(
-            children: [
-              SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
-              Column(
-                children: [
-                  /// LIVE TAG
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFCD3529),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+    return Obx(() {
+      if (controller.isLoadingLiveMatches.value) {
+        return Container(
+          height: 200,
+          child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
+        );
+      }
+
+      final scheduleData = controller.liveMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) return const SizedBox.shrink();
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) return const SizedBox.shrink();
+
+      final firstMatch = allMatches.first;
+      final categoryType = scheduleData.firstOrNull?.categoryType ?? "Mixed Doubles";
+
+      return Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 0),
+            child: Stack(
+              children: [
+                SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
+                Column(
+                  children: [
+                    /// LIVE TAG
+                    Container(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFCD3529),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(radius: 4, backgroundColor: Colors.white),
+                          SizedBox(width: 6),
+                          Text(
+                            "LIVE",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ).paddingOnly(top: 10),
+                    /// SCORE ROW
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        CircleAvatar(radius: 4, backgroundColor: Colors.white),
-                        SizedBox(width: 6),
-                        Text(
-                          "LIVE",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
+                        _teamColumn(
+                          firstMatch.teamA?.teamName ?? "Team A",
+                          "https://i.pravatar.cc/150?img=1",
+                          "https://i.pravatar.cc/150?img=2",
+                          (firstMatch.teamA?.players?.isNotEmpty ?? false) ? (firstMatch.teamA!.players![0].playerName ?? "") : "Player 1",
+                          (firstMatch.teamA?.players != null && firstMatch.teamA!.players!.length > 1) ? (firstMatch.teamA!.players![1].playerName ?? "") : "Player 2",
+                          AppColors.primaryColor,
+                        ),
+
+                        Transform.translate(
+                          offset: Offset(0, 0),
+                          child: Column(
+                            children: [
+                              Text(categoryType, style: Get.textTheme.labelMedium),
+                              SizedBox(height: 8),
+                              Text(
+                                  "${firstMatch.score?.teamA ?? 0} : ${firstMatch.score?.teamB ?? 0}",
+                                  style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                            ],
+                          ),
+                        ),
+                        _teamColumn(
+                          firstMatch.teamB?.teamName ?? "Team B",
+                          "https://i.pravatar.cc/150?img=3",
+                          "https://i.pravatar.cc/150?img=4",
+                          (firstMatch.teamB?.players?.isNotEmpty ?? false) ? (firstMatch.teamB!.players![0].playerName ?? "") : "Player 1",
+                          (firstMatch.teamB?.players != null && firstMatch.teamB!.players!.length > 1) ? (firstMatch.teamB!.players![1].playerName ?? "") : "Player 2",
+                          AppColors.secondaryColor,
                         ),
                       ],
                     ),
-                  ).paddingOnly(top: 10),
-                  /// SCORE ROW
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _teamColumn("Team A",
-                        "https://i.pravatar.cc/150?img=1",
-                        "https://i.pravatar.cc/150?img=2",
-                        "Eleanor Pena",
-                        "Kristin Watson",
-                        AppColors.primaryColor,),
-
-                      Transform.translate(
-                        offset: Offset(0, 8),
-                        child: Text(
-                            "2 : 0",
-                            style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
-                      ),
-                      _teamColumn("Team B",
-                          "https://i.pravatar.cc/150?img=3",
-                          "https://i.pravatar.cc/150?img=4",
-                          "Theresa Webb",
-                          "Ronald Richards",
-                          AppColors.secondaryColor),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: (){
-                      Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                        "matchType":"live"
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                          color: const Color(0xff27AE60),
-                          borderRadius:
-                          BorderRadius.circular(30)),
-                      child:  Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircleAvatar(
-                            radius: 11,
-                            backgroundColor: AppColors.primaryColor,
-                            child: Icon(Icons.play_arrow,
-                                color: Colors.white, size: 18),
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap: (){
+                            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                              "matchType":"live"
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                                color: const Color(0xff27AE60),
+                                borderRadius:
+                                BorderRadius.circular(30)),
+                            child:  Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 11,
+                                  backgroundColor: AppColors.primaryColor,
+                                  child: Icon(Icons.play_arrow,
+                                      color: Colors.white, size: 18),
+                                ),
+                                SizedBox(width: 8),
+                                Text("Watch Live",
+                                    style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
+                              ],
+                            ),
                           ),
-                          SizedBox(width: 8),
-                          Text("Watch Live",
-                              style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _teamColumn(
@@ -356,8 +389,8 @@ class LeagueScreen extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _avatar(img1, 0),
-                _avatar(img2, 24),
+                _avatarWithInitials(name1, 0),
+                _avatarWithInitials(name2, 24),
               ],
             ),
           ),
@@ -373,7 +406,15 @@ class LeagueScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _avatar(String url, double left) {
+  
+  Widget _avatarWithInitials(String name, double left) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
     return Positioned(
       left: left,
       child: Container(
@@ -385,9 +426,16 @@ class LeagueScreen extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
+          color:Color(0xffCBD6FF),
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -408,17 +456,52 @@ class LeagueScreen extends StatelessWidget {
     );
   }
   Widget _liveList() {
-    return ListView.builder(
-      itemCount: 3,
-      itemBuilder: (context, index) =>
-          GestureDetector(
-              onTap: (){
-                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                  "matchType":"live"
-                });
-              },
-              child: const LiveMatchCard()),
-    );
+    return Obx(() {
+      if (controller.isLoadingLiveMatches.value) {
+        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+      }
+
+      final scheduleData = controller.liveMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) {
+        return Center(
+          child: Text(
+            "No live matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) {
+        return Center(
+          child: Text(
+            "No live matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return GestureDetector(
+            onTap: () {
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                "matchType": "live"
+              });
+            },
+            child: LiveMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+            ),
+          );
+        },
+      );
+    });
   }
   Widget _resultsList() {
     return ListView.builder(
@@ -449,7 +532,7 @@ class UpcomingMatchCard extends StatelessWidget {
             height: 25,
             width: 140,
             decoration: const BoxDecoration(
-              color: Color(0xff2E4DB7),
+              color: AppColors.primaryColor,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(14),
                 bottomRight: Radius.circular(14),
@@ -526,7 +609,12 @@ class UpcomingMatchCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          SvgPicture.asset(Assets.imagesImgVs,),
+                          Column(
+                            children: [
+                              SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
+                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
+                            ],
+                          ),
                           Row(
                             children: [
                               Text(
@@ -582,10 +670,17 @@ class UpcomingMatchCard extends StatelessWidget {
   }
 }
 class LiveMatchCard extends StatelessWidget {
-  const LiveMatchCard({super.key});
+  final Matches? match;
+  final String? categoryType;
+  const LiveMatchCard({super.key, this.match, this.categoryType});
 
   @override
   Widget build(BuildContext context) {
+    if (match == null) return const SizedBox.shrink();
+    
+    final teamAPlayers = match?.teamA?.players ?? [];
+    final teamBPlayers = match?.teamB?.players ?? [];
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -669,12 +764,12 @@ class LiveMatchCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                              "Team A",
+                              match?.teamA?.teamName ?? "Team A",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                           const Spacer(),
                           Text(
-                              "Team B",
+                              match?.teamB?.teamName ?? "Team B",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                         ],
@@ -691,32 +786,76 @@ class LiveMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,8),
+                                    _avatar(teamAPlayers.isNotEmpty ? teamAPlayers[0].playerName ?? "" : "Player 1", 0, 0),
+                                    _avatar(teamAPlayers.length > 1 ? teamAPlayers[1].playerName ?? "" : "Player 2", 12, 8),
                                   ],
                                 ),
                               ).paddingOnly(right: 5),
-                              Text(
-                                  "Eleanor Pena \nKristin Watson",
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: (match?.teamA?.players?.isNotEmpty ?? false)
+                                      ? match!.teamA!.players!
+                                      .take(2)
+                                      .map((e) => Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    formatName(e.playerName ?? ''),
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 1",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 2",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          Row(
+                          Column(
                             children: [
-                              Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                              Row(
+                                children: [
+                                  Text("${match?.score?.teamA ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text("${match?.score?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                ],
+                              ),
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
                             ],
                           ),
                           Row(
                             children: [
-                              Text(
-                                  "Theresa Webb \nRonald Richards",
-                                  textAlign: TextAlign.right,
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: (match?.teamB?.players?.isNotEmpty ?? false)
+                                      ? match!.teamB!.players!
+                                      .take(2)
+                                      .map((e) => Text(
+                                    formatName(e.playerName ?? ''),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("P3",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("P4",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
@@ -724,8 +863,8 @@ class LiveMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,8),
+                                    _avatar(teamBPlayers.isNotEmpty ? teamBPlayers[0].playerName ?? "" : "Player 3", 12, 0),
+                                    _avatar(teamBPlayers.length > 1 ? teamBPlayers[1].playerName ?? "" : "Player 4", 0, 8),
                                   ],
                                 ),
                               ).paddingOnly(left: 5),
@@ -743,7 +882,15 @@ class LiveMatchCard extends StatelessWidget {
       ),
     );
   }
-  Widget _avatar(String url, double left,double top) {
+  
+  Widget _avatar(String name, double left, double top) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
     return Positioned(
       left: left,
       top: top,
@@ -756,13 +903,27 @@ class LiveMatchCard extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
     );
+  }
+  String formatName(String name) {
+    final parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts.first} ${parts.last[0]}";
+    }
+    return name;
   }
 }
 class ResultMatchCard extends StatelessWidget {
@@ -864,13 +1025,18 @@ class ResultMatchCard extends StatelessWidget {
                             ],
                           ),
 
-                          Row(
+                          Column(
                             children: [
-                              Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                              Row(
+                                children: [
+                                  Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                ],
+                              ),
+                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
                             ],
                           ),
 

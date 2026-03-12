@@ -1,16 +1,14 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_matches_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
-import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
@@ -296,148 +294,164 @@ class MainHomeScreen extends StatelessWidget {
   Widget _buildSportTabSelector() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.creamColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFE8E8E8),
           width: 1,
         ),
       ),
-      child: Obx(() => Row(
-        children: [
-          // Padel Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: controller.selectedSportTab.value == 0
-                      ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFFEEF2FF),
-                      const Color(0xFFE0E7FF),
-                    ],
-                  )
-                      : null,
-                  color: controller.selectedSportTab.value == 0
-                      ? null
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 0
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                  boxShadow: controller.selectedSportTab.value == 0
-                      ? [
-                    BoxShadow(
-                      color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                      spreadRadius: -1,
+      child: Obx(() {
+        final selected = controller.selectedSportTab.value;
+        return Stack(
+          children: [
+            // Animated sliding pill background
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              alignment: selected == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFEEF2FF),
+                        Color(0xFFE0E7FF),
+                      ],
                     ),
-                  ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      Assets.imagesIcPadel,
-                      height: 18, // Add this line - adjust value as needed
-                      color: controller.selectedSportTab.value == 0
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF3B5BDB),
+                      width: 1.5,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Padel',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 0
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B5BDB).withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                        spreadRadius: -1,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  height: 38,
                 ),
               ),
             ),
-          ),
 
-          // Pickleball Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: controller.selectedSportTab.value == 1
-                      ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFFEEF2FF),
-                      const Color(0xFFE0E7FF),
-                    ],
-                  )
-                      : null,
-                  color: controller.selectedSportTab.value == 1
-                      ? null
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 1
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                  boxShadow: controller.selectedSportTab.value == 1
-                      ? [
-                    BoxShadow(
-                      color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                      spreadRadius: -1,
-                    ),
-                  ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      Assets.imagesIcPickleball,
-                      height: 18, // Add this line - adjust value as needed
-                      color: controller.selectedSportTab.value == 1
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Pickleball',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 1
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+            // Tab buttons row (on top of pill)
+            Row(
+              children: [
+                // Padel Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.onSportTabChanged(0),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      height: 38,
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: selected == 0 ? 1.15 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            child: SvgPicture.asset(
+                              Assets.imagesIcPadel,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                selected == 0
+                                    ? const Color(0xFF3B5BDB)
+                                    : const Color(0xFF252525),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              color: selected == 0
+                                  ? const Color(0xFF3B5BDB)
+                                  : const Color(0xFF252525),
+                              fontSize: 14,
+                              fontWeight: selected == 0
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontFamily: Get.textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('Padel'),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+
+                // Pickleball Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.onSportTabChanged(1),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      height: 38,
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: selected == 1 ? 1.15 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            child: SvgPicture.asset(
+                              Assets.imagesIcPickleball,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                selected == 1
+                                    ? const Color(0xFF3B5BDB)
+                                    : const Color(0xFF252525),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              color: selected == 1
+                                  ? const Color(0xFF3B5BDB)
+                                  : const Color(0xFF252525),
+                              fontSize: 14,
+                              fontWeight: selected == 1
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontFamily: Get.textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('Pickleball'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      )),
+          ],
+        );
+      }),
     );
   }
   Widget _buildAppBarTitle(BuildContext context) {
@@ -545,107 +559,98 @@ class MainHomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _buildTitleSponsor(),
+        BuildTitleSponsor(),
         BuildMoreSponsor()
       ],
     ).paddingOnly(top: 10);
   }
-  Widget _buildTitleSponsor(){
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          Text(
-              "Title Sponsor",
-              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400)
-          ).paddingOnly(bottom: 6),
-          Image.asset(
-            Assets.imagesImgDummyLogo2,
-            height: 40,
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Expanded(
-                child: Divider(
-                  color: Colors.black26,
-                  thickness: 1,
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              Text(
-                "Sub Sponsors",
-                style: Get.textTheme.bodySmall!
-                    .copyWith(fontWeight: FontWeight.w400),
-              ),
-
-              const SizedBox(width: 8),
-
-              const Expanded(
-                child: Divider(
-                  color: Colors.black26,
-                  thickness: 1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Image.asset(
-                Assets.imagesImgDummyLogo1,
-                height: 25,
-              ),
 
 
-              _divider(),
-
-
-              Image.asset(
-                Assets.imagesImgDummyLogo4,
-                height: 25,
-              ),
-
-
-              _divider(),
-
-
-              Image.asset(
-                Assets.imagesImgDummyLogo3,
-                height: 25,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider() {
-    return Container(
-      height: 30,
-      width: 1,
-      color: Colors.black26,
-    );
-  }
   Widget _buildLeagueLiveMatch(){
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSwootTitle(),
         const SizedBox(height: 12),
-        // _liveMatchCard(),
-        _upcomingMatchCard(),
-        _buildTitleSponsor(),
+        _buildLeagueLiveMatchSlider([]),
+        // _upcomingMatchCard(),
+        BuildTitleSponsor(),
         BuildMoreSponsor(),
+        _buildLeaguePointsTable(),
       ],
     ).paddingOnly(top: 10);
   }
-  Widget _liveMatchCard() {
+
+  Widget _buildLeagueLiveMatchSlider(List<Widget> cards) {
+    return Obx(() {
+      final scheduleData = controller.scheduleMatches.value?.data ?? [];
+      
+      if (controller.isLoadingScheduleMatches.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
+      
+      if (scheduleData.isEmpty) return const SizedBox.shrink();
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) return const SizedBox.shrink();
+
+      final liveMatchCards = scheduleData.expand((data) {
+        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType));
+      }).toList();
+
+      if (liveMatchCards.length == 1) return liveMatchCards.first;
+
+      return Column(
+        children: [
+          CarouselSlider.builder(
+            itemCount: liveMatchCards.length,
+            itemBuilder: (context, index, realIndex) => liveMatchCards[index],
+            options: CarouselOptions(
+              viewportFraction: 1,
+              enableInfiniteScroll: false,
+              enlargeCenterPage: false,
+              autoPlay: false,
+              height: 200,
+              onPageChanged: (index, reason) {
+                controller.leagueLiveCarouselIndex.value = index;
+              },
+            ),
+          ),
+          Obx(() {
+            final idx = controller.leagueLiveCarouselIndex.value;
+            if (idx >= liveMatchCards.length) {
+              controller.leagueLiveCarouselIndex.value = 0;
+            }
+            final activeIndex = controller.leagueLiveCarouselIndex.value.clamp(0, liveMatchCards.length - 1);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(liveMatchCards.length, (i) {
+                final isActive = i == activeIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: isActive ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primaryColor : Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                );
+              }),
+            );
+          }),
+          SizedBox(height: 10,)
+        ],
+      );
+    });
+  }
+  Widget _liveMatchCard(Matches? match, String? categoryType) {
+    if (match == null) return const SizedBox.shrink();
+    
     return Column(
       children: [
         Container(
@@ -688,55 +693,69 @@ class MainHomeScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _teamColumn("Team A",
+                      _teamColumn(
+                        match.teamA?.teamName ?? "Team A",
                         "https://i.pravatar.cc/150?img=1",
                         "https://i.pravatar.cc/150?img=2",
-                        "Eleanor Pena",
-                        "Kristin Watson",
-                        AppColors.primaryColor,),
+                        (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
+                        (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
+                        AppColors.primaryColor,
+                      ),
 
                       Transform.translate(
-                        offset: Offset(0, 8),
-                        child: Text(
-                            "2 : 0",
-                            style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                        offset: Offset(0, 0),
+                        child: Column(
+                          children: [
+                            Text(categoryType ?? "Mixed Doubles", style: Get.textTheme.labelMedium),
+                            SizedBox(height: 8),
+                            Text(
+                                "${match.score?.teamA ?? 0} : ${match.score?.teamB ?? 0}",
+                                style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                          ],
+                        ),
                       ),
-                      _teamColumn("Team B",
-                          "https://i.pravatar.cc/150?img=3",
-                          "https://i.pravatar.cc/150?img=4",
-                          "Theresa Webb",
-                          "Ronald Richards",
-                          AppColors.secondaryColor),
+                      _teamColumn(
+                        match.teamB?.teamName ?? "Team B",
+                        "https://i.pravatar.cc/150?img=3",
+                        "https://i.pravatar.cc/150?img=4",
+                        (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
+                        (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 2",
+                        AppColors.secondaryColor,
+                      ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: (){
-                      Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                        "matchType":"live"
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                          color: const Color(0xff27AE60),
-                          borderRadius:
-                          BorderRadius.circular(30)),
-                      child:  Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircleAvatar(
-                            radius: 11,
-                            backgroundColor: AppColors.primaryColor,
-                            child: Icon(Icons.play_arrow,
-                                color: Colors.white, size: 18),
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: (){
+                          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                            "matchType":"live"
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                              color: const Color(0xff27AE60),
+                              borderRadius:
+                              BorderRadius.circular(30)),
+                          child:  Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 11,
+                                backgroundColor: AppColors.primaryColor,
+                                child: Icon(Icons.play_arrow,
+                                    color: Colors.white, size: 18),
+                              ),
+                              SizedBox(width: 8),
+                              Text("Watch Live",
+                                  style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
+                            ],
                           ),
-                          SizedBox(width: 8),
-                          Text("Watch Live",
-                              style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -823,6 +842,132 @@ class MainHomeScreen extends StatelessWidget {
       ),
     ).paddingOnly(bottom: 10);
   }
+  Widget _buildLeaguePointsTable(){
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey.shade100,
+                spreadRadius: 1.5,
+                blurRadius: 5.0,
+                offset: Offset(0, 3)
+            )
+          ]
+      ),
+      child: Column(
+        children: [
+          /// Header Row
+          _headerRow(),
+
+          Divider(color: Colors.grey.shade300,),
+
+          /// List
+          ...List.generate(6, (index) {
+            return Column(
+              children: [
+                _teamRow(index + 1),
+                Divider(color: Colors.grey.shade300,),
+              ],
+            );
+          }),
+        ],
+      ),
+    ).paddingOnly(top: 10);
+  }
+  Widget _headerRow() {
+    final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
+    return  Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(width: 20, child: Text("#",style: style,)),
+        Expanded(
+            flex: 3,
+            child: SizedBox(width: 35,child: Text("Teams",style: style))),
+        // SizedBox(width: 30, child: Text("M",style: style)),
+        SizedBox(width: 30, child: Center(child: Text("W",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("L",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Pts",style: style))),
+        Expanded(
+            flex: 3,
+            child: Center(child: Text("Last 5",style: style))),
+      ],
+    );
+  }
+  Widget _teamRow(int index) {
+    List<String> teams = [
+      "Terrakort",
+      "Padel Haus",
+      "Courtline",
+      "Terrakort",
+      "Padel Haus",
+      "Courtline"
+    ];
+
+    return Row(
+      children: [
+        SizedBox(width: 25, child: Text("$index",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        Expanded(
+          flex: 3,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 11,
+                backgroundColor: Colors.black12,
+                backgroundImage: NetworkImage(
+                  "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                teams[index - 1],
+                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+
+        // SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        Expanded(
+          flex: 3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children:  [
+              _buildResultIcon(false),
+              _buildResultIcon(true),
+              _buildResultIcon(false),
+              _buildResultIcon(true),
+              _buildResultIcon(false),
+            ],
+          ),
+        )
+
+      ],
+    );
+  }
+  Widget _buildResultIcon(bool win) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      height: 16,
+      width: 16,
+      decoration: BoxDecoration(
+        color: win ? Colors.green : Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        win ? Icons.check : Icons.close,
+        size: 10,
+        color: Colors.white,
+      ),
+    );
+  }
   Widget _teamColumn(
       String team,
       String img1,
@@ -850,8 +995,8 @@ class MainHomeScreen extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _avatar(img1, 0),
-                _avatar(img2, 24),
+                _avatarWithInitials(name1, 0),
+                _avatarWithInitials(name2, 24),
               ],
             ),
           ),
@@ -867,7 +1012,15 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _avatar(String url, double left) {
+  
+  Widget _avatarWithInitials(String name, double left) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
     return Positioned(
       left: left,
       child: Container(
@@ -879,9 +1032,16 @@ class MainHomeScreen extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -1581,7 +1741,6 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
     final courtDetails = court.courts?.isNotEmpty == true ? court.courts![0] : null;
-    final courtImage = courtDetails?.courtImage?.isNotEmpty == true ? courtDetails!.courtImage![0] : null;
     final courtCount = courtDetails?.courtCount ?? 0;
     final features = courtDetails?.features ?? [];
     final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;

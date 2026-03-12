@@ -12,13 +12,19 @@ import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_matches_model.dart';
 class MainHomeController extends GetxController{
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
   final HomeRepository _homeRepository = HomeRepository();
   final OpenMatchRepository _openMatchRepository = OpenMatchRepository();
+  final LeagueRepository _leagueRepository = LeagueRepository();
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
+  final RxInt leagueLiveCarouselIndex = 0.obs;
+  final Rx<GetAllScheduleMatchesModel?> scheduleMatches = Rx<GetAllScheduleMatchesModel?>(null);
+  final RxBool isLoadingScheduleMatches = false.obs;
   // Sport Tab Selection
   final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
   
@@ -83,6 +89,7 @@ class MainHomeController extends GetxController{
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
     await fetchOpenMatches();
+    await fetchScheduleMatches();
     _startBannerAutoSlide();
   }
 
@@ -264,6 +271,18 @@ class MainHomeController extends GetxController{
       case 3:
         Get.toNamed(RoutesName.bookACourt);
         break;
+    }
+  }
+
+  Future<void> fetchScheduleMatches() async {
+    try {
+      isLoadingScheduleMatches.value = true;
+      final response = await _leagueRepository.getAllScheduleMatches(matchStatus: 'live');
+      scheduleMatches.value = response;
+    } catch (e) {
+      print('Error fetching schedule matches: $e');
+    } finally {
+      isLoadingScheduleMatches.value = false;
     }
   }
 }

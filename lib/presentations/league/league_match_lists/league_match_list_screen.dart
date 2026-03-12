@@ -83,7 +83,7 @@ class UpcomingMatchCard extends StatelessWidget {
             height: 25,
             width: 140,
             decoration: const BoxDecoration(
-              color: Color(0xff2E4DB7),
+              color: AppColors.primaryColor,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(14),
                 bottomRight: Radius.circular(14),
@@ -161,11 +161,12 @@ class UpcomingMatchCard extends StatelessWidget {
                             ],
                           ),
 
-                          Text(
-                              "vs",
-                              style: Get.textTheme.titleLarge!.copyWith(color: Colors.grey)
+                          Column(
+                            children: [
+                              SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
+                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
+                            ],
                           ),
-
                           Row(
                             children: [
                               Text(
@@ -484,13 +485,18 @@ class ResultMatchCard extends StatelessWidget {
                             ],
                           ),
 
-                          Row(
+                          Column(
                             children: [
-                              Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-                              const SizedBox(width: 6),
-                              Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                              Row(
+                                children: [
+                                  Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                ],
+                              ),
+                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
                             ],
                           ),
 
