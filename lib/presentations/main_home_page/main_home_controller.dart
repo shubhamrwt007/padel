@@ -13,7 +13,8 @@ import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
 class MainHomeController extends GetxController{
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
@@ -23,8 +24,12 @@ class MainHomeController extends GetxController{
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
   final RxInt leagueLiveCarouselIndex = 0.obs;
-  final Rx<GetAllScheduleMatchesModel?> scheduleMatches = Rx<GetAllScheduleMatchesModel?>(null);
+  final Rx<GetAllScheduleLiveMatchesModel?> scheduleMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
   final RxBool isLoadingScheduleMatches = false.obs;
+  final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final RxBool isLoadingUpcomingMatches = false.obs;
+  final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
+  final RxBool isLoadingSponsors = false.obs;
   // Sport Tab Selection
   final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
   
@@ -90,6 +95,8 @@ class MainHomeController extends GetxController{
     await fetCustomerLeaderBoardRank();
     await fetchOpenMatches();
     await fetchScheduleMatches();
+    await fetchUpcomingMatches();
+    await fetchSponsors();
     _startBannerAutoSlide();
   }
 
@@ -277,12 +284,36 @@ class MainHomeController extends GetxController{
   Future<void> fetchScheduleMatches() async {
     try {
       isLoadingScheduleMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleMatches(matchStatus: 'live');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live');
       scheduleMatches.value = response;
     } catch (e) {
       print('Error fetching schedule matches: $e');
     } finally {
       isLoadingScheduleMatches.value = false;
+    }
+  }
+
+  Future<void> fetchUpcomingMatches() async {
+    try {
+      isLoadingUpcomingMatches.value = true;
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming');
+      upcomingMatches.value = response;
+    } catch (e) {
+      print('Error fetching upcoming matches: $e');
+    } finally {
+      isLoadingUpcomingMatches.value = false;
+    }
+  }
+
+  Future<void> fetchSponsors() async {
+    try {
+      isLoadingSponsors.value = true;
+      final response = await _leagueRepository.getLeagueSponsors();
+      sponsors.value = response;
+    } catch (e) {
+      print('Error fetching sponsors: $e');
+    } finally {
+      isLoadingSponsors.value = false;
     }
   }
 }

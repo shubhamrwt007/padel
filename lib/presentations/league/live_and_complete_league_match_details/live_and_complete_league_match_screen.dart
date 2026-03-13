@@ -5,6 +5,7 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_controller.dart';
+import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 
 class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
@@ -23,25 +24,48 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
             )
           ]
       ),
-      body: Column(
-        children: [
-          controller.matchType.value == "live"?
-          _buildVideoSection():BuildSponsorBanner(),
-          _buildScoreSection(),
-          _buildTabSelector(),
-          Expanded(
-            child: Obx(() => controller.selectedTab.value == 1
-                ? const MatchStatsCard()
-                : ListView.builder(
-              itemCount: 4,
-              itemBuilder: (context,index){
-                return _buildSetTwoCard(index).paddingOnly(bottom: 10);
-              },
-            )
+      body: Obx(() {
+        final isLoading = controller.isLoadingMatchDetails.value;
+        final err = controller.matchDetailsError.value.trim();
+        final history = controller.historyData.value;
+        final sets = history?.sets ?? const [];
+
+        return Column(
+          children: [
+            controller.matchType.value == "live"
+                ? _buildVideoSection()
+                : _buildSponsorBannerSafe(),
+            _buildScoreSection(),
+            _buildTabSelector(),
+            if (isLoading) const LinearProgressIndicator(minHeight: 2),
+            if (!isLoading && err.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Text(
+                  err,
+                  style: Get.textTheme.bodySmall!.copyWith(color: Colors.red),
+                ),
+              ),
+            Expanded(
+              child: controller.selectedTab.value == 1
+                  ? MatchStatsCard(controller: controller)
+                  : sets.isEmpty
+                      ? Center(
+                          child: Text(
+                            "No history available",
+                            style: Get.textTheme.bodyMedium,
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: sets.length,
+                          itemBuilder: (context, index) {
+                            return _buildSetTwoCard(index).paddingOnly(bottom: 10);
+                          },
+                        ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
   Widget _buildVideoSection() {
@@ -78,7 +102,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
         Positioned(
             left: 16,
             top: 16,
-            child: Row(
+            child: Obx(() => Row(
               children: [
                 Container(
                   padding:
@@ -87,10 +111,13 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                     color: Color(0xFFCD3529),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(radius: 4, backgroundColor: Colors.white),
+                      CircleAvatar(
+                        radius: 4, 
+                        backgroundColor: controller.isSocketConnected.value ? Colors.white : Colors.white54
+                      ),
                       SizedBox(width: 6),
                       Text(
                         "LIVE",
@@ -126,7 +153,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 ),
 
               ],
-            )
+            ))
         ),
         Positioned(
           bottom: 16,
@@ -140,6 +167,18 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
         )
       ],
     );
+  }
+
+  Widget _buildSponsorBannerSafe() {
+    try {
+      if (Get.isRegistered<LeagueController>()) {
+        final leagueController = Get.find<LeagueController>();
+        return BuildSponsorBanner(controller: leagueController);
+      }
+    } catch (e) {
+      print('LeagueController not found: $e');
+    }
+    return const SizedBox(height: 200);
   }
   Widget _buildScoreSection() {
     return Stack(
@@ -163,10 +202,10 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 /// TEAM A
                 Column(
                   children: [
-                    Text("A1",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 30)),
+                    Text(controller.historyData.value?.teamA?.teamName ?? "Team",
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 26)),
                     const SizedBox(height: 6),
-                    Text("Eleanor Pena &\nKristin Watson",
+                    Text(_teamPlayersText(controller.historyData.value?.teamA),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
                         textAlign: TextAlign.center),
                   ],
@@ -184,10 +223,10 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 /// TEAM B
                 Column(
                   children: [
-                    Text("A2",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 30,color: AppColors.secondaryColor)),
+                    Text(controller.historyData.value?.teamB?.teamName ?? "Team",
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 26,color: AppColors.secondaryColor)),
                     const SizedBox(height: 6),
-                    Text("Theresa Webb &\nRonald Richards",
+                    Text(_teamPlayersText(controller.historyData.value?.teamB),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
                         textAlign: TextAlign.center),
                   ],
@@ -222,7 +261,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => controller.selectedTab.value = 0,
+              onTap: () => controller.onTabChanged(0),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -261,7 +300,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => controller.selectedTab.value = 1,
+              onTap: () => controller.onTabChanged(1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -337,14 +376,14 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          index == 0 ? "Final Set":"Set ${4 - index}",
+                          _setTitle(index),
                           style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Text("6-3",style: Get.textTheme.headlineMedium).paddingOnly(right: 5),
-                            Text("(Team A1)",style: Get.textTheme.labelMedium!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)),
+                            Text(_setScoreText(index),style: Get.textTheme.headlineMedium).paddingOnly(right: 5),
+                            Text(_setWinnerText(index),style: Get.textTheme.labelMedium!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ],
@@ -364,155 +403,25 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              child: controller.isSet2Expanded[index] ? Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                const SizedBox(width: 50),
-
-                                _roundTitle("R1"),
-                                _roundTitle("R2"),
-                                _roundTitle("R3"),
-                                _roundTitle("R4"),
-                                _roundTitle("R5"),
-                                _roundTitle("R6"),
-                                _roundTitle("R7"),
-                                _roundTitle("R8"),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    RotatedBox(
-                                      quarterTurns: 3,
-                                      child: Text(
-                                        "05:00",
-                                        style: Get.textTheme.labelSmall!.copyWith(
-                                          color: AppColors.labelBlackColor,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-
-                                    Container(
-                                      width: 4,
-                                      height: 30,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xff2D5BFF),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 12),
-
-                                    Text(
-                                      "6",
-                                      style: Get.textTheme.headlineMedium!
-                                          .copyWith(color: AppColors.primaryColor),
-                                    ),
-                                  ],
-                                ),
-
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Divider(thickness: 0.5,color: Colors.grey.shade300,).paddingOnly(left: 30),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(width: 25,),
-                                    Container(
-                                      width: 4,
-                                      height: 30,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.secondaryColor,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                        "4",
-                                        style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.secondaryColor)
-                                    ),
-                                  ],
-                                ),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                                _roundCell(Text("-")),
-                                _roundCell(Image.asset(Assets.imagesImgCrown, scale: 8)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ) : const SizedBox.shrink(),
+              child: controller.isSet2Expanded.length > index && controller.isSet2Expanded[index]
+                  ? _buildExpandedSetGrid(index)
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
       ),
     ));
   }
-  Widget _roundTitle(String text) {
-    const double colWidth = 32;
-
-    return SizedBox(
-      width: colWidth,
-      child: Center(
-        child: Text(
-          text,
-          style: Get.textTheme.bodySmall!
-              .copyWith(fontWeight: FontWeight.w500),
-        ),
-      ),
-    );
-  }
-  Widget _roundCell(Widget child) {
-    const double colWidth = 32;
-
-    return SizedBox(
-      width: colWidth,
-      child: Center(child: child),
-    );
-  }
 }
 class MatchStatsCard extends StatelessWidget {
-  const MatchStatsCard({super.key});
+  final LiveAndCompleteLeagueMatchController controller;
+  const MatchStatsCard({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
+    final stats = controller.statisticsData.value?.statistics;
+    final teamA = stats?.teamA;
+    final teamB = stats?.teamB;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -537,11 +446,11 @@ class MatchStatsCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Team A1",
+                  controller.historyData.value?.teamA?.teamName ?? "Team A",
                   style: Get.textTheme.labelLarge!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  "Team A2",
+                  controller.historyData.value?.teamB?.teamName ?? "Team B",
                   style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor,fontWeight: FontWeight.w500),
                 ),
               ],
@@ -552,14 +461,14 @@ class MatchStatsCard extends StatelessWidget {
             const SizedBox(height: 10),
 
             /// Stats
-            _statRow("Total Points", 10, 9),
-            _statRow("Break Point Opportunities", 2, 6),
-            _statRow("Break Points won", 2, 6),
-            _statRow("Golden Point", 2, 6),
-            _statRow("Winners", 2, 6),
-            _statRow("Forced Errors", 2, 6),
-            _statRow("Unforced Errors", 2, 1),
-            _statRow("First Serve%", 23, 84, isPercentage: true),
+            _statRow("Total Points", teamA?.totalPoints ?? 0, teamB?.totalPoints ?? 0),
+            _statRow("Break Point Opportunities", teamA?.breakPointOpportunities ?? 0, teamB?.breakPointOpportunities ?? 0),
+            _statRow("Break Points won", teamA?.breakPointsWon ?? 0, teamB?.breakPointsWon ?? 0),
+            _statRow("Golden Point", teamA?.goldenPoints ?? 0, teamB?.goldenPoints ?? 0),
+            _statRow("Winners", teamA?.winners ?? 0, teamB?.winners ?? 0),
+            _statRow("Forced Errors", teamA?.forcedErrors ?? 0, teamB?.forcedErrors ?? 0),
+            _statRow("Unforced Errors", teamA?.unforcedErrors ?? 0, teamB?.unforcedErrors ?? 0),
+            _statRow("First Serve%", teamA?.firstServePercentage ?? 0, teamB?.firstServePercentage ?? 0, isPercentage: true),
           ],
         ),
       ),
@@ -675,6 +584,208 @@ class MatchStatsCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+extension _MatchDetailsUiHelpers on LiveAndCompleteLeagueMatchScreen {
+  String _teamPlayersText(dynamic team) {
+    try {
+      final players = team?.players as List<dynamic>?;
+      if (players == null || players.isEmpty) return "-";
+      final names = players
+          .map((p) => (p.playerName ?? "").toString().trim())
+          .where((n) => n.isNotEmpty)
+          .toList();
+      if (names.isEmpty) return "-";
+      return names.join(" &\n");
+    } catch (_) {
+      return "-";
+    }
+  }
+
+  String _setTitle(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return "Set";
+    final setNo = sets[index].setNumber;
+    if (setNo == null) return "Set";
+    final isFinal = index == 0;
+    return isFinal ? "Final Set" : "Set $setNo";
+  }
+
+  String _setScoreText(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return "-";
+    final s = sets[index].finalScore;
+    final a = s?.teamA;
+    final b = s?.teamB;
+    if (a == null || b == null) return "-";
+    return "$a-$b";
+  }
+
+  String _setWinnerText(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return "";
+    final s = sets[index].finalScore;
+    final a = s?.teamA ?? 0;
+    final b = s?.teamB ?? 0;
+    final winnerTeamName = a == b
+        ? null
+        : (a > b
+            ? controller.historyData.value?.teamA?.teamName
+            : controller.historyData.value?.teamB?.teamName);
+    return winnerTeamName == null ? "" : "($winnerTeamName)";
+  }
+
+  Widget _buildRoundsForSet(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return const SizedBox.shrink();
+    final rounds = sets[index].rounds ?? const [];
+    if (rounds.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "No rounds available",
+            style: Get.textTheme.bodySmall,
+          ),
+        ),
+      );
+    }
+
+    // Legacy UI layout (R1..R8 grid) with API data injected.
+    final maxCols = 8;
+    final cols = rounds.length >= maxCols ? maxCols : rounds.length;
+    final visibleRounds = rounds.take(maxCols).toList();
+
+    String leftTimeLabel() {
+      final completedAt = visibleRounds.first.completedAt ?? "";
+      if (completedAt.isEmpty) return "-";
+      // Keep it simple: show last 5 chars if it looks like time, else '-'
+      return completedAt.length >= 5 ? completedAt.substring(completedAt.length - 5) : completedAt;
+    }
+
+    Widget scoreCell(String? v) => _roundCell(Text((v ?? "-").toString()));
+
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SizedBox(width: 50),
+                      for (int i = 0; i < cols; i++) _roundTitle("R${i + 1}"),
+                      for (int i = cols; i < maxCols; i++) _roundTitle(""),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          RotatedBox(
+                            quarterTurns: 3,
+                            child: Text(
+                              leftTimeLabel(),
+                              style: Get.textTheme.labelSmall!.copyWith(
+                                color: AppColors.labelBlackColor,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 4,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: const Color(0xff2D5BFF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            (sets[index].finalScore?.teamA ?? 0).toString(),
+                            style: Get.textTheme.headlineMedium!.copyWith(
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      for (int i = 0; i < maxCols; i++)
+                        i < visibleRounds.length
+                            ? scoreCell(visibleRounds[i].score?.teamA?.toString())
+                            : scoreCell("-"),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Divider(thickness: 0.5, color: Colors.grey.shade300).paddingOnly(left: 30),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 25),
+                          Container(
+                            width: 4,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            (sets[index].finalScore?.teamB ?? 0).toString(),
+                            style: Get.textTheme.headlineMedium!.copyWith(
+                              color: AppColors.secondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      for (int i = 0; i < maxCols; i++)
+                        i < visibleRounds.length
+                            ? scoreCell(visibleRounds[i].score?.teamB?.toString())
+                            : scoreCell("-"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedSetGrid(int index) => _buildRoundsForSet(index);
+
+  Widget _roundTitle(String text) {
+    const double colWidth = 32;
+    return SizedBox(
+      width: colWidth,
+      child: Center(
+        child: Text(
+          text,
+          style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  Widget _roundCell(Widget child) {
+    const double colWidth = 32;
+    return SizedBox(
+      width: colWidth,
+      child: Center(child: child),
     );
   }
 }

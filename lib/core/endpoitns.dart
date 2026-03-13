@@ -7,8 +7,8 @@ class AppEndpoints {
   // static const String base = "https://apimobile.swootapp.com/api/customer/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  static const String base = "http://192.168.1.31:7600/api/";
-  static const String socketUrl = "http://192.168.1.31:7600";
+  static const String base = "http://192.168.1.31:5080/api/";
+  static const String socketUrl = "http://192.168.1.31:5080";
 
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
@@ -99,7 +99,9 @@ class AppEndpoints {
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
 
   ///League---------------------------------------------------------------------
-  static const String getAllScheduleMatches = "${base}league-schedules/getAllSchedules?";
+  static const String getAllScheduleLiveMatches = "${baseUrl}court/league-schedule/getAllSchedulesByStatus?";
+  static const String getLeagueMatchDetails = "${base}score";
+  static const String getLeagueSponsors = "${baseUrl}court/league/getLeagueSponsors";
 }
 class PaymentConfig {
   // Toggle this when switching environment

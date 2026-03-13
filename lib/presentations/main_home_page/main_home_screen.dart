@@ -3,11 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
@@ -201,7 +202,7 @@ class MainHomeScreen extends StatelessWidget {
                     _banner(),
                     const SizedBox(height: 16),
                     _quickActions(),
-                    _buildLeagueComingSoon(),
+                    // _buildLeagueComingSoon(),
                     _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
@@ -559,8 +560,12 @@ class MainHomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        BuildTitleSponsor(),
-        BuildMoreSponsor()
+        BuildTitleSponsor(controller: controller),
+        Obx(() {
+          final sponsorData = controller.sponsors.value?.data;
+          final sponsorsList = sponsorData?.sponsors ?? [];
+          return BuildMoreSponsor(sponsors: sponsorsList);
+        }),
       ],
     ).paddingOnly(top: 10);
   }
@@ -572,10 +577,30 @@ class MainHomeScreen extends StatelessWidget {
       children: [
         _buildSwootTitle(),
         const SizedBox(height: 12),
-        _buildLeagueLiveMatchSlider([]),
-        // _upcomingMatchCard(),
-        BuildTitleSponsor(),
-        BuildMoreSponsor(),
+        Obx(() {
+          final scheduleData = controller.scheduleMatches.value?.data ?? [];
+          final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+          
+          if (controller.isLoadingScheduleMatches.value) {
+            return Container(
+              height: 200,
+              margin: const EdgeInsets.symmetric(horizontal: 18),
+              child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+            );
+          }
+          
+          if (scheduleData.isEmpty || allMatches.isEmpty) {
+            return _upcomingMatchCard();
+          }
+          
+          return _buildLeagueLiveMatchSlider([]);
+        }),
+        BuildTitleSponsor(controller: controller),
+        Obx(() {
+          final sponsorData = controller.sponsors.value?.data;
+          final sponsorsList = sponsorData?.sponsors ?? [];
+          return BuildMoreSponsor(sponsors: sponsorsList);
+        }),
         _buildLeaguePointsTable(),
       ],
     ).paddingOnly(top: 10);
@@ -599,7 +624,7 @@ class MainHomeScreen extends StatelessWidget {
       if (allMatches.isEmpty) return const SizedBox.shrink();
 
       final liveMatchCards = scheduleData.expand((data) {
-        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType));
+        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType, data.matchId));
       }).toList();
 
       if (liveMatchCards.length == 1) return liveMatchCards.first;
@@ -648,7 +673,7 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
-  Widget _liveMatchCard(Matches? match, String? categoryType) {
+  Widget _liveMatchCard(Matches? match, String? categoryType, String? matchId) {
     if (match == null) return const SizedBox.shrink();
     
     return Column(
@@ -706,10 +731,10 @@ class MainHomeScreen extends StatelessWidget {
                         offset: Offset(0, 0),
                         child: Column(
                           children: [
-                            Text(categoryType ?? "Mixed Doubles", style: Get.textTheme.labelMedium),
+                            Text(categoryType ?? "", style: Get.textTheme.labelMedium),
                             SizedBox(height: 8),
                             Text(
-                                "${match.score?.teamA ?? 0} : ${match.score?.teamB ?? 0}",
+                                "${_getScoreText(match.score?.teamA)} : ${_getScoreText(match.score?.teamB)}",
                                 style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
                           ],
                         ),
@@ -728,8 +753,12 @@ class MainHomeScreen extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: (){
+                          print('👆 Live match card tapped');
+                          print('🎫 Match ID: $matchId');
+                          print('🎫 Match Type: live');
                           Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                            "matchType":"live"
+                            "matchType":"live",
+                            "matchId": matchId ?? ""
                           });
                         },
                         child: Container(
@@ -766,81 +795,123 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
   Widget _upcomingMatchCard(){
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      decoration:  BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Stack(
-        children: [
-          Image.asset(Assets.imagesImgLeagueUpcomingMatch,fit: BoxFit.cover,width: Get.width,),
-          Column(
-            children: [
-              /// UPCOMING TAG
-              Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child:  Row(
-                  mainAxisSize: MainAxisSize.min,
+    return Obx(() {
+      if (controller.isLoadingUpcomingMatches.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
+
+      final scheduleData = controller.upcomingMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) return const SizedBox.shrink();
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) return const SizedBox.shrink();
+
+      final firstMatch = allMatches.first;
+      final matchData = scheduleData.firstWhere(
+        (data) => data.matches?.contains(firstMatch) ?? false,
+        orElse: () => scheduleData.first,
+      );
+
+      final teamAPlayers = firstMatch.teamA?.players ?? [];
+      final teamBPlayers = firstMatch.teamB?.players ?? [];
+
+      String formatDate(String? dateStr) {
+        if (dateStr == null || dateStr.isEmpty) return "TBD";
+        try {
+          final date = DateTime.parse(dateStr);
+          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}";
+        } catch (e) {
+          return dateStr;
+        }
+      }
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          children: [
+            Image.asset(Assets.imagesImgLeagueUpcomingMatch, fit: BoxFit.cover, width: Get.width),
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
+                      SizedBox(width: 6),
+                      Text(
+                        "Upcoming",
+                        style: Get.textTheme.labelMedium!.copyWith(
+                            fontWeight: FontWeight.w500, color: AppColors.primaryColor),
+                      ),
+                    ],
+                  ),
+                ).paddingOnly(top: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
-                    SizedBox(width: 6),
-                    Text(
-                      "Upcoming",
-                      style:Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: AppColors.primaryColor),
+                    _teamColumn(
+                      firstMatch.teamA?.teamName ?? "Team A",
+                      "https://i.pravatar.cc/150?img=1",
+                      "https://i.pravatar.cc/150?img=2",
+                      teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
+                      teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
+                      AppColors.primaryColor,
+                    ),
+                    Transform.translate(
+                        offset: Offset(0, -8),
+                        child: Column(
+                          children: [
+                            Text(matchData.categoryType ?? "", style: Get.textTheme.labelMedium),
+                            SizedBox(height: 8),
+                            SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                          ],
+                        )),
+                    _teamColumn(
+                      firstMatch.teamB?.teamName ?? "Team B",
+                      "https://i.pravatar.cc/150?img=3",
+                      "https://i.pravatar.cc/150?img=4",
+                      teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
+                      teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 2") : "Player 2",
+                      AppColors.primaryColor,
                     ),
                   ],
                 ),
-              ).paddingOnly(top: 10),
-              /// SCORE ROW
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _teamColumn("Team A",
-                    "https://i.pravatar.cc/150?img=1",
-                    "https://i.pravatar.cc/150?img=2",
-                    "Eleanor Pena",
-                    "Kristin Watson",
-                    AppColors.primaryColor,),
-
-                  Transform.translate(
-                      offset: Offset(0, 0),
-                      child: SvgPicture.asset(Assets.imagesImgVsUpcoming)),
-                  _teamColumn("Team B",
-                      "https://i.pravatar.cc/150?img=3",
-                      "https://i.pravatar.cc/150?img=4",
-                      "Theresa Webb",
-                      "Ronald Richards",
-                      AppColors.primaryColor),
-                ],
-              ),
-              GestureDetector(
-                onTap: (){
-                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                    "matchType":"live"
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 15, vertical: 8),
-                  decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius:
-                      BorderRadius.circular(30)),
-                  child:  Text("05 Jun, 2025",
-                      style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500)),
+                GestureDetector(
+                  onTap: () {
+                    // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                    //   "matchType": "upcoming"
+                    // });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    decoration: BoxDecoration(
+                        color: AppColors.primaryColor,
+                        borderRadius: BorderRadius.circular(30)),
+                    child: Text(formatDate(matchData.date),
+                        style: Get.textTheme.labelMedium!
+                            .copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).paddingOnly(bottom: 10);
+              ],
+            ),
+          ],
+        ),
+      ).paddingOnly(bottom: 10);
+    });
   }
   Widget _buildLeaguePointsTable(){
     return Container(
@@ -2729,5 +2800,16 @@ class MainHomeScreen extends StatelessWidget {
         child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
       ),
     );
+  }
+
+  String _getScoreText(dynamic score) {
+    if (score == null) return "0";
+    if (score is int) return score.toString();
+    if (score is ScoreDetail) {
+      // Display sets count for the new format
+      return (score.sets ?? 0).toString();
+    }
+    // Fallback for any other format
+    return score.toString();
   }
 }

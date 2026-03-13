@@ -7,6 +7,7 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 class LeagueMatchListScreen extends StatelessWidget {
   final LeagueMatchListController controller = Get.put(LeagueMatchListController());
   LeagueMatchListScreen({super.key});
@@ -34,17 +35,58 @@ class LeagueMatchListScreen extends StatelessWidget {
     );
   }
   Widget _upcomingList() {
-    return ListView.builder(
-      itemCount: 5,
-      itemBuilder: (context, index) =>
-      GestureDetector(
-          onTap: (){
-            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-              "matchType":"upcoming"
-            });
-          },
-          child: const UpcomingMatchCard()),
-    );
+    return Obx(() {
+      if (controller.isLoadingUpcomingMatches.value) {
+        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+      }
+
+      final scheduleData = controller.upcomingMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) {
+        return Center(
+          child: Text(
+            "No upcoming matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) {
+        return Center(
+          child: Text(
+            "No upcoming matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return GestureDetector(
+            onTap: () {
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                "matchType": "upcoming",
+                "matchId": matchData.matchId ?? ""
+              });
+            },
+            child: UpcomingMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+              date: matchData.date,
+            ),
+          );
+        },
+      );
+    });
   }
 
   // Widget _liveList() {
@@ -55,25 +97,75 @@ class LeagueMatchListScreen extends StatelessWidget {
   // }
 
   Widget _resultsList() {
-    return ListView.builder(
-      itemCount: 8,
-      itemBuilder: (context, index) =>
-      GestureDetector(
-          onTap: (){
-            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-              "matchType":"result"
-            });
-          },
-          child: const ResultMatchCard()),
-    );
+    return Obx(() {
+      if (controller.isLoadingResultMatches.value) {
+        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+      }
+
+      final scheduleData = controller.resultMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) {
+        return Center(
+          child: Text(
+            "No result matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) {
+        return Center(
+          child: Text(
+            "No result matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return GestureDetector(
+            onTap: () {
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                "matchType": "result",
+                "matchId": matchData.matchId ?? ""
+              });
+            },
+            child: ResultMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+              date: matchData.date,
+            ),
+          );
+        },
+      );
+    });
   }
 }
 
 class UpcomingMatchCard extends StatelessWidget {
-  const UpcomingMatchCard({super.key});
+  final dynamic match;
+  final String? categoryType;
+  final String? date;
+  
+  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date});
 
   @override
   Widget build(BuildContext context) {
+    if (match == null) return const SizedBox.shrink();
+    
+    final teamAPlayers = match?.teamA?.players ?? [];
+    final teamBPlayers = match?.teamB?.players ?? [];
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -91,7 +183,7 @@ class UpcomingMatchCard extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-                "05Jun, 2025",
+                _formatDate(date ?? ""),
                 style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
             ),
           ),
@@ -127,12 +219,12 @@ class UpcomingMatchCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                              "Team A",
+                              match?.teamA?.teamName ?? "Team A",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
                           ),
                           const Spacer(),
                           Text(
-                              "Team B",
+                              match?.teamB?.teamName ?? "Team B",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
                           ),
                         ],
@@ -149,14 +241,34 @@ class UpcomingMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,8),
+                                    _avatar(teamAPlayers.isNotEmpty ? teamAPlayers[0].playerName ?? "" : "Player 1", 0, 0),
+                                    _avatar(teamAPlayers.length > 1 ? teamAPlayers[1].playerName ?? "" : "Player 2", 12, 8),
                                   ],
                                 ),
                               ).paddingOnly(right: 5),
-                              Text(
-                                  "Eleanor Pena \nKristin Watson",
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: (match?.teamA?.players?.isNotEmpty ?? false)
+                                      ? match!.teamA!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    formatName(e.playerName ?? ''),
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 1",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 2",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -164,15 +276,34 @@ class UpcomingMatchCard extends StatelessWidget {
                           Column(
                             children: [
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
-                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
                             ],
                           ),
                           Row(
                             children: [
-                              Text(
-                                  "Theresa Webb \nRonald Richards",
-                                  textAlign: TextAlign.right,
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: (match?.teamB?.players?.isNotEmpty ?? false)
+                                      ? match!.teamB!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    formatName(e.playerName ?? ''),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 3",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 4",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
@@ -180,8 +311,8 @@ class UpcomingMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,8),
+                                    _avatar(teamBPlayers.isNotEmpty ? teamBPlayers[0].playerName ?? "" : "Player 3", 12, 0),
+                                    _avatar(teamBPlayers.length > 1 ? teamBPlayers[1].playerName ?? "" : "Player 4", 0, 8),
                                   ],
                                 ),
                               ).paddingOnly(left: 5),
@@ -199,7 +330,26 @@ class UpcomingMatchCard extends StatelessWidget {
       ),
     );
   }
-  Widget _avatar(String url, double left,double top) {
+  
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return "TBD";
+    try {
+      final date = DateTime.parse(dateStr);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return "${date.day.toString().padLeft(2, '0')}${months[date.month - 1]}, ${date.year}";
+    } catch (e) {
+      return dateStr;
+    }
+  }
+  
+  Widget _avatar(String name, double left, double top) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
     return Positioned(
       left: left,
       top: top,
@@ -212,13 +362,28 @@ class UpcomingMatchCard extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
     );
+  }
+  
+  String formatName(String name) {
+    final parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts.first} ${parts.last[0]}";
+    }
+    return name;
   }
 }
 // class LiveMatchCard extends StatelessWidget {
@@ -388,10 +553,19 @@ class UpcomingMatchCard extends StatelessWidget {
 //   }
 // }
 class ResultMatchCard extends StatelessWidget {
-  const ResultMatchCard({super.key});
+  final dynamic match;
+  final String? categoryType;
+  final String? date;
+  
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date});
 
   @override
   Widget build(BuildContext context) {
+    if (match == null) return const SizedBox.shrink();
+    
+    final teamAPlayers = match?.teamA?.players ?? [];
+    final teamBPlayers = match?.teamB?.players ?? [];
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -409,7 +583,7 @@ class ResultMatchCard extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-                "05Jun, 2025",
+                _formatDate(date ?? ""),
                 style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
             ),
           ),
@@ -451,12 +625,12 @@ class ResultMatchCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                              "Team A",
+                              match?.teamA?.teamName ?? "Team A",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                           const Spacer(),
                           Text(
-                              "Team B",
+                              match?.teamB?.teamName ?? "Team B",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                         ],
@@ -473,14 +647,34 @@ class ResultMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,8),
+                                    _avatarWithInitials(teamAPlayers.isNotEmpty ? teamAPlayers[0].playerName ?? "" : "Player 1", 0, 0),
+                                    _avatarWithInitials(teamAPlayers.length > 1 ? teamAPlayers[1].playerName ?? "" : "Player 2", 12, 8),
                                   ],
                                 ),
                               ).paddingOnly(right: 5),
-                              Text(
-                                  "Eleanor Pena \nKristin Watson",
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: (match?.teamA?.players?.isNotEmpty ?? false)
+                                      ? match!.teamA!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    formatName(e.playerName ?? ''),
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 1",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 2",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -489,23 +683,42 @@ class ResultMatchCard extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  Text(_getScoreText(match?.score?.teamA), style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                   const SizedBox(width: 6),
                                   Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                   const SizedBox(width: 6),
-                                  Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  Text(_getScoreText(match?.score?.teamB), style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                 ],
                               ),
-                              Text("Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
                             ],
                           ),
 
                           Row(
                             children: [
-                              Text(
-                                  "Theresa Webb \nRonald Richards",
-                                  textAlign: TextAlign.right,
-                                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: (match?.teamB?.players?.isNotEmpty ?? false)
+                                      ? match!.teamB!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    formatName(e.playerName ?? ''),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 3",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 4",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
                               ),
                               SizedBox(
                                 height: 30,
@@ -513,8 +726,8 @@ class ResultMatchCard extends StatelessWidget {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    _avatar("https://i.pravatar.cc/150?img=1", 12,0),
-                                    _avatar("https://i.pravatar.cc/150?img=1", 0,8),
+                                    _avatarWithInitials(teamBPlayers.isNotEmpty ? teamBPlayers[0].playerName ?? "" : "Player 3", 12, 0),
+                                    _avatarWithInitials(teamBPlayers.length > 1 ? teamBPlayers[1].playerName ?? "" : "Player 4", 0, 8),
                                   ],
                                 ),
                               ).paddingOnly(left: 5),
@@ -533,7 +746,26 @@ class ResultMatchCard extends StatelessWidget {
       ),
     );
   }
-  Widget _avatar(String url, double left,double top) {
+  
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return "TBD";
+    try {
+      final date = DateTime.parse(dateStr);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return "${date.day.toString().padLeft(2, '0')}${months[date.month - 1]}, ${date.year}";
+    } catch (e) {
+      return dateStr;
+    }
+  }
+  
+  Widget _avatarWithInitials(String name, double left, double top) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
     return Positioned(
       left: left,
       top: top,
@@ -546,12 +778,34 @@ class ResultMatchCard extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
     );
   }
+  
+  String formatName(String name) {
+    final parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts.first} ${parts.last[0]}";
+    }
+    return name;
+  }
+}
+
+String _getScoreText(dynamic score) {
+  if (score == null) return "0";
+  if (score is int) return score.toString();
+  if (score is ScoreDetail) return (score.sets ?? 0).toString();
+  return "0";
 }

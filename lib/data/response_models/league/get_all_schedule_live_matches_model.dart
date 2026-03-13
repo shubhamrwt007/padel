@@ -1,12 +1,12 @@
-class GetAllScheduleMatchesModel {
+class GetAllScheduleLiveMatchesModel {
   bool? success;
   List<ScheduleMatchData>? data;
   Pagination? pagination;
 
-  GetAllScheduleMatchesModel({this.success, this.data, this.pagination});
+  GetAllScheduleLiveMatchesModel({this.success, this.data, this.pagination});
 
-  factory GetAllScheduleMatchesModel.fromJson(Map<String, dynamic> json) {
-    return GetAllScheduleMatchesModel(
+  factory GetAllScheduleLiveMatchesModel.fromJson(Map<String, dynamic> json) {
+    return GetAllScheduleLiveMatchesModel(
       success: json['success'],
       data: (json['data'] as List?)
           ?.map((e) => ScheduleMatchData.fromJson(e))
@@ -37,6 +37,7 @@ class ScheduleMatchData {
   String? updatedAt;
   int? v;
   String? matchStatus;
+  String? matchId;
 
   ScheduleMatchData({
     this.id,
@@ -51,6 +52,7 @@ class ScheduleMatchData {
     this.updatedAt,
     this.v,
     this.matchStatus,
+    this.matchId,
   });
 
   factory ScheduleMatchData.fromJson(Map<String, dynamic> json) => ScheduleMatchData(
@@ -72,6 +74,7 @@ class ScheduleMatchData {
     updatedAt: json['updatedAt'],
     v: json['__v'],
     matchStatus: json['matchStatus'],
+    matchId: json['matchId'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -87,6 +90,7 @@ class ScheduleMatchData {
     'updatedAt': updatedAt,
     '__v': v,
     'matchStatus': matchStatus,
+    'matchId': matchId,
   };
 }
 
@@ -135,6 +139,9 @@ class Matches {
   String? status;
   Score? score;
   String? id;
+  String? winner;
+  Team? winningTeam;
+  Team? losingTeam;
 
   Matches({
     this.teamA,
@@ -147,6 +154,9 @@ class Matches {
     this.status,
     this.score,
     this.id,
+    this.winner,
+    this.winningTeam,
+    this.losingTeam,
   });
 
   factory Matches.fromJson(Map<String, dynamic> json) => Matches(
@@ -158,9 +168,11 @@ class Matches {
     endTime: json['endTime'],
     duration: json['duration'],
     status: json['status'],
-    score:
-    json['score'] != null ? Score.fromJson(json['score']) : null,
+    score: json['score'] != null ? Score.fromJson(json['score']) : null,
     id: json['_id'],
+    winner: json['winner'],
+    winningTeam: json['winningTeam'] != null ? Team.fromJson(json['winningTeam']) : null,
+    losingTeam: json['losingTeam'] != null ? Team.fromJson(json['losingTeam']) : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -174,6 +186,9 @@ class Matches {
     'status': status,
     'score': score?.toJson(),
     '_id': id,
+    'winner': winner,
+    'winningTeam': winningTeam?.toJson(),
+    'losingTeam': losingTeam?.toJson(),
   };
 }
 
@@ -225,17 +240,42 @@ class Player {
 }
 
 class Score {
-  int? teamA;
-  int? teamB;
+  dynamic teamA;
+  dynamic teamB;
 
   Score({this.teamA, this.teamB});
 
-  factory Score.fromJson(Map<String, dynamic> json) =>
-      Score(teamA: json['teamA'], teamB: json['teamB']);
+  factory Score.fromJson(Map<String, dynamic> json) {
+    return Score(
+      teamA: json['teamA'] is Map<String, dynamic> 
+          ? ScoreDetail.fromJson(json['teamA']) 
+          : json['teamA'],
+      teamB: json['teamB'] is Map<String, dynamic> 
+          ? ScoreDetail.fromJson(json['teamB']) 
+          : json['teamB'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-    'teamA': teamA,
-    'teamB': teamB,
+    'teamA': teamA is ScoreDetail ? (teamA as ScoreDetail).toJson() : teamA,
+    'teamB': teamB is ScoreDetail ? (teamB as ScoreDetail).toJson() : teamB,
+  };
+}
+
+class ScoreDetail {
+  int? sets;
+  List<int>? games;
+
+  ScoreDetail({this.sets, this.games});
+
+  factory ScoreDetail.fromJson(Map<String, dynamic> json) => ScoreDetail(
+    sets: json['sets'],
+    games: (json['games'] as List?)?.map((e) => e as int).toList(),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'sets': sets,
+    'games': games,
   };
 }
 
