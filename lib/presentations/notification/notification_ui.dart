@@ -15,23 +15,23 @@ class NotificationScreen extends StatelessWidget {
     controller.fetchNotifications();
     return Scaffold(
       appBar: primaryAppBar(title: Text("Notification"), context: context,centerTitle: true,
-          // action: [
-          //   // Obx(() {
-          //   //   final hasUnread = controller.notifications
-          //   //       .any((n) => n['isRead'] == false);
-          //   //   return hasUnread
-          //   //       ? IconButton(
-          //   //     icon: const Icon(Icons.mark_email_read),
-          //   //     tooltip: "Mark all as read",
-          //   //     // onPressed: controller.markAllNotificationsAsRead,
-          //   //     onPressed: (){},
-          //   //   )
-          //   //       : const SizedBox.shrink();
-          //   // }),
-          //   IconButton(onPressed: (){
-          //     Get.toNamed(RoutesName.tutorial);
-          //   }, icon: Icon(Icons.eighteen_mp))
-          // ]
+          action: [
+            Obx(() {
+              final hasUnread = controller.notifications
+                  .any((n) => n['isRead'] == false);
+              return hasUnread
+                  ? IconButton(
+                icon: const Icon(Icons.mark_email_read),
+                tooltip: "Mark all as read",
+                onPressed: controller.markAllNotificationsAsRead,
+                // onPressed: (){},
+              )
+                  : const SizedBox.shrink();
+            }),
+            // IconButton(onPressed: (){
+            //   Get.toNamed(RoutesName.tutorial);
+            // }, icon: Icon(Icons.eighteen_mp))
+          ]
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -98,6 +98,11 @@ class NotificationScreen extends StatelessWidget {
                   userName: n['userName'] ?? '',
                 )),
                 const SizedBox(height: 16),
+
+
+
+
+
               ],
             );
           },

@@ -511,10 +511,7 @@ class ScoreBoardController extends GetxController {
         fetchScoreBoard(showLoader: false).then((_) {
           // Only show dialog from socket if not already showing
           Future.delayed(const Duration(milliseconds: 500), () {
-            if (!isShowingMatchSummary.value) {
-              isShowingMatchSummary.value = true;
-              showMatchSummaryDialog(this);
-            }
+            tryShowMatchSummaryDialog();
           });
         });
       });
@@ -793,6 +790,19 @@ class ScoreBoardController extends GetxController {
   // Add flag to prevent multiple dialog calls
   RxBool isShowingMatchSummary = false.obs;
 
+  DateTime? _lastMatchSummaryDialogRequestAt;
+
+  void tryShowMatchSummaryDialog() {
+    final now = DateTime.now();
+    final last = _lastMatchSummaryDialogRequestAt;
+    if (last != null && now.difference(last).inMilliseconds < 1500) return;
+    _lastMatchSummaryDialogRequestAt = now;
+
+    if (isShowingMatchSummary.value) return;
+    isShowingMatchSummary.value = true;
+    showMatchSummaryDialog(this);
+  }
+
   Future<void> endGame() async {
     CustomLogger.logMessage(msg: 'endGame API call', level: LogLevel.info);
     // Check if any set is empty (no scores)
@@ -827,10 +837,7 @@ class ScoreBoardController extends GetxController {
         
         // Show dialog with delay to ensure proper state
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (!isShowingMatchSummary.value) {
-            isShowingMatchSummary.value = true;
-            showMatchSummaryDialog(this);
-          }
+          tryShowMatchSummaryDialog();
         });
       } else {
         CustomLogger.logMessage(msg: response.message ?? "", level: LogLevel.debug);
