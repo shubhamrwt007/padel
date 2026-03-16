@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart' show ScoreDetail;
@@ -238,7 +239,7 @@ class LeagueScreen extends StatelessWidget {
       if (controller.isLoadingLiveMatches.value) {
         return Container(
           height: 200,
-          child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
         );
       }
 
@@ -447,7 +448,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _upcomingList() {
     return Obx(() {
       if (controller.isLoadingUpcomingMatches.value) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
       }
 
       final scheduleData = controller.upcomingMatches.value?.data ?? [];
@@ -491,7 +492,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _liveList() {
     return Obx(() {
       if (controller.isLoadingLiveMatches.value) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
       }
 
       final scheduleData = controller.liveMatches.value?.data ?? [];
@@ -544,7 +545,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _resultsList() {
     return Obx(() {
       if (controller.isLoadingResultMatches.value) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
       }
 
       final scheduleData = controller.resultMatches.value?.data ?? [];
@@ -1508,7 +1509,7 @@ class LeaderBoardWidget extends StatelessWidget {
         final controller = Get.find<LeagueController>();
         
         if (controller.isLoadingUpcomingMatches.value) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+          return Center(child: LoadingWidget(color: AppColors.primaryColor,));
         }
 
         final scheduleData = controller.upcomingMatches.value?.data ?? [];

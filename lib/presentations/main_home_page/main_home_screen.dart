@@ -8,7 +8,6 @@ import 'package:padel_mobile/data/response_models/openmatch_model/open_match_boo
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
-import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
@@ -572,38 +571,54 @@ class MainHomeScreen extends StatelessWidget {
 
 
   Widget _buildLeagueLiveMatch(){
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSwootTitle(),
-        const SizedBox(height: 12),
-        Obx(() {
-          final scheduleData = controller.scheduleMatches.value?.data ?? [];
-          final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-          
-          if (controller.isLoadingScheduleMatches.value) {
-            return Container(
-              height: 200,
-              margin: const EdgeInsets.symmetric(horizontal: 18),
-              child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
-            );
-          }
-          
-          if (scheduleData.isEmpty || allMatches.isEmpty) {
-            return _upcomingMatchCard();
-          }
-          
-          return _buildLeagueLiveMatchSlider([]);
-        }),
-        BuildTitleSponsor(controller: controller),
-        Obx(() {
-          final sponsorData = controller.sponsors.value?.data;
-          final sponsorsList = sponsorData?.sponsors ?? [];
-          return BuildMoreSponsor(sponsors: sponsorsList);
-        }),
-        _buildLeaguePointsTable(),
-      ],
-    ).paddingOnly(top: 10);
+    return Obx(() {
+      final scheduleData = controller.scheduleMatches.value?.data ?? [];
+      final upcomingData = controller.upcomingMatches.value?.data ?? [];
+      
+      final allLiveMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      final allUpcomingMatches = upcomingData.expand((data) => data.matches ?? []).toList();
+      
+      // If both live and upcoming are empty, show coming soon
+      if (allLiveMatches.isEmpty && allUpcomingMatches.isEmpty && 
+          !controller.isLoadingScheduleMatches.value && 
+          !controller.isLoadingUpcomingMatches.value) {
+        return _buildLeagueComingSoon();
+      }
+      
+      // Otherwise show the league section
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSwootTitle(),
+          const SizedBox(height: 12),
+          Obx(() {
+            final scheduleData = controller.scheduleMatches.value?.data ?? [];
+            final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+            
+            if (controller.isLoadingScheduleMatches.value) {
+              return Container(
+                height: 200,
+                margin: const EdgeInsets.symmetric(horizontal: 18),
+                child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+              );
+            }
+            
+            if (scheduleData.isEmpty || allMatches.isEmpty) {
+              return _upcomingMatchCard();
+            }
+            
+            return _buildLeagueLiveMatchSlider([]);
+          }),
+          BuildTitleSponsor(controller: controller),
+          Obx(() {
+            final sponsorData = controller.sponsors.value?.data;
+            final sponsorsList = sponsorData?.sponsors ?? [];
+            return BuildMoreSponsor(sponsors: sponsorsList);
+          }),
+          _buildLeaguePointsTable(),
+        ],
+      ).paddingOnly(top: 10);
+    });
   }
 
   Widget _buildLeagueLiveMatchSlider(List<Widget> cards) {

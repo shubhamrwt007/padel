@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:get/get.dart';
@@ -37,7 +38,7 @@ class LeagueMatchListScreen extends StatelessWidget {
   Widget _upcomingList() {
     return Obx(() {
       if (controller.isLoadingUpcomingMatches.value) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
       }
 
       final scheduleData = controller.upcomingMatches.value?.data ?? [];
@@ -99,7 +100,7 @@ class LeagueMatchListScreen extends StatelessWidget {
   Widget _resultsList() {
     return Obx(() {
       if (controller.isLoadingResultMatches.value) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
       }
 
       final scheduleData = controller.resultMatches.value?.data ?? [];

@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_controller.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
@@ -37,7 +38,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 : _buildSponsorBannerSafe(),
             _buildScoreSection(),
             _buildTabSelector(),
-            if (isLoading) const LinearProgressIndicator(minHeight: 2),
+            if (isLoading) LoadingWidget(color: AppColors.primaryColor,),
             if (!isLoading && err.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
