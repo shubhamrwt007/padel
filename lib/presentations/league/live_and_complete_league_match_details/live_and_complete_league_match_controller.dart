@@ -131,12 +131,12 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
         print('✅ Connected. Socket ID: ${_socket?.id}');
         isSocketConnected.value = true;
         print('📤 Emitting joinMatch with matchId: ${matchId.value}');
-        _socket?.emit('joinMatch', matchId.value);
+        _socket?.emit('joinScoreMatch', matchId.value);
 
         // Request initial data immediately
         print('📤 Requesting initial match data');
         // _socket?.emit('matchJoined', {'matchId': matchId.value});
-        _socket?.on("matchJoined",(data){
+        _socket?.on("scoreMatchJoined",(data){
           log('''
 ┌──────────────────────────────────────────────────────────────
 │ 🟢 Get Match Data
@@ -173,7 +173,7 @@ $data
         }
       });
       
-      _socket?.on('matchJoined', (data) {
+      _socket?.on('scoreMatchJoined', (data) {
         print('🎯 matchJoined event received');
         log('🎯 Match Joined Data: $data');
         if (data is Map<String, dynamic>) {
