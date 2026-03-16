@@ -631,11 +631,8 @@ var locationsId = "".obs;
     final supports30Min = slotSupports30Min(slot);
     final is90MinSlot = slot.duration == 90;
     
-    // Check if this is the first slot being selected
-    final isFirstSlot = multiDateSelections.isEmpty;
-    
     // Check for duration mismatch if not the first slot
-    if (!isFirstSlot) {
+    if (multiDateSelections.isNotEmpty) {
       bool has90MinSlot = false;
       bool hasNon90MinSlot = false;
       
@@ -658,52 +655,435 @@ var locationsId = "".obs;
         return;
       }
     }
-    
-    // If it's the first slot and supports 30min, force full selection
-    final forceFullSelection = isFirstSlot && supports30Min;
-    
-    if (forceFullSelection) {
-      final isLeftBooked = isLeftHalfBooked(slot);
-      final isRightBooked = isRightHalfBooked(slot);
-      
-      if (isLeftBooked || isRightBooked) {
-        AppToast.error("First slot must be fully available. Please select a complete slot.");
-        log("First slot selection blocked - slot has booked half");
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 30-min pricing supported: use the same half-slot continuity rules as
+    // Book A Court (edge-only half selection; full slot otherwise; cleanup).
+    // We store halves using the existing keys: _L / _R
+    // ─────────────────────────────────────────────────────────────────────────
+    if (supports30Min && isLeftHalf != null) {
+      final leftKey = '${dateString}_${resolvedCourtId}_${slotId}_L';
+      final rightKey = '${dateString}_${resolvedCourtId}_${slotId}_R';
+
+      final hasLeft = multiDateSelections.containsKey(leftKey);
+      final hasRight = multiDateSelections.containsKey(rightKey);
+      final isSelected = hasLeft || hasRight;
+      final tappingLeft = isLeftHalf == true;
+      final slotBase = _convertTimeToMinutes(slot.time ?? '');
+      if (slotBase == null) return;
+      final tappedBlockStart = tappingLeft ? slotBase : slotBase + 30;
+
+      // Upgrade case: other half already selected -> select full (both halves)
+      if (hasLeft && !hasRight && !tappingLeft) {
+        if (isRightHalfBooked(slot)) return;
+        _upsertHalfSelection(
+          slot: slot,
+          courtId: resolvedCourtId,
+          courtName: resolvedCourtName,
+          dateString: dateString,
+          currentDate: currentDate,
+          isLeftHalf: false,
+        );
+        _recalculateTotalAmount();
         return;
       }
-      
-      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, true);
-      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, false);
+      if (hasRight && !hasLeft && tappingLeft) {
+        if (isLeftHalfBooked(slot)) return;
+        _upsertHalfSelection(
+          slot: slot,
+          courtId: resolvedCourtId,
+          courtName: resolvedCourtName,
+          dateString: dateString,
+          currentDate: currentDate,
+          isLeftHalf: true,
+        );
+        _recalculateTotalAmount();
+        return;
+      }
+
+      final blocks = _getSelectedHalfBlocksForCourtDate(
+        courtId: resolvedCourtId,
+        dateString: dateString,
+      );
+
+      // SELECTING (slot not selected)
+      if (!isSelected) {
+        if (blocks.isEmpty) {
+          // Nothing selected yet -> always select FULL slot (both halves)
+          if (isLeftHalfBooked(slot) || isRightHalfBooked(slot)) return;
+          if (!_ensureMaxSlotsCapacity(addCount: 2)) return;
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: true,
+          );
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: false,
+          );
+          _recalculateTotalAmount();
+          return;
+        }
+
+        final rangeStart = blocks.first;
+        final rangeEnd = blocks.last; // last block start
+        final slotEnd = slotBase + 60;
+
+        if (slotEnd == rangeStart) {
+          // Slot directly BEFORE range -> add RIGHT half only
+          if (isRightHalfBooked(slot)) return;
+          if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: false,
+          );
+        } else if (slotBase == rangeEnd + 30) {
+          // Slot directly AFTER range -> add LEFT half only
+          if (isLeftHalfBooked(slot)) return;
+          if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: true,
+          );
+        } else {
+          // Not consecutive -> select FULL slot (both halves)
+          if (isLeftHalfBooked(slot) || isRightHalfBooked(slot)) return;
+          if (!_ensureMaxSlotsCapacity(addCount: 2)) return;
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: true,
+          );
+          _upsertHalfSelection(
+            slot: slot,
+            courtId: resolvedCourtId,
+            courtName: resolvedCourtName,
+            dateString: dateString,
+            currentDate: currentDate,
+            isLeftHalf: false,
+          );
+        }
+
+        _cleanupIsolatedHalfSelections(
+          courtId: resolvedCourtId,
+          dateString: dateString,
+        );
+        _recalculateTotalAmount();
+        return;
+      }
+
+      // DESELECTING (slot already selected)
+      if (blocks.isEmpty) return;
+      final rangeStart = blocks.first;
+      final rangeEnd = blocks.last;
+      final isAtStart = tappedBlockStart == rangeStart;
+      final isAtEnd = tappedBlockStart == rangeEnd;
+
+      // If selection is only one full slot (2 blocks) or one half (1 block) -> clear all for court+date
+      if (blocks.length <= 2) {
+        _removeAllHalfSelectionsForCourtDate(
+          courtId: resolvedCourtId,
+          dateString: dateString,
+        );
+        _recalculateTotalAmount();
+        return;
+      }
+
+      if (isAtStart) {
+        _removeHalfEdgeBlock(
+          slot: slot,
+          courtId: resolvedCourtId,
+          courtName: resolvedCourtName,
+          dateString: dateString,
+          currentDate: currentDate,
+          removingLeftSide: true,
+        );
+        _cleanupIsolatedHalfSelections(
+          courtId: resolvedCourtId,
+          dateString: dateString,
+        );
+        _recalculateTotalAmount();
+        return;
+      }
+
+      if (isAtEnd) {
+        _removeHalfEdgeBlock(
+          slot: slot,
+          courtId: resolvedCourtId,
+          courtName: resolvedCourtName,
+          dateString: dateString,
+          currentDate: currentDate,
+          removingLeftSide: false,
+        );
+        _cleanupIsolatedHalfSelections(
+          courtId: resolvedCourtId,
+          dateString: dateString,
+        );
+        _recalculateTotalAmount();
+        return;
+      }
+
+      // Middle: if both halves selected, keep the opposite half; otherwise remove only tapped half
+      if (hasLeft && hasRight) {
+        if (tappingLeft) {
+          multiDateSelections.remove(leftKey);
+        } else {
+          multiDateSelections.remove(rightKey);
+        }
+      } else {
+        if (hasLeft) multiDateSelections.remove(leftKey);
+        if (hasRight) multiDateSelections.remove(rightKey);
+      }
+
+      _cleanupIsolatedHalfSelections(
+        courtId: resolvedCourtId,
+        dateString: dateString,
+      );
       _recalculateTotalAmount();
-      log("First slot selected as FULL (both halves)");
       return;
     }
-    
-    final multiDateKey = supports30Min && isLeftHalf != null && !forceFullSelection
-        ? '${dateString}_${resolvedCourtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}'
-        : '${dateString}_${resolvedCourtId}_${slotId}';
 
-    bool isAlreadySelected = multiDateSelections.containsKey(multiDateKey);
-    
-    if (supports30Min && !isAlreadySelected) {
-      final fullKey = '${dateString}_${resolvedCourtId}_${slotId}';
-      isAlreadySelected = multiDateSelections.containsKey(fullKey);
-      if (isAlreadySelected) {
-        _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
-        _recalculateTotalAmount();
-        log("Unselected full slot and all after it, remaining: ${multiDateSelections.length}");
-        return;
-      }
-    }
-    
-    if (isAlreadySelected) {
-      _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
+    // ─────────────────────────────────────────────────────────────────────────
+    // Non-30-min pricing: simple full-slot toggle
+    // ─────────────────────────────────────────────────────────────────────────
+    final fullKey = '${dateString}_${resolvedCourtId}_${slotId}';
+    if (multiDateSelections.containsKey(fullKey)) {
+      multiDateSelections.remove(fullKey);
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
     } else {
-      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, forceFullSelection ? null : isLeftHalf);
+      if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
+      multiDateSelections[fullKey] = {
+        'slot': slot,
+        'courtId': resolvedCourtId,
+        'courtName': resolvedCourtName,
+        'date': dateString,
+        'dateTime': currentDate,
+        'bookingTime': slot.time ?? '',
+        'isLeftHalf': null,
+        'adjustedAmount': slot.amount ?? 0,
+      };
+      if (!selectedSlots.any((s) => s.sId == slotId)) selectedSlots.add(slot);
+      selectedSlotsWithCourtInfo['${resolvedCourtId}_$slotId'] = {
+        'slot': slot,
+        'courtId': resolvedCourtId,
+        'courtName': resolvedCourtName,
+        'bookingTime': slot.time ?? '',
+        'adjustedAmount': slot.amount ?? 0,
+      };
     }
 
     _recalculateTotalAmount();
-    log("Selected ${multiDateSelections.length} slots across multiple dates, Total: ₹${totalAmount.value}");
+  }
+
+  bool _ensureMaxSlotsCapacity({required int addCount}) {
+    if (addCount <= 0) return true;
+    if (multiDateSelections.length + addCount > maxSlots) {
+      CustomLogger.logMessage(
+        msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.",
+        level: LogLevel.error,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  List<int> _getSelectedHalfBlocksForCourtDate({
+    required String courtId,
+    required String dateString,
+  }) {
+    final mins = <int>{};
+    multiDateSelections.forEach((k, v) {
+      if (!k.startsWith(dateString)) return;
+      if ((v['courtId'] as String?) != courtId) return;
+      final slot = v['slot'] as Slots;
+      if (!slotSupports30Min(slot)) return;
+      final base = _convertTimeToMinutes(slot.time ?? '');
+      if (base == null) return;
+      final isLeft = v['isLeftHalf'] as bool?;
+      if (isLeft == null) return;
+      mins.add(isLeft ? base : base + 30);
+    });
+    final list = mins.toList()..sort();
+    return list;
+  }
+
+  void _removeAllHalfSelectionsForCourtDate({
+    required String courtId,
+    required String dateString,
+  }) {
+    final keys = multiDateSelections.keys.where((k) {
+      final v = multiDateSelections[k];
+      if (v == null) return false;
+      if ((v['date'] as String?) != dateString) return false;
+      if ((v['courtId'] as String?) != courtId) return false;
+      final slot = v['slot'] as Slots;
+      return slotSupports30Min(slot) && (v['isLeftHalf'] is bool);
+    }).toList();
+
+    final slotIds = <String>{};
+    for (final k in keys) {
+      final v = multiDateSelections[k]!;
+      final slot = v['slot'] as Slots;
+      slotIds.add(slot.sId ?? '');
+      multiDateSelections.remove(k);
+    }
+    for (final slotId in slotIds) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+  }
+
+  void _removeHalfEdgeBlock({
+    required Slots slot,
+    required String courtId,
+    required String courtName,
+    required String dateString,
+    required DateTime currentDate,
+    required bool removingLeftSide,
+  }) {
+    final slotId = slot.sId ?? '';
+    final leftKey = '${dateString}_${courtId}_${slotId}_L';
+    final rightKey = '${dateString}_${courtId}_${slotId}_R';
+    final hasLeft = multiDateSelections.containsKey(leftKey);
+    final hasRight = multiDateSelections.containsKey(rightKey);
+
+    // If both halves exist, remove the edge half only
+    if (hasLeft && hasRight) {
+      if (removingLeftSide) {
+        multiDateSelections.remove(leftKey);
+      } else {
+        multiDateSelections.remove(rightKey);
+      }
+      return;
+    }
+
+    // Otherwise remove whichever exists
+    if (hasLeft) multiDateSelections.remove(leftKey);
+    if (hasRight) multiDateSelections.remove(rightKey);
+  }
+
+  void _cleanupIsolatedHalfSelections({
+    required String courtId,
+    required String dateString,
+  }) {
+    bool changed = true;
+    while (changed) {
+      changed = false;
+      final keysToRemove = <String>[];
+
+      multiDateSelections.forEach((key, value) {
+        if ((value['courtId'] as String?) != courtId) return;
+        if ((value['date'] as String?) != dateString) return;
+        final slot = value['slot'] as Slots;
+        if (!slotSupports30Min(slot)) return;
+        final isLeft = value['isLeftHalf'] as bool?;
+        if (isLeft == null) return;
+
+        final base = _convertTimeToMinutes(slot.time ?? '');
+        if (base == null) return;
+        final myBlock = isLeft ? base : base + 30;
+        final neighbourBlocks = isLeft
+            ? <int>{base - 30, base + 30} // prev slot OR same-slot right half
+            : <int>{base, base + 60};     // same-slot left half OR next slot
+
+        bool neighbourExists = false;
+        multiDateSelections.forEach((k2, v2) {
+          if (k2 == key) return;
+          if ((v2['courtId'] as String?) != courtId) return;
+          if ((v2['date'] as String?) != dateString) return;
+          final s2 = v2['slot'] as Slots;
+          if (!slotSupports30Min(s2)) return;
+          final isLeft2 = v2['isLeftHalf'] as bool?;
+          if (isLeft2 == null) return;
+          final base2 = _convertTimeToMinutes(s2.time ?? '');
+          if (base2 == null) return;
+          final block2 = isLeft2 ? base2 : base2 + 30;
+          if (neighbourBlocks.contains(block2)) neighbourExists = true;
+        });
+
+        if (!neighbourExists) keysToRemove.add(key);
+      });
+
+      if (keysToRemove.isEmpty) return;
+      final removedSlotIds = <String>{};
+      for (final k in keysToRemove) {
+        final v = multiDateSelections[k];
+        if (v != null) {
+          final s = v['slot'] as Slots;
+          removedSlotIds.add(s.sId ?? '');
+        }
+        multiDateSelections.remove(k);
+        changed = true;
+      }
+      for (final slotId in removedSlotIds) {
+        final stillExists = multiDateSelections.values.any((sel) {
+          if ((sel['courtId'] as String?) != courtId) return false;
+          if ((sel['date'] as String?) != dateString) return false;
+          final s = sel['slot'] as Slots;
+          return (s.sId ?? '') == slotId;
+        });
+        if (!stillExists) {
+          selectedSlots.removeWhere((s) => s.sId == slotId);
+          selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+        }
+      }
+    }
+  }
+
+  void _upsertHalfSelection({
+    required Slots slot,
+    required String courtId,
+    required String courtName,
+    required String dateString,
+    required DateTime currentDate,
+    required bool isLeftHalf,
+  }) {
+    final slotId = slot.sId ?? '';
+    final slotKey = '${dateString}_${courtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}';
+    final compositeKey = '${courtId}_$slotId';
+
+    final bookingTime =
+        isLeftHalf ? (slot.time ?? '') : _addMinutesToTime(slot.time ?? '', 30);
+    final adjustedAmount = (slot.amount ?? 0) ~/ 2;
+
+    multiDateSelections[slotKey] = {
+      'slot': slot,
+      'courtId': courtId,
+      'courtName': courtName,
+      'date': dateString,
+      'dateTime': currentDate,
+      'bookingTime': bookingTime,
+      'isLeftHalf': isLeftHalf,
+      'adjustedAmount': adjustedAmount,
+    };
+
+    if (!selectedSlots.any((s) => s.sId == slotId)) selectedSlots.add(slot);
+    selectedSlotsWithCourtInfo[compositeKey] = {
+      'slot': slot,
+      'courtId': courtId,
+      'courtName': courtName,
+      'bookingTime': bookingTime,
+      'adjustedAmount': adjustedAmount,
+    };
   }
 
   void _removeSlotAndAllAfter(Slots slot, String courtId, String dateString) {

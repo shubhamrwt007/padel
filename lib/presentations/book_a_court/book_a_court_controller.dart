@@ -832,12 +832,29 @@ class BookACourtController extends GetxController {
 
     if (hasFullSlot) {
       // Tapped half is part of a full slot in the middle of the range.
-      final tappingRightHalfOfFullSlot = !tappingFirstHalf;
+      // Remove the entire full slot — keep both the left side and right side
+      // of the range intact as separate segments.
+      // Cleanup will then remove any halves that become isolated.
+      //
+      // Example: 7pm(full) + 8pm(full) + 9pm(firstHalf)
+      //   Tap 8pm left half → remove 8pm full entirely
+      //   Result: 7pm(full) stays + 9pm(firstHalf) stays
+      //   Cleanup: 9pm firstHalf neighbour = 1230 (gone) → isolated → removed
+      //   Final: 7pm full only... BUT that's wrong per user expectation.
+      //
+      // Actually user wants: 7pm intact AND 8:30→9:30 intact.
+      // 8pm right half (1230) + 9pm firstHalf (1260) are still consecutive.
+      // So we should keep 8pm second half when removing 8pm first half.
+      //
+      // Rule:
+      //   Tap LEFT  half of middle full slot → remove full, keep RIGHT half
+      //   Tap RIGHT half of middle full slot → remove full, keep LEFT half
+      // Both kept halves stay connected to whatever is on their respective side.
 
-      if (tappingRightHalfOfFullSlot) {
-        // Remove the full slot, keep only the RIGHT half (left half trimmed off).
-        // Result: right half stays as new range start, connects forward.
-        realCourtSelections.remove(fullKey);
+      realCourtSelections.remove(fullKey);
+
+      if (tappingFirstHalf) {
+        // Keep second half (right side stays connected forward)
         final halfSlot = Slots(
             sId: slotId, time: slot.time, amount: (slot.amount ?? 0) ~/ 2);
         realCourtSelections[secondKey] = {
@@ -851,19 +868,22 @@ class BookACourtController extends GetxController {
           'isFirstHalf': false,
         };
       } else {
-        // Tapping LEFT half of a full slot in the middle → cascade from here onward.
-        // Removes this slot and everything after it.
-        _cascadeRemoveRealCourtFromBlock(
-          fromBlock: tappedBlockStart,
-          courtId: resolvedCourtId,
-          dateString: dateString,
-          currentDate: currentDate,
-        );
+        // Keep first half (left side stays connected backward)
+        final halfSlot = Slots(
+            sId: slotId, time: slot.time, amount: (slot.amount ?? 0) ~/ 2);
+        realCourtSelections[firstKey] = {
+          'slot': halfSlot,
+          'courtId': resolvedCourtId,
+          'courtName': courtName ?? '',
+          'date': dateString,
+          'dateTime': currentDate,
+          'amount': (slot.amount ?? 0) ~/ 2,
+          'isHalfSlot': true,
+          'isFirstHalf': true,
+        };
       }
     } else {
-      // Tapped block is a standalone half in the middle.
-      // Only remove THIS half — don't cascade, as non-consecutive slots
-      // further along (like a separate 9pm full slot) must not be affected.
+      // Standalone half in the middle — remove only this half entry.
       if (hasFirstHalf) {
         realCourtSelections.remove(firstKey);
       } else if (hasSecondHalf) {
@@ -954,8 +974,12 @@ class BookACourtController extends GetxController {
         };
       }
     } else {
-      // Was already a single half — just remove it
-      realCourtSelections.remove(removingFirstHalf ? firstKey : secondKey);
+      // Was already a single half — remove whichever half is actually stored
+      if (realCourtSelections.containsKey(firstKey)) {
+        realCourtSelections.remove(firstKey);
+      } else {
+        realCourtSelections.remove(secondKey);
+      }
     }
   }
 
@@ -1983,9 +2007,11 @@ class BookACourtController extends GetxController {
       }
 
       final List<Map<String, dynamic>> slotData = [];
+
       for (var slotGroup in slotGroups.entries) {
         final selections      = slotGroup.value;
         final isHalfSlotGroup = slotGroup.key.endsWith('_half');
+
         if (isHalfSlotGroup && selections.length == 2) {
           final firstSel    = selections.first;
           final slot        = firstSel['slot'] as Slots;

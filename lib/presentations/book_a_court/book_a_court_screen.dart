@@ -2367,23 +2367,25 @@ class BookACourtScreen extends StatelessWidget {
   }
 
   int _getGroupedSlotsCount() {
-    // Group selections by date and court, then count consolidated slots
+    // Group selections by date and court, then group consecutive slots
     final groupedSelections = <String, List<Map<String, dynamic>>>{};
 
-    // First group by date, court, and club
+    // First group by date and court
     for (var entry in controller.realCourtSelections.entries) {
       final selection = entry.value;
       final dateTime = selection['dateTime'] as DateTime;
       final courtId = selection['courtId'] as String;
       final formattedDate = DateFormat('dd, MMM').format(dateTime);
       final key = '${formattedDate}_$courtId';
+
       if (!groupedSelections.containsKey(key)) {
         groupedSelections[key] = [];
       }
       groupedSelections[key]!.add(selection);
     }
 
-    int totalGroups = 0;
+    // Process each group to find consecutive slots and consolidate half-slots
+    int totalEntries = 0;
 
     for (var entry in groupedSelections.entries) {
       final selections = entry.value;
@@ -2404,8 +2406,18 @@ class BookACourtScreen extends StatelessWidget {
       for (var slotGroup in slotGroups.entries) {
         final slotSelections = slotGroup.value;
         if (slotSelections.length == 2) {
-          // Both halves selected - count as one slot
-          consolidatedSelections.add(slotSelections.first);
+          // Both halves selected - create one consolidated entry with full slot info
+          final firstSelection = slotSelections.first;
+          final totalAmount = slotSelections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
+          consolidatedSelections.add({
+            'slot': firstSelection['slot'],
+            'amount': totalAmount,
+            'dateTime': firstSelection['dateTime'],
+            'courtId': firstSelection['courtId'],
+            'date': firstSelection['date'],
+            'isHalfSlot': false, // Mark as full slot since both halves are selected
+            'isFirstHalf': true,
+          });
         } else {
           // Single half or full slot - add as is
           consolidatedSelections.addAll(slotSelections);
@@ -2419,29 +2431,59 @@ class BookACourtScreen extends StatelessWidget {
         return timeA.compareTo(timeB);
       });
 
-      // Count consecutive groups
+      // Group consecutive slots (same logic as _buildSlotDetails)
       var i = 0;
       while (i < consolidatedSelections.length) {
-        var consecutiveCount = 1;
+        final consecutiveGroup = [consolidatedSelections[i]];
 
-        // Find consecutive slots
+        // Find consecutive slots (considering half-slots)
         for (var j = i + 1; j < consolidatedSelections.length; j++) {
-          final currentTime = _parseTimeToMinutes((consolidatedSelections[j - 1]['slot'] as Slots).time ?? '');
-          final nextTime = _parseTimeToMinutes((consolidatedSelections[j]['slot'] as Slots).time ?? '');
+          final currentSelection = consolidatedSelections[j - 1];
+          final nextSelection = consolidatedSelections[j];
 
-          if (nextTime - currentTime == 60) { // 1 hour difference
-            consecutiveCount++;
+          final currentSlot = currentSelection['slot'] as Slots;
+          final nextSlot = nextSelection['slot'] as Slots;
+
+          final currentIsHalf = currentSelection['isHalfSlot'] as bool? ?? false;
+          final currentIsFirst = currentSelection['isFirstHalf'] as bool? ?? true;
+          final nextIsHalf = nextSelection['isHalfSlot'] as bool? ?? false;
+          final nextIsFirst = nextSelection['isFirstHalf'] as bool? ?? true;
+
+          final currentTime = _parseTimeToMinutes(currentSlot.time ?? '');
+          final nextTime = _parseTimeToMinutes(nextSlot.time ?? '');
+
+          // Calculate actual end time of current slot
+          final currentSlotDuration = currentSlot.duration ?? 60;
+          int currentEndTime = currentTime;
+          if (currentSlotDuration == 90) {
+            currentEndTime += 90; // 90-minute slot
+          } else if (currentIsHalf) {
+            currentEndTime += currentIsFirst ? 30 : 60; // First half ends at +30, second half ends at +60
+          } else {
+            currentEndTime += 60; // Full slot
+          }
+
+          // Calculate actual start time of next slot
+          int nextStartTime = nextTime;
+          if (nextIsHalf && !nextIsFirst) {
+            nextStartTime += 30; // Second half starts at +30
+          }
+
+          // Check if slots are consecutive
+          if (currentEndTime == nextStartTime) {
+            consecutiveGroup.add(consolidatedSelections[j]);
           } else {
             break;
           }
         }
 
-        totalGroups++;
-        i += consecutiveCount;
+        // Each consecutive group counts as one entry in the order summary
+        totalEntries++;
+        i += consecutiveGroup.length;
       }
     }
 
-    return totalGroups;
+    return totalEntries;
   }
 
   int _parseTimeToMinutes(String time) {
