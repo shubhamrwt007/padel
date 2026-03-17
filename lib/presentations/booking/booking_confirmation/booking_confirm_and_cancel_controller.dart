@@ -42,7 +42,6 @@ final fromCancelled = ''.obs;
   @override
   void onInit() async {
     super.onInit();
-
     final String? bookingId = Get.arguments?['id'];
   fromBooking.value = Get.arguments?['fromCompleted']?.toString() ?? '';
   fromCancelled.value = Get.arguments?['fromCancelled']?.toString() ?? '';
