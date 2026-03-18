@@ -376,14 +376,14 @@ class HomeScreen extends GetView<HomeController> {
               width: 118,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: courtImage != null
+                child: club.logo != null && club.logo!.isNotEmpty
                     ? CachedNetworkImage(
-                  imageUrl: courtImage,
+                  imageUrl: club.logo!,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => const Center(child: LoadingWidget(color: AppColors.primaryColor,)),
-                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.business, color: Colors.grey)),
                 )
-                    : const Center(child: Icon(Icons.photo, color: Colors.grey, size: 40)),
+                    : const Center(child: Icon(Icons.business, color: Colors.grey, size: 40)),
               ),
             ).paddingOnly(right: Get.width * 0.02),
             Expanded(
