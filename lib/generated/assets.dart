@@ -97,10 +97,9 @@ class Assets {
   static const String imagesPlaystore = 'assets/images/playstore.png';
   static const String imagesRazorPay = 'assets/images/razorPay.png';
   static const String imagesRowthTechLogo = 'assets/images/rowthTech_logo.svg';
-  static const String imagesTutorialScreenPng1 = 'assets/images/tutorial_screen_png_1.png';
   static const String imagesTutorialScreenPng2 = 'assets/images/tutorial_screen_png_2.png';
+  static const String imagesTutorialScreenPng1 = 'assets/images/tutorial_screen_png_1.png';
   static const String imagesTutorialScreenPng3 = 'assets/images/tutorial_screen_png_3.png';
   static const String imagesTutorialScreenPng4 = 'assets/images/tutorial_screen_png_4.png';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';
-
 }
