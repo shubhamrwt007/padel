@@ -269,7 +269,7 @@ class LeaderboardScreen extends StatelessWidget {
             // SizedBox(height: Get.height * 0.012),
 
             Container(
-              height: 16,
+              height: 22,
               width: 55,
               alignment: Alignment.center,
               decoration: BoxDecoration(

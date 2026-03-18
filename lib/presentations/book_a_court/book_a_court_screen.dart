@@ -405,7 +405,7 @@ class BookACourtScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(20.0),
             child: Text(
-              'No matches available For this time, please create an public open match',
+              'No matches available for this time',
               style: TextStyle(color: Colors.grey),
             ),
           ),
@@ -1198,6 +1198,28 @@ class BookACourtScreen extends StatelessWidget {
     );
   }
 
+  // Helper method to find corresponding API slot for status check
+  CourtSlot? _findCorrespondingApiSlot(dynamic slot, String courtId) {
+    final courtsByDuration = controller.courtsByDuration.value;
+    if (courtsByDuration?.data == null) return null;
+    
+    for (var clubData in courtsByDuration!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          // Match both court ID and slot time
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              if (apiSlot.time == slot.time) {
+                return apiSlot;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   Widget _buildCourtSlotTile(
       BuildContext context,
       dynamic slot,
@@ -1211,8 +1233,14 @@ class BookACourtScreen extends StatelessWidget {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
-    final isLeftHalfBooked = supports30Min && controller.isLeftHalfBooked(slot, resolvedCourtId);
-    final isRightHalfBooked = supports30Min && controller.isRightHalfBooked(slot, resolvedCourtId);
+    // Check for booked slots from API response
+    final correspondingApiSlot = _findCorrespondingApiSlot(slot, resolvedCourtId);
+    final isSlotBooked = correspondingApiSlot?.status?.toLowerCase() == 'booked';
+    
+    final isLeftHalfBooked = supports30Min && (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+    final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+    final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
+    final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
@@ -1248,7 +1276,7 @@ class BookACourtScreen extends StatelessWidget {
           } : null,
           onTap: !supports30Min ? () {
             // Prevent selection if slot is booked
-            if (isLeftHalfBooked || isRightHalfBooked) {
+            if (isSlotBooked || isAnyHalfBooked) {
               return;
             }
 
@@ -1335,7 +1363,7 @@ class BookACourtScreen extends StatelessWidget {
                     ),
                   ),
 
-                /// LEFT HALF BOOKED OVERLAY (FADED)
+                /// LEFT HALF BOOKED OVERLAY (RED)
                 if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                   Align(
                     alignment: Alignment.centerLeft,
@@ -1347,12 +1375,12 @@ class BookACourtScreen extends StatelessWidget {
                           topLeft: Radius.circular(radius),
                           bottomLeft: Radius.circular(radius),
                         ),
-                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                        color: AppColors.lightred,
                       ),
                     ),
                   ),
 
-                /// RIGHT HALF BOOKED OVERLAY (FADED)
+                /// RIGHT HALF BOOKED OVERLAY (RED)
                 if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                   Align(
                     alignment: Alignment.centerRight,
@@ -1364,8 +1392,17 @@ class BookACourtScreen extends StatelessWidget {
                           topRight: Radius.circular(radius),
                           bottomRight: Radius.circular(radius),
                         ),
-                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                        color: AppColors.lightred,
                       ),
+                    ),
+                  ),
+
+                /// FULL SLOT BOOKED OVERLAY (RED) - for non-30min slots or both halves booked
+                if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(radius),
+                      color: AppColors.lightred,
                     ),
                   ),
 
@@ -1379,7 +1416,7 @@ class BookACourtScreen extends StatelessWidget {
                     ),
                   ),
 
-                /// LEFT BLUE STRIP (ONLY WHEN NOT SELECTED)
+                /// LEFT STRIP (ONLY WHEN NOT SELECTED) - RED FOR BOOKED, BLUE FOR AVAILABLE
                 if (!isSelected )
                   Align(
                     alignment: Alignment.centerLeft,
@@ -1387,7 +1424,8 @@ class BookACourtScreen extends StatelessWidget {
                       width: 4,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: blueColor,
+                        color: (isSlotBooked || isAnyHalfBooked) ? AppColors.redColor
+                            : blueColor,
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(radius),
                           bottomLeft: Radius.circular(radius),
@@ -1463,6 +1501,17 @@ class BookACourtScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                               color: Colors.grey.shade600,
                             ),
+                          ),
+                        ),
+
+                      // Full slot grayed text for booked slots
+                      if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                        Text(
+                          controller.formatTimeForDisplay(slot.time),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
                           ),
                         ),
 
@@ -1666,7 +1715,7 @@ class BookACourtScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
+                  /// LEFT STRIP (ONLY WHEN NOT SELECTED) - RED FOR BOOKED, BLUE FOR AVAILABLE
                   if (!isSelected)
                     Positioned.fill(
                       left: 0,
@@ -1675,7 +1724,7 @@ class BookACourtScreen extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: blueColor,
+                            color: isUnavailable ? AppColors.lightred : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
