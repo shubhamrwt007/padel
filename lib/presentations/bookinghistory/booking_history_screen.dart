@@ -1330,33 +1330,33 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   Text("${playerAvatars.length} attendee", style: Get.textTheme.bodySmall),
                 ],
               ),
-              if (showCrossIcon)
-                GestureDetector(
-                  onTap: () {
-                    Get.toNamed(RoutesName.bookingConfirmAndCancel, arguments: {
-                      'id': booking.sId ?? '',
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 12,
-                    ),
-                  ),
-                ),
+              // if (showCrossIcon)
+                // GestureDetector(
+                //   onTap: () {
+                //     Get.toNamed(RoutesName.bookingConfirmAndCancel, arguments: {
+                //       'id': booking.sId ?? '',
+                //     });
+                //   },
+                //   child: Container(
+                //     padding: const EdgeInsets.all(6),
+                //     decoration: BoxDecoration(
+                //       color: Colors.red,
+                //       shape: BoxShape.circle,
+                //       boxShadow: [
+                //         BoxShadow(
+                //           color: Colors.black26,
+                //           blurRadius: 4,
+                //           offset: Offset(0, 2),
+                //         ),
+                //       ],
+                //     ),
+                //     child: const Icon(
+                //       Icons.close,
+                //       color: Colors.white,
+                //       size: 12,
+                //     ),
+                //   ),
+                // ),
             ],
           ),
           const SizedBox(height: 8),

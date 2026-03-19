@@ -2,11 +2,11 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
+import 'package:padel_mobile/services/socket_service.dart';
 import '../../../handler/text_formatter.dart';
 import 'book_session_controller.dart';
 
@@ -23,6 +23,49 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure socket is connected when book session screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final socketService = SocketService.instance;
+        log('BookSession: Checking socket connection status');
+        socketService.testConnection();
+        
+        if (!socketService.isConnected) {
+          log('BookSession: Socket not connected, attempting to connect');
+          socketService.connect();
+        } else {
+          log('BookSession: Socket already connected');
+        }
+      } catch (e) {
+        log('Socket connection error in book session: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    try {
+      final socketService = SocketService.instance;
+      final clubId = controller.argument.id;
+      final selectedDate = controller.selectedDate.value;
+      final dateString = "${selectedDate?.year}-${selectedDate?.month.toString().padLeft(2, '0')}-${selectedDate?.day.toString().padLeft(2, '0')}";
+      
+      if (clubId != null) {
+        socketService.unsubscribeFromSlotWiseUpdates(
+          clubId: clubId,
+          date: dateString,
+        );
+        log('BookSession: Unsubscribed from slot updates for club: $clubId, date: $dateString');
+      }
+    } catch (e) {
+      log('Error unsubscribing from slot updates: $e');
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +302,10 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                           controller.focusedMonth.value =
                               DateTime(date.year, date.month, 1);
                           controller.isLoadingCourts.value = true;
+                          
+                          // Re-subscribe to slot updates for new date
+                          controller.resubscribeToSlotUpdates();
+                          
                           await controller.fetchAllSlotPrices();
                           await controller.getAvailableCourtsById(
                             controller.locationID.value,

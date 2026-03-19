@@ -7,9 +7,13 @@ import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart'
 import '../../../data/request_models/home_models/get_available_court.dart';
 import '../../../data/request_models/home_models/get_club_name_model.dart';
 import '../../../repositories/home_repository/home_repository.dart';
+import '../../../services/socket_service.dart';
+import '../../../services/slot_wise_service.dart';
 import '../../payment/payment_method_controller.dart';
 
 class BookSessionController extends GetxController {
+  final SlotWiseService _slotWiseService = SlotWiseService();
+  RxBool isSocketDataReceived = false.obs;
   // Booking limits
   static const int maxSlots = 24;
   static const int maxDays = 5;
@@ -264,7 +268,8 @@ var locationsId = "".obs;
     selectedDate.value = _getInitialDate();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchAllSlotPrices();
-      await getAvailableCourtsById(locationID.value,categoryId.value,sId.value,argument.id!, showUnavailable: true);
+      // Subscribe to slot-wise updates first (with API fallback)
+      _subscribeToSlotUpdates();
       _startDateAutoSwitchTimer();
     });
   }
@@ -297,6 +302,10 @@ var locationsId = "".obs;
     multiDateSelections.clear();
     totalAmount.value = 0;
     pageController.dispose();
+    
+    // Unsubscribe from slot updates
+    _unsubscribeFromSlotUpdates();
+    
     super.onClose();
   }
 
@@ -656,6 +665,9 @@ var locationsId = "".obs;
       }
     }
 
+    // Store selection state before making changes
+    final wasSelected = isSlotSelected(slot, resolvedCourtId);
+
     // ─────────────────────────────────────────────────────────────────────────
     // 30-min pricing supported: use the same half-slot continuity rules as
     // Book A Court (edge-only half selection; full slot otherwise; cleanup).
@@ -685,6 +697,7 @@ var locationsId = "".obs;
           isLeftHalf: false,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
       if (hasRight && !hasLeft && tappingLeft) {
@@ -698,6 +711,7 @@ var locationsId = "".obs;
           isLeftHalf: true,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
 
@@ -729,6 +743,7 @@ var locationsId = "".obs;
             isLeftHalf: false,
           );
           _recalculateTotalAmount();
+          _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
           return;
         }
 
@@ -787,6 +802,7 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
 
@@ -804,6 +820,7 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -821,6 +838,7 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -838,6 +856,7 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -858,6 +877,7 @@ var locationsId = "".obs;
         dateString: dateString,
       );
       _recalculateTotalAmount();
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
       return;
     }
 
@@ -869,6 +889,7 @@ var locationsId = "".obs;
       multiDateSelections.remove(fullKey);
       selectedSlots.removeWhere((s) => s.sId == slotId);
       selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
     } else {
       if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
       multiDateSelections[fullKey] = {
@@ -889,6 +910,7 @@ var locationsId = "".obs;
         'bookingTime': slot.time ?? '',
         'adjustedAmount': slot.amount ?? 0,
       };
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
     }
 
     _recalculateTotalAmount();
@@ -1568,7 +1590,7 @@ var locationsId = "".obs;
         availability == "weather conditions" ||
         availability == "staff unavailability"||
         availability == "tournament";
-    final isBooked = (slot.status?.toLowerCase() == 'booked');
+    // Don't consider booked slots as unavailable - they should be shown in red
     final isPast = isPastAndUnavailable(slot);
     
     // For 30-minute duration, check if any half is booked
@@ -1578,28 +1600,43 @@ var locationsId = "".obs;
       isHalfBooked = isLeftHalfBooked(slot) || isRightHalfBooked(slot);
     }
     
-    return isPast || isBlocked || isBooked || isHalfBooked;
+    // Only consider past or blocked slots as unavailable (not booked slots)
+    return isPast || isBlocked;
   }
 
   bool _isAvailableSlot(Slots slot) {
     final status = slot.status?.toLowerCase() ?? '';
     final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
     
+    // Always show booked slots (they will be displayed in red in UI)
+    final isBooked = (slot.status?.toLowerCase() == 'booked');
+    final leftHalfBooked = isLeftHalfBooked(slot);
+    final rightHalfBooked = isRightHalfBooked(slot);
+    
     // For 30-minute duration, slot is available if at least one half is free
     if (selectedDurationMinutes == 30) {
-      final leftBooked = isLeftHalfBooked(slot);
-      final rightBooked = isRightHalfBooked(slot);
       // Available if at least one half is free and not blocked/past
       final isNotBlocked = !isPastAndUnavailable(slot) && 
           slot.availabilityStatus?.toLowerCase() != "maintenance" &&
           slot.availabilityStatus?.toLowerCase() != "weather conditions" &&
           slot.availabilityStatus?.toLowerCase() != "staff unavailability" &&
-          slot.availabilityStatus?.toLowerCase() != "tournament" &&
-          slot.status?.toLowerCase() != 'booked';
-      return isNotBlocked && (!leftBooked || !rightBooked);
+          slot.availabilityStatus?.toLowerCase() != "tournament";
+      
+      // Show slot if it's not blocked (booked slots will be shown in red)
+      return isNotBlocked;
     }
     
-    return !_isUnavailableSlot(slot) && (status == 'available' || status.isEmpty);
+    // For other durations, show all slots except past/blocked ones
+    // Booked slots will be shown in red color in UI
+    final availability = slot.availabilityStatus?.toLowerCase();
+    final isBlocked = availability == "maintenance" ||
+        availability == "weather conditions" ||
+        availability == "staff unavailability"||
+        availability == "tournament";
+    final isPast = isPastAndUnavailable(slot);
+    
+    // Show slot if it's not past or blocked (booked slots will be shown in red)
+    return !isPast && !isBlocked;
   }
 
   /// Check if left half of a 30-minute slot is booked
@@ -2343,6 +2380,207 @@ var locationsId = "".obs;
       return slotHour >= startHour && slotHour <= endHour;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Emit slot selection/deselection events via socket
+  void _emitSlotEvent(Slots slot, String courtId, String courtName, String dateString, bool isDeselection) {
+    try {
+      final socketService = SocketService.instance;
+      final eventData = {
+        'slotId': slot.sId ?? '',
+        'courtId': courtId,
+        'courtName': courtName,
+        'time': slot.time ?? '',
+        'date': dateString,
+        'amount': slot.amount ?? 0,
+        'userId': socketService.userId,
+        'clubId': argument.id ?? '',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      
+      if (isDeselection) {
+        socketService.emitSlotDeselection(eventData);
+      } else {
+        socketService.emitSlotSelection(eventData);
+      }
+    } catch (e) {
+      log('Error emitting slot event: $e');
+    }
+  }
+
+  /// Subscribe to slot-wise updates using SlotWiseService
+  void _subscribeToSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDay = _getWeekday(date.weekday);
+      final formattedDate = _dateFormatter.format(date);
+
+      _slotWiseService.subscribeToSlotWise(
+        clubId: argument.id ?? '',
+        date: formattedDate,
+        locationId: locationID.value,
+        categoryId: categoryId.value,
+        sId: sId.value,
+        locId: locationsId.value,
+        day: formattedDay,
+        onInitialData: (data) {
+          log('📡 SlotWise acknowledgment received');
+          isSocketDataReceived.value = true;
+          _handleInitialSlotData(data);
+        },
+        onSlotUpdate: (data) {
+          log('🔄 SlotWise real-time update received in BookSessionController');
+          log('📊 Update data: $data');
+          _handleRealTimeSlotUpdate(data);
+        },
+      );
+      
+      log('Subscribed to slot-wise updates for club: ${argument.id}, date: $formattedDate');
+      
+      // Fallback: If no socket data received within 3 seconds, use API
+      Timer(const Duration(seconds: 3), () {
+        if (!isSocketDataReceived.value) {
+          log('⚠️ No socket data received, falling back to API');
+          getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+        }
+      });
+    } catch (e) {
+      log('Error subscribing to slot updates: $e');
+      // Fallback to API on error
+      getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+    }
+  }
+
+  /// Unsubscribe from slot-wise updates
+  void _unsubscribeFromSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDate = _dateFormatter.format(date);
+      
+      _slotWiseService.unsubscribe(argument.id ?? '', formattedDate);
+      log('Unsubscribed from slot-wise updates');
+    } catch (e) {
+      log('Error unsubscribing from slot updates: $e');
+    }
+  }
+
+  /// Re-subscribe to slot updates when date changes
+  void resubscribeToSlotUpdates() {
+    isSocketDataReceived.value = false;
+    _unsubscribeFromSlotUpdates();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _subscribeToSlotUpdates();
+    });
+  }
+
+  /// Handle initial slot data from subscription acknowledgment
+  void _handleInitialSlotData(dynamic initialData) {
+    try {
+      log('📡 Handling initial slot data from acknowledgment');
+      
+      if (initialData != null) {
+        log('Initial slot data received, parsing and updating UI');
+        
+        // Handle both List and Map formats from socket
+        Map<String, dynamic> dataMap;
+        if (initialData is List) {
+          // If data is a list, wrap it in the expected structure
+          dataMap = {'data': initialData};
+        } else if (initialData is Map<String, dynamic>) {
+          dataMap = initialData;
+        } else {
+          log('❌ Unexpected initial data format: ${initialData.runtimeType}');
+          // Fallback to API on unexpected format
+          getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+          return;
+        }
+        
+        // Parse the socket data into GetAllActiveCourtsForSlotWiseModel
+        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+        
+        // Update slot prices and apply filtering
+        _updateSocketSlotData(parsedData);
+        
+        log('✅ Socket data successfully displayed in UI');
+      }
+    } catch (e) {
+      log('❌ Error handling initial slot data: $e');
+      // Fallback to API on parsing error
+      getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+    }
+  }
+
+  /// Handle real-time slot data updates
+  void _handleRealTimeSlotUpdate(dynamic slotData) {
+    try {
+      log('🔄 Handling real-time slot data update');
+      
+      if (slotData != null) {
+        log('Real-time slot data received, updating UI');
+        
+        // Handle both List and Map formats from socket
+        Map<String, dynamic> dataMap;
+        if (slotData is List) {
+          // If data is a list, wrap it in the expected structure
+          dataMap = {'data': slotData};
+        } else if (slotData is Map<String, dynamic>) {
+          dataMap = slotData;
+        } else {
+          log('❌ Unexpected data format: ${slotData.runtimeType}');
+          return;
+        }
+        
+        // Parse the socket data into GetAllActiveCourtsForSlotWiseModel
+        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+        
+        // Update slot data and refresh UI
+        _updateSocketSlotData(parsedData);
+        
+        log('✅ Real-time slot data successfully updated in UI');
+      }
+    } catch (e) {
+      log('❌ Error handling real-time slot update: $e');
+    }
+  }
+
+  /// Update slots with socket data and apply filtering
+  void _updateSocketSlotData(GetAllActiveCourtsForSlotWiseModel socketData) {
+    try {
+      // Store ALL slots (both available and unavailable)
+      _allSlotsCache.clear();
+      for (var court in socketData.data ?? []) {
+        _allSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+
+      // Apply filtering based on toggle
+      for (var court in socketData.data ?? []) {
+        final base = _allSlotsCache[court.sId ?? ''] ?? [];
+        if (showUnavailableSlots.value) {
+          // Show BOTH available and unavailable
+          court.slots = List<Slots>.from(base);
+        } else {
+          // Show only available
+          court.slots = base.where((s) => _isAvailableSlot(s)).toList();
+        }
+      }
+
+      slots.value = socketData;
+
+      // Build original cache from filtered slots for time-of-day filtering
+      _originalSlotsCache.clear();
+      final courts = slots.value?.data ?? [];
+      for (final court in courts) {
+        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+      _recalculateTimeOfDayCounts();
+
+      filterSlotsByTimeOfDay();
+      _autoSelectTab();
+      
+      log('✅ Socket slot data successfully processed and displayed');
+    } catch (e) {
+      log('❌ Error updating socket slot data: $e');
     }
   }
 
