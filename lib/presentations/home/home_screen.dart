@@ -17,6 +17,7 @@ import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/services/socket_service.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -343,13 +344,33 @@ class HomeScreen extends GetView<HomeController> {
           
           String categoryId = "";
           String locationId = "";
+          String userId = "";
           
           try {
             final mainHomeController = Get.find<MainHomeController>();
             categoryId = mainHomeController.selectedCategoryId.value;
             locationId = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "";
+            userId = mainHomeController.profileController.profileModel.value?.response?.sId ?? "";
+            
+            log("Navigation data - categoryId: $categoryId, locationId: $locationId, userId: $userId");
           } catch (e) {
             log("MainHomeController not found: $e");
+          }
+          
+          // Connect socket and register user
+          try {
+            final socketService = SocketService.instance;
+            log("Socket service instance obtained");
+            
+            if (userId.isNotEmpty) {
+              log("Setting user ID and connecting socket: $userId");
+              socketService.setUserIdAndConnect(userId);
+            } else {
+              log("User ID is empty, connecting socket without user registration");
+              socketService.connect();
+            }
+          } catch (e) {
+            log("Socket service error: $e");
           }
           
           Get.toNamed(RoutesName.booking, arguments: {
