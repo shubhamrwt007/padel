@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
 
 class LeagueController extends GetxController with GetSingleTickerProviderStateMixin {
   final RxInt selectedTab = 0.obs;
@@ -19,16 +20,25 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   final RxBool isLoadingResultMatches = false.obs;
   final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
   final RxBool isLoadingSponsors = false.obs;
+  final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
+  final RxBool isLoadingLeaderBoard = false.obs;
+  
+  String? leagueId;
 
   @override
   void onInit() {
     super.onInit();
+    // Get leagueId from arguments
+    leagueId = Get.arguments?['leagueId'];
+    print('🎯 League Controller - Received leagueId: $leagueId');
+    
     pageController = PageController(initialPage: 1);
     tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     fetchLiveMatches();
     fetchUpcomingMatches();
     fetchResultMatches();
     fetchSponsors();
+    fetchLeaderBoard();
   }
 
   @override
@@ -64,7 +74,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   Future<void> fetchLiveMatches() async {
     try {
       isLoadingLiveMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(
+        matchStatus: 'live',
+        leagueId: leagueId ?? '',
+      );
       liveMatches.value = response;
     } catch (e) {
       print('Error fetching live matches: $e');
@@ -76,7 +89,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   Future<void> fetchUpcomingMatches() async {
     try {
       isLoadingUpcomingMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(
+        matchStatus: 'upcoming',
+        leagueId: leagueId ?? '',
+      );
       upcomingMatches.value = response;
     } catch (e) {
       print('Error fetching upcoming matches: $e');
@@ -88,7 +104,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   Future<void> fetchResultMatches() async {
     try {
       isLoadingResultMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'finished');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(
+        matchStatus: 'finished',
+        leagueId: leagueId ?? '',
+      );
       resultMatches.value = response;
     } catch (e) {
       print('Error fetching result matches: $e');
@@ -106,6 +125,20 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
       print('Error fetching sponsors: $e');
     } finally {
       isLoadingSponsors.value = false;
+    }
+  }
+
+  Future<void> fetchLeaderBoard() async {
+    try {
+      isLoadingLeaderBoard.value = true;
+      final response = await _leagueRepository.getLeagueLeaderBoard(
+        leagueId: leagueId ?? '',
+      );
+      leaderBoard.value = response;
+    } catch (e) {
+      print('Error fetching leaderboard: $e');
+    } finally {
+      isLoadingLeaderBoard.value = false;
     }
   }
 }

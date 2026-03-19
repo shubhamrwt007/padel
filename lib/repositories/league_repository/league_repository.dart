@@ -2,6 +2,8 @@ import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_upcoming_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -19,10 +21,10 @@ class LeagueRepository {
 
   ///Get All Schedule Live Matches---------------------------------------------------
   Future<GetAllScheduleLiveMatchesModel> getAllScheduleLiveMatches(
-      {required String matchStatus}) async {
+      {required String matchStatus,required String leagueId}) async {
     try {
       final response = await dioClient.get(
-        "${AppEndpoints.getAllScheduleLiveMatches}matchStatus=$matchStatus",
+        "${AppEndpoints.getAllScheduleLiveMatches}matchStatus=$matchStatus&leagueId=$leagueId",
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -94,6 +96,60 @@ class LeagueRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Get League Match Details failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Get League Leader Board----------------------------------------------------
+  Future<GetLeagueLeaderBoardModel> getLeagueLeaderBoard({required String leagueId}) async {
+    try {
+      final response = await dioClient.get(
+        "${AppEndpoints.getLeagueLeaderBoard}$leagueId/leaderboard",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Get League Leader Board Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetLeagueLeaderBoardModel.fromJson(response.data);
+      } else {
+        throw Exception(
+            "Get League Leader Board failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Get League Leader Board failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Get League List----------------------------------------------------
+  Future<GetLeagueListModel> getLeagueList({required String status}) async {
+    try {
+      final response = await dioClient.get(
+        "${AppEndpoints.getLeagueList}$status",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Get League List Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetLeagueListModel.fromJson(response.data);
+      } else {
+        throw Exception(
+            "Get League List failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Get League List failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

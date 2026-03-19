@@ -43,49 +43,61 @@ class LeagueMatchListScreen extends StatelessWidget {
 
       final scheduleData = controller.upcomingMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
-        return Center(
-          child: Text(
-            "No upcoming matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        return RefreshIndicator(
+          color: Colors.white,
+          onRefresh: controller.fetchUpcomingMatches,
+          child: Center(
+            child: Text(
+              "No upcoming matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
           ),
         );
       }
 
       final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
       if (allMatches.isEmpty) {
-        return Center(
-          child: Text(
-            "No upcoming matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        return RefreshIndicator(
+          color: Colors.white,
+          onRefresh: controller.fetchUpcomingMatches,
+          child: Center(
+            child: Text(
+              "No upcoming matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
           ),
         );
       }
 
-      return ListView.builder(
-        itemCount: allMatches.length,
-        itemBuilder: (context, index) {
-          final matchData = scheduleData.firstWhere(
-            (data) => data.matches?.contains(allMatches[index]) ?? false,
-            orElse: () => scheduleData.first,
-          );
-          return GestureDetector(
-            onTap: () {
-              final matchData = scheduleData.firstWhere(
-                (data) => data.matches?.contains(allMatches[index]) ?? false,
-                orElse: () => scheduleData.first,
-              );
-              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                "matchType": "upcoming",
-                "matchId": matchData.matchId ?? ""
-              });
-            },
-            child: UpcomingMatchCard(
-              match: allMatches[index],
-              categoryType: matchData.categoryType,
-              date: matchData.date,
-            ),
-          );
-        },
+      return RefreshIndicator(
+        color: Colors.white,
+        onRefresh: controller.fetchUpcomingMatches,
+        child: ListView.builder(
+          itemCount: allMatches.length,
+          itemBuilder: (context, index) {
+            final matchData = scheduleData.firstWhere(
+              (data) => data.matches?.contains(allMatches[index]) ?? false,
+              orElse: () => scheduleData.first,
+            );
+            return GestureDetector(
+              onTap: () {
+                // final matchData = scheduleData.firstWhere(
+                //   (data) => data.matches?.contains(allMatches[index]) ?? false,
+                //   orElse: () => scheduleData.first,
+                // );
+                // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                //   "matchType": "upcoming",
+                //   "matchId": matchData.matchId ?? ""
+                // });
+              },
+              child: UpcomingMatchCard(
+                match: allMatches[index],
+                categoryType: matchData.categoryType,
+                date: matchData.date,
+              ),
+            );
+          },
+        ),
       );
     });
   }
@@ -105,49 +117,62 @@ class LeagueMatchListScreen extends StatelessWidget {
 
       final scheduleData = controller.resultMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
-        return Center(
-          child: Text(
-            "No result matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        return RefreshIndicator(
+          color: Colors.white,
+          onRefresh: controller.fetchResultMatches,
+          child: Center(
+            child: Text(
+              "No result matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
           ),
         );
       }
 
       final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
       if (allMatches.isEmpty) {
-        return Center(
-          child: Text(
-            "No result matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        return RefreshIndicator(
+          color: Colors.white,
+          onRefresh: controller.fetchResultMatches,
+          child: Center(
+            child: Text(
+              "No result matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
           ),
         );
       }
 
-      return ListView.builder(
-        itemCount: allMatches.length,
-        itemBuilder: (context, index) {
-          final matchData = scheduleData.firstWhere(
-            (data) => data.matches?.contains(allMatches[index]) ?? false,
-            orElse: () => scheduleData.first,
-          );
-          return GestureDetector(
-            onTap: () {
-              final matchData = scheduleData.firstWhere(
-                (data) => data.matches?.contains(allMatches[index]) ?? false,
-                orElse: () => scheduleData.first,
-              );
-              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                "matchType": "result",
-                "matchId": matchData.matchId ?? ""
-              });
-            },
-            child: ResultMatchCard(
-              match: allMatches[index],
-              categoryType: matchData.categoryType,
-              date: matchData.date,
-            ),
-          );
-        },
+      return RefreshIndicator(
+        color: Colors.white,
+        onRefresh: controller.fetchResultMatches,
+        child: ListView.builder(
+          itemCount: allMatches.length,
+          itemBuilder: (context, index) {
+            final matchData = scheduleData.firstWhere(
+              (data) => data.matches?.contains(allMatches[index]) ?? false,
+              orElse: () => scheduleData.first,
+            );
+            return GestureDetector(
+              onTap: () {
+                final matchData = scheduleData.firstWhere(
+                  (data) => data.matches?.contains(allMatches[index]) ?? false,
+                  orElse: () => scheduleData.first,
+                );
+                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                  "matchType": "result",
+                  "matchId": matchData.matchId?.id ?? ""
+                });
+              },
+              child: ResultMatchCard(
+                match: allMatches[index],
+                categoryType: matchData.categoryType,
+                date: matchData.date,
+                setsWon: matchData.matchId?.setsWon,
+              ),
+            );
+          },
+        ),
       );
     });
   }
@@ -557,8 +582,9 @@ class ResultMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final String? date;
+  final SetsWon? setsWon;
   
-  const ResultMatchCard({super.key, this.match, this.categoryType, this.date});
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon});
 
   @override
   Widget build(BuildContext context) {
@@ -684,11 +710,11 @@ class ResultMatchCard extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Text(_getScoreText(match?.score?.teamA), style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  Text("${setsWon?.teamA ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                   const SizedBox(width: 6),
                                   Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                   const SizedBox(width: 6),
-                                  Text(_getScoreText(match?.score?.teamB), style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  Text("${setsWon?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                 ],
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)

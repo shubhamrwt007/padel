@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
@@ -30,6 +31,10 @@ class MainHomeController extends GetxController{
   final RxBool isLoadingUpcomingMatches = false.obs;
   final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
   final RxBool isLoadingSponsors = false.obs;
+  
+  final Rx<GetLeagueListModel?> activeLeagues = Rx<GetLeagueListModel?>(null);
+  final RxBool isLoadingActiveLeagues = false.obs;
+  final RxInt leagueCarouselIndex = 0.obs;
   // Sport Tab Selection
   final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
   
@@ -97,6 +102,7 @@ class MainHomeController extends GetxController{
     await fetchScheduleMatches();
     await fetchUpcomingMatches();
     await fetchSponsors();
+    await fetchActiveLeagues();
     _startBannerAutoSlide();
   }
 
@@ -284,7 +290,8 @@ class MainHomeController extends GetxController{
   Future<void> fetchScheduleMatches() async {
     try {
       isLoadingScheduleMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live');
+      final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live',leagueId: leagueId);
       scheduleMatches.value = response;
     } catch (e) {
       print('Error fetching schedule matches: $e');
@@ -296,7 +303,8 @@ class MainHomeController extends GetxController{
   Future<void> fetchUpcomingMatches() async {
     try {
       isLoadingUpcomingMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming');
+      final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming',leagueId: leagueId);
       upcomingMatches.value = response;
     } catch (e) {
       print('Error fetching upcoming matches: $e');
@@ -314,6 +322,18 @@ class MainHomeController extends GetxController{
       print('Error fetching sponsors: $e');
     } finally {
       isLoadingSponsors.value = false;
+    }
+  }
+
+  Future<void> fetchActiveLeagues() async {
+    try {
+      isLoadingActiveLeagues.value = true;
+      final response = await _leagueRepository.getLeagueList(status: 'active');
+      activeLeagues.value = response;
+    } catch (e) {
+      print('Error fetching active leagues: $e');
+    } finally {
+      isLoadingActiveLeagues.value = false;
     }
   }
 }

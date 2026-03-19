@@ -4,6 +4,7 @@ import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_m
 
 class LeagueMatchListController extends GetxController{
   final matchTab = 0.obs;
+  final RxString leagueId = ''.obs;
   final LeagueRepository _leagueRepository = LeagueRepository();
   final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
@@ -13,6 +14,7 @@ class LeagueMatchListController extends GetxController{
 @override
   void onInit() {
     matchTab.value = Get.arguments['matchTab'];
+    leagueId.value = Get.arguments['leagueId'] ?? '';
     if (matchTab.value == 0) {
       fetchUpcomingMatches();
     } else if (matchTab.value == 2) {
@@ -24,7 +26,7 @@ class LeagueMatchListController extends GetxController{
   Future<void> fetchUpcomingMatches() async {
     try {
       isLoadingUpcomingMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming',leagueId: leagueId.value);
       upcomingMatches.value = response;
     } catch (e) {
       print('Error fetching upcoming matches: $e');
@@ -36,7 +38,7 @@ class LeagueMatchListController extends GetxController{
   Future<void> fetchResultMatches() async {
     try {
       isLoadingResultMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'finished');
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'finished',leagueId: leagueId.value);
       resultMatches.value = response;
     } catch (e) {
       print('Error fetching result matches: $e');

@@ -4,6 +4,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
@@ -11,6 +13,7 @@ import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart'
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
@@ -201,7 +204,7 @@ class MainHomeScreen extends StatelessWidget {
                     _banner(),
                     const SizedBox(height: 16),
                     _quickActions(),
-                    // _buildLeagueComingSoon(),
+                    _buildLeagueComingSoon(),
                     _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
@@ -517,13 +520,13 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildSwootTitle(){
+  Widget _buildSwootTitle(String? leagueName){
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           Text(
-            "Swoot Premier League",
+            leagueName ?? "Swoot Premier League",
             style: Get.textTheme.headlineMedium,
           ),
 
@@ -533,40 +536,188 @@ class MainHomeScreen extends StatelessWidget {
   }
   /// LEAGUE SECTION
   Widget _buildLeagueComingSoon(){
+    return Obx(() {
+      if (controller.isLoadingActiveLeagues.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        ).paddingOnly(top: 10);
+      }
+
+      final leagues = controller.activeLeagues.value?.data ?? [];
+      
+      if (leagues.isEmpty) {
+        return Column(
+          children: [
+            _buildSwootTitle(null),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: (){
+                Get.toNamed(RoutesName.league);
+              },
+              child: Container(
+                width: Get.width,
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 8,
+                      spreadRadius: 2.3,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Image.asset(Assets.imagesImgLeagueComingSoon),
+              ),
+            ),
+            const SizedBox(height: 12),
+            BuildTitleSponsor(controller: controller),
+            Obx(() {
+              final sponsorData = controller.sponsors.value?.data;
+              final sponsorsList = sponsorData?.sponsors ?? [];
+              return BuildMoreSponsor(sponsors: sponsorsList);
+            }),
+          ],
+        ).paddingOnly(top: 10);
+      }
+
+      return Column(
+        children: [
+          // Dynamic title based on carousel index
+          Obx(() {
+            final currentIndex = controller.leagueCarouselIndex.value;
+            final leagueName = leagues.length > currentIndex 
+                ? leagues[currentIndex].leagueName 
+                : leagues.first.leagueName;
+            return _buildSwootTitle(leagueName);
+          }),
+          const SizedBox(height: 12),
+          leagues.length == 1
+              ? _buildSingleLeagueCard(leagues.first)
+              : _buildLeagueCarousel(leagues),
+          const SizedBox(height: 12),
+          // Dynamic sponsors based on carousel index
+          Obx(() {
+            final currentIndex = controller.leagueCarouselIndex.value;
+            final currentLeague = leagues.length > currentIndex 
+                ? leagues[currentIndex] 
+                : leagues.first;
+            return Column(
+              children: [
+                BuildLeagueTitleSponsor(league: currentLeague),
+                BuildLeagueMoreSponsor(league: currentLeague),
+              ],
+            );
+          }),
+        ],
+      ).paddingOnly(top: 10);
+    });
+  }
+
+  Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
+    return GestureDetector(
+      onTap: () {
+        Get.toNamed(RoutesName.league, arguments: {
+          'leagueId': leagueData.id,
+        });
+      },
+      child: Container(
+        width: Get.width,
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 8,
+              spreadRadius: 2.3,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+              ? Image.network(leagueData.mobileBanner!, fit: BoxFit.cover)
+              : Image.asset(Assets.imagesImgLeagueComingSoon),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeagueCarousel(List<LeagueModel.Data> leagues) {
     return Column(
       children: [
-        _buildSwootTitle(),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: (){
-            Get.toNamed(RoutesName.league);
-          },
-          child: Container(
-            width: Get.width,
-            margin: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  blurRadius: 8,
-                  spreadRadius: 2.3,
-                  offset: const Offset(0, 3),
+        CarouselSlider.builder(
+          itemCount: leagues.length,
+          itemBuilder: (context, index, realIndex) {
+            final leagueData = leagues[index];
+            return GestureDetector(
+              onTap: () {
+                Get.toNamed(RoutesName.league, arguments: {
+                  'leagueId': leagueData.id,
+                });
+              },
+              child: Container(
+                width: Get.width,
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 8,
+                      spreadRadius: 2.3,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Image.asset(Assets.imagesImgLeagueComingSoon),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+                      ? Image.network(leagueData.mobileBanner!, fit: BoxFit.cover)
+                      : Image.asset(Assets.imagesImgLeagueComingSoon),
+                ),
+              ),
+            );
+          },
+          options: CarouselOptions(
+            viewportFraction: 1,
+            enableInfiniteScroll: leagues.length > 1,
+            enlargeCenterPage: false,
+            autoPlay: leagues.length > 1,
+            autoPlayInterval: const Duration(seconds: 3),
+            height: 200,
+            onPageChanged: (index, reason) {
+              controller.leagueCarouselIndex.value = index;
+            },
           ),
         ),
-        const SizedBox(height: 12),
-        BuildTitleSponsor(controller: controller),
-        Obx(() {
-          final sponsorData = controller.sponsors.value?.data;
-          final sponsorsList = sponsorData?.sponsors ?? [];
-          return BuildMoreSponsor(sponsors: sponsorsList);
-        }),
+        SizedBox(height: 20,),
+        if (leagues.length > 1)
+          Obx(() {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(leagues.length, (i) {
+                final isActive = i == controller.leagueCarouselIndex.value;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: isActive ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primaryColor : Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                );
+              }),
+            );
+          }),
       ],
-    ).paddingOnly(top: 10);
+    );
   }
 
 
@@ -585,11 +736,15 @@ class MainHomeScreen extends StatelessWidget {
         return _buildLeagueComingSoon();
       }
       
+      // Get league data from active leagues
+      final leagues = controller.activeLeagues.value?.data ?? [];
+      final currentLeague = leagues.isNotEmpty ? leagues.first : null;
+      
       // Otherwise show the league section
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSwootTitle(),
+          _buildSwootTitle(currentLeague?.leagueName),
           const SizedBox(height: 12),
           Obx(() {
             final scheduleData = controller.scheduleMatches.value?.data ?? [];
@@ -609,12 +764,10 @@ class MainHomeScreen extends StatelessWidget {
             
             return _buildLeagueLiveMatchSlider([]);
           }),
-          BuildTitleSponsor(controller: controller),
-          Obx(() {
-            final sponsorData = controller.sponsors.value?.data;
-            final sponsorsList = sponsorData?.sponsors ?? [];
-            return BuildMoreSponsor(sponsors: sponsorsList);
-          }),
+          if (currentLeague != null) ...[
+            BuildLeagueTitleSponsor(league: currentLeague),
+            BuildLeagueMoreSponsor(league: currentLeague),
+          ],
           _buildLeaguePointsTable(),
         ],
       ).paddingOnly(top: 10);
@@ -639,7 +792,7 @@ class MainHomeScreen extends StatelessWidget {
       if (allMatches.isEmpty) return const SizedBox.shrink();
 
       final liveMatchCards = scheduleData.expand((data) {
-        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType, data.matchId));
+        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType, data.matchId?.id, data.matchId?.setsWon));
       }).toList();
 
       if (liveMatchCards.length == 1) return liveMatchCards.first;
@@ -688,7 +841,7 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
-  Widget _liveMatchCard(Matches? match, String? categoryType, String? matchId) {
+  Widget _liveMatchCard(Matches? match, String? categoryType, String? matchId, SetsWon? setsWon) {
     if (match == null) return const SizedBox.shrink();
     
     return Column(
@@ -749,7 +902,7 @@ class MainHomeScreen extends StatelessWidget {
                             Text(categoryType ?? "", style: Get.textTheme.labelMedium),
                             SizedBox(height: 8),
                             Text(
-                                "${_getScoreText(match.score?.teamA)} : ${_getScoreText(match.score?.teamB)}",
+                                "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
                                 style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
                           ],
                         ),
@@ -1724,7 +1877,11 @@ class MainHomeScreen extends StatelessWidget {
         });
         break;
       case 'league':
-       Get.toNamed(RoutesName.league);
+        final leagues = controller.activeLeagues.value?.data ?? [];
+        final leagueId = leagues.isNotEmpty ? leagues.first.id : null;
+        Get.toNamed(RoutesName.league, arguments: {
+          if (leagueId != null) 'leagueId': '',
+        });
 
         break;
       case 'player':

@@ -11,13 +11,13 @@ class BuildSponsorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoadingSponsors.value) {
-        return Container(
-          height: 150,
-          margin: const EdgeInsets.symmetric(horizontal: 14),
-          child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
-        ).paddingOnly(bottom: 10);
-      }
+      // if (controller.isLoadingSponsors.value) {
+      //   return Container(
+      //     height: 150,
+      //     margin: const EdgeInsets.symmetric(horizontal: 14),
+      //     child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
+      //   ).paddingOnly(bottom: 10);
+      // }
 
       final sponsorData = controller.sponsors.value?.data;
       if (sponsorData == null) return const SizedBox.shrink();
@@ -138,8 +138,8 @@ class BuildTitleSponsor extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isLoadingSponsors.value) {
-        return Container(
-          height: 100,
+        return SizedBox(
+          height: 70,
           child: Center(
             child: CircularProgressIndicator(color: AppColors.primaryColor),
           ),
@@ -209,6 +209,7 @@ class BuildTitleSponsor extends StatelessWidget {
                                 height: 25,
                                 placeholder: (context, url) => Container(
                                   height: 25,
+                                  width: 25,
                                   child: Center(
                                     child: CircularProgressIndicator(
                                       color: AppColors.primaryColor,

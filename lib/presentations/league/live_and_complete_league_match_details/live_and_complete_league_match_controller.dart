@@ -121,7 +121,7 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
       //   'autoConnect': true,
       // });
       _socket = IO.io(
-        AppEndpoints.socketUrl,
+        "${AppEndpoints.socketUrl}/score",
         IO.OptionBuilder()
             .setTransports(['websocket'])
             .setAuth({'userId': userId})
@@ -266,27 +266,23 @@ $data
     try {
       print('🔄 Updating Scoreboard...');
       if (scoreboard is Map<String, dynamic>) {
-        // Get first set's games score
-        final sets = scoreboard['sets'];
-        if (sets != null && sets is List && sets.isNotEmpty) {
-          final firstSet = sets[0];
-          if (firstSet is Map<String, dynamic>) {
-            final teamAGames = firstSet['teamA'];
-            final teamBGames = firstSet['teamB'];
-            
-            if (teamAGames != null) {
-              final newScore = teamAGames is int ? teamAGames : int.tryParse(teamAGames.toString()) ?? 0;
-              print('🔵 Setting teamAScore from ${teamAScore.value} to $newScore (games)');
-              teamAScore.value = newScore;
-            }
-            if (teamBGames != null) {
-              final newScore = teamBGames is int ? teamBGames : int.tryParse(teamBGames.toString()) ?? 0;
-              print('🟢 Setting teamBScore from ${teamBScore.value} to $newScore (games)');
-              teamBScore.value = newScore;
-            }
-            
-            print('✅ Scoreboard Updated - Team A: ${teamAScore.value}, Team B: ${teamBScore.value}');
+        final setsWon = scoreboard['setsWon'];
+        if (setsWon is Map<String, dynamic>) {
+          final teamA = setsWon['teamA'];
+          final teamB = setsWon['teamB'];
+          
+          if (teamA != null) {
+            final newScore = teamA is int ? teamA : int.tryParse(teamA.toString()) ?? 0;
+            print('🔵 Setting teamAScore from ${teamAScore.value} to $newScore (setsWon)');
+            teamAScore.value = newScore;
           }
+          if (teamB != null) {
+            final newScore = teamB is int ? teamB : int.tryParse(teamB.toString()) ?? 0;
+            print('🟢 Setting teamBScore from ${teamBScore.value} to $newScore (setsWon)');
+            teamBScore.value = newScore;
+          }
+          
+          print('✅ Scoreboard Updated - Team A: ${teamAScore.value}, Team B: ${teamBScore.value}');
         }
       }
     } catch (e) {

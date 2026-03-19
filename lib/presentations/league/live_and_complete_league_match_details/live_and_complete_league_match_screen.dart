@@ -38,7 +38,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 : _buildSponsorBannerSafe(),
             _buildScoreSection(),
             _buildTabSelector(),
-            if (isLoading) LoadingWidget(color: AppColors.primaryColor,),
+            if (isLoading) LinearProgressIndicator(color: AppColors.primaryColor,minHeight: 1,),
             if (!isLoading && err.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -204,7 +204,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 Column(
                   children: [
                     Text(controller.historyData.value?.teamA?.teamName ?? "Team",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 26)),
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 23)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamA),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
@@ -225,7 +225,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                 Column(
                   children: [
                     Text(controller.historyData.value?.teamB?.teamName ?? "Team",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 26,color: AppColors.secondaryColor)),
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 23,color: AppColors.secondaryColor)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamB),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
@@ -384,7 +384,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(_setScoreText(index),style: Get.textTheme.headlineMedium).paddingOnly(right: 5),
-                            Text(_setWinnerText(index),style: Get.textTheme.labelMedium!.copyWith(color: AppColors.primaryColor,fontWeight: FontWeight.w600)),
+                            Text(_setWinnerText(index),style: Get.textTheme.labelMedium!.copyWith(color: _getWinnerColor(index),fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ],
@@ -638,6 +638,16 @@ extension _MatchDetailsUiHelpers on LiveAndCompleteLeagueMatchScreen {
     return winnerTeamName == null ? "" : "($winnerTeamName)";
   }
 
+  Color _getWinnerColor(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return AppColors.primaryColor;
+    final s = sets[index].finalScore;
+    final a = s?.teamA ?? 0;
+    final b = s?.teamB ?? 0;
+    if (a == b) return AppColors.primaryColor;
+    return a > b ? AppColors.primaryColor : AppColors.secondaryColor;
+  }
+
   Widget _buildRoundsForSet(int index) {
     final sets = controller.historyData.value?.sets ?? const [];
     if (index < 0 || index >= sets.length) return const SizedBox.shrink();
@@ -662,9 +672,30 @@ extension _MatchDetailsUiHelpers on LiveAndCompleteLeagueMatchScreen {
 
     String leftTimeLabel() {
       final completedAt = visibleRounds.first.completedAt ?? "";
+      print("Debug completedAt: '$completedAt'"); // Debug line
       if (completedAt.isEmpty) return "-";
-      // Keep it simple: show last 5 chars if it looks like time, else '-'
-      return completedAt.length >= 5 ? completedAt.substring(completedAt.length - 5) : completedAt;
+      
+      // Try to parse different time formats
+      try {
+        // If it's a full datetime string, extract time part
+        if (completedAt.contains('T')) {
+          final timePart = completedAt.split('T').last;
+          if (timePart.contains(':')) {
+            return timePart.substring(0, 5); // HH:MM format
+          }
+        }
+        
+        // If it already looks like time (contains colon)
+        if (completedAt.contains(':')) {
+          return completedAt.length >= 5 ? completedAt.substring(0, 5) : completedAt;
+        }
+        
+        // Fallback to original logic
+        return completedAt.length >= 5 ? completedAt.substring(completedAt.length - 5) : completedAt;
+      } catch (e) {
+        print("Error parsing time: $e");
+        return "-";
+      }
     }
 
     Widget scoreCell(String? v) => _roundCell(Text((v ?? "-").toString()));
