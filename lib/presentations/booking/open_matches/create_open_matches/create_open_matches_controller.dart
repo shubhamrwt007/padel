@@ -15,8 +15,12 @@ import '../../../../configs/routes/routes_name.dart';
 import '../../../booking/details_page/details_page_controller.dart';
 import '../questions_bottomsheet/questions_bottomsheet_controller.dart';
 import '../questions_bottomsheet/questions_bottomsheet_screen.dart';
+import '../../../../services/socket_service.dart';
+import '../../../../services/slot_wise_service.dart';
 
 class CreateOpenMatchesController extends GetxController {
+  final SlotWiseService _slotWiseService = SlotWiseService();
+  RxBool isSocketDataReceived = false.obs;
 
   ///Date Picker----------------------------------------------------------------
   Future<void> openDatePicker(BuildContext context) async {
@@ -168,7 +172,7 @@ class CreateOpenMatchesController extends GetxController {
     selectedDate.value = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchAllSlotPrices();
-      await getAvailableCourtsById(argument.id!, showUnavailable: true);
+      _subscribeToSlotUpdates();
     });
   }
 
@@ -179,6 +183,7 @@ class CreateOpenMatchesController extends GetxController {
     multiDateSelections.clear();
     totalAmount.value = 0;
     pageController.dispose();
+    _unsubscribeFromSlotUpdates();
     super.onClose();
   }
 
@@ -749,6 +754,156 @@ class CreateOpenMatchesController extends GetxController {
       }
     }
   }
+  void _emitSlotEvent(Slots slot, String courtId, String courtName, String dateString, bool isDeselection) {
+    try {
+      final socketService = SocketService.instance;
+      final eventData = {
+        'slotId': slot.sId ?? '',
+        'courtId': courtId,
+        'courtName': courtName,
+        'time': slot.time ?? '',
+        'date': dateString,
+        'amount': slot.amount ?? 0,
+        'userId': socketService.userId,
+        'clubId': argument.id ?? '',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      if (isDeselection) {
+        socketService.emitSlotDeselection(eventData);
+      } else {
+        socketService.emitSlotSelection(eventData);
+      }
+    } catch (e) {
+      log('Error emitting slot event: \$e');
+    }
+  }
+
+  void _subscribeToSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDay = _getWeekday(date.weekday);
+      final formattedDate = _dateFormatter.format(date);
+
+      _slotWiseService.subscribeToSlotWise(
+        clubId: argument.id ?? '',
+        date: formattedDate,
+        locationId: locationID.value,
+        categoryId: categoryId.value,
+        sId: sId.value,
+        locId: locationsId.value,
+        day: formattedDay,
+        onInitialData: (data) {
+          log('📡 SlotWise acknowledgment received');
+          isSocketDataReceived.value = true;
+          _handleInitialSlotData(data);
+        },
+        onSlotUpdate: (data) {
+          log('🔄 SlotWise real-time update received in CreateOpenMatchesController');
+          _handleRealTimeSlotUpdate(data);
+        },
+      );
+
+      log('Subscribed to slot-wise updates for club: \${argument.id}, date: \$formattedDate');
+
+      Timer(const Duration(seconds: 3), () {
+        if (!isSocketDataReceived.value) {
+          log('⚠️ No socket data received, falling back to API');
+          getAvailableCourtsById(argument.id!, showUnavailable: true);
+        }
+      });
+    } catch (e) {
+      log('Error subscribing to slot updates: \$e');
+      getAvailableCourtsById(argument.id!, showUnavailable: true);
+    }
+  }
+
+  void _unsubscribeFromSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDate = _dateFormatter.format(date);
+      _slotWiseService.unsubscribe(argument.id ?? '', formattedDate);
+      log('Unsubscribed from slot-wise updates');
+    } catch (e) {
+      log('Error unsubscribing from slot updates: \$e');
+    }
+  }
+
+  void resubscribeToSlotUpdates() {
+    isSocketDataReceived.value = false;
+    _unsubscribeFromSlotUpdates();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _subscribeToSlotUpdates();
+    });
+  }
+
+  void _handleInitialSlotData(dynamic initialData) {
+    try {
+      if (initialData != null) {
+        Map<String, dynamic> dataMap;
+        if (initialData is List) {
+          dataMap = {'data': initialData};
+        } else if (initialData is Map<String, dynamic>) {
+          dataMap = initialData;
+        } else {
+          log('❌ Unexpected initial data format: \${initialData.runtimeType}');
+          getAvailableCourtsById(argument.id!, showUnavailable: true);
+          return;
+        }
+        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+        _updateSocketSlotData(parsedData);
+        log('✅ Socket initial data displayed in UI');
+      }
+    } catch (e) {
+      log('❌ Error handling initial slot data: \$e');
+      getAvailableCourtsById(argument.id!, showUnavailable: true);
+    }
+  }
+
+  void _handleRealTimeSlotUpdate(dynamic slotData) {
+    try {
+      if (slotData != null) {
+        Map<String, dynamic> dataMap;
+        if (slotData is List) {
+          dataMap = {'data': slotData};
+        } else if (slotData is Map<String, dynamic>) {
+          dataMap = slotData;
+        } else {
+          log('❌ Unexpected data format: \${slotData.runtimeType}');
+          return;
+        }
+        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+        _updateSocketSlotData(parsedData);
+        log('✅ Real-time slot data updated in UI');
+      }
+    } catch (e) {
+      log('❌ Error handling real-time slot update: \$e');
+    }
+  }
+
+  void _updateSocketSlotData(GetAllActiveCourtsForSlotWiseModel socketData) {
+    try {
+      _allSlotsCache.clear();
+      for (var court in socketData.data ?? []) {
+        _allSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+      for (var court in socketData.data ?? []) {
+        final base = _allSlotsCache[court.sId ?? ''] ?? [];
+        court.slots = List<Slots>.from(base);
+      }
+      slots.value = socketData;
+      _originalSlotsCache.clear();
+      for (final court in slots.value?.data ?? []) {
+        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+      _recalculateTimeOfDayCounts();
+      filterSlotsByTimeOfDay();
+      _autoSelectTab();
+      log('✅ Socket slot data processed and displayed');
+    } catch (e) {
+      log('❌ Error updating socket slot data: \$e');
+    }
+  }
+
   Future<bool> createAndGetSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
       log('createAndGetSlotHistory called with slots: $slots');
@@ -835,6 +990,7 @@ class CreateOpenMatchesController extends GetxController {
         // Remove full slot and all slots after it
         _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
         _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         log("Unselected full slot and all after it, remaining: ${multiDateSelections.length}");
         return;
       }
@@ -843,8 +999,10 @@ class CreateOpenMatchesController extends GetxController {
     if (isAlreadySelected) {
       // Remove this slot and all slots after it to maintain continuity
       _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
     } else {
       _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, forceFullSelection ? null : isLeftHalf);
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
     }
 
     _recalculateTotalAmount();

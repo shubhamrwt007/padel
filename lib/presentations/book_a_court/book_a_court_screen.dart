@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,8 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
+import 'package:padel_mobile/services/socket_service.dart';
+import 'package:padel_mobile/core/network/dio_client.dart' show storage;
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
@@ -45,6 +48,18 @@ class BookACourtScreen extends StatelessWidget {
     // Fetch wallet balance after build completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       walletController.fetchWallet();
+      // Ensure socket is connected with userId
+      try {
+        final socketService = SocketService.instance;
+        final userId = storage.read('userId')?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          socketService.setUserIdAndConnect(userId);
+        } else if (!socketService.isConnected) {
+          socketService.connect();
+        }
+      } catch (e) {
+        log('Socket connection error in BookACourtScreen: $e');
+      }
     });
 
     return Scaffold(

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
@@ -22,6 +23,8 @@ import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_a
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart' as GetCourtsByDurationModel;
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
+import 'package:padel_mobile/services/socket_service.dart';
+import 'package:padel_mobile/core/network/dio_client.dart' show storage;
 import 'create_open_match_for_all_courts_controller.dart';
 class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   final CreateOpenMatchForAllCourtsController controller = Get.put(CreateOpenMatchForAllCourtsController());
@@ -35,7 +38,22 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Fetch wallet balance when screen builds
     walletController.fetchWallet();
-    
+
+    // Ensure socket is connected with userId
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final socketService = SocketService.instance;
+        final userId = storage.read('userId')?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          socketService.setUserIdAndConnect(userId);
+        } else if (!socketService.isConnected) {
+          socketService.connect();
+        }
+      } catch (e) {
+        log('Socket connection error in CreateOpenMatchForAllCourtsScreen: $e');
+      }
+    });
+
     // Start periodic timer to check and remove expired slots
     _startSlotExpiryCheck();
 

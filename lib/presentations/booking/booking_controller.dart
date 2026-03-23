@@ -25,7 +25,7 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     super.onInit();
 
     tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
       initialIndex: 1,
     );
