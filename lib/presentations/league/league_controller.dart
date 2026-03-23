@@ -119,7 +119,8 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   Future<void> fetchSponsors() async {
     try {
       isLoadingSponsors.value = true;
-      final response = await _leagueRepository.getLeagueSponsors();
+      final response = await _leagueRepository.getLeagueSponsors(leagueId: leagueId);
+      print('🎯 Sponsors - leagueId: $leagueId, data: ${response.data?.mobileBanner}, sponsors count: ${response.data?.sponsors?.length}');
       sponsors.value = response;
     } catch (e) {
       print('Error fetching sponsors: $e');

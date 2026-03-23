@@ -50,11 +50,12 @@ class LeagueRepository {
 
 
   ///Get League Sponsors--------------------------------------------------------
-  Future<GetLeagueSponsorsModel> getLeagueSponsors() async {
+  Future<GetLeagueSponsorsModel> getLeagueSponsors({String? leagueId}) async {
     try {
-      final response = await dioClient.get(
-        AppEndpoints.getLeagueSponsors,
-      );
+      final url = leagueId != null && leagueId.isNotEmpty
+          ? "${AppEndpoints.getLeagueSponsors}?leagueId=$leagueId"
+          : AppEndpoints.getLeagueSponsors;
+      final response = await dioClient.get(url);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(

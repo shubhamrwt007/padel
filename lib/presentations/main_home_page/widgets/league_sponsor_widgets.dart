@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
 
@@ -26,9 +27,7 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
               placeholder: (context, url) => Container(
                 height: 40,
                 child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryColor,
-                  ),
+                  child: LoadingWidget(color: AppColors.primaryColor,)
                 ),
               ),
               errorWidget: (context, url, error) => Image.asset(
@@ -67,15 +66,13 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
                           ? CachedNetworkImage(
                               imageUrl: sponsor.logo!,
                               height: 25,
-                              placeholder: (context, url) => Container(
-                                height: 25,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primaryColor,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
+                              // placeholder: (context, url) => Container(
+                              //   height: 20,
+                              //   width: 20,
+                              //   child: Center(
+                              //     child: LoadingWidget(color: AppColors.primaryColor,)
+                              //   ),
+                              // ),
                               errorWidget: (context, url, error) => Icon(
                                 Icons.image_not_supported,
                                 size: 25,

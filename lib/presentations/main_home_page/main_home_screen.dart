@@ -205,7 +205,7 @@ class MainHomeScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     _quickActions(),
                     _buildLeagueComingSoon(),
-                    _buildLeagueLiveMatch(),
+                    // _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -570,7 +570,7 @@ class MainHomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Image.asset(Assets.imagesImgLeagueComingSoon),
+                // child: Image.asset(Assets.imagesImgLeagueComingSoon),
               ),
             ),
             const SizedBox(height: 12),
@@ -1880,7 +1880,7 @@ class MainHomeScreen extends StatelessWidget {
         final leagues = controller.activeLeagues.value?.data ?? [];
         final leagueId = leagues.isNotEmpty ? leagues.first.id : null;
         Get.toNamed(RoutesName.league, arguments: {
-          if (leagueId != null) 'leagueId': '',
+          if (leagueId != null) 'leagueId': "",
         });
 
         break;

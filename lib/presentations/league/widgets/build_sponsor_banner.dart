@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -211,10 +212,7 @@ class BuildTitleSponsor extends StatelessWidget {
                                   height: 25,
                                   width: 25,
                                   child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primaryColor,
-                                      strokeWidth: 2,
-                                    ),
+                                    child:LoadingWidget(color: Colors.red,)
                                   ),
                                 ),
                                 errorWidget: (context, url, error) => Icon(
