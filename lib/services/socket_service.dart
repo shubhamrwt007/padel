@@ -135,6 +135,15 @@ class SocketService extends GetxService {
         // Handle slot updates here
       });
 
+      // Listen for courtsByDuration real-time updates
+      _socket?.on('courtsByDuration:data', (response) {
+        log('📡 courtsByDuration:data received: $response');
+        log('📊 _onCourtsByDurationUpdate callback set: ${_onCourtsByDurationUpdate != null}');
+        if (_onCourtsByDurationUpdate != null && response != null) {
+          _onCourtsByDurationUpdate!(response);
+        }
+      });
+
       // Listen for slot-wise updates (same structure as getAllActiveCourtsForSlotWise API)
       _socket?.on('slotWise:update', (data) {
         log('📡 SlotWise update received: $data');
@@ -440,6 +449,71 @@ class SocketService extends GetxService {
       // For now, just log the data - BookSessionController will handle the actual updates
     } catch (e) {
       log('❌ Error handling slot data update: $e');
+    }
+  }
+
+  // courtsByDuration callback
+  Function(dynamic)? _onCourtsByDurationUpdate;
+
+  void setCourtsByDurationCallback(Function(dynamic) callback) {
+    _onCourtsByDurationUpdate = callback;
+  }
+
+  void clearCourtsByDurationCallback() {
+    _onCourtsByDurationUpdate = null;
+  }
+
+  void subscribeToCourtsByDuration({
+    required String date,
+    required String duration,
+    String? time,
+    String? categoryId,
+    // String? location,
+    String? queryKey,
+    String? userId,
+    Function(dynamic)? onInitialData,
+  }) {
+    if (_socket == null || !_isConnected.value) {
+      log('❌ Cannot subscribe to courtsByDuration: socket not connected');
+      return;
+    }
+    final payload = {
+      'query': {
+        'date': date,
+        'duration': duration,
+        if (time != null && time.isNotEmpty) 'time': time,
+        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
+        // if (location != null && location.isNotEmpty) 'location': location,
+      },
+      if (queryKey != null) 'queryKey': queryKey,
+      if (userId != null && userId.isNotEmpty) 'userId': userId,
+    };
+    try {
+      _socket?.emitWithAck('courtsByDuration:subscribe', payload, ack: (response) {
+        log('✅ courtsByDuration:subscribe ack: $response');
+        if (response != null && response['success'] == true && response['data'] != null) {
+          onInitialData?.call(response['data']);
+        }
+      });
+      log('📤 courtsByDuration:subscribe emitted: $payload');
+    } catch (e) {
+      log('❌ Error emitting courtsByDuration:subscribe: $e');
+    }
+  }
+
+  void unsubscribeFromCourtsByDuration({
+    required String date,
+    required String duration,
+  }) {
+    if (_socket == null || !_isConnected.value) return;
+    try {
+      _socket?.emitWithAck(
+        'courtsByDuration:unsubscribe',
+        {'date': date, 'duration': duration},
+        ack: (response) => log('✅ courtsByDuration:unsubscribe: $response'),
+      );
+    } catch (e) {
+      log('❌ Error emitting courtsByDuration:unsubscribe: $e');
     }
   }
 

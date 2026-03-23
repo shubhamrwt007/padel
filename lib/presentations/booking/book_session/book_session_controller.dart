@@ -267,7 +267,7 @@ var locationsId = "".obs;
     locationsId.value = Get.arguments['locationsId']??"";
     selectedDate.value = _getInitialDate();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await fetchAllSlotPrices();
+      // await fetchAllSlotPrices();
       // Subscribe to slot-wise updates first (with API fallback)
       _subscribeToSlotUpdates();
       _startDateAutoSwitchTimer();

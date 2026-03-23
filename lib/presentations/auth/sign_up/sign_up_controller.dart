@@ -1,10 +1,12 @@
 // SignUpController.dart
 import 'dart:developer';
+import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/sign_up_model.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
@@ -193,7 +195,18 @@ class SignUpController extends GetxController {
       if (firebaseToken != null && firebaseToken.isNotEmpty) {
         loginBody["fcmToken"] = firebaseToken;
       }
-      
+
+      final deviceInfo = DeviceInfoPlugin();
+      String? deviceId;
+      if (Platform.isAndroid) {
+        deviceId = (await deviceInfo.androidInfo).id;
+      } else if (Platform.isIOS) {
+        deviceId = (await deviceInfo.iosInfo).identifierForVendor;
+      }
+      if (deviceId != null && deviceId.isNotEmpty) {
+        loginBody["deviceId"] = deviceId;
+      }
+
       LoginModel loginResult = await loginRepository.loginUser(body: loginBody);
 
       if (loginResult.status == "200") {

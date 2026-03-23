@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -16,6 +17,7 @@ import 'package:padel_mobile/presentations/main_home_page/main_home_controller.d
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 import '../../../configs/components/snack_bars.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../../notification/notification_controller.dart';
 
 class LoginController extends GetxController {
@@ -117,11 +119,20 @@ class LoginController extends GetxController {
       final Map<String, dynamic> body = {
         "phoneNumber": phoneController.text.trim(),
       };
-      // Only include fcmToken if we have a non-empty value
       if (firebaseToken != null && firebaseToken.isNotEmpty) {
         body["fcmToken"] = firebaseToken;
       }
 
+      final deviceInfo = DeviceInfoPlugin();
+      String? deviceId;
+      if (Platform.isAndroid) {
+        deviceId = (await deviceInfo.androidInfo).id;
+      } else if (Platform.isIOS) {
+        deviceId = (await deviceInfo.iosInfo).identifierForVendor;
+      }
+      if (deviceId != null && deviceId.isNotEmpty) {
+        body["deviceId"] = deviceId;
+      }
       LoginModel result = await loginRepository.loginUser(body: body);
       if (result.status == "200") {
         // Clear old data first

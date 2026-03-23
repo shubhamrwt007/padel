@@ -341,7 +341,7 @@ class BookingScreen extends GetView<BookingController> {
               HomeContent(),
               BookSession(),
               OpenMatchesScreen(),
-              AmericanoScreen(),
+              // AmericanoScreen(),
             ],
           ),
         ),
