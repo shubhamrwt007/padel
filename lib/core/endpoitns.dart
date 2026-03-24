@@ -4,11 +4,11 @@ class AppEndpoints {
   // static const String baseUrl = "https://padelstagingmobileapi.swootapp.com/api/customer/";
   // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
    /// -----------------------New Live URL--------------------------------------
-  static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
-  static const String socketUrl = "https://apimobile.swootapp.com";
+  // static const String baseUrl = "https://apimobile.swootapp.com/api/customer/";
+  // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  // static const String baseUrl = "http://192.168.1.18:5070/api/customer/";
-  // static const String socketUrl = "http://192.168.1.18:5070";
+  static const String baseUrl = "http://192.168.1.20:5070/api/customer/";
+  static const String socketUrl = "http://192.168.1.20:5070";
 
 
   

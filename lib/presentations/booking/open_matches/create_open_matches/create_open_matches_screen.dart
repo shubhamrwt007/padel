@@ -11,14 +11,54 @@ import 'package:padel_mobile/presentations/booking/book_session/widgets/court_sl
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import '../../../../handler/text_formatter.dart';
+import '../../../../services/socket_service.dart';
 import 'create_open_matches_controller.dart';
 
-class CreateOpenMatchesScreen extends StatelessWidget {
-  CreateOpenMatchesScreen({super.key});
+class CreateOpenMatchesScreen extends StatefulWidget {
+  const CreateOpenMatchesScreen({super.key});
+
+  @override
+  State<CreateOpenMatchesScreen> createState() => _CreateOpenMatchesScreenState();
+}
+
+class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
   final CreateOpenMatchesController controller = Get.put(CreateOpenMatchesController());
-  
-  // Map to track expanded state for each court
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final socketService = SocketService.instance;
+        socketService.testConnection();
+        if (!socketService.isConnected) {
+          socketService.connect();
+        }
+      } catch (e) {
+        log('Socket connection error in create open matches: \$e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    try {
+      final socketService = SocketService.instance;
+      final clubId = controller.argument.id;
+      final selectedDate = controller.selectedDate.value;
+      final dateString = "\${selectedDate?.year}-\${selectedDate?.month.toString().padLeft(2, '0')}-\${selectedDate?.day.toString().padLeft(2, '0')}";
+      if (clubId != null) {
+        socketService.unsubscribeFromSlotWiseUpdates(
+          clubId: clubId,
+          date: dateString,
+        );
+      }
+    } catch (e) {
+      log('Error unsubscribing from slot updates: \$e');
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -308,10 +348,11 @@ class CreateOpenMatchesScreen extends StatelessWidget {
                           controller.focusedMonth.value =
                               DateTime(date.year, date.month, 1);
                           controller.isLoadingCourts.value = true;
+                          controller.resubscribeToSlotUpdates();
                           await controller.fetchAllSlotPrices();
                           await controller.getAvailableCourtsById(
                             controller.argument.id!,
-                            showUnavailable: true, // Always show both available and unavailable
+                            showUnavailable: true,
                           );
                           controller.slots.refresh();
                           controller.isLoadingCourts.value = false;

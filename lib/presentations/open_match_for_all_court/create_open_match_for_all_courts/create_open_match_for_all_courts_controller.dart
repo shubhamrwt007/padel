@@ -18,6 +18,8 @@ import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 import 'package:padel_mobile/repositories/home_repository/profile_repository.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../main_home_page/main_home_controller.dart';
+import '../../../services/socket_service.dart';
+import '../../../core/network/dio_client.dart' show storage;
 
 class CreateOpenMatchForAllCourtsController extends GetxController {
   final HomeRepository _homeRepository = HomeRepository();
@@ -304,8 +306,14 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   // Variables to store fetched slot prices
   var allSlotPricesResponse = Rxn<GetAllSlotPricesOfCourtModel>();
   var isSlotPricesLoading = false.obs;
-  final Map<String, Map<String, int>> slotPricesData = {}; // day -> {duration -> price}
-  final Map<String, Map<String, int>> originalSlotPricesData = {}; // Track original prices
+  final Map<String, Map<String, int>> slotPricesData = {};
+  final Map<String, Map<String, int>> originalSlotPricesData = {};
+
+  // Socket
+  RxBool isSocketDataReceived = false.obs;
+  String? _lastSubscribedDate;
+  String? _lastSubscribedDuration;
+
   @override
   void onInit()async {
     super.onInit();
@@ -391,6 +399,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
 
   @override
   void onClose() {
+    _unsubscribeFromCourtsByDuration();
     _cleanupOnBack();
     selectedSlots.clear();
     multiDateSelections.clear();
@@ -1945,53 +1954,134 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     return false;
   }
 
-  // Fetch courts by duration from API
   Future<void> fetchCourtsByDuration() async {
+    final dateString = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
+    final durationValue = is30Slots.value ? '30' : '60';
+
+    String formattedTime = '';
+    if (multiDateSelections.isNotEmpty) {
+      final selectedSlotTimes = <String>{};
+      multiDateSelections.forEach((key, selection) {
+        final slot = selection['slot'] as Slots;
+        if (slot.time != null && slot.time!.isNotEmpty) {
+          selectedSlotTimes.add(_formatTimeForAPI(slot.time!));
+        }
+      });
+      formattedTime = selectedSlotTimes.join(',');
+    }
+
+    String? catId;
     try {
-      isLoadingCourtsByDuration.value = true;
-
-      final dateString = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
-
-      // Collect all selected slot times from multiDateSelections
-      String formattedTime = '';
-      if (multiDateSelections.isNotEmpty) {
-        final selectedSlotTimes = <String>{};
-        multiDateSelections.forEach((key, selection) {
-          final slot = selection['slot'] as Slots;
-          if (slot.time != null && slot.time!.isNotEmpty) {
-            selectedSlotTimes.add(_formatTimeForAPI(slot.time!));
-          }
-        });
-        formattedTime = selectedSlotTimes.join(',');
-      }
-
-      // Get duration from is30Slots: 30 for 30m, 60 for 60m
-      final durationValue = is30Slots.value ? '30' : '60';
-      
-      final locationId = selectedCityId.value;
       final mainHomeController = Get.find<MainHomeController>();
-      final categoryId = mainHomeController.selectedCategoryId.value.isNotEmpty
+      catId = mainHomeController.selectedCategoryId.value.isNotEmpty
           ? mainHomeController.selectedCategoryId.value
           : null;
-      log('Fetching courts with categoryId: $categoryId, locationId: $locationId');
-      
+    } catch (_) {}
+
+    if (_lastSubscribedDate != null) {
+      _unsubscribeFromCourtsByDuration();
+    }
+
+    isSocketDataReceived.value = false;
+    _lastSubscribedDate = dateString;
+    _lastSubscribedDuration = durationValue;
+
+    final socketService = SocketService.instance;
+    if (socketService.isConnected) {
+      final userId = storage.read('userId')?.toString() ?? '';
+      socketService.setCourtsByDurationCallback((response) {
+        log('🔄 courtsByDuration:data real-time update received: $response');
+        final data = response['data'] ?? response;
+        _handleCourtsByDurationData(data);
+      });
+
+      socketService.subscribeToCourtsByDuration(
+        date: dateString,
+        duration: durationValue,
+        time: formattedTime.isNotEmpty ? formattedTime : null,
+        categoryId: catId,
+        queryKey: 'create-open-match',
+        userId: userId,
+        onInitialData: (data) {
+          log('📡 courtsByDuration initial data from socket ack');
+          isSocketDataReceived.value = true;
+          _handleCourtsByDurationData(data);
+        },
+      );
+
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!isSocketDataReceived.value) {
+          log('⚠️ No socket data, falling back to API');
+          _fetchCourtsByDurationFromApi(
+            dateString: dateString,
+            durationValue: durationValue,
+            formattedTime: formattedTime,
+            catId: catId,
+          );
+        }
+      });
+    } else {
+      await _fetchCourtsByDurationFromApi(
+        dateString: dateString,
+        durationValue: durationValue,
+        formattedTime: formattedTime,
+        catId: catId,
+      );
+    }
+  }
+
+  void _handleCourtsByDurationData(dynamic data) {
+    try {
+      if (data == null) return;
+      final Map<String, dynamic> json = data is List
+          ? {'data': data}
+          : (data is Map<String, dynamic> ? data : {'data': data});
+      final response = GetCourtsByDurationModel.fromJson(json);
+      courtsByDuration.value = response;
+      isLoadingCourtsByDuration.value = false;
+      log('✅ courtsByDuration updated: ${response.data?.length} clubs');
+    } catch (e) {
+      log('❌ Error parsing courtsByDuration socket data: $e');
+    }
+  }
+
+  Future<void> _fetchCourtsByDurationFromApi({
+    required String dateString,
+    required String durationValue,
+    required String formattedTime,
+    String? catId,
+  }) async {
+    try {
+      isLoadingCourtsByDuration.value = true;
       final response = await _homeRepository.getCourtsByDuration(
         duration: durationValue,
         date: dateString,
         time: formattedTime,
-        categoryId: categoryId,
-        // locationId: selectedCityId.value.isNotEmpty ? selectedCityId.value : "68c94a94d72a6f9769712ff0",
+        categoryId: catId,
         page: 1,
         limit: 15,
       );
-
       courtsByDuration.value = response;
-
-      log('Courts by duration fetched: ${response.data?.length} clubs');
+      log('Courts by duration fetched from API: ${response.data?.length} clubs');
     } catch (e) {
-      log('Error fetching courts by duration: $e');
+      log('Error fetching courts by duration from API: $e');
     } finally {
       isLoadingCourtsByDuration.value = false;
+    }
+  }
+
+  void _unsubscribeFromCourtsByDuration() {
+    if (_lastSubscribedDate == null || _lastSubscribedDuration == null) return;
+    try {
+      SocketService.instance.unsubscribeFromCourtsByDuration(
+        date: _lastSubscribedDate!,
+        duration: _lastSubscribedDuration!,
+      );
+      SocketService.instance.clearCourtsByDurationCallback();
+      _lastSubscribedDate = null;
+      _lastSubscribedDuration = null;
+    } catch (e) {
+      log('Error unsubscribing courtsByDuration: $e');
     }
   }
 

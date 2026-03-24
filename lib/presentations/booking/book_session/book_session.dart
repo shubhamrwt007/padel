@@ -306,7 +306,7 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                           // Re-subscribe to slot updates for new date
                           controller.resubscribeToSlotUpdates();
                           
-                          await controller.fetchAllSlotPrices();
+                          // await controller.fetchAllSlotPrices();
                           await controller.getAvailableCourtsById(
                             controller.locationID.value,
                             controller.categoryId.value,
