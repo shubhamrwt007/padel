@@ -6,6 +6,7 @@ import 'package:padel_mobile/data/response_models/get_review_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 import 'package:padel_mobile/repositories/review_repo/review_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../data/request_models/home_models/get_club_name_model.dart' hide Data;
 
 class HomeContentController extends GetxController{
@@ -197,6 +198,33 @@ class HomeContentController extends GetxController{
       mapLatitude.value = 30.7333;
       mapLongitude.value = 76.7794;
       CustomLogger.logMessage(msg: "Error extracting coordinates: $e", level: LogLevel.error);
+    }
+  }
+
+  Future<void> openGoogleMaps() async {
+    final lat = mapLatitude.value;
+    final lng = mapLongitude.value;
+    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      CustomLogger.logMessage(msg: "Could not launch Google Maps", level: LogLevel.error);
+    }
+  }
+
+  Future<void> makePhoneCall() async {
+    final phoneNumber = registerClubResponse.value?.data?.ownerPhoneNumber;
+    if (phoneNumber == null) {
+      CustomLogger.logMessage(msg: "Phone number not available", level: LogLevel.error);
+      return;
+    }
+    
+    final url = 'tel:$phoneNumber';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      CustomLogger.logMessage(msg: "Could not launch phone dialer", level: LogLevel.error);
     }
   }
 

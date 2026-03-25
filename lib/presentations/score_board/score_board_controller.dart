@@ -8,6 +8,7 @@ import 'package:padel_mobile/repositories/score_board_repo/score_board_repositor
 import 'package:uuid/uuid.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:padel_mobile/presentations/score_board/widgets/match_summary_dialog.dart';
+import 'package:padel_mobile/presentations/score_board/widgets/teams_shuffle_result_dialog.dart' hide showTeamsShuffleResultDialog;
 import 'package:flutter/services.dart';
 
 class ScoreBoardController extends GetxController {
@@ -243,8 +244,15 @@ class ScoreBoardController extends GetxController {
   final isAddingScore = false.obs;
   final isShuffleMode = false.obs;
   final hasPlayerSwaps = false.obs;
+  final didShuffleDuringActiveMatch = false.obs;
+  final preShuffleWinner = ''.obs;
+  final preShuffleTeamAWins = 0.obs;
+  final preShuffleTeamBWins = 0.obs;
   var matchBookingId = ''.obs;
   final shouldShakeAvatars = false.obs;
+  final isShowingShuffleResultDialog = false.obs;
+  final xpEarned = 0.obs;
+  final xpLost = 0.obs;
 
   Future<void> fetchScoreBoard({bool showLoader = true}) async {
     if (showLoader) {
@@ -505,9 +513,151 @@ class ScoreBoardController extends GetxController {
         print('🔔 Scoreboard update received in controller: $data');
         fetchScoreBoard(showLoader: false);
       });
+      repository.onScoreboardSwapped((data) {
+        print('🔄 ========== SCOREBOARD SWAPPED EVENT RECEIVED ==========');
+        print('🔄 Full data: $data');
+        print('🔄 Data type: ${data.runtimeType}');
+        
+        if (data != null) {
+          print('🔄 Data is not null');
+          
+          if (data is Map) {
+            print('🔄 Data is a Map');
+            print('🔄 Available keys: ${data.keys.toList()}');
+            
+            final isSwappingDuringMatch = data['isSwappingDuringMatch'];
+            print('🔄 isSwappingDuringMatch value: $isSwappingDuringMatch');
+            print('🔄 isSwappingDuringMatch type: ${isSwappingDuringMatch.runtimeType}');
+            
+            if (isSwappingDuringMatch == true) {
+              print('🎯 ========== SWAP DURING MATCH DETECTED ==========');
+              
+              // Extract shuffle result data from the swap event
+              final preShuffleWinner = data['preShuffleWinner']?.toString() ?? '';
+              final preShuffleTeamAWins = data['preShuffleTeamAWins'] ?? 0;
+              final preShuffleTeamBWins = data['preShuffleTeamBWins'] ?? 0;
+              
+              print('📊 Pre-shuffle data:');
+              print('   Winner: $preShuffleWinner');
+              print('   Team A Wins: $preShuffleTeamAWins');
+              print('   Team B Wins: $preShuffleTeamBWins');
+              
+              // Determine team results
+              String teamAResult = 'LOSE';
+              String teamBResult = 'WIN';
+              
+              final normalizedWinner = preShuffleWinner.trim().toLowerCase().replaceAll(' ', '');
+              print('🔍 Normalized winner: "$normalizedWinner"');
+              
+              if (normalizedWinner == 'teama') {
+                teamAResult = 'WIN';
+                teamBResult = 'LOSE';
+                print('✅ Team A is winner');
+              } else if (normalizedWinner == 'teamb') {
+                teamAResult = 'LOSE';
+                teamBResult = 'WIN';
+                print('✅ Team B is winner');
+              } else if (preShuffleTeamAWins == preShuffleTeamBWins) {
+                teamAResult = 'DRAW';
+                teamBResult = 'DRAW';
+                print('✅ Match is a draw');
+              } else if (preShuffleTeamAWins > preShuffleTeamBWins) {
+                teamAResult = 'WIN';
+                teamBResult = 'LOSE';
+                print('✅ Team A wins by score');
+              } else {
+                teamAResult = 'LOSE';
+                teamBResult = 'WIN';
+                print('✅ Team B wins by score');
+              }
+              
+              print('🏆 Final results - Team A: $teamAResult, Team B: $teamBResult');
+              print('🔔 Scheduling dialog to show in 500ms...');
+              
+              // Show shuffle result dialog after a short delay
+              Future.delayed(const Duration(milliseconds: 500), () {
+                print('🔔 Delay complete, calling _handleTeamShuffleResultFromSwap');
+                _handleTeamShuffleResultFromSwap(
+                  teamAResult: teamAResult,
+                  teamBResult: teamBResult,
+                  teamAScore: preShuffleTeamAWins,
+                  teamBScore: preShuffleTeamBWins,
+                );
+              });
+            } else {
+              print('⚠️ isSwappingDuringMatch is FALSE or null - no popup will show');
+              print('⚠️ This means either:');
+              print('   1. Game was not started');
+              print('   2. No sets were added');
+              print('   3. Backend did not include isSwappingDuringMatch in response');
+            }
+          } else {
+            print('❌ Data is NOT a Map - type: ${data.runtimeType}');
+          }
+        } else {
+          print('❌ Data is NULL');
+        }
+        
+        print('🔄 Fetching scoreboard to update UI...');
+        fetchScoreBoard(showLoader: false);
+        print('🔄 ========== END SCOREBOARD SWAPPED EVENT ==========');
+      });
+      repository.onTeamShuffleResult((data) {
+        print('🏆 Team shuffle result received: $data');
+        // Show the shuffle result dialog to all players
+        _handleTeamShuffleResultFromSocket(data);
+      });
       repository.onMatchCompleted((data) {
         print('🏆 Match completed received: $data');
         isCompleted.value = true;
+        
+        // Get XP values from socket data if available
+        // Try multiple possible key names: xpEarned, currentXP, xpChange
+        if (data != null) {
+          CustomLogger.logMessage(
+            msg: '🔍 MATCH COMPLETED - Full data: $data',
+            level: LogLevel.info,
+          );
+          
+          int socketXpEarned = 0;
+          int socketXpLost = 0;
+          
+          if (data is Map) {
+            socketXpEarned = (data['xpEarned'] ?? data['currentXP'] ?? data['xpChange'] ?? 0) as int;
+            socketXpLost = (data['xpLost'] ?? 0) as int;
+            
+            CustomLogger.logMessage(
+              msg: '🔍 AVAILABLE KEYS: ${data.keys.toList()}',
+              level: LogLevel.info,
+            );
+          }
+          
+          CustomLogger.logMessage(
+            msg: '📊 EXTRACTED XP - Earned: $socketXpEarned, Lost: $socketXpLost',
+            level: LogLevel.info,
+          );
+          
+          if (socketXpEarned > 0) {
+            xpEarned.value = socketXpEarned;
+            CustomLogger.logMessage(
+              msg: '✅ XP Earned updated to: ${xpEarned.value}',
+              level: LogLevel.info,
+            );
+          }
+          if (socketXpLost > 0) {
+            xpLost.value = socketXpLost;
+            CustomLogger.logMessage(
+              msg: '✅ XP Lost updated to: ${xpLost.value}',
+              level: LogLevel.info,
+            );
+          }
+          
+          CustomLogger.logMessage(
+            msg: 'Match completed with XP - Earned: $socketXpEarned, Lost: $socketXpLost',
+            level: LogLevel.info,
+          );
+        }
+        
         fetchScoreBoard(showLoader: false).then((_) {
           // Only show dialog from socket if not already showing
           Future.delayed(const Duration(milliseconds: 500), () {
@@ -832,6 +982,17 @@ class ScoreBoardController extends GetxController {
 
       if (response.success == true) {
         isCompleted.value = true;
+        
+        // Capture XP values from API response
+        if (response.data != null) {
+          xpEarned.value = response.data!.xpEarned ?? 0;
+          xpLost.value = response.data!.xpLost ?? 0;
+          CustomLogger.logMessage(
+            msg: 'XP values from API - Earned: ${xpEarned.value}, Lost: ${xpLost.value}',
+            level: LogLevel.info,
+          );
+        }
+        
         await profileController.fetchUserProfile();
         await fetchScoreBoard(showLoader: false);
         
@@ -850,7 +1011,7 @@ class ScoreBoardController extends GetxController {
   }
 
   ///Check if swapping is allowed----------------------------------------------
-  bool get canSwapPlayers => !isCompleted.value && !isGameStarted.value && currentPlayerIds.isNotEmpty;
+  bool get canSwapPlayers => !isCompleted.value && currentPlayerIds.isNotEmpty;
 
   ///Check user's team and scoring permissions----------------------------------
   String get currentUserId => profileController.profileModel.value?.response?.sId ?? '';
@@ -940,12 +1101,20 @@ class ScoreBoardController extends GetxController {
   ///Swap Players---------------------------------------------------------------
   void swapPlayers(String draggedPlayerId, String targetTeam, int targetIndex) {
     HapticFeedback.mediumImpact();
-    CustomLogger.logMessage(msg: 'swapPlayers called - draggedPlayerId: $draggedPlayerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
+    CustomLogger.logMessage(msg: '🔄 SWAP INITIATED - draggedPlayerId: $draggedPlayerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
+    
     try {
+      // Safety checks
+      if (teams.isEmpty || targetIndex < 0) {
+        CustomLogger.logMessage(msg: '❌ SWAP FAILED - Invalid parameters: teams.isEmpty=${teams.isEmpty}, targetIndex=$targetIndex', level: LogLevel.error);
+        return;
+      }
+      
       // Find dragged player and remove from current position
       Map<String, dynamic>? draggedPlayer;
       int draggedTeamIndex = -1;
       int draggedPlayerIndex = -1;
+      String sourceTeam = '';
 
       for (int teamIndex = 0; teamIndex < teams.length; teamIndex++) {
         final teamPlayers = teams[teamIndex]['players'] as List;
@@ -954,54 +1123,173 @@ class ScoreBoardController extends GetxController {
             draggedPlayer = Map<String, dynamic>.from(teamPlayers[playerIndex]);
             draggedTeamIndex = teamIndex;
             draggedPlayerIndex = playerIndex;
-            CustomLogger.logMessage(msg: 'Found dragged player in team $teamIndex at index $playerIndex', level: LogLevel.info);
+            sourceTeam = teams[teamIndex]['name'];
+            CustomLogger.logMessage(msg: '👤 PLAYER FOUND - ${draggedPlayer['name']} from $sourceTeam at position $playerIndex', level: LogLevel.info);
             break;
           }
         }
         if (draggedPlayer != null) break;
       }
 
-      if (draggedPlayer == null) {
-        CustomLogger.logMessage(msg: 'Dragged player not found!', level: LogLevel.error);
+      if (draggedPlayer == null || draggedTeamIndex == -1 || draggedPlayerIndex == -1) {
+        CustomLogger.logMessage(msg: '❌ SWAP FAILED - Dragged player not found or invalid indices!', level: LogLevel.error);
         return;
       }
 
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
-      CustomLogger.logMessage(msg: 'Target team index: $targetTeamIndex', level: LogLevel.info);
+      if (targetTeamIndex >= teams.length) {
+        CustomLogger.logMessage(msg: '❌ SWAP FAILED - Invalid target team index: $targetTeamIndex', level: LogLevel.error);
+        return;
+      }
 
       // Get target player if exists
       Map<String, dynamic>? targetPlayer;
       final targetTeamPlayers = teams[targetTeamIndex]['players'] as List;
-      if (targetIndex < targetTeamPlayers.length) {
+      if (targetIndex >= 0 && targetIndex < targetTeamPlayers.length) {
         targetPlayer = Map<String, dynamic>.from(targetTeamPlayers[targetIndex]);
-        CustomLogger.logMessage(msg: 'Found target player at index $targetIndex', level: LogLevel.info);
+        CustomLogger.logMessage(msg: '🎯 TARGET FOUND - ${targetPlayer['name']} in $targetTeam at position $targetIndex', level: LogLevel.info);
+      } else {
+        CustomLogger.logMessage(msg: '🎯 TARGET EMPTY - Moving to empty slot in $targetTeam', level: LogLevel.info);
       }
 
-      // Perform the swap in local data only - NO API CALL
+      // Log before swap state
+      CustomLogger.logMessage(msg: '📊 BEFORE SWAP:', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Team A: ${(teams[0]['players'] as List).map((p) => p['name']).join(', ')}', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Team B: ${(teams[1]['players'] as List).map((p) => p['name']).join(', ')}', level: LogLevel.info);
+
+      // Perform the swap in local data
       final draggedTeamPlayers = teams[draggedTeamIndex]['players'] as List;
 
+      // Additional safety check for array access
+      if (draggedPlayerIndex >= draggedTeamPlayers.length) {
+        CustomLogger.logMessage(msg: '❌ SWAP FAILED - Invalid dragged player index: $draggedPlayerIndex >= ${draggedTeamPlayers.length}', level: LogLevel.error);
+        return;
+      }
+
       if (targetPlayer != null) {
-        // Swap players
-        CustomLogger.logMessage(msg: 'Swapping players between teams', level: LogLevel.info);
+        // Swap players - only update local UI, don't send API call
+        CustomLogger.logMessage(msg: '🔄 EXECUTING SWAP - ${draggedPlayer['name']} ↔ ${targetPlayer['name']}', level: LogLevel.info);
         draggedTeamPlayers[draggedPlayerIndex] = targetPlayer;
         targetTeamPlayers[targetIndex] = draggedPlayer;
       } else {
-        // Move player to empty slot
-        CustomLogger.logMessage(msg: 'Moving player to empty slot', level: LogLevel.info);
+        // Move player to empty slot - only update local UI, don't send API call
+        CustomLogger.logMessage(msg: '➡️ EXECUTING MOVE - ${draggedPlayer['name']} from $sourceTeam to $targetTeam', level: LogLevel.info);
         draggedTeamPlayers.removeAt(draggedPlayerIndex);
-        if (targetIndex < targetTeamPlayers.length) {
+        if (targetIndex >= 0 && targetIndex < targetTeamPlayers.length) {
           targetTeamPlayers[targetIndex] = draggedPlayer;
         } else {
           targetTeamPlayers.add(draggedPlayer);
         }
       }
 
+      // Log after swap state
+      CustomLogger.logMessage(msg: '📊 AFTER SWAP:', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Team A: ${(teams[0]['players'] as List).map((p) => p['name']).join(', ')}', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Team B: ${(teams[1]['players'] as List).map((p) => p['name']).join(', ')}', level: LogLevel.info);
+
       hasPlayerSwaps.value = true;
       teams.refresh();
-      CustomLogger.logMessage(msg: 'Local swap completed successfully', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '✅ SWAP COMPLETED SUCCESSFULLY (Local only)', level: LogLevel.info);
+      
     } catch (e) {
-      CustomLogger.logMessage(msg: 'Swap error: $e', level: LogLevel.error);
+      CustomLogger.logMessage(msg: '💥 SWAP ERROR: $e', level: LogLevel.error);
+    }
+  }
+
+  ///Send Swap Action API Call
+  Future<void> _sendSwapAction(String player1Id, String player1Team, String player1NewTeam, String player2Id, String player2Team, String player2NewTeam) async {
+    try {
+      CustomLogger.logMessage(msg: '📡 PREPARING SWAP API CALL', level: LogLevel.info);
+      
+      // Build the teams array with current player positions after swap
+      final updatedTeams = [];
+      for (int i = 0; i < teams.length; i++) {
+        final teamPlayers = teams[i]['players'] as List;
+        final playerIds = teamPlayers.map((p) => {'playerId': p['playerId']}).toList();
+
+        updatedTeams.add({
+          'name': teams[i]['name'],
+          'players': playerIds,
+        });
+        
+        CustomLogger.logMessage(msg: '   ${teams[i]['name']}: ${teamPlayers.map((p) => p['name']).join(', ')}', level: LogLevel.info);
+      }
+      
+      final body = {
+        "scoreboardId": scoreboardId.value,
+        "action": "swap",
+        "teams": updatedTeams,
+      };
+      
+      CustomLogger.logMessage(msg: '📤 SENDING SWAP API BODY:', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   ScoreboardId: ${scoreboardId.value}', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Action: swap', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Teams: $updatedTeams', level: LogLevel.info);
+      
+      // Call the updateScoreBoard API
+      final response = await repository.updateScoreBoard(data: body);
+      
+      if (response.success == true) {
+        CustomLogger.logMessage(msg: '✅ SWAP API CALL SUCCESSFUL', level: LogLevel.info);
+        
+        // Emit socket event for real-time update
+        repository.emitScoreboardSwapped(body);
+        CustomLogger.logMessage(msg: '📡 SOCKET EVENT EMITTED', level: LogLevel.info);
+      } else {
+        CustomLogger.logMessage(msg: '❌ SWAP API CALL FAILED: ${response.message}', level: LogLevel.error);
+      }
+      
+    } catch (e) {
+      CustomLogger.logMessage(msg: '💥 ERROR SENDING SWAP API CALL: $e', level: LogLevel.error);
+    }
+  }
+
+  ///Send Move Action API Call
+  Future<void> _sendMoveAction(String playerId, String fromTeam, String toTeam) async {
+    try {
+      CustomLogger.logMessage(msg: '📡 PREPARING MOVE API CALL', level: LogLevel.info);
+      
+      // Build the teams array with current player positions after move
+      final updatedTeams = [];
+      for (int i = 0; i < teams.length; i++) {
+        final teamPlayers = teams[i]['players'] as List;
+        final playerIds = teamPlayers.map((p) => {'playerId': p['playerId']}).toList();
+
+        updatedTeams.add({
+          'name': teams[i]['name'],
+          'players': playerIds,
+        });
+        
+        CustomLogger.logMessage(msg: '   ${teams[i]['name']}: ${teamPlayers.map((p) => p['name']).join(', ')}', level: LogLevel.info);
+      }
+      
+      final body = {
+        "scoreboardId": scoreboardId.value,
+        "action": "move",
+        "teams": updatedTeams,
+      };
+      
+      CustomLogger.logMessage(msg: '📤 SENDING MOVE API BODY:', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   ScoreboardId: ${scoreboardId.value}', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Action: move', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Teams: $updatedTeams', level: LogLevel.info);
+      
+      // Call the updateScoreBoard API
+      final response = await repository.updateScoreBoard(data: body);
+      
+      if (response.success == true) {
+        CustomLogger.logMessage(msg: '✅ MOVE API CALL SUCCESSFUL', level: LogLevel.info);
+        
+        // Emit socket event for real-time update
+        repository.emitScoreboardSwapped(body);
+        CustomLogger.logMessage(msg: '📡 SOCKET EVENT EMITTED', level: LogLevel.info);
+      } else {
+        CustomLogger.logMessage(msg: '❌ MOVE API CALL FAILED: ${response.message}', level: LogLevel.error);
+      }
+      
+    } catch (e) {
+      CustomLogger.logMessage(msg: '💥 ERROR SENDING MOVE API CALL: $e', level: LogLevel.error);
     }
   }
 
@@ -1010,10 +1298,17 @@ class ScoreBoardController extends GetxController {
     HapticFeedback.mediumImpact();
     CustomLogger.logMessage(msg: 'movePlayerToEmptySlot called - playerId: $playerId, targetTeam: $targetTeam, targetIndex: $targetIndex', level: LogLevel.info);
     try {
+      // Safety checks
+      if (teams.isEmpty || targetIndex < 0) {
+        CustomLogger.logMessage(msg: 'Invalid parameters: teams.isEmpty=${teams.isEmpty}, targetIndex=$targetIndex', level: LogLevel.error);
+        return;
+      }
+      
       // Find the player to move
       Map<String, dynamic>? playerToMove;
       int sourceTeamIndex = -1;
       int sourcePlayerIndex = -1;
+      String sourceTeam = '';
 
       for (int teamIndex = 0; teamIndex < teams.length; teamIndex++) {
         final teamPlayers = teams[teamIndex]['players'] as List;
@@ -1022,24 +1317,34 @@ class ScoreBoardController extends GetxController {
             playerToMove = Map<String, dynamic>.from(teamPlayers[playerIndex]);
             sourceTeamIndex = teamIndex;
             sourcePlayerIndex = playerIndex;
+            sourceTeam = teams[teamIndex]['name'];
             break;
           }
         }
         if (playerToMove != null) break;
       }
 
-      if (playerToMove == null) {
-        CustomLogger.logMessage(msg: 'Player not found', level: LogLevel.error);
+      if (playerToMove == null || sourceTeamIndex == -1 || sourcePlayerIndex == -1) {
+        CustomLogger.logMessage(msg: 'Player not found or invalid indices', level: LogLevel.error);
         return;
       }
 
       // Get target team index
       int targetTeamIndex = targetTeam == 'Team A' ? 0 : 1;
+      if (targetTeamIndex >= teams.length) {
+        CustomLogger.logMessage(msg: 'Invalid target team index: $targetTeamIndex', level: LogLevel.error);
+        return;
+      }
       
       CustomLogger.logMessage(msg: 'Moving from team $sourceTeamIndex index $sourcePlayerIndex to team $targetTeamIndex index $targetIndex', level: LogLevel.info);
 
-      // Remove player from source team
+      // Additional safety check for array access
       final sourceTeamPlayers = List<Map<String, dynamic>>.from(teams[sourceTeamIndex]['players'] as List);
+      if (sourcePlayerIndex >= sourceTeamPlayers.length) {
+        CustomLogger.logMessage(msg: 'Invalid source player index: $sourcePlayerIndex >= ${sourceTeamPlayers.length}', level: LogLevel.error);
+        return;
+      }
+      
       sourceTeamPlayers.removeAt(sourcePlayerIndex);
       teams[sourceTeamIndex]['players'] = sourceTeamPlayers;
 
@@ -1047,7 +1352,7 @@ class ScoreBoardController extends GetxController {
       final targetTeamPlayers = List<Map<String, dynamic>>.from(teams[targetTeamIndex]['players'] as List);
       
       // Insert at the correct position
-      if (targetIndex >= targetTeamPlayers.length) {
+      if (targetIndex >= targetTeamPlayers.length || targetIndex < 0) {
         targetTeamPlayers.add(playerToMove);
       } else {
         targetTeamPlayers.insert(targetIndex, playerToMove);
@@ -1057,13 +1362,253 @@ class ScoreBoardController extends GetxController {
       
       hasPlayerSwaps.value = true;
       teams.refresh();
-      CustomLogger.logMessage(msg: 'Player moved to slot successfully', level: LogLevel.info);
+      
+      CustomLogger.logMessage(msg: 'Player moved to slot successfully (Local only)', level: LogLevel.info);
     } catch (e) {
       CustomLogger.logMessage(msg: 'Move player error: $e', level: LogLevel.error);
     }
   }
 
   ///Save Player Swaps---------------------------------------------------------
+  void prepareShuffleSession() {
+    // If a user shuffles mid-match, we want to finalize the pre-shuffle result UI
+    // and restart the match with the new teams.
+    // Even for 0-0 (no scores yet), we treat it as a DRAW based on equal totals.
+    didShuffleDuringActiveMatch.value = isGameStarted.value && sets.isNotEmpty;
+    preShuffleWinner.value = winner.value;
+    preShuffleTeamAWins.value = teamAWins.value;
+    preShuffleTeamBWins.value = teamBWins.value;
+  }
+
+  Future<void> _showPreShuffleResultDialog() async {
+    final normalizedWinner = preShuffleWinner.value.trim().toLowerCase().replaceAll(' ', '');
+    String teamAStatus = "LOSE";
+    String teamBStatus = "WIN";
+
+    if (normalizedWinner == 'teama') {
+      teamAStatus = "WIN";
+      teamBStatus = "LOSE";
+    } else if (normalizedWinner == 'teamb') {
+      teamAStatus = "LOSE";
+      teamBStatus = "WIN";
+    } else if (normalizedWinner == 'draw' ||
+        normalizedWinner == 'tie' ||
+        normalizedWinner == 'tied' ||
+        preShuffleTeamAWins.value == preShuffleTeamBWins.value) {
+      teamAStatus = "DRAW";
+      teamBStatus = "DRAW";
+    } else if (preShuffleTeamAWins.value > preShuffleTeamBWins.value) {
+      teamAStatus = "WIN";
+      teamBStatus = "LOSE";
+    } else if (preShuffleTeamBWins.value > preShuffleTeamAWins.value) {
+      teamAStatus = "LOSE";
+      teamBStatus = "WIN";
+    }
+    await showTeamsShuffleResultDialog(
+      controller: this,
+      teamAResult: teamAStatus,
+      teamBResult: teamBStatus,
+    );
+  }
+
+  ///Handle team shuffle result from scoreboardSwapped event
+  Future<void> _handleTeamShuffleResultFromSwap({
+    required String teamAResult,
+    required String teamBResult,
+    required int teamAScore,
+    required int teamBScore,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: '🔔 SHUFFLE RESULT FROM SWAP - isShowingShuffleResultDialog: ${isShowingShuffleResultDialog.value}',
+        level: LogLevel.info,
+      );
+      
+      // Prevent duplicate dialog if already showing
+      if (isShowingShuffleResultDialog.value) {
+        CustomLogger.logMessage(
+          msg: 'Shuffle result dialog already showing, skipping duplicate',
+          level: LogLevel.info,
+        );
+        return;
+      }
+      
+      CustomLogger.logMessage(
+        msg: 'Showing shuffle result - Team A: $teamAResult ($teamAScore), Team B: $teamBResult ($teamBScore)',
+        level: LogLevel.info,
+      );
+      
+      // Set flag to prevent duplicate
+      isShowingShuffleResultDialog.value = true;
+      
+      // Show the dialog to this player
+      await showTeamsShuffleResultDialog(
+        controller: this,
+        teamAResult: teamAResult,
+        teamBResult: teamBResult,
+      );
+      
+      CustomLogger.logMessage(
+        msg: '✅ Dialog closed, resetting match',
+        level: LogLevel.info,
+      );
+      
+      // Reset flag after dialog is closed
+      isShowingShuffleResultDialog.value = false;
+      
+      // After dialog is closed, reset the match for this player
+      await _restartMatchAfterShuffle();
+      didShuffleDuringActiveMatch.value = false;
+      
+    } catch (e, stackTrace) {
+      isShowingShuffleResultDialog.value = false;
+      CustomLogger.logMessage(
+        msg: 'Error handling team shuffle result from swap: $e',
+        level: LogLevel.error,
+      );
+      CustomLogger.logMessage(
+        msg: 'Stack trace: $stackTrace',
+        level: LogLevel.error,
+      );
+    }
+  }
+
+  ///Handle team shuffle result from socket for all players
+  Future<void> _handleTeamShuffleResultFromSocket(dynamic data) async {
+    try {
+      CustomLogger.logMessage(
+        msg: '🔔 SOCKET HANDLER CALLED - isShowingShuffleResultDialog: ${isShowingShuffleResultDialog.value}',
+        level: LogLevel.info,
+      );
+      
+      // Prevent duplicate dialog if already showing
+      if (isShowingShuffleResultDialog.value) {
+        CustomLogger.logMessage(
+          msg: 'Shuffle result dialog already showing, skipping duplicate',
+          level: LogLevel.info,
+        );
+        return;
+      }
+      
+      // Log the entire data object
+      CustomLogger.logMessage(
+        msg: '🔍 FULL SOCKET DATA: $data',
+        level: LogLevel.info,
+      );
+      
+      final teamAResult = data['teamAResult']?.toString() ?? 'DRAW';
+      final teamBResult = data['teamBResult']?.toString() ?? 'DRAW';
+      final teamAScore = data['teamAScore'] ?? 0;
+      final teamBScore = data['teamBScore'] ?? 0;
+      
+      // Get XP values from socket data - try multiple possible key names
+      int socketXpEarned = 0;
+      int socketXpLost = 0;
+      
+      if (data is Map) {
+        socketXpEarned = (data['xpEarned'] ?? data['currentXP'] ?? data['xpChange'] ?? 0) as int;
+        socketXpLost = (data['xpLost'] ?? 0) as int;
+        
+        CustomLogger.logMessage(
+          msg: '🔍 EXTRACTED XP - Earned: $socketXpEarned, Lost: $socketXpLost',
+          level: LogLevel.info,
+        );
+        CustomLogger.logMessage(
+          msg: '🔍 AVAILABLE KEYS: ${data.keys.toList()}',
+          level: LogLevel.info,
+        );
+      }
+      
+      // Update controller XP values from socket
+      if (socketXpEarned > 0) {
+        xpEarned.value = socketXpEarned;
+        CustomLogger.logMessage(
+          msg: '✅ XP Earned updated to: ${xpEarned.value}',
+          level: LogLevel.info,
+        );
+      }
+      if (socketXpLost > 0) {
+        xpLost.value = socketXpLost;
+        CustomLogger.logMessage(
+          msg: '✅ XP Lost updated to: ${xpLost.value}',
+          level: LogLevel.info,
+        );
+      }
+      
+      CustomLogger.logMessage(
+        msg: 'Showing shuffle result dialog from socket - Team A: $teamAResult ($teamAScore), Team B: $teamBResult ($teamBScore), XP Earned: $socketXpEarned, XP Lost: $socketXpLost',
+        level: LogLevel.info,
+      );
+      
+      // Set flag to prevent duplicate
+      isShowingShuffleResultDialog.value = true;
+      
+      // Show the dialog to this player
+      await showTeamsShuffleResultDialog(
+        controller: this,
+        teamAResult: teamAResult,
+        teamBResult: teamBResult,
+      );
+      
+      CustomLogger.logMessage(
+        msg: '✅ Dialog closed, resetting match',
+        level: LogLevel.info,
+      );
+      
+      // Reset flag after dialog is closed
+      isShowingShuffleResultDialog.value = false;
+      
+      // After dialog is closed, reset the match for this player
+      await _restartMatchAfterShuffle();
+      didShuffleDuringActiveMatch.value = false;
+      
+    } catch (e, stackTrace) {
+      isShowingShuffleResultDialog.value = false;
+      CustomLogger.logMessage(
+        msg: 'Error handling team shuffle result: $e',
+        level: LogLevel.error,
+      );
+      CustomLogger.logMessage(
+        msg: 'Stack trace: $stackTrace',
+        level: LogLevel.error,
+      );
+    }
+  }
+
+  Future<void> _restartMatchAfterShuffle() async {
+    // Stop the game timer if running
+    if (isGameStarted.value) {
+      try {
+        _gameTimer.cancel();
+      } catch (_) {}
+      isGameStarted.value = false;
+    }
+
+    // Clear all sets and scores
+    sets.clear();
+    sets.refresh();
+    teamAWins.value = 0;
+    teamBWins.value = 0;
+    winner.value = "";
+
+    // Reset the match state on the server
+    try {
+      final body = {
+        "scoreboardId": scoreboardId.value,
+        "type": "reset"
+      };
+      await repository.updateScoreBoard(data: body);
+      CustomLogger.logMessage(msg: 'Match reset successfully', level: LogLevel.info);
+    } catch (e) {
+      CustomLogger.logMessage(msg: 'Error resetting match: $e', level: LogLevel.error);
+    }
+
+    // Fetch updated scoreboard to sync with server
+    await fetchScoreBoard(showLoader: false);
+    
+    CustomLogger.logMessage(msg: 'Match restarted - ready for new game with new teams', level: LogLevel.info);
+  }
+
   Future<void> savePlayerSwaps() async {
     if (!hasPlayerSwaps.value) {
       CustomLogger.logMessage(msg: 'No swaps made - exiting shuffle mode without API call', level: LogLevel.info);
@@ -1071,9 +1616,26 @@ class ScoreBoardController extends GetxController {
       return;
     }
 
-    CustomLogger.logMessage(msg: 'savePlayerSwaps called - API CALL STARTING', level: LogLevel.info);
+    // Check if swapping during an active match
+    final isSwappingDuringMatch = isGameStarted.value && sets.isNotEmpty;
+    
+    CustomLogger.logMessage(
+      msg: '🔄 SWAP INITIATED - isSwappingDuringMatch: $isSwappingDuringMatch, isGameStarted: ${isGameStarted.value}, sets.length: ${sets.length}',
+      level: LogLevel.info,
+    );
+    
+    // Store pre-shuffle state if swapping during match
+    if (isSwappingDuringMatch) {
+      prepareShuffleSession();
+      CustomLogger.logMessage(
+        msg: '📊 PRE-SHUFFLE STATE - Winner: ${preShuffleWinner.value}, Team A: ${preShuffleTeamAWins.value}, Team B: ${preShuffleTeamBWins.value}',
+        level: LogLevel.info,
+      );
+    }
+
+    CustomLogger.logMessage(msg: 'savePlayerSwaps called - SENDING SWAP ACTION TO API', level: LogLevel.info);
     try {
-      // Build API body
+      // Build API body with swap action
       final updatedTeams = [];
       for (int i = 0; i < teams.length; i++) {
         final teamPlayers = teams[i]['players'] as List;
@@ -1087,23 +1649,57 @@ class ScoreBoardController extends GetxController {
 
       final body = {
         'scoreboardId': scoreboardId.value,
-        'teams': updatedTeams,
         'action': 'swap',
+        'teams': updatedTeams,
+        // Include match state for backend to determine if shuffle result is needed
+        'isSwappingDuringMatch': isSwappingDuringMatch,
+        'preShuffleWinner': isSwappingDuringMatch ? preShuffleWinner.value : null,
+        'preShuffleTeamAWins': isSwappingDuringMatch ? preShuffleTeamAWins.value : null,
+        'preShuffleTeamBWins': isSwappingDuringMatch ? preShuffleTeamBWins.value : null,
       };
 
-      CustomLogger.logMessage(msg: 'Making API call to save player swaps', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '========== SENDING SWAP API ==========', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   ScoreboardId: ${scoreboardId.value}', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   Action: swap', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '   isSwappingDuringMatch: $isSwappingDuringMatch', level: LogLevel.info);
+      if (isSwappingDuringMatch) {
+        CustomLogger.logMessage(msg: '   preShuffleWinner: ${preShuffleWinner.value}', level: LogLevel.info);
+        CustomLogger.logMessage(msg: '   preShuffleTeamAWins: ${preShuffleTeamAWins.value}', level: LogLevel.info);
+        CustomLogger.logMessage(msg: '   preShuffleTeamBWins: ${preShuffleTeamBWins.value}', level: LogLevel.info);
+      }
+      CustomLogger.logMessage(msg: '   Teams: $updatedTeams', level: LogLevel.info);
+      CustomLogger.logMessage(msg: '========================================', level: LogLevel.info);
+
       final response = await repository.updateScoreBoard(data: body);
-      if (response.success == true) {
+
+      if (response?.success == true) {
+        CustomLogger.logMessage(msg: '✅ SWAP API CALL SUCCESSFUL', level: LogLevel.info);
+        
+        // Emit socket event for team swap - backend will handle teamShuffleResult
+        repository.emitScoreboardSwapped(body);
+        CustomLogger.logMessage(msg: '📡 scoreboardSwapped SOCKET EVENT EMITTED', level: LogLevel.info);
+        
         hasPlayerSwaps.value = false;
         isShuffleMode.value = false;
-        await fetchScoreBoard();
-        CustomLogger.logMessage(msg: 'API call successful - shuffle mode disabled', level: LogLevel.info);
+        
+        // Backend will emit teamShuffleResult if isSwappingDuringMatch is true
+        // All players (including initiator) will receive it via socket listener
+        CustomLogger.logMessage(
+          msg: '⏳ Waiting for backend to process and emit teamShuffleResult...',
+          level: LogLevel.info,
+        );
+        
+        AppToast.success('Teams updated successfully');
+        CustomLogger.logMessage(msg: 'Teams swapped and socket event emitted', level: LogLevel.info);
       } else {
-        await fetchScoreBoard(showLoader: false);
+        AppToast.error('Failed to update teams');
+        CustomLogger.logMessage(msg: '❌ SWAP API CALL FAILED: ${response?.message}', level: LogLevel.error);
       }
-    } catch (e) {
-      CustomLogger.logMessage(msg: 'Save error: $e', level: LogLevel.error);
-      await fetchScoreBoard(showLoader: false);
+    } catch (e, stackTrace) {
+      isShowingShuffleResultDialog.value = false;
+      CustomLogger.logMessage(msg: '💥 ERROR SENDING SWAP API CALL: $e', level: LogLevel.error);
+      CustomLogger.logMessage(msg: 'Stack trace: $stackTrace', level: LogLevel.error);
+      AppToast.error('Error updating teams');
     }
   }
   ///Convert Booking To Open Match---------------------------------------------
@@ -1248,5 +1844,15 @@ Great game! 🏓
           ? const Rect.fromLTWH(0, 0, 1, 1)
           : shareRect,
     );
+  }
+
+  String formatMatchDateAt(String dateString) {
+    try {
+      if (dateString.isEmpty) return "Unknown Date";
+      final date = DateTime.parse(dateString);
+      return DateFormat('EEEE, MMM dd, yyyy').format(date);
+    } catch (e) {
+      return "Unknown Date";
+    }
   }
 }

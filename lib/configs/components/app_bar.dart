@@ -59,7 +59,7 @@ AppBar primaryAppBar({
     surfaceTintColor: Colors.transparent,
     backgroundColor: backGroundColor ?? Colors.transparent,
     elevation: 3,
-    actionsPadding: EdgeInsets.only(right: Get.width * 0.03),
+    actionsPadding: EdgeInsets.only(right: Get.width * 0.01),
     actions: action,
     flexibleSpace: flexibleSpace,
 

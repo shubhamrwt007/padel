@@ -121,16 +121,16 @@ class ScoreBoardScreen extends StatelessWidget {
             Obx(() => IconButton(
               icon: Icon(
                 controller.isShuffleMode.value ? Icons.check : Icons.swap_horiz,
-                color: controller.canSwapPlayers ? Colors.white : Colors.grey,
+                color: controller.isGameStarted.value ? Colors.white.withOpacity(0.5) : Colors.white,
                 size: 25,
               ),
-              onPressed: controller.canSwapPlayers ? () {
+              onPressed: controller.isGameStarted.value ? null : () {
                 if (controller.isShuffleMode.value) {
                   controller.savePlayerSwaps();
                 } else {
                   _showShuffleDialog();
                 }
-              } : null,
+              },
             )),
             IconButton(
               icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20,),
@@ -581,7 +581,7 @@ class ScoreBoardScreen extends StatelessWidget {
                 children: [
                   Text(controller.matchType.value, style: Get.textTheme.labelMedium),
                   const SizedBox(width: 4),
-                  const Icon(Icons.lock_outline, size: 16, color: AppColors.primaryColor),
+                  // const Icon(Icons.lock_outline, size: 16, color: AppColors.primaryColor),
                 ],
               ),
             )
@@ -706,6 +706,11 @@ class ScoreBoardScreen extends StatelessWidget {
 // Replace the existing method in your scoreboard_screen.dart file with this one
 
   Widget _buildMergedPlayersView(List teamAPlayers, List teamBPlayers) {
+    // Safety check - ensure we have at least 2 players in each team
+    if (teamAPlayers.length < 2 || teamBPlayers.length < 2) {
+      return _buildCompactPlayersView(teamAPlayers, teamBPlayers);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -995,12 +1000,48 @@ class ScoreBoardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildCompactPlayersView(List teamAPlayers, List teamBPlayers) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        // All 4 players in one row
+        Row(
+          children: [
+            // Team A - Player 1
+            _buildCompactPlayerSlot(teamAPlayers, 0, "Team A"),
+            const SizedBox(width: 8),
+            // Team A - Player 2
+            _buildCompactPlayerSlot(teamAPlayers, 1, "Team A"),
+            const SizedBox(width: 12),
+            // Divider
+            Container(
+              width: 2,
+              height: 70,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryColor.withOpacity(0.3), AppColors.primaryColor, AppColors.primaryColor.withOpacity(0.3)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Team B - Player 1
+            _buildCompactPlayerSlot(teamBPlayers, 0, "Team B"),
+            const SizedBox(width: 8),
+            // Team B - Player 2
+            _buildCompactPlayerSlot(teamBPlayers, 1, "Team B"),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildAllPlayersView(List teamAPlayers, List teamBPlayers) {
     return Obx(() => controller.isShuffleMode.value
         ? _buildShuffleView(teamAPlayers, teamBPlayers)
         : _buildNormalView(teamAPlayers, teamBPlayers));
   }
-
   Widget _buildShuffleView(List teamAPlayers, List teamBPlayers) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1061,7 +1102,8 @@ class ScoreBoardScreen extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 12),
-                ...teamAPlayers.asMap().entries.map((entry) {
+                // Show existing players
+                ...teamAPlayers.take(2).toList().asMap().entries.map((entry) {
                   final index = entry.key;
                   final player = entry.value;
                   return Column(
@@ -1071,8 +1113,8 @@ class ScoreBoardScreen extends StatelessWidget {
                     ],
                   );
                 }),
-                // Add empty slots
-                ...List.generate(2 - teamAPlayers.length, (index) {
+                // Add empty slots only if team has less than 2 players
+                ...List.generate(math.max(0, 2 - teamAPlayers.length), (index) {
                   return Column(
                     children: [
                       _buildEmptyShuffleSlot('Team A', teamAPlayers.length + index),
@@ -1150,7 +1192,8 @@ class ScoreBoardScreen extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 12),
-                ...teamBPlayers.asMap().entries.map((entry) {
+                // Show existing players
+                ...teamBPlayers.take(2).toList().asMap().entries.map((entry) {
                   final index = entry.key;
                   final player = entry.value;
                   return Column(
@@ -1160,8 +1203,8 @@ class ScoreBoardScreen extends StatelessWidget {
                     ],
                   );
                 }),
-                // Add empty slots
-                ...List.generate(2 - teamBPlayers.length, (index) {
+                // Add empty slots only if team has less than 2 players
+                ...List.generate(math.max(0, 2 - teamBPlayers.length), (index) {
                   return Column(
                     children: [
                       _buildEmptyShuffleSlot('Team B', teamBPlayers.length + index),
@@ -1178,6 +1221,11 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyShuffleSlot(String team, int index) {
+    // Safety check for negative index
+    if (index < 0) {
+      return const SizedBox.shrink();
+    }
+    
     return GestureDetector(
       onTap: () {
         log("Opening bottomsheet from shuffle slot - team: $team");
@@ -1398,6 +1446,11 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 
   Widget _buildShufflePlayerItem(Map<String, dynamic> player, int index, String team) {
+    // Safety check for negative index
+    if (index < 0) {
+      return const SizedBox.shrink();
+    }
+    
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1646,6 +1699,11 @@ class ScoreBoardScreen extends StatelessWidget {
   }
 
   Widget _buildNormalView(List teamAPlayers, List teamBPlayers) {
+    // Safety check - ensure we have at least 2 players in each team
+    if (teamAPlayers.length < 2 || teamBPlayers.length < 2) {
+      return _buildCompactPlayersView(teamAPlayers, teamBPlayers);
+    }
+
     return Column(
       children: [
         Container(
@@ -2485,11 +2543,6 @@ class ScoreBoardScreen extends StatelessWidget {
       return;
     }
 
-    if (controller.isGameStarted.value) {
-      AppToast.error("Cannot shuffle after game has started");
-      return;
-    }
-
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -2562,6 +2615,7 @@ class ScoreBoardScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Get.back();
+                        controller.prepareShuffleSession();
                         controller.isShuffleMode.value = true;
                       },
                       style: ElevatedButton.styleFrom(

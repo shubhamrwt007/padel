@@ -87,7 +87,7 @@ class BookACourtScreen extends StatelessWidget {
                 waitDuration: Duration(milliseconds: 200),
                 showDuration: Duration(seconds: 3),
                 triggerMode: TooltipTriggerMode.tap,
-                child: Icon(Icons.info_outline,size: 20,))
+                child: Icon(Icons.info_outline,size: 15,).paddingOnly(top: 3))
           ],
         ),
         centerTitle: true,
@@ -345,13 +345,13 @@ class BookACourtScreen extends StatelessWidget {
                 waitDuration: Duration(milliseconds: 200),
                 showDuration: Duration(seconds: 3),
                 triggerMode: TooltipTriggerMode.tap,
-                child: Icon(Icons.info_outline,size: 20,)).paddingOnly(right: 5),
+                child: Icon(Icons.info_outline,size: 15,)).paddingOnly(right: 5),
 
             Obx(() {
               final isFriendly = controller.matchType.value == "friendly";
 
               return Container(
-                height: 34,
+                height: 30,
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
@@ -416,15 +416,15 @@ class BookACourtScreen extends StatelessWidget {
       if (courtsByDuration == null ||
           courtsByDuration.data == null ||
           courtsByDuration.data!.isEmpty) {
-        return const Center(
+        return  Center(
           child: Padding(
             padding: EdgeInsets.all(20.0),
             child: Text(
-              'No matches available for this time',
+              'No court’s available for this time',
               style: TextStyle(color: Colors.grey),
             ),
           ),
-        );
+        ).paddingOnly(top: Get.height*.2);
       }
 
       final clubsData = courtsByDuration.data!;
@@ -939,33 +939,33 @@ class BookACourtScreen extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      controller.openDatePicker(context);
-                    },
-                    child: Container(
-                      height: 25,
-                      width: 25,
-                      decoration: BoxDecoration(
-                        color: AppColors.textFieldColor,
-                        borderRadius: BorderRadius.circular(5),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.calendar_month_outlined,
-                          color: AppColors.primaryColor,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ).paddingOnly(left: 10)
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     controller.openDatePicker(context);
+                  //   },
+                  //   child: Container(
+                  //     height: 25,
+                  //     width: 25,
+                  //     decoration: BoxDecoration(
+                  //       color: AppColors.textFieldColor,
+                  //       borderRadius: BorderRadius.circular(5),
+                  //       boxShadow: const [
+                  //         BoxShadow(
+                  //           color: Colors.black12,
+                  //           blurRadius: 8,
+                  //           offset: Offset(2, 2),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //     child: const Center(
+                  //       child: Icon(
+                  //         Icons.calendar_month_outlined,
+                  //         color: AppColors.primaryColor,
+                  //         size: 20,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ).paddingOnly(left: 10)
                 ],
               ),
               GestureDetector(

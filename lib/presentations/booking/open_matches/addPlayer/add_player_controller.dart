@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
@@ -44,6 +46,9 @@ class AddPlayerController extends GetxController {
   Future<void> createUser() async {
     if (isLoading.value) return;
 
+    // Dismiss keyboard first to ensure toast is visible
+    FocusManager.instance.primaryFocus?.unfocus();
+    
     // If login user is adding themselves, skip API call and add directly
     if (isLoginUserAdding.value) {
       await addLoginUserDirectly();
@@ -51,12 +56,15 @@ class AddPlayerController extends GetxController {
     }
     if (phoneController.text.isEmpty) {
       AppToast.error("Please Enter Phone Number");
+      return;
     }
-    else if (nameController.text.isEmpty) {
+    if (nameController.text.isEmpty) {
       AppToast.error("Please Enter Full Name");
+      return;
     }
-    else if (gender.value.isEmpty) {
+    if (gender.value.isEmpty) {
       AppToast.error("Please Select Gender");
+      return;
     }
 
     isLoading.value = true;
@@ -74,8 +82,7 @@ class AddPlayerController extends GetxController {
 
       if (response?.status == "200" && response?.response?.sId != null) {
         playerId.value = response!.response!.sId!;
-
-        // ---------- Add Player For Open Matches ----------
+        // ---------- Add Player For Open Matches ------------ //
         if (allOpenMatchController != null) {
           final added = await addPlayer();
           if (added) {
