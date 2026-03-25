@@ -51,6 +51,7 @@ class GetRegisterClubData {
   String? updatedAt;
   String? zipCode;
   String? description;
+  dynamic ownerPhoneNumber;
 
   GetRegisterClubData({
     this.location,
@@ -75,6 +76,7 @@ class GetRegisterClubData {
     this.updatedAt,
     this.zipCode,
     this.description,
+    this.ownerPhoneNumber,
   });
 
   GetRegisterClubData.fromJson(Map<String, dynamic> json) {
@@ -113,6 +115,7 @@ class GetRegisterClubData {
     updatedAt = json['updatedAt'];
     zipCode = json['zipCode'];
     description = json['description'];
+    ownerPhoneNumber = json['ownerPhoneNumber'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -139,6 +142,7 @@ class GetRegisterClubData {
     'updatedAt': updatedAt,
     'zipCode': zipCode,
     'description': description,
+    'ownerPhoneNumber': ownerPhoneNumber,
   };
 }
 

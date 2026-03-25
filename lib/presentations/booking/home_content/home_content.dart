@@ -58,14 +58,11 @@ class HomeContent extends StatelessWidget {
                     );
                   }
 
-                  final reviewData = controller.registerClubResponse.value?.reviewData;
-                  final avgRating = reviewData?.averageRating?.toDouble() ?? 0.0;
-
                   return Row(
                     children: [
                       RatingBar.builder(
                         itemSize: 16,
-                        initialRating: avgRating,
+                        initialRating: 4.5,
                         minRating: 0,
                         unratedColor: AppColors.starUnselectedColor,
                         direction: Axis.horizontal,
@@ -85,7 +82,7 @@ class HomeContent extends StatelessWidget {
                         onRatingUpdate: (rating) {},
                       ).paddingOnly(right: Get.width * 0.02),
                       Text(
-                        avgRating.toStringAsFixed(1),
+                        "4.5",
                         style: Theme.of(context).textTheme.headlineMedium!
                             .copyWith(
                               fontWeight: FontWeight.w500,
@@ -103,8 +100,8 @@ class HomeContent extends StatelessWidget {
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
                   child: Container(
-                    width: 120,
-                    height: 16,
+                    width: double.infinity,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(8),
@@ -113,14 +110,17 @@ class HomeContent extends StatelessWidget {
                 ).paddingOnly(bottom: Get.height * 0.02);
               }
 
-              final clubData = controller.registerClubResponse.value?.data;
-              final courtCount = clubData?.courtCount ?? 0;
+              final description = controller.registerClubResponse.value?.data?.description;
+              if (description == null || description.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
               return Text(
-                "$courtCount Available courts",
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge!.copyWith(color: AppColors.textColor),
+                description,
+                style: Theme.of(context).textTheme.displayMedium!.copyWith(
+                  color: AppColors.textColor,
+                  fontSize: 13,
+                ),
               ).paddingOnly(bottom: Get.height * 0.02);
             }),
             Text(
@@ -199,7 +199,13 @@ class HomeContent extends StatelessWidget {
 
                       return GestureDetector(
                         onTap: () {
-                          if (index != 1) {
+                          if (index == 0) {
+                            // Direction - Open Google Maps
+                            controller.openGoogleMaps();
+                          } else if (index == 1) {
+                            // Call - Make phone call
+                            controller.makePhoneCall();
+                          } else {
                             controller.selectedIndex.value = index;
                             if (index != 2) controller.isShowAllReviews.value = false;
                             if (index != 3) controller.isShowAllPhotos.value = false;

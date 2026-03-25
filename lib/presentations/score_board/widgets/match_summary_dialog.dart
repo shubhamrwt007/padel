@@ -4,6 +4,7 @@ import 'package:padel_mobile/presentations/score_board/score_board_controller.da
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 bool _isOpeningMatchSummaryDialog = false;
+bool _isOpeningTeamsShuffleSummaryDialog = false;
 
 Future<void> showMatchSummaryDialog(ScoreBoardController controller) async {
   // Prevent stacking the same dialog multiple times due to rapid triggers
@@ -21,9 +22,10 @@ Future<void> showMatchSummaryDialog(ScoreBoardController controller) async {
     }
 
     final result = _getMatchResult(controller);
-    _showResultDialog(
+    await _showResultDialog(
       result: result,
       controller: controller,
+      resetDialogFlagOnClose: true,
     );
   } finally {
     _isOpeningMatchSummaryDialog = false;
@@ -78,9 +80,10 @@ _MatchResult _getMatchResult(ScoreBoardController controller) {
 /// ------------------------------------------------------------
 /// RESULT DIALOG (WIN / LOST)
 /// ------------------------------------------------------------
-void _showResultDialog({
+Future<void> _showResultDialog({
   required _MatchResult result,
   required ScoreBoardController controller,
+  required bool resetDialogFlagOnClose,
 }) {
   ProfileController? profileController;
   try {
@@ -109,12 +112,12 @@ void _showResultDialog({
   };
 
   final String badgeText = switch (result) {
-    _MatchResult.win => "+100 XP",
-    _MatchResult.loss => "-100 XP",
+    _MatchResult.win => controller.xpEarned.value > 0 ? "+${controller.xpEarned.value} XP" : "+100 XP",
+    _MatchResult.loss => controller.xpLost.value > 0 ? "-${controller.xpLost.value} XP" : "-100 XP",
     _MatchResult.draw => "0 XP",
   };
 
-  Get.dialog(
+  return Get.dialog(
     Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 30),
       shape: RoundedRectangleBorder(
@@ -223,7 +226,9 @@ void _showResultDialog({
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () {
-                  _resetDialogFlag(controller);
+                  if (resetDialogFlagOnClose) {
+                    _resetDialogFlag(controller);
+                  }
                   // If multiple dialogs got stacked for any reason, close all at once
                   if (Get.isDialogOpen == true) {
                     while (Get.isDialogOpen == true) {
@@ -246,8 +251,46 @@ void _showResultDialog({
     barrierDismissible: true,
   ).then((_) {
     // Reset flag when dialog is dismissed by any means
-    _resetDialogFlag(controller);
+    if (resetDialogFlagOnClose) {
+      _resetDialogFlag(controller);
+    }
   });
+}
+
+_MatchResult _parseTeamResult(String raw) {
+  final v = raw.trim().toLowerCase();
+  if (v == 'win' || v == 'won' || v.contains('win')) return _MatchResult.win;
+  if (v == 'loss' || v == 'lose' || v.contains('loss') || v.contains('lose')) {
+    return _MatchResult.loss;
+  }
+  return _MatchResult.draw;
+}
+
+/// Shows the same win/lose dialog UI twice: first for Team A, then Team B.
+/// Used when teams are shuffled mid-match (check icon confirmation).
+Future<void> showTeamsShuffleResultDialog({
+  required ScoreBoardController controller,
+  required String teamAResult,
+  required String teamBResult,
+}) async {
+  if (_isOpeningTeamsShuffleSummaryDialog) return;
+  _isOpeningTeamsShuffleSummaryDialog = true;
+
+  try {
+    await _showResultDialog(
+      result: _parseTeamResult(teamAResult),
+      controller: controller,
+      resetDialogFlagOnClose: false,
+    );
+    await _showResultDialog(
+      result: _parseTeamResult(teamBResult),
+      controller: controller,
+      resetDialogFlagOnClose: false,
+    );
+  } finally {
+    _resetDialogFlag(controller);
+    _isOpeningTeamsShuffleSummaryDialog = false;
+  }
 }
 
 /// XP TEXT

@@ -50,6 +50,7 @@ class Assets {
   static const String imagesIcPerson = 'assets/images/ic_person.svg';
   static const String imagesIcPickleball = 'assets/images/ic_pickleball.svg';
   static const String imagesIcPrivacy = 'assets/images/ic_privacy.png';
+  static const String imagesIcRackets = 'assets/images/ic_rackets.png';
   static const String imagesIcReview = 'assets/images/ic_review.svg';
   static const String imagesIcSearch = 'assets/images/ic_search.png';
   static const String imagesIcSecondPlace = 'assets/images/ic_second_place.svg';
@@ -97,9 +98,10 @@ class Assets {
   static const String imagesPlaystore = 'assets/images/playstore.png';
   static const String imagesRazorPay = 'assets/images/razorPay.png';
   static const String imagesRowthTechLogo = 'assets/images/rowthTech_logo.svg';
-  static const String imagesTutorialScreenPng2 = 'assets/images/tutorial_screen_png_2.png';
   static const String imagesTutorialScreenPng1 = 'assets/images/tutorial_screen_png_1.png';
+  static const String imagesTutorialScreenPng2 = 'assets/images/tutorial_screen_png_2.png';
   static const String imagesTutorialScreenPng3 = 'assets/images/tutorial_screen_png_3.png';
   static const String imagesTutorialScreenPng4 = 'assets/images/tutorial_screen_png_4.png';
   static const String lottieFilesNoData = 'assets/lottie_files/no_data.gif';
+
 }

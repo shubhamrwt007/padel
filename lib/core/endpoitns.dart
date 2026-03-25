@@ -9,10 +9,6 @@ class AppEndpoints {
   ///-----------------------Local URL-------------------------------------------
   static const String baseUrl = "http://192.168.1.20:5070/api/customer/";
   static const String socketUrl = "http://192.168.1.20:5070";
-
-
-  
-
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
   static const String logout = "${baseUrl}logout";
@@ -71,29 +67,29 @@ class AppEndpoints {
   static const String joinPerShareMatchWithPayment = "${baseUrl}court/openmatch/joinPerShareMatchWithPayment";
   static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
-  ///Notification---------------------------------------------------------------
+  /// Notification---------------------------------------------------------------
   static const String getNotification = "${baseUrl}court/userNotification/readNotification";
   static const String getNotificationMarkAsRead = "${baseUrl}court/userNotification/markAsRead";
   static const String getNotificationMarkAsReadALl = "${baseUrl}court/userNotification/markAsAllAsRead";
   static const String getNotificationCount = "${baseUrl}court/userNotification/ureadCountData";
-  ///ScoreBoard-----------------------------------------------------------------
+  /// ScoreBoard-----------------------------------------------------------------
   static const String createScoreBoard = "${baseUrl}court/scoreboard/createScoreboard";
   static const String getScoreBoard = "${baseUrl}court/scoreboard/getScoreboards";
   static const String updateScoreBoard = "${baseUrl}court/scoreboard/updateScoreboard";
-  ///Google Maps Api------------------------------------------------------------
+  /// Google Maps Api------------------------------------------------------------
   static const String getLocationMaps = "${baseUrl}GetgoogleMap?";
-  ///Wallet---------------------------------------------------------------------
+  /// Wallet---------------------------------------------------------------------
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
   static const String testWalletCreate = "${baseUrl}wallet/order";
   static const String appVersions= "${baseUrl}app-version/check";
-  ///LeaderBoard----------------------------------------------------------------
+  /// LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
   static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
   static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
   static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
 
-  ///XP Points------------------------------------------------------------------
+  /// XP Points------------------------------------------------------------------
   static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";
   /// Get Category
   static const String getCategory = "${baseUrl}court/category/list";

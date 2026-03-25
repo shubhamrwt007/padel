@@ -34,6 +34,8 @@ class Data {
   String? createdAt;
   String? updatedAt;
   int? iV;
+  int? xpEarned;
+  int? xpLost;
 
   Data({
     this.totalScore,
@@ -51,6 +53,8 @@ class Data {
     this.createdAt,
     this.updatedAt,
     this.iV,
+    this.xpEarned,
+    this.xpLost,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,8 @@ class Data {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
+    xpEarned = json['xpEarned'];
+    xpLost = json['xpLost'];
   }
 
   Map<String, dynamic> toJson() => {
@@ -93,6 +99,8 @@ class Data {
         'createdAt': createdAt,
         'updatedAt': updatedAt,
         '__v': iV,
+        'xpEarned': xpEarned,
+        'xpLost': xpLost,
       };
 }
 
