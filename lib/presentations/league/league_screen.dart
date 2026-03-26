@@ -131,7 +131,7 @@ class LeagueScreen extends StatelessWidget {
           // Padel Tab
           Expanded(
             child: GestureDetector(
-              onTap: () => controller.selectedTab.value = 0,
+              onTap: () => controller.setSelectedTab(0),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -190,7 +190,7 @@ class LeagueScreen extends StatelessWidget {
           // Pickleball Tab
           Expanded(
             child: GestureDetector(
-              onTap: () => controller.selectedTab.value = 1,
+              onTap: () => controller.setSelectedTab(1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,

@@ -179,11 +179,24 @@ class ClubId {
 
 class Sponsors {
   String? name;
+  CategoryId? categoryId;
   String? logo;
 
   Sponsors.fromJson(Map<String, dynamic> json) {
     name = json['name'];
+    categoryId = json['categoryId'] != null
+        ? CategoryId.fromJson(json['categoryId'])
+        : null;
     logo = json['logo'];
+  }
+}
+class CategoryId {
+  String? id;
+  String? name;
+
+  CategoryId.fromJson(Map<String, dynamic> json) {
+    id = json['_id'];
+    name = json['name'];
   }
 }
 

@@ -29,7 +29,7 @@ class MainHomeController extends GetxController{
   final RxBool isLoadingScheduleMatches = false.obs;
   final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
-  final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
+  // final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
   final RxBool isLoadingSponsors = false.obs;
   
   final Rx<GetLeagueListModel?> activeLeagues = Rx<GetLeagueListModel?>(null);
@@ -85,7 +85,8 @@ class MainHomeController extends GetxController{
     
     // Fetch categories first and wait for it to complete
     await fetchCategories();
-    
+    await fetchActiveLeagues();
+
     // Now fetch bookings with the selected category and location
     final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
     
@@ -95,14 +96,13 @@ class MainHomeController extends GetxController{
       categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
       locationId: locationId,
     );
-
     await fetchNearCityPlayers();
     await fetCustomerLeaderBoardRank();
     await fetchOpenMatches();
     await fetchScheduleMatches();
     await fetchUpcomingMatches();
-    await fetchSponsors();
-    await fetchActiveLeagues();
+    // await fetchSponsors();
+
     _startBannerAutoSlide();
   }
 
@@ -312,18 +312,18 @@ class MainHomeController extends GetxController{
       isLoadingUpcomingMatches.value = false;
     }
   }
-
-  Future<void> fetchSponsors() async {
-    try {
-      isLoadingSponsors.value = true;
-      final response = await _leagueRepository.getLeagueSponsors();
-      sponsors.value = response;
-    } catch (e) {
-      print('Error fetching sponsors: $e');
-    } finally {
-      isLoadingSponsors.value = false;
-    }
-  }
+  //
+  // Future<void> fetchSponsors() async {
+  //   try {
+  //     isLoadingSponsors.value = true;
+  //     final response = await _leagueRepository.getLeagueSponsors();
+  //     sponsors.value = response;
+  //   } catch (e) {
+  //     print('Error fetching sponsors: $e');
+  //   } finally {
+  //     isLoadingSponsors.value = false;
+  //   }
+  // }
 
   Future<void> fetchActiveLeagues() async {
     try {

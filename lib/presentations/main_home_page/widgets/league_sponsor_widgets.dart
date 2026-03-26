@@ -52,83 +52,116 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          if (league.sponsors != null && league.sponsors!.isNotEmpty)
-            Row(
+          Builder(builder: (context) {
+            final tier2Sponsors = (league.sponsors ?? [])
+                .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 2')
+                .take(3)
+                .toList();
+            if (tier2Sponsors.isEmpty) return const SizedBox.shrink();
+            final children = <Widget>[];
+            for (final sponsor in tier2Sponsors) {
+              children.add(
+                Expanded(
+                  child: sponsor.logo != null
+                      ? CachedNetworkImage(
+                          imageUrl: sponsor.logo!,
+                          height: 25,
+                          errorWidget: (context, url, error) => Icon(
+                            Icons.image_not_supported,
+                            size: 25,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : Icon(Icons.image_not_supported, size: 25, color: Colors.grey),
+                ),
+              );
+              children.add(Container(height: 30, width: 1, color: Colors.black26));
+            }
+            if (children.isNotEmpty) children.removeLast();
+            return Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: () {
-                final items = league.sponsors!.take(3).toList();
-                final children = <Widget>[];
-
-                for (final sponsor in items) {
-                  children.add(
-                    Expanded(
-                      child: sponsor.logo != null
-                          ? CachedNetworkImage(
-                              imageUrl: sponsor.logo!,
-                              height: 25,
-                              // placeholder: (context, url) => Container(
-                              //   height: 20,
-                              //   width: 20,
-                              //   child: Center(
-                              //     child: LoadingWidget(color: AppColors.primaryColor,)
-                              //   ),
-                              // ),
-                              errorWidget: (context, url, error) => Icon(
-                                Icons.image_not_supported,
-                                size: 25,
-                                color: Colors.grey,
-                              ),
-                            )
-                          : Icon(
-                              Icons.image_not_supported,
-                              size: 25,
-                              color: Colors.grey,
-                            ),
-                    ),
-                  );
-                  children.add(Container(
-                    height: 30,
-                    width: 1,
-                    color: Colors.black26,
-                  ));
-                }
-
-                if (children.isNotEmpty) children.removeLast();
-                return children;
-              }(),
-            ),
+              children: children,
+            );
+          }),
         ],
       ),
     );
   }
 }
 
-class BuildLeagueMoreSponsor extends StatelessWidget {
+class BuildLeagueMoreSponsor extends StatefulWidget {
   final LeagueModel.Data league;
   const BuildLeagueMoreSponsor({super.key, required this.league});
 
   @override
-  Widget build(BuildContext context) {
-    if (league.sponsors == null || league.sponsors!.isEmpty) {
-      return const SizedBox.shrink();
+  State<BuildLeagueMoreSponsor> createState() => _BuildLeagueMoreSponsorState();
+}
+
+class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
+    with SingleTickerProviderStateMixin {
+  late final ScrollController _scrollController;
+  late final AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
+  }
+
+  void _startScrolling() async {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    while (mounted) {
+      await _scrollController.animateTo(
+        maxScroll,
+        duration: Duration(milliseconds: (maxScroll * 20).toInt()),
+        curve: Curves.linear,
+      );
+      if (!mounted) break;
+      _scrollController.jumpTo(0);
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tier3Sponsors = (widget.league.sponsors ?? [])
+        .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 3')
+        .toList();
+
+    if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
+
+    // Duplicate list to create seamless loop effect
+    final loopedSponsors = [...tier3Sponsors, ...tier3Sponsors, ...tier3Sponsors];
 
     return Container(
       height: 30,
       width: Get.width,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF3513EA),
-            Color(0xFF002091),
-          ],
+          colors: [Color(0xFF3513EA), Color(0xFF002091)],
         ),
       ),
       child: ListView.builder(
-        itemCount: league.sponsors!.length,
+        controller: _scrollController,
+        itemCount: loopedSponsors.length,
         scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
-          final sponsor = league.sponsors![index];
+          final sponsor = loopedSponsors[index];
           return Row(
             children: [
               if (sponsor.logo != null)
@@ -138,30 +171,22 @@ class BuildLeagueMoreSponsor extends StatelessWidget {
                     width: 20,
                     height: 20,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.grey,
-                    ),
-                    errorWidget: (context, url, error) => CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.grey,
-                    ),
+                    placeholder: (context, url) =>
+                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+                    errorWidget: (context, url, error) =>
+                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
                   ),
                 ).paddingOnly(right: 5)
               else
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.grey,
-                ).paddingOnly(right: 5),
+                const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
+                    .paddingOnly(right: 5),
               Text(
                 sponsor.name ?? "Sponsor",
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              )
+                style: Get.textTheme.bodySmall!
+                    .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
+              ),
             ],
-          ).paddingOnly(right: 8);
+          ).paddingOnly(right: 16);
         },
       ).paddingOnly(left: 10),
     ).paddingOnly(top: 10);

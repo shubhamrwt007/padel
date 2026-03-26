@@ -7,6 +7,17 @@ import 'package:padel_mobile/data/response_models/league/get_league_leader_board
 
 class LeagueController extends GetxController with GetSingleTickerProviderStateMixin {
   final RxInt selectedTab = 0.obs;
+
+  void setSelectedTab(int index) {
+    selectedTab.value = index;
+    if (index == 0) {
+      matchTab.value = 1;
+      tabController.animateTo(1);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (pageController.hasClients) pageController.jumpToPage(1);
+      });
+    }
+  }
   final RxInt matchTab = 1.obs; // 0: Upcoming, 1: Live, 2: Results
   late PageController pageController;
   late TabController tabController;
@@ -120,7 +131,7 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     try {
       isLoadingSponsors.value = true;
       final response = await _leagueRepository.getLeagueSponsors(leagueId: leagueId);
-      print('🎯 Sponsors - leagueId: $leagueId, data: ${response.data?.mobileBanner}, sponsors count: ${response.data?.sponsors?.length}');
+      print('🎯 Sponsors - leagueId: $leagueId, data: ${response.data?.titleSponsor?.titleSponsorBanner}, sponsors count: ${response.data?.sponsors?.length}');
       sponsors.value = response;
     } catch (e) {
       print('Error fetching sponsors: $e');

@@ -27,6 +27,7 @@ import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:developer';
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
@@ -192,6 +193,7 @@ class MainHomeScreen extends StatelessWidget {
                   categoryId: controller.selectedCategoryId.value,
                   locationId: locationId,
                 );
+                await controller.fetchActiveLeagues();
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
               },
@@ -526,7 +528,7 @@ class MainHomeScreen extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            leagueName ?? "Swoot Premier League",
+            leagueName ?? "",
             style: Get.textTheme.headlineMedium,
           ),
 
@@ -548,40 +550,41 @@ class MainHomeScreen extends StatelessWidget {
       final leagues = controller.activeLeagues.value?.data ?? [];
       
       if (leagues.isEmpty) {
-        return Column(
-          children: [
-            _buildSwootTitle(null),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: (){
-                Get.toNamed(RoutesName.league);
-              },
-              child: Container(
-                width: Get.width,
-                margin: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade300,
-                      blurRadius: 8,
-                      spreadRadius: 2.3,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                // child: Image.asset(Assets.imagesImgLeagueComingSoon),
-              ),
-            ),
-            const SizedBox(height: 12),
-            BuildTitleSponsor(controller: controller),
-            Obx(() {
-              final sponsorData = controller.sponsors.value?.data;
-              final sponsorsList = sponsorData?.sponsors ?? [];
-              return BuildMoreSponsor(sponsors: sponsorsList);
-            }),
-          ],
-        ).paddingOnly(top: 10);
+        return SizedBox.shrink();
+        //   Column(
+        //   children: [
+        //     _buildSwootTitle(null),
+        //     const SizedBox(height: 12),
+        //     GestureDetector(
+        //       onTap: (){
+        //         Get.toNamed(RoutesName.league);
+        //       },
+        //       child: Container(
+        //         width: Get.width,
+        //         margin: const EdgeInsets.symmetric(horizontal: 14),
+        //         decoration: BoxDecoration(
+        //           borderRadius: BorderRadius.circular(20),
+        //           boxShadow: [
+        //             BoxShadow(
+        //               color: Colors.grey.shade300,
+        //               blurRadius: 8,
+        //               spreadRadius: 2.3,
+        //               offset: const Offset(0, 3),
+        //             ),
+        //           ],
+        //         ),
+        //         // child: Image.asset(Assets.imagesImgLeagueComingSoon),
+        //       ),
+        //     ),
+        //     const SizedBox(height: 12),
+        //     BuildTitleSponsor(controller: controller),
+        //     Obx(() {
+        //       final sponsorData = controller.sponsors.value?.data;
+        //       final sponsorsList = sponsorData?.sponsors ?? [];
+        //       return BuildMoreSponsor(sponsors: sponsorsList);
+        //     }),
+        //   ],
+        // ).paddingOnly(top: 10);
       }
 
       return Column(
@@ -626,6 +629,7 @@ class MainHomeScreen extends StatelessWidget {
       },
       child: Container(
         width: Get.width,
+        height: 163,
         margin: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
@@ -641,7 +645,7 @@ class MainHomeScreen extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-              ? Image.network(leagueData.mobileBanner!, fit: BoxFit.cover)
+              ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
               : Image.asset(Assets.imagesImgLeagueComingSoon),
         ),
       ),
@@ -678,7 +682,7 @@ class MainHomeScreen extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-                      ? Image.network(leagueData.mobileBanner!, fit: BoxFit.cover)
+                      ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
                       : Image.asset(Assets.imagesImgLeagueComingSoon),
                 ),
               ),

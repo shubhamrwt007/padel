@@ -25,7 +25,7 @@ class BuildSponsorBanner extends StatelessWidget {
 
       return Column(
         children: [
-          if (sponsorData.mobileBanner != null)
+          if (sponsorData.titleSponsor?.titleSponsorBanner != null)
             GestureDetector(
               onTap: () {},
               child: Container(
@@ -45,7 +45,7 @@ class BuildSponsorBanner extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: CachedNetworkImage(
-                    imageUrl: sponsorData.mobileBanner!,
+                    imageUrl: sponsorData.titleSponsor!.titleSponsorBanner!,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       height: 120,
@@ -68,30 +68,67 @@ class BuildSponsorBanner extends StatelessWidget {
   }
 }
 
-class BuildMoreSponsor extends StatelessWidget {
+class BuildMoreSponsor extends StatefulWidget {
   final List<dynamic> sponsors;
   const BuildMoreSponsor({super.key, required this.sponsors});
 
   @override
+  State<BuildMoreSponsor> createState() => _BuildMoreSponsorState();
+}
+
+class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
+  }
+
+  void _startScrolling() async {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    while (mounted) {
+      await _scrollController.animateTo(
+        maxScroll,
+        duration: Duration(milliseconds: (maxScroll * 20).toInt()),
+        curve: Curves.linear,
+      );
+      if (!mounted) break;
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (sponsors.isEmpty) return const SizedBox.shrink();
-    
+    if (widget.sponsors.isEmpty) return const SizedBox.shrink();
+
+    final loopedSponsors = [...widget.sponsors, ...widget.sponsors, ...widget.sponsors];
+
     return Container(
       height: 30,
       width: Get.width,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF3513EA),
-            Color(0xFF002091),
-          ],
+          colors: [Color(0xFF3513EA), Color(0xFF002091)],
         ),
       ),
       child: ListView.builder(
-        itemCount: sponsors.length,
+        controller: _scrollController,
+        itemCount: loopedSponsors.length,
         scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
         itemBuilder: (context, index) {
-          final sponsor = sponsors[index];
+          final sponsor = loopedSponsors[index];
           return Row(
             children: [
               if (sponsor.logo != null)
@@ -101,30 +138,22 @@ class BuildMoreSponsor extends StatelessWidget {
                     width: 20,
                     height: 20,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.grey,
-                    ),
-                    errorWidget: (context, url, error) => CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.grey,
-                    ),
+                    placeholder: (context, url) =>
+                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+                    errorWidget: (context, url, error) =>
+                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
                   ),
                 ).paddingOnly(right: 5)
               else
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.grey,
-                ).paddingOnly(right: 5),
+                const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
+                    .paddingOnly(right: 5),
               Text(
                 sponsor.name ?? "Sponsor",
-                style: Get.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              )
+                style: Get.textTheme.bodySmall!
+                    .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
+              ),
             ],
-          ).paddingOnly(right: 8);
+          ).paddingOnly(right: 16);
         },
       ).paddingOnly(left: 10),
     ).paddingOnly(top: 10);
