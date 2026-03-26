@@ -92,9 +92,12 @@ class HomeRepository {
   }
 
   ///Get Register Club Data-----------------------------------------------------
-  Future<GetRegisterClubModel> getRegisterClub({required String clubId}) async {
+  Future<GetRegisterClubModel> getRegisterClub({required String clubId, String? courtId}) async {
     try {
-      final url = "${AppEndpoints.getRegisterClub}clubId=$clubId";
+      String url = "${AppEndpoints.getRegisterClub}clubId=$clubId";
+      if (courtId != null && courtId.isNotEmpty) {
+        url += "&courtId=$courtId";
+      }
 
       final response = await dioClient.get(url);
 

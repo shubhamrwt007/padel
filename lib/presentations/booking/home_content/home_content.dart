@@ -110,7 +110,12 @@ class HomeContent extends StatelessWidget {
                 ).paddingOnly(bottom: Get.height * 0.02);
               }
 
-              final description = controller.registerClubResponse.value?.data?.description;
+              // Get description from courts array
+              final courtDetails = controller.argument.courts?.isNotEmpty == true 
+                  ? controller.argument.courts!.first 
+                  : null;
+              final description = courtDetails?.description;
+              
               if (description == null || description.isEmpty) {
                 return const SizedBox.shrink();
               }
@@ -154,8 +159,11 @@ class HomeContent extends StatelessWidget {
                 ).paddingOnly(bottom: Get.height * 0.02);
               }
 
-              final clubData = controller.registerClubResponse.value?.data;
-              final features = clubData?.features ?? [];
+              // Get features from courts array
+              final courtDetails = controller.argument.courts?.isNotEmpty == true 
+                  ? controller.argument.courts!.first 
+                  : null;
+              final features = courtDetails?.features ?? [];
 
               return Wrap(
                 spacing: 8,

@@ -96,6 +96,7 @@ class AppEndpoints {
   static const String getCategory = "${baseUrl}court/category/list";
   ///FCM Token------------------------------------------------------------------
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
+  static const String support = "${baseUrl}support/send";
 }
 class PaymentConfig {
   // Toggle this when switching environment

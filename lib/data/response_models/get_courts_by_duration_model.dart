@@ -28,11 +28,13 @@ class GetCourtsByDurationData {
   String? clubName;
   RegisterClub? registerClub;
   List<Court>? courts;
+  bool? isRequestedTime;
 
   GetCourtsByDurationData({
     this.clubName,
     this.registerClub,
     this.courts,
+    this.isRequestedTime,
   });
 
   GetCourtsByDurationData.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class GetCourtsByDurationData {
     registerClub = json['register_club_id'] != null
         ? RegisterClub.fromJson(json['register_club_id'])
         : null;
+    isRequestedTime = json['isRequestedTime'];
 
     if (json['courts'] != null) {
       courts = <Court>[];
@@ -192,6 +195,7 @@ class CourtSlot {
   String? bookingTime;
   int? bookingCount;
   bool? has30MinPrice;
+  bool? isRequestedTime;
 
   CourtSlot({
     this.id,
@@ -202,6 +206,7 @@ class CourtSlot {
     this.bookingTime,
     this.bookingCount,
     this.has30MinPrice,
+    this.isRequestedTime,
   });
 
   CourtSlot.fromJson(Map<String, dynamic> json) {
@@ -213,5 +218,6 @@ class CourtSlot {
     bookingTime = json['bookingTime'];
     bookingCount = json['bookingCount'];
     has30MinPrice = json['has30MinPrice'];
+    isRequestedTime = json['isRequestedTime'];
   }
 }

@@ -85,11 +85,11 @@ class HomeContentController extends GetxController{
   ///Get Register Club Find ById------------------------------------------------
   var registerClubResponse = Rxn<GetRegisterClubModel>();
   HomeRepository homeRepository = Get.put(HomeRepository());
-  Future<void> fetchRegisterClub(String clubId) async {
+  Future<void> fetchRegisterClub(String clubId, {String? courtId}) async {
     try {
       isLoading.value = true;
 
-      final response = await homeRepository.getRegisterClub(clubId: clubId);
+      final response = await homeRepository.getRegisterClub(clubId: clubId, courtId: courtId);
       registerClubResponse.value = response;
       address.value = "${response.data?.address??""}${response.data?.city}";
       if (response.success == true) {
@@ -233,8 +233,9 @@ class HomeContentController extends GetxController{
     argument = Get.arguments['data'];
     log("Register club id = >${argument.id!}");
    final clubId = Get.arguments['clubId'];
+   final courtId = argument.courts?.isNotEmpty == true ? argument.courts!.first.id : null;
    await fetchReview();
-   await fetchRegisterClub(clubId);
+   await fetchRegisterClub(clubId, courtId: courtId);
     super.onInit();
   }
 }
