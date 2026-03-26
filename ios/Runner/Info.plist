@@ -40,6 +40,11 @@
 	<string>This app needs access to your photo library to select images.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

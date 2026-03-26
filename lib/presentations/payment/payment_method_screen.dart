@@ -48,6 +48,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           children: [
             // Payment Summary Section
             _buildPaymentSummary(context, cartController),
+            Image.asset(Assets.imagesIcRackets,).paddingOnly(left: 20,right: 20),
 
             // UPI Section
             Text(
@@ -55,7 +56,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
               style: Theme.of(context).textTheme.headlineLarge!.copyWith(
                 fontWeight: FontWeight.w600,
               ),
-            ).paddingSymmetric(horizontal: Get.width * 0.05),
+            ).paddingSymmetric(horizontal: Get.width * 0.05,vertical: 10),
 
             _buildUPIOptions(context),
 

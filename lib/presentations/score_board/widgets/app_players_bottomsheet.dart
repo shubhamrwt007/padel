@@ -81,8 +81,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
+    final maxHeight = screenHeight - topPadding - 60;
     
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -159,15 +158,15 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   Widget _playersList(String bookingId) {
     return Obx(() {
       if (controller.isLoadingNearbyPlayers.value) {
-        return const SizedBox(
-          height: 100,
+        return  SizedBox(
+          height: Get.height*.3,
           child: Center(child: CircularProgressIndicator()),
         );
       }
       
       if (controller.nearbyPlayers.isEmpty) {
         return SizedBox(
-          height: 100,
+          height: Get.height*.3,
           child: Center(
             child: Text(
               'No nearby players found',
@@ -180,8 +179,8 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
       final itemCount = controller.nearbyPlayers.length;
       final displayCount = itemCount > 5 ? 5 : itemCount;
       final itemHeight = 60.0;
-      final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
-      
+      // final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
+      final  listHeight =  Get.height*.3;
       return SizedBox(
         height: listHeight,
         child: ListView.separated(

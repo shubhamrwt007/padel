@@ -312,6 +312,40 @@ class ScoreBoardRepository {
       rethrow;
     }
   }
+
+  //Update Teams----------------------------------------------------------------
+  Future<UpdateScoreBoardModel?> updateTeams({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Update Teams Request Body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.put(
+        AppEndpoints.updateScoreBoard,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Update Teams Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return UpdateScoreBoardModel.fromJson(response.data);
+      } else {
+        throw Exception("Update Teams Failed with status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Update Teams failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
   //Socket Methods--------------------------------------------------------------
   void _connectSocket() {
     if (_socket != null && _socket!.connected) return;
@@ -361,8 +395,61 @@ class ScoreBoardRepository {
   void onMatchCompleted(Function(dynamic) callback) {
     _socket?.on('matchCompleted', (data) {
       print('🏆 SOCKET: matchCompleted received: $data');
+      print('🏆 SOCKET DATA KEYS: ${data?.keys}');
+      print('🏆 XP DATA - xpEarned: ${data?['xpEarned']}, currentXP: ${data?['currentXP']}, xpChange: ${data?['xpChange']}');
+      print('🏆 XP DATA - xpLost: ${data?['xpLost']}');
       callback(data);
     });
+  }
+
+  void onScoreboardSwapped(Function(dynamic) callback) {
+    _socket?.on('scoreboardSwapped', (data) {
+      print('🔄 SOCKET: scoreboardSwapped received: $data');
+      callback(data);
+    });
+  }
+
+  void onTeamShuffleResult(Function(dynamic) callback) {
+    _socket?.off('teamShuffleResult'); // Remove any existing listeners first
+    _socket?.on('teamShuffleResult', (data) {
+      print('🏆 SOCKET: teamShuffleResult received: $data');
+      print('🏆 SOCKET DATA KEYS: ${data?.keys}');
+      print('🏆 XP DATA - xpEarned: ${data?['xpEarned']}, currentXP: ${data?['currentXP']}, xpChange: ${data?['xpChange']}');
+      print('🏆 XP DATA - xpLost: ${data?['xpLost']}');
+      print('🏆 TEAM RESULTS - teamAResult: ${data?['teamAResult']}, teamBResult: ${data?['teamBResult']}');
+      callback(data);
+    });
+    CustomLogger.logMessage(
+      msg: '🎯 Socket listener registered for teamShuffleResult',
+      level: LogLevel.info,
+    );
+  }
+
+  void emitScoreboardSwapped(Map<String, dynamic> data) {
+    _socket?.emit('scoreboardSwapped', data);
+    print('📤 SOCKET: scoreboardSwapped emitted: $data');
+    CustomLogger.logMessage(
+      msg: '📤 Emitted scoreboardSwapped: $data',
+      level: LogLevel.info,
+    );
+  }
+
+  void emitTeamShuffleResult(Map<String, dynamic> data) {
+    if (_socket == null || !_socket!.connected) {
+      print('❌ SOCKET: Cannot emit teamShuffleResult - socket not connected');
+      CustomLogger.logMessage(
+        msg: '❌ Cannot emit teamShuffleResult - socket not connected',
+        level: LogLevel.error,
+      );
+      return;
+    }
+    
+    _socket?.emit('teamShuffleResult', data);
+    print('📤 SOCKET: teamShuffleResult emitted: $data');
+    CustomLogger.logMessage(
+      msg: '📤 Emitted teamShuffleResult: $data',
+      level: LogLevel.info,
+    );
   }
 
 }
