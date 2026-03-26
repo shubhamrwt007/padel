@@ -432,6 +432,14 @@ class BookACourtScreen extends StatelessWidget {
       final displayedClubs = clubsData.take(displayCount).toList();
       final hasMore = displayCount < clubsData.length;
 
+      // Auto-expand first club (since all clubs have the requested time)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (displayedClubs.isNotEmpty && controller.expandedIndex.value == -1) {
+          controller.expandedIndex.value = 0; // Expand first club
+          log('🔵 Auto-expanding first club at index 0');
+        }
+      });
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -534,6 +542,8 @@ class BookACourtScreen extends StatelessWidget {
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
                             courtId: court.id ?? '',
+                            isRequestedTime: clubIndex == 0, // First club gets auto-scroll
+                            clubIndex: clubIndex,
                           ),
                         )
                             : const SizedBox.shrink(),
@@ -582,6 +592,8 @@ class BookACourtScreen extends StatelessWidget {
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
+    bool isRequestedTime = false,
+    required int clubIndex,
   })
   {
     // Show all slots from API
@@ -593,6 +605,40 @@ class BookACourtScreen extends StatelessWidget {
       duration: slot.duration,
     )).toList()
         : <Slots>[];
+
+    final scrollController = ScrollController();
+
+    // Auto-scroll to requested time slot when club is expanded
+    if (displaySlots.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (controller.expandedIndex.value == (clubIndex * 100)) {
+          Future.delayed(Duration(milliseconds: 350), () {
+            if (scrollController.hasClients && availableSlots != null) {
+              // Find the slot marked as isRequestedTime in the API response
+              int foundIndex = -1;
+              for (int i = 0; i < availableSlots.length; i++) {
+                if (availableSlots[i].isRequestedTime == true) {
+                  foundIndex = i;
+                  log('✅ Found requested slot at index $foundIndex: ${availableSlots[i].time}');
+                  break;
+                }
+              }
+              
+              if (foundIndex != -1) {
+                final offset = (foundIndex * 98.0).clamp(0.0, scrollController.position.maxScrollExtent);
+                scrollController.animateTo(
+                  offset,
+                  duration: Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              } else {
+                log('❌ No slot found with isRequestedTime: true');
+              }
+            }
+          });
+        }
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,23 +675,25 @@ class BookACourtScreen extends StatelessWidget {
             if (displaySlots.isNotEmpty)
               Expanded(
                 child: SingleChildScrollView(
+                  controller: scrollController,
                   scrollDirection: Axis.horizontal,
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                  child: Row(
                     children: displaySlots.map((slot) {
                       final index = displaySlots.indexOf(slot);
-                      return SizedBox(
-                        width: 88,
-                        child: Obx(() => _buildCourtSlotTile(
-                          context,
-                          slot,
-                          courtName,
-                          selectedIndex,
-                          index,
-                          courtId: courtId ?? 'court$selectedIndex',
-                          availableSlots: displaySlots,
-                        )),
+                      return Padding(
+                        padding: EdgeInsets.only(right: index < displaySlots.length - 1 ? 10 : 0),
+                        child: SizedBox(
+                          width: 88,
+                          child: Obx(() => _buildCourtSlotTile(
+                            context,
+                            slot,
+                            courtName,
+                            selectedIndex,
+                            index,
+                            courtId: courtId ?? 'court$selectedIndex',
+                            availableSlots: displaySlots,
+                          )),
+                        ),
                       );
                     }).toList(),
                   ),
@@ -1927,7 +1975,7 @@ class BookACourtScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
                   CustomButton(
-                    width: Get.width * 0.9,
+                    width: Get.width * 0.81,
                     height: 55,
                     gradientColors: [Colors.white, Colors.white, Colors.white],
                     onTap: () async {
@@ -2017,7 +2065,7 @@ class BookACourtScreen extends StatelessWidget {
             ),
           ),
         ],
-      ).paddingOnly(left: 10, right: 10);
+      );
     });
   }
 

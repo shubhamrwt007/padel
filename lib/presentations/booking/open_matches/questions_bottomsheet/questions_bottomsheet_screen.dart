@@ -159,7 +159,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         // )),
                         // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
                         CustomButton(
-                          width: Get.width * 0.9,
+                          width: Get.width * 0.81,
                           height: 55,
                           gradientColors: [Colors.white, Colors.white, Colors.white],
                           onTap: controller.isProcessing.value ? null : () {

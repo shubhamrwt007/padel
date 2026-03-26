@@ -26,7 +26,7 @@ class _ArrowAnimationState extends State<ArrowAnimation>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2500),
     )..repeat();
 
     // common tween (direction handled later)

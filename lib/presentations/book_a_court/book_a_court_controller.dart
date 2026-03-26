@@ -1387,8 +1387,9 @@ class BookACourtController extends GetxController {
           selected.day == now.day;
 
       if (isToday) {
-        final slotWithBuffer = slotDateTime.add(const Duration(minutes: 15));
-        if (now.isAfter(slotWithBuffer)) return true;
+        // Show slot until 15 minutes after its start time
+        // e.g., 3:00 PM slot remains visible until 3:15 PM
+        if (now.isAfter(slotDateTime.add(const Duration(minutes: 15)))) return true;
       }
     } catch (_) {
       return false;

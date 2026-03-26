@@ -8,10 +8,8 @@ class CustomButton extends StatelessWidget {
   final VoidCallback? onTap;
   final List<Color>? gradientColors;
   final Color? circleColor;
-
   static const double _defaultWidth = 250;
   static const double _defaultHeight = 60;
-
   const CustomButton({
     super.key,
     this.width = _defaultWidth,

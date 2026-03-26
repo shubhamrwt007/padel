@@ -17,7 +17,7 @@ class EditProfileUi extends StatelessWidget {
         appBar: primaryAppBar(
           showLeading:buttonType=="drawer"? true:false,
           centerTitle: true,
-          title: Text("Profile").paddingOnly(left: Get.width * 0.02),
+          title: Text("My Profile").paddingOnly(left: Get.width * 0.02),
           context: context,
         ),
         body: RefreshIndicator(

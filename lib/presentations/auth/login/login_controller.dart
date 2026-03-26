@@ -118,6 +118,7 @@ class LoginController extends GetxController {
       isLoading.value = true;
       final Map<String, dynamic> body = {
         "phoneNumber": phoneController.text.trim(),
+        "deviceType": Platform.isIOS ? "ios" : "android",
       };
       if (firebaseToken != null && firebaseToken.isNotEmpty) {
         body["fcmToken"] = firebaseToken;
