@@ -89,6 +89,7 @@ Future<void> main() async {
     Get.put(NotificationController());
     
     // Initialize FCM token service
+    // Initialize FCM token service
     Get.put(FCMTokenService());
     if (kDebugMode) {
       print('✅ Controllers initialized');
