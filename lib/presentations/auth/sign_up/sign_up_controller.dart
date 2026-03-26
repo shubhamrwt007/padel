@@ -171,6 +171,7 @@ class SignUpController extends GetxController {
       // "password": passwordController.text.trim(),
       "city": selectedLocationId.value,
       "gender": selectedGender.value,
+      "deviceType": Platform.isIOS ? "ios" : "android",
       // "agreeTermsAndCondition": true,
       // "location": {
       //   "type": "Point",

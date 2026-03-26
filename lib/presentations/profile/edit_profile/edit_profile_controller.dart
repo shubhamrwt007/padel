@@ -274,9 +274,9 @@ class EditProfileController extends GetxController{
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imagePath,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 100,
-        maxWidth: 1000,
-        maxHeight: 1000,
+        compressQuality: 70,
+        maxWidth: 512,
+        maxHeight: 512,
         compressFormat: ImageCompressFormat.jpg,
         uiSettings: [
           AndroidUiSettings(
@@ -285,10 +285,12 @@ class EditProfileController extends GetxController{
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: true,
+            cropStyle: CropStyle.circle,
           ),
           IOSUiSettings(
             title: 'Crop Image',
             aspectRatioLockEnabled: true,
+            cropStyle: CropStyle.circle,
           ),
         ],
       );

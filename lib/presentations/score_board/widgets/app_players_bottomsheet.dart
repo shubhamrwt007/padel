@@ -108,6 +108,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               SizedBox(
                 height: 45,
                 child: PrimaryTextField(contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                  maxLength: 10,
                   onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
                   hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                   suffixIcon: Icon(Icons.search, color: AppColors.textColor),
@@ -169,7 +170,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           height: Get.height*.3,
           child: Center(
             child: Text(
-              'No nearby players found',
+              'No  player found',
               style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
             ),
           ),
@@ -352,7 +353,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           controller.requestingPlayerId.value = '';
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF),
             borderRadius: BorderRadius.circular(8),
@@ -369,7 +370,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               : Text(
                   isRequested ? 'Request Sent' : 'Send Request',
                   style: Get.textTheme.bodyLarge!.copyWith(
-                    color: isRequested ? Colors.grey : AppColors.primaryColor,fontSize: 12
+                    color: isRequested ? Colors.grey : AppColors.primaryColor,fontSize: 10,fontWeight: FontWeight.w800
                   ),
                 ),
         ),
