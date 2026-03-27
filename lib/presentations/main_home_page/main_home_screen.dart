@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
@@ -1765,106 +1767,107 @@ class MainHomeScreen extends StatelessWidget {
       },
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: items.map((e) {
-        final double boxSize = e["boxSize"] as double;
-        final double iconSize = e["iconSize"] as double;
-        final Offset offset = e["offset"] as Offset;
+    return Obx(() {
+      final leagueEmpty = (controller.activeLeagues.value?.data ?? []).isEmpty;
 
-        return GestureDetector(
-          onTap: () => _handleQuickAction(e["action"] as String),
-          child: Column(
-            children: [
-              Container(
-                height: boxSize,
-                width: boxSize,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF3F56D6),
-                      Color(0xFF2B44C4),
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: items.map((e) {
+          final double boxSize = e["boxSize"] as double;
+          final double iconSize = e["iconSize"] as double;
+          final Offset offset = e["offset"] as Offset;
+          final isLeague = e["action"] == "league";
+          final showComingSoon = isLeague && leagueEmpty;
+
+          return GestureDetector(
+            onTap: showComingSoon ? null : () => _handleQuickAction(e["action"] as String),
+            child: Column(
+              children: [
+                Container(
+                  height: boxSize,
+                  width: boxSize,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF3F56D6),
+                        Color(0xFF2B44C4),
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: -boxSize * 0.35,
+                        left: -boxSize * 0.35,
+                        child: Container(
+                          height: boxSize * 1.3,
+                          width: boxSize * 1.3,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Transform.translate(
+                          offset: offset,
+                          child: SvgPicture.asset(
+                            e["icon"] as String,
+                            width: iconSize,
+                            height: iconSize,
+                          ),
+                        ),
+                      ),
+                      if (showComingSoon)
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      Color(0xFF3DBE64).withValues(alpha: 0.5),
+                                      Color(0xFF1F41BB).withValues(alpha: 0.5),
+                                    ],
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  "Coming\nSoon",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Background circle glow
-                    Positioned(
-                      top: -boxSize * 0.35,
-                      left: -boxSize * 0.35,
-                      child: Container(
-                        height: boxSize * 1.3,
-                        width: boxSize * 1.3,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.04),
-                        ),
-                      ),
-                    ),
-
-                    // Icon
-                    Center(
-                      child: Transform.translate(
-                        offset: offset,
-                        child: SvgPicture.asset(
-                          e["icon"] as String,
-                          width: iconSize,
-                          height: iconSize,
-                        ),
-                      ),
-                    ),
-// Coming Soon overlay
-//                     if (e["action"] == "tournament")
-//                       Positioned.fill(
-//                         child: ClipRRect(
-//                           borderRadius: BorderRadius.circular(20),
-//                           child: BackdropFilter(
-//                             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-//                             child: Container(
-//                               decoration:  BoxDecoration(
-//                                 gradient: LinearGradient(
-//                                   begin: Alignment.centerLeft,
-//                                   end: Alignment.centerRight,
-//                                   colors: [
-//                                     Color(0xFF3DBE64).withValues(alpha: 0.5), // green tint
-//                                     Color(0xFF1F41BB).withValues(alpha: 0.5), // blue tint
-//                                   ],
-//                                 ),
-//                               ),
-//                               alignment: Alignment.center,
-//                               child: const Text(
-//                                 "Coming\nSoon",
-//                                 textAlign: TextAlign.center,
-//                                 style: TextStyle(
-//                                   color: Colors.white,
-//                                   fontSize: 11,
-//                                   fontWeight: FontWeight.w600,
-//                                   height: 1.2,
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-
-                  ],
+                const SizedBox(height: 6),
+                Text(
+                  e["title"] as String,
+                  style: Get.textTheme.labelSmall!.copyWith(fontSize: 12),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                e["title"] as String,
-                style: Get.textTheme.labelSmall!.copyWith(fontSize: 12),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 
   void _handleQuickAction(String action) {
