@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:get/get.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
@@ -25,12 +26,19 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   
   IO.Socket? _socket;
   final RxBool isSocketConnected = false.obs;
+  final RxString youtubeVideoId = "".obs;
+  final Rx<YoutubePlayerController?> youtubeController = Rx<YoutubePlayerController?>(null);
 
   @override
   void onInit() {
     matchType.value = Get.arguments["matchType"] ?? "";
     matchId.value = Get.arguments["matchId"] ?? "";
-    print('🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}');
+    log('🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}');
+    log('🔍 Checking matchType for youtube: "${matchType.value}" == "live" → ${matchType.value == "live"}');
+    if (matchType.value == "live") {
+      log('▶️ Calling setYoutubeUrl...');
+      setYoutubeUrl("qqxcqo65XGM");
+    }
     if (matchId.value.isNotEmpty) {
       if (matchType.value == "live") {
         print('🔴 LIVE match detected - connecting WebSocket');
@@ -48,7 +56,18 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   @override
   void onClose() {
     _disconnectWebSocket();
+    youtubeController.value?.dispose();
     super.onClose();
+  }
+
+  void setYoutubeUrl(String videoId) {
+    log('🎥 setYoutubeUrl called - videoId: $videoId');
+    youtubeVideoId.value = videoId;
+    youtubeController.value = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
+    );
+    log('✅ YoutubePlayerController created with id: $videoId');
   }
   
   Future<void> fetchMatchDetails() async {
