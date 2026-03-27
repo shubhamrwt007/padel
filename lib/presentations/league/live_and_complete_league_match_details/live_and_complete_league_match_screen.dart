@@ -1,20 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
-import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_controller.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 
-class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
+class LiveAndCompleteLeagueMatchScreen extends StatefulWidget {
+  const LiveAndCompleteLeagueMatchScreen({super.key});
+
+  @override
+  State<LiveAndCompleteLeagueMatchScreen> createState() => _LiveAndCompleteLeagueMatchScreenState();
+}
+
+class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeagueMatchScreen> {
   final LiveAndCompleteLeagueMatchController controller = Get.put(LiveAndCompleteLeagueMatchController());
-  LiveAndCompleteLeagueMatchScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      final ytController = controller.youtubeController.value;
+      if (controller.matchType.value == "live" && ytController != null) {
+        return YoutubePlayerBuilder(
+          player: YoutubePlayer(
+            controller: ytController,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: AppColors.primaryColor,
+          ),
+          builder: (context, player) => _buildScaffold(context, videoPlayer: player),
+        );
+      }
+      return _buildScaffold(context);
+    });
+  }
+
+  Widget _buildScaffold(BuildContext context, {Widget? videoPlayer}) {
     return Scaffold(
       appBar: primaryAppBar(title: Text("SPL"),centerTitle: true, context: context,
           action: [
@@ -34,7 +57,7 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
         return Column(
           children: [
             controller.matchType.value == "live"
-                ? _buildVideoSection()
+                ? _buildVideoSection(videoPlayer)
                 : _buildSponsorBannerSafe(),
             _buildScoreSection(),
             _buildTabSelector(),
@@ -69,103 +92,66 @@ class LiveAndCompleteLeagueMatchScreen extends StatelessWidget {
       }),
     );
   }
-  Widget _buildVideoSection() {
+
+  Widget _buildVideoSection(Widget? player) {
+    if (player != null) {
+      return Stack(
+        children: [
+          player,
+          // Positioned(left: 16, top: 16, child: _liveBadge()),
+        ],
+      );
+    }
     return Stack(
       alignment: Alignment.center,
       children: [
         Container(
           height: 200,
           width: double.infinity,
-          color: Colors.black12,
-          child: Image.network(
-            "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
-            fit: BoxFit.cover,
-          ),
+          color: Colors.black,
+          child: const Center(child: CircularProgressIndicator(color: Colors.white54)),
         ),
+        // Positioned(left: 16, top: 16, child: _liveBadge()),
+      ],
+    );
+  }
+
+  Widget _liveBadge() {
+    return Row(
+      children: [
         Container(
-          height: 200,
-          width: Get.width,
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
           decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: AlignmentGeometry.topCenter,
-                  end: AlignmentGeometry.bottomCenter,
-                  colors: [Colors.white.withValues(alpha: 0.2),Colors.black.withValues(alpha: 0.4)])
+            color: const Color(0xFFCD3529),
+            borderRadius: BorderRadius.circular(20),
           ),
-        ),
-        /// Play Button
-        CircleAvatar(
-          radius: 35,
-          backgroundColor: AppColors.primaryColor,
-          child: const Icon(Icons.play_arrow, color: Colors.white, size: 40),
-        ),
-
-        /// LIVE Badge
-        Positioned(
-            left: 16,
-            top: 16,
-            child: Obx(() => Row(
-              children: [
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFCD3529),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 4, 
-                        backgroundColor: controller.isSocketConnected.value ? Colors.white : Colors.white54
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        "LIVE",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ).paddingOnly(right: 8),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.remove_red_eye_outlined,color: Colors.white,size: 13,),
-                      SizedBox(width: 6),
-                      Text(
-                        "2K",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-
-              ],
-            ))
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.settings,color: Colors.white,).paddingOnly(right: 10),
-              Icon(Icons.zoom_out_map,color: Colors.white,),
+              CircleAvatar(
+                radius: 4,
+                backgroundColor: controller.isSocketConnected.value ? Colors.white : Colors.white54,
+              ),
+              const SizedBox(width: 6),
+              const Text("LIVE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
             ],
           ),
-        )
+        ).paddingOnly(right: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.remove_red_eye_outlined, color: Colors.white, size: 13),
+              SizedBox(width: 6),
+              Text("2K", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -589,7 +575,7 @@ class MatchStatsCard extends StatelessWidget {
   }
 }
 
-extension _MatchDetailsUiHelpers on LiveAndCompleteLeagueMatchScreen {
+extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
   String _teamPlayersText(dynamic team) {
     try {
       final players = team?.players as List<dynamic>?;
@@ -610,8 +596,8 @@ extension _MatchDetailsUiHelpers on LiveAndCompleteLeagueMatchScreen {
     if (index < 0 || index >= sets.length) return "Set";
     final setNo = sets[index].setNumber;
     if (setNo == null) return "Set";
-    final isFinal = index == 0;
-    return isFinal ? "Final Set" : "Set $setNo";
+    final maxSetNo = sets.map((s) => s.setNumber ?? 0).reduce((a, b) => a > b ? a : b);
+    return setNo == maxSetNo ? "Final Set" : "Set $setNo";
   }
 
   String _setScoreText(int index) {
