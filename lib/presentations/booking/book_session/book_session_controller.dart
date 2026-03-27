@@ -456,11 +456,10 @@ var locationsId = "".obs;
 
       slots.value = result;
 
-      // Build original cache from filtered slots for time-of-day filtering
+      // Build original cache from ALL slots (including booked) for time-of-day filtering
       _originalSlotsCache.clear();
-      final courts = slots.value?.data ?? [];
-      for (final court in courts) {
-        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      for (var court in result.data ?? []) {
+        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(_allSlotsCache[court.sId ?? ''] ?? []);
       }
       _recalculateTimeOfDayCounts();
 
@@ -1517,8 +1516,8 @@ var locationsId = "".obs;
 
   bool isPastAndUnavailable(Slots slot) {
     final status = slot.status?.toLowerCase() ?? '';
-    // Don't filter out booked slots - we want to show them in red
-    if (status.isNotEmpty && status != 'available' && status != 'booked') return true;
+    // Don't filter out booked/maintenance/etc slots - we want to show them in red
+    if (status.isNotEmpty && status != 'available' && status != 'booked') return false;
 
     final rawTime = slot.time;
     if (rawTime == null || rawTime.trim().isEmpty) {
@@ -1605,38 +1604,9 @@ var locationsId = "".obs;
   }
 
   bool _isAvailableSlot(Slots slot) {
-    final status = slot.status?.toLowerCase() ?? '';
-    final selectedDurationMinutes = int.tryParse(selectedDuration.value.replaceAll(' min', '')) ?? 60;
-    
-    // Always show booked slots (they will be displayed in red in UI)
-    final isBooked = (slot.status?.toLowerCase() == 'booked');
-    final leftHalfBooked = isLeftHalfBooked(slot);
-    final rightHalfBooked = isRightHalfBooked(slot);
-    
-    // For 30-minute duration, slot is available if at least one half is free
-    if (selectedDurationMinutes == 30) {
-      // Available if at least one half is free and not blocked/past
-      final isNotBlocked = !isPastAndUnavailable(slot) && 
-          slot.availabilityStatus?.toLowerCase() != "maintenance" &&
-          slot.availabilityStatus?.toLowerCase() != "weather conditions" &&
-          slot.availabilityStatus?.toLowerCase() != "staff unavailability" &&
-          slot.availabilityStatus?.toLowerCase() != "tournament";
-      
-      // Show slot if it's not blocked (booked slots will be shown in red)
-      return isNotBlocked;
-    }
-    
-    // For other durations, show all slots except past/blocked ones
-    // Booked slots will be shown in red color in UI
-    final availability = slot.availabilityStatus?.toLowerCase();
-    final isBlocked = availability == "maintenance" ||
-        availability == "weather conditions" ||
-        availability == "staff unavailability"||
-        availability == "tournament";
-    final isPast = isPastAndUnavailable(slot);
-    
-    // Show slot if it's not past or blocked (booked slots will be shown in red)
-    return !isPast && !isBlocked;
+    // Only filter out truly past slots
+    // Booked, maintenance, weather, tournament etc. will be shown in red in UI
+    return !isPastAndUnavailable(slot);
   }
 
   /// Check if left half of a 30-minute slot is booked
@@ -2468,6 +2438,7 @@ var locationsId = "".obs;
   /// Re-subscribe to slot updates when date changes
   void resubscribeToSlotUpdates() {
     isSocketDataReceived.value = false;
+    isLoadingCourts.value = true;
     _unsubscribeFromSlotUpdates();
     Future.delayed(const Duration(milliseconds: 500), () {
       _subscribeToSlotUpdates();
@@ -2567,16 +2538,16 @@ var locationsId = "".obs;
 
       slots.value = socketData;
 
-      // Build original cache from filtered slots for time-of-day filtering
+      // Build original cache from ALL slots (including booked) for time-of-day filtering
       _originalSlotsCache.clear();
-      final courts = slots.value?.data ?? [];
-      for (final court in courts) {
-        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      for (var court in socketData.data ?? []) {
+        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(_allSlotsCache[court.sId ?? ''] ?? []);
       }
       _recalculateTimeOfDayCounts();
 
       filterSlotsByTimeOfDay();
       _autoSelectTab();
+      isLoadingCourts.value = false;
       
       log('✅ Socket slot data successfully processed and displayed');
     } catch (e) {

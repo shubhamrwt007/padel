@@ -297,25 +297,13 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                           );
                         },
 
-                        onDateChange: (date) async {
+                        onDateChange: (date) {
                           controller.selectedDate.value = date;
                           controller.focusedMonth.value =
                               DateTime(date.year, date.month, 1);
-                          controller.isLoadingCourts.value = true;
-                          
                           // Re-subscribe to slot updates for new date
+                          // (socket fallback will call API if no socket data in 3s)
                           controller.resubscribeToSlotUpdates();
-                          
-                          // await controller.fetchAllSlotPrices();
-                          await controller.getAvailableCourtsById(
-                            controller.locationID.value,
-                            controller.categoryId.value,
-                            controller.sId.value,
-                            controller.argument.id!,
-                            showUnavailable: true,
-                          );
-                          controller.slots.refresh();
-                          controller.isLoadingCourts.value = false;
                         },
                       ),
                     ),

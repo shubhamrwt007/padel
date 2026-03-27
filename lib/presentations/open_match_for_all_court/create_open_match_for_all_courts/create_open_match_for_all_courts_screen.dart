@@ -1196,7 +1196,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     
     // Check for booked slots from API response
     final correspondingApiSlot = _findCorrespondingApiSlot(slot, resolvedCourtId);
-    final isSlotBooked = correspondingApiSlot?.status?.toLowerCase() == 'booked';
+    final _status = correspondingApiSlot?.status?.toLowerCase();
+    final isSlotBooked = _status == 'booked' || _status == 'unavailable';
     
     final isLeftHalfBooked = supports30Min && (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
     final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
@@ -1258,6 +1259,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 );
               } else {
                 // Full slot selection for first selection or non-30min
+                if (isSlotBooked) return;
                 controller.toggleCourtRowSlotSelection(
                   slot,
                   courtId: resolvedCourtId,
