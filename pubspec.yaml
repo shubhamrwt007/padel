@@ -51,6 +51,7 @@ dependencies:
   fluttertoast:
   rolling_number_text:
   animate_do: ^3.3.4
+  youtube_player_flutter: ^9.1.1
   sms_autofill:
   otp_autofill: ^4.1.0
   pretty_dio_logger:
