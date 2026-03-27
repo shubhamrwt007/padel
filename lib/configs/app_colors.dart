@@ -41,4 +41,5 @@ class AppColors {
   static const Color cartColor = Color(0XFFe0e7ff);
   static const Color slotColor = Color(0XFFe9e9ea);
   static const Color lightGrace = Color(0XFFe1e2e6);
+  static const Color liveMatchRed = Color(0XFFCD3529);
 }

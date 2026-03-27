@@ -81,4 +81,10 @@ class RoutesName {
   static const String fipPromises = '/fipPromises';
   static const String liveTournament = '/liveTournament';
   static const String joinTournament = '/joinTournament';
+
+  //League----------------------------------------------------------------------
+  static const String league = '/league';
+  static const String leagueMatchLists = '/leagueMatchLists';
+  static const String liveAndCompleteLeagueMatch = '/liveAndCompleteLeagueMatch';
+
 }

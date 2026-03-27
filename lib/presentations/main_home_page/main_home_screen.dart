@@ -5,12 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
@@ -24,6 +29,7 @@ import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:developer';
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
@@ -189,6 +195,7 @@ class MainHomeScreen extends StatelessWidget {
                   categoryId: controller.selectedCategoryId.value,
                   locationId: locationId,
                 );
+                await controller.fetchActiveLeagues();
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
               },
@@ -201,7 +208,8 @@ class MainHomeScreen extends StatelessWidget {
                     _banner(),
                     const SizedBox(height: 16),
                     _quickActions(),
-
+                    _buildLeagueComingSoon(),
+                    // _buildLeagueLiveMatch(),
                     _bookingSection(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -249,8 +257,6 @@ class MainHomeScreen extends StatelessWidget {
                         ],
                       );
                     }),
-
-
                     Obx(() {
                       if (controller.selectedSportTab.value == 0) {
                         return Column(
@@ -295,148 +301,164 @@ class MainHomeScreen extends StatelessWidget {
   Widget _buildSportTabSelector() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.creamColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: const Color(0xFFE8E8E8),
           width: 1,
         ),
       ),
-      child: Obx(() => Row(
-        children: [
-          // Padel Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: controller.selectedSportTab.value == 0
-                      ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFFEEF2FF),
-                      const Color(0xFFE0E7FF),
-                    ],
-                  )
-                      : null,
-                  color: controller.selectedSportTab.value == 0
-                      ? null
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 0
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                  boxShadow: controller.selectedSportTab.value == 0
-                      ? [
-                    BoxShadow(
-                      color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                      spreadRadius: -1,
+      child: Obx(() {
+        final selected = controller.selectedSportTab.value;
+        return Stack(
+          children: [
+            // Animated sliding pill background
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              alignment: selected == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFEEF2FF),
+                        Color(0xFFE0E7FF),
+                      ],
                     ),
-                  ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      Assets.imagesIcPadel,
-                      height: 18, // Add this line - adjust value as needed
-                      color: controller.selectedSportTab.value == 0
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF3B5BDB),
+                      width: 1.5,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Padel',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 0
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B5BDB).withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                        spreadRadius: -1,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  height: 38,
                 ),
               ),
             ),
-          ),
 
-          // Pickleball Tab
-          Expanded(
-            child: GestureDetector(
-              onTap: () => controller.onSportTabChanged(1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: controller.selectedSportTab.value == 1
-                      ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFFEEF2FF),
-                      const Color(0xFFE0E7FF),
-                    ],
-                  )
-                      : null,
-                  color: controller.selectedSportTab.value == 1
-                      ? null
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: controller.selectedSportTab.value == 1
-                      ? Border.all(
-                    color: const Color(0xFF3B5BDB),
-                    width: 1.5,
-                  )
-                      : null,
-                  boxShadow: controller.selectedSportTab.value == 1
-                      ? [
-                    BoxShadow(
-                      color: const Color(0xFF3B5BDB).withValues(alpha: 0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                      spreadRadius: -1,
-                    ),
-                  ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      Assets.imagesIcPickleball,
-                      height: 18, // Add this line - adjust value as needed
-                      color: controller.selectedSportTab.value == 1
-                          ? const Color(0xFF3B5BDB)
-                          : const Color(0xFF252525),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Pickleball',
-                      style: TextStyle(
-                        color: controller.selectedSportTab.value == 1
-                            ? const Color(0xFF3B5BDB)
-                            : const Color(0xFF252525),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+            // Tab buttons row (on top of pill)
+            Row(
+              children: [
+                // Padel Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.onSportTabChanged(0),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      height: 38,
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: selected == 0 ? 1.15 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            child: SvgPicture.asset(
+                              Assets.imagesIcPadel,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                selected == 0
+                                    ? const Color(0xFF3B5BDB)
+                                    : const Color(0xFF252525),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              color: selected == 0
+                                  ? const Color(0xFF3B5BDB)
+                                  : const Color(0xFF252525),
+                              fontSize: 14,
+                              fontWeight: selected == 0
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontFamily: Get.textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('Padel'),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+
+                // Pickleball Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.onSportTabChanged(1),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                      height: 38,
+                      color: Colors.transparent,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: selected == 1 ? 1.15 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            child: SvgPicture.asset(
+                              Assets.imagesIcPickleball,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                selected == 1
+                                    ? const Color(0xFF3B5BDB)
+                                    : const Color(0xFF252525),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            style: TextStyle(
+                              color: selected == 1
+                                  ? const Color(0xFF3B5BDB)
+                                  : const Color(0xFF252525),
+                              fontSize: 14,
+                              fontWeight: selected == 1
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontFamily: Get.textTheme.bodyMedium?.fontFamily,
+                            ),
+                            child: const Text('Pickleball'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      )),
+          ],
+        );
+      }),
     );
   }
   Widget _buildAppBarTitle(BuildContext context) {
@@ -501,6 +523,776 @@ class MainHomeScreen extends StatelessWidget {
       ).paddingOnly(left: 5);
     });
   }
+
+  Widget _buildSwootTitle(String? leagueName){
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            leagueName ?? "",
+            style: Get.textTheme.headlineMedium,
+          ),
+
+        ],
+      ),
+    );
+  }
+  /// LEAGUE SECTION
+  Widget _buildLeagueComingSoon(){
+    return Obx(() {
+      if (controller.isLoadingActiveLeagues.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        ).paddingOnly(top: 10);
+      }
+
+      final leagues = controller.activeLeagues.value?.data ?? [];
+      
+      if (leagues.isEmpty) {
+        return SizedBox.shrink();
+        //   Column(
+        //   children: [
+        //     _buildSwootTitle(null),
+        //     const SizedBox(height: 12),
+        //     GestureDetector(
+        //       onTap: (){
+        //         Get.toNamed(RoutesName.league);
+        //       },
+        //       child: Container(
+        //         width: Get.width,
+        //         margin: const EdgeInsets.symmetric(horizontal: 14),
+        //         decoration: BoxDecoration(
+        //           borderRadius: BorderRadius.circular(20),
+        //           boxShadow: [
+        //             BoxShadow(
+        //               color: Colors.grey.shade300,
+        //               blurRadius: 8,
+        //               spreadRadius: 2.3,
+        //               offset: const Offset(0, 3),
+        //             ),
+        //           ],
+        //         ),
+        //         // child: Image.asset(Assets.imagesImgLeagueComingSoon),
+        //       ),
+        //     ),
+        //     const SizedBox(height: 12),
+        //     BuildTitleSponsor(controller: controller),
+        //     Obx(() {
+        //       final sponsorData = controller.sponsors.value?.data;
+        //       final sponsorsList = sponsorData?.sponsors ?? [];
+        //       return BuildMoreSponsor(sponsors: sponsorsList);
+        //     }),
+        //   ],
+        // ).paddingOnly(top: 10);
+      }
+
+      return Column(
+        children: [
+          // Dynamic title based on carousel index
+          Obx(() {
+            final currentIndex = controller.leagueCarouselIndex.value;
+            final leagueName = leagues.length > currentIndex 
+                ? leagues[currentIndex].leagueName 
+                : leagues.first.leagueName;
+            return _buildSwootTitle(leagueName);
+          }),
+          const SizedBox(height: 12),
+          leagues.length == 1
+              ? _buildSingleLeagueCard(leagues.first)
+              : _buildLeagueCarousel(leagues),
+          const SizedBox(height: 12),
+          // Dynamic sponsors based on carousel index
+          Obx(() {
+            final currentIndex = controller.leagueCarouselIndex.value;
+            final currentLeague = leagues.length > currentIndex 
+                ? leagues[currentIndex] 
+                : leagues.first;
+            return Column(
+              children: [
+                BuildLeagueTitleSponsor(league: currentLeague),
+                BuildLeagueMoreSponsor(league: currentLeague),
+              ],
+            );
+          }),
+        ],
+      ).paddingOnly(top: 10);
+    });
+  }
+
+  Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
+    return GestureDetector(
+      onTap: () {
+        Get.toNamed(RoutesName.league, arguments: {
+          'leagueId': leagueData.id,
+        });
+      },
+      child: Container(
+        width: Get.width,
+        height: 163,
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 8,
+              spreadRadius: 2.3,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+              ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+              : Image.asset(Assets.imagesImgLeagueComingSoon),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeagueCarousel(List<LeagueModel.Data> leagues) {
+    return Column(
+      children: [
+        CarouselSlider.builder(
+          itemCount: leagues.length,
+          itemBuilder: (context, index, realIndex) {
+            final leagueData = leagues[index];
+            return GestureDetector(
+              onTap: () {
+                Get.toNamed(RoutesName.league, arguments: {
+                  'leagueId': leagueData.id,
+                });
+              },
+              child: Container(
+                width: Get.width,
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 8,
+                      spreadRadius: 2.3,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+                      ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+                      : Image.asset(Assets.imagesImgLeagueComingSoon),
+                ),
+              ),
+            );
+          },
+          options: CarouselOptions(
+            viewportFraction: 1,
+            enableInfiniteScroll: leagues.length > 1,
+            enlargeCenterPage: false,
+            autoPlay: leagues.length > 1,
+            autoPlayInterval: const Duration(seconds: 3),
+            height: 200,
+            onPageChanged: (index, reason) {
+              controller.leagueCarouselIndex.value = index;
+            },
+          ),
+        ),
+        SizedBox(height: 20,),
+        if (leagues.length > 1)
+          Obx(() {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(leagues.length, (i) {
+                final isActive = i == controller.leagueCarouselIndex.value;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: isActive ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primaryColor : Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                );
+              }),
+            );
+          }),
+      ],
+    );
+  }
+
+
+  Widget _buildLeagueLiveMatch(){
+    return Obx(() {
+      final scheduleData = controller.scheduleMatches.value?.data ?? [];
+      final upcomingData = controller.upcomingMatches.value?.data ?? [];
+      
+      final allLiveMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      final allUpcomingMatches = upcomingData.expand((data) => data.matches ?? []).toList();
+      
+      // If both live and upcoming are empty, show coming soon
+      if (allLiveMatches.isEmpty && allUpcomingMatches.isEmpty && 
+          !controller.isLoadingScheduleMatches.value && 
+          !controller.isLoadingUpcomingMatches.value) {
+        return _buildLeagueComingSoon();
+      }
+      
+      // Get league data from active leagues
+      final leagues = controller.activeLeagues.value?.data ?? [];
+      final currentLeague = leagues.isNotEmpty ? leagues.first : null;
+      
+      // Otherwise show the league section
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSwootTitle(currentLeague?.leagueName),
+          const SizedBox(height: 12),
+          Obx(() {
+            final scheduleData = controller.scheduleMatches.value?.data ?? [];
+            final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+            
+            if (controller.isLoadingScheduleMatches.value) {
+              return Container(
+                height: 200,
+                margin: const EdgeInsets.symmetric(horizontal: 18),
+                child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+              );
+            }
+            
+            if (scheduleData.isEmpty || allMatches.isEmpty) {
+              return _upcomingMatchCard();
+            }
+            
+            return _buildLeagueLiveMatchSlider([]);
+          }),
+          if (currentLeague != null) ...[
+            BuildLeagueTitleSponsor(league: currentLeague),
+            BuildLeagueMoreSponsor(league: currentLeague),
+          ],
+          _buildLeaguePointsTable(),
+        ],
+      ).paddingOnly(top: 10);
+    });
+  }
+
+  Widget _buildLeagueLiveMatchSlider(List<Widget> cards) {
+    return Obx(() {
+      final scheduleData = controller.scheduleMatches.value?.data ?? [];
+      
+      if (controller.isLoadingScheduleMatches.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
+      
+      if (scheduleData.isEmpty) return const SizedBox.shrink();
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) return const SizedBox.shrink();
+
+      final liveMatchCards = scheduleData.expand((data) {
+        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType, data.matchId?.id, data.matchId?.setsWon));
+      }).toList();
+
+      if (liveMatchCards.length == 1) return liveMatchCards.first;
+
+      return Column(
+        children: [
+          CarouselSlider.builder(
+            itemCount: liveMatchCards.length,
+            itemBuilder: (context, index, realIndex) => liveMatchCards[index],
+            options: CarouselOptions(
+              viewportFraction: 1,
+              enableInfiniteScroll: false,
+              enlargeCenterPage: false,
+              autoPlay: false,
+              height: 200,
+              onPageChanged: (index, reason) {
+                controller.leagueLiveCarouselIndex.value = index;
+              },
+            ),
+          ),
+          Obx(() {
+            final idx = controller.leagueLiveCarouselIndex.value;
+            if (idx >= liveMatchCards.length) {
+              controller.leagueLiveCarouselIndex.value = 0;
+            }
+            final activeIndex = controller.leagueLiveCarouselIndex.value.clamp(0, liveMatchCards.length - 1);
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(liveMatchCards.length, (i) {
+                final isActive = i == activeIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: isActive ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primaryColor : Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                );
+              }),
+            );
+          }),
+          SizedBox(height: 10,)
+        ],
+      );
+    });
+  }
+  Widget _liveMatchCard(Matches? match, String? categoryType, String? matchId, SetsWon? setsWon) {
+    if (match == null) return const SizedBox.shrink();
+    
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          decoration:  BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,)),
+              Column(
+                children: [
+                  /// LIVE TAG
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFCD3529),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(radius: 4, backgroundColor: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          "LIVE",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ).paddingOnly(top: 10),
+                  /// SCORE ROW
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _teamColumn(
+                        match.teamA?.teamName ?? "Team A",
+                        "https://i.pravatar.cc/150?img=1",
+                        "https://i.pravatar.cc/150?img=2",
+                        (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
+                        (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
+                        AppColors.primaryColor,
+                      ),
+
+                      Transform.translate(
+                        offset: Offset(0, 0),
+                        child: Column(
+                          children: [
+                            Text(categoryType ?? "", style: Get.textTheme.labelMedium),
+                            SizedBox(height: 8),
+                            Text(
+                                "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
+                                style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                          ],
+                        ),
+                      ),
+                      _teamColumn(
+                        match.teamB?.teamName ?? "Team B",
+                        "https://i.pravatar.cc/150?img=3",
+                        "https://i.pravatar.cc/150?img=4",
+                        (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
+                        (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 2",
+                        AppColors.secondaryColor,
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: (){
+                          print('👆 Live match card tapped');
+                          print('🎫 Match ID: $matchId');
+                          print('🎫 Match Type: live');
+                          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                            "matchType":"live",
+                            "matchId": matchId ?? ""
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                              color: const Color(0xff27AE60),
+                              borderRadius:
+                              BorderRadius.circular(30)),
+                          child:  Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 11,
+                                backgroundColor: AppColors.primaryColor,
+                                child: Icon(Icons.play_arrow,
+                                    color: Colors.white, size: 18),
+                              ),
+                              SizedBox(width: 8),
+                              Text("Watch Live",
+                                  style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _upcomingMatchCard(){
+    return Obx(() {
+      if (controller.isLoadingUpcomingMatches.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
+
+      final scheduleData = controller.upcomingMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) return const SizedBox.shrink();
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) return const SizedBox.shrink();
+
+      final firstMatch = allMatches.first;
+      final matchData = scheduleData.firstWhere(
+        (data) => data.matches?.contains(firstMatch) ?? false,
+        orElse: () => scheduleData.first,
+      );
+
+      final teamAPlayers = firstMatch.teamA?.players ?? [];
+      final teamBPlayers = firstMatch.teamB?.players ?? [];
+
+      String formatDate(String? dateStr) {
+        if (dateStr == null || dateStr.isEmpty) return "TBD";
+        try {
+          final date = DateTime.parse(dateStr);
+          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}";
+        } catch (e) {
+          return dateStr;
+        }
+      }
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          children: [
+            Image.asset(Assets.imagesImgLeagueUpcomingMatch, fit: BoxFit.cover, width: Get.width),
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
+                      SizedBox(width: 6),
+                      Text(
+                        "Upcoming",
+                        style: Get.textTheme.labelMedium!.copyWith(
+                            fontWeight: FontWeight.w500, color: AppColors.primaryColor),
+                      ),
+                    ],
+                  ),
+                ).paddingOnly(top: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _teamColumn(
+                      firstMatch.teamA?.teamName ?? "Team A",
+                      "https://i.pravatar.cc/150?img=1",
+                      "https://i.pravatar.cc/150?img=2",
+                      teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
+                      teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
+                      AppColors.primaryColor,
+                    ),
+                    Transform.translate(
+                        offset: Offset(0, -8),
+                        child: Column(
+                          children: [
+                            Text(matchData.categoryType ?? "", style: Get.textTheme.labelMedium),
+                            SizedBox(height: 8),
+                            SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                          ],
+                        )),
+                    _teamColumn(
+                      firstMatch.teamB?.teamName ?? "Team B",
+                      "https://i.pravatar.cc/150?img=3",
+                      "https://i.pravatar.cc/150?img=4",
+                      teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
+                      teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 2") : "Player 2",
+                      AppColors.primaryColor,
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                    //   "matchType": "upcoming"
+                    // });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    decoration: BoxDecoration(
+                        color: AppColors.primaryColor,
+                        borderRadius: BorderRadius.circular(30)),
+                    child: Text(formatDate(matchData.date),
+                        style: Get.textTheme.labelMedium!
+                            .copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ).paddingOnly(bottom: 10);
+    });
+  }
+  Widget _buildLeaguePointsTable(){
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.grey.shade100,
+                spreadRadius: 1.5,
+                blurRadius: 5.0,
+                offset: Offset(0, 3)
+            )
+          ]
+      ),
+      child: Column(
+        children: [
+          /// Header Row
+          _headerRow(),
+
+          Divider(color: Colors.grey.shade300,),
+
+          /// List
+          ...List.generate(6, (index) {
+            return Column(
+              children: [
+                _teamRow(index + 1),
+                Divider(color: Colors.grey.shade300,),
+              ],
+            );
+          }),
+        ],
+      ),
+    ).paddingOnly(top: 10);
+  }
+  Widget _headerRow() {
+    final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
+    return  Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(width: 20, child: Text("#",style: style,)),
+        Expanded(
+            flex: 3,
+            child: SizedBox(width: 35,child: Text("Teams",style: style))),
+        // SizedBox(width: 30, child: Text("M",style: style)),
+        SizedBox(width: 30, child: Center(child: Text("W",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("L",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Pts",style: style))),
+        Expanded(
+            flex: 3,
+            child: Center(child: Text("Last 5",style: style))),
+      ],
+    );
+  }
+  Widget _teamRow(int index) {
+    List<String> teams = [
+      "Terrakort",
+      "Padel Haus",
+      "Courtline",
+      "Terrakort",
+      "Padel Haus",
+      "Courtline"
+    ];
+
+    return Row(
+      children: [
+        SizedBox(width: 25, child: Text("$index",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        Expanded(
+          flex: 3,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 11,
+                backgroundColor: Colors.black12,
+                backgroundImage: NetworkImage(
+                  "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                teams[index - 1],
+                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+
+        // SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        Expanded(
+          flex: 3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children:  [
+              _buildResultIcon(false),
+              _buildResultIcon(true),
+              _buildResultIcon(false),
+              _buildResultIcon(true),
+              _buildResultIcon(false),
+            ],
+          ),
+        )
+
+      ],
+    );
+  }
+  Widget _buildResultIcon(bool win) {
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      height: 16,
+      width: 16,
+      decoration: BoxDecoration(
+        color: win ? Colors.green : Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        win ? Icons.check : Icons.close,
+        size: 10,
+        color: Colors.white,
+      ),
+    );
+  }
+  Widget _teamColumn(
+      String team,
+      String img1,
+      String img2,
+      String name1,
+      String name2,
+      Color color,
+      ) {
+    return SizedBox(
+      width: 130,
+      child: Column(
+        children: [
+          /// TEAM LABEL
+          Text(
+            team,
+            style:Get.textTheme.headlineMedium!.copyWith(color: color)
+          ),
+
+          const SizedBox(height: 15),
+
+          /// STACKED AVATARS
+          SizedBox(
+            height: 40,
+            width: 60,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _avatarWithInitials(name1, 0),
+                _avatarWithInitials(name2, 24),
+              ],
+            ),
+          ),
+
+
+          /// NAMES
+          Text(
+              "$name1 &\n$name2",
+              textAlign: TextAlign.center,
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _avatarWithInitials(String name, double left) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
+    return Positioned(
+      left: left,
+      child: Container(
+        height: 36,
+        width: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 
   /// BOOKING SECTION
   Widget _bookingSection() {
@@ -967,153 +1759,115 @@ class MainHomeScreen extends StatelessWidget {
       },
       {
         "icon": Assets.imagesIcAmericanoNew,
-        "title": "Tournament",
-        "action": "tournament",
+        "title": "League",
+        "action": "league",
         "boxSize": 70.0,
-        "iconSize": 34.0,
+        "iconSize": 40.0,
         "offset": Offset(0, 3)
       },
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: items.map((e) {
-        final double boxSize = e["boxSize"] as double;
-        final double iconSize = e["iconSize"] as double;
-        final Offset offset = e["offset"] as Offset;
+    return Obx(() {
+      final leagueEmpty = (controller.activeLeagues.value?.data ?? []).isEmpty;
 
-        return GestureDetector(
-          onTap: () => _handleQuickAction(e["action"] as String),
-          child: Column(
-            children: [
-              Container(
-                height: boxSize,
-                width: boxSize,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF3F56D6),
-                      Color(0xFF2B44C4),
-                    ],
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: items.map((e) {
+          final double boxSize = e["boxSize"] as double;
+          final double iconSize = e["iconSize"] as double;
+          final Offset offset = e["offset"] as Offset;
+          final isLeague = e["action"] == "league";
+          final showComingSoon = isLeague && leagueEmpty;
+
+          return GestureDetector(
+            onTap: showComingSoon ? null : () => _handleQuickAction(e["action"] as String),
+            child: Column(
+              children: [
+                Container(
+                  height: boxSize,
+                  width: boxSize,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF3F56D6),
+                        Color(0xFF2B44C4),
+                      ],
+                    ),
                   ),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Background circle glow
-                    Positioned(
-                      top: -boxSize * 0.35,
-                      left: -boxSize * 0.35,
-                      child: Container(
-                        height: boxSize * 1.3,
-                        width: boxSize * 1.3,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.04),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: -boxSize * 0.35,
+                        left: -boxSize * 0.35,
+                        child: Container(
+                          height: boxSize * 1.3,
+                          width: boxSize * 1.3,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
                         ),
                       ),
-                    ),
-
-                    // Icon
-                    Center(
-                      child: Transform.translate(
-                        offset: offset,
-                        child: SvgPicture.asset(
-                          e["icon"] as String,
-                          width: iconSize,
-                          height: iconSize,
+                      Center(
+                        child: Transform.translate(
+                          offset: offset,
+                          child: SvgPicture.asset(
+                            e["icon"] as String,
+                            width: iconSize,
+                            height: iconSize,
+                          ),
                         ),
                       ),
-                    ),
-// Coming Soon overlay
-                    if (e["action"] == "tournament")
-                      Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              decoration:  BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                  colors: [
-                                    Color(0xFF3DBE64).withValues(alpha: 0.5), // green tint
-                                    Color(0xFF1F41BB).withValues(alpha: 0.5), // blue tint
-                                  ],
+                      if (showComingSoon)
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      Color(0xFF3DBE64).withValues(alpha: 0.5),
+                                      Color(0xFF1F41BB).withValues(alpha: 0.5),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                "Coming\nSoon",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.2,
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  "Coming\nSoon",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    // 🎀 Perfect corner ribbon
-                    // if (e["action"] == "americano" || e["action"] == "player")
-                    //   Positioned(
-                    //     top: 0,
-                    //     left: 0,
-                    //     child: SizedBox(
-                    //       width: boxSize,
-                    //       height: boxSize,
-                    //       child: ClipRRect(
-                    //         borderRadius: BorderRadius.circular(20),
-                    //         child: Stack(
-                    //           children: [
-                    //             // Diagonal strip
-                    //             Positioned(
-                    //               top: 6,
-                    //               left: -28,
-                    //               child: Transform.rotate(
-                    //                 angle: -0.685398, // -45°
-                    //                 child: Container(
-                    //                   width: 90,
-                    //                   height: 14,
-                    //                   alignment: Alignment.center,
-                    //                   color: Colors.orange,
-                    //                   child: const Text(
-                    //                     "COMING SOON",
-                    //                     style: TextStyle(
-                    //                       color: Colors.white,
-                    //                       fontSize: 5,
-                    //                       fontWeight: FontWeight.w700,
-                    //                       letterSpacing: 0.6,
-                    //                     ),
-                    //                   ),
-                    //                 ),
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                e["title"] as String,
-                style: Get.textTheme.labelSmall!.copyWith(fontSize: 12),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
+                const SizedBox(height: 6),
+                Text(
+                  e["title"] as String,
+                  style: Get.textTheme.labelSmall!.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 
   void _handleQuickAction(String action) {
@@ -1129,8 +1883,12 @@ class MainHomeScreen extends StatelessWidget {
           'location': locationId,
         });
         break;
-      case 'tournament':
-        CustomLogger.logMessage(msg: "tournaments coming soon!", level: LogLevel.debug);
+      case 'league':
+        final leagues = controller.activeLeagues.value?.data ?? [];
+        final leagueId = leagues.isNotEmpty ? leagues.first.id : null;
+        Get.toNamed(RoutesName.league, arguments: {
+          if (leagueId != null) 'leagueId': "",
+        });
 
         break;
       case 'player':
@@ -1233,7 +1991,6 @@ class MainHomeScreen extends StatelessWidget {
 
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
     final courtDetails = court.courts?.isNotEmpty == true ? court.courts![0] : null;
-    final courtImage = courtDetails?.courtImage?.isNotEmpty == true ? courtDetails!.courtImage![0] : null;
     final courtCount = courtDetails?.courtCount ?? 0;
     final features = courtDetails?.features ?? [];
     final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
@@ -2222,5 +2979,16 @@ class MainHomeScreen extends StatelessWidget {
         child: Icon(Icons.add, color: AppColors.primaryColor, size: 20),
       ),
     );
+  }
+
+  String _getScoreText(dynamic score) {
+    if (score == null) return "0";
+    if (score is int) return score.toString();
+    if (score is ScoreDetail) {
+      // Display sets count for the new format
+      return (score.sets ?? 0).toString();
+    }
+    // Fallback for any other format
+    return score.toString();
   }
 }
