@@ -198,6 +198,7 @@ class MainHomeScreen extends StatelessWidget {
                 await controller.fetchActiveLeagues();
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
+                await controller.profileController.fetchUserProfile();
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

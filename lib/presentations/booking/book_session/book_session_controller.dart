@@ -1616,8 +1616,9 @@ var locationsId = "".obs;
 
   /// Check if left half of a 30-minute slot is booked
   bool isLeftHalfBooked(Slots slot) {
-    // If status is booked, entire slot is booked
+    // If status is booked or locked, entire slot is booked
     if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
     
     // Check if bookingTime exists and is not empty
     final bookingTime = slot.bookingTime?.trim();
@@ -1643,8 +1644,9 @@ var locationsId = "".obs;
 
   /// Check if right half of a 30-minute slot is booked
   bool isRightHalfBooked(Slots slot) {
-    // If status is booked, entire slot is booked
+    // If status is booked or locked, entire slot is booked
     if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
     
     // Check if bookingTime exists and is not empty
     final bookingTime = slot.bookingTime?.trim();
