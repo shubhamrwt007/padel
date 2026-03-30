@@ -1300,7 +1300,7 @@ class BookACourtScreen extends StatelessWidget {
     // Check for booked slots from API response
     final correspondingApiSlot = _findCorrespondingApiSlot(slot, resolvedCourtId);
     final _status = correspondingApiSlot?.status?.toLowerCase();
-    final isSlotBooked = _status == 'booked' || _status == 'unavailable';
+    final isSlotBooked = _status == 'booked' || _status == 'unavailable' || _status == "lock";
     
     final isLeftHalfBooked = supports30Min && (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
     final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);

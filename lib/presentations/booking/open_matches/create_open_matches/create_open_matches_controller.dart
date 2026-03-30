@@ -2048,6 +2048,7 @@ class CreateOpenMatchesController extends GetxController {
   /// Check if left half of a 30-minute slot is booked
   bool isLeftHalfBooked(Slots slot) {
     if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
     
     final bookingTime = slot.bookingTime?.trim();
     if (bookingTime == null || bookingTime.isEmpty) return false;
@@ -2068,6 +2069,7 @@ class CreateOpenMatchesController extends GetxController {
   /// Check if right half of a 30-minute slot is booked
   bool isRightHalfBooked(Slots slot) {
     if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
     
     final bookingTime = slot.bookingTime?.trim();
     if (bookingTime == null || bookingTime.isEmpty) return false;

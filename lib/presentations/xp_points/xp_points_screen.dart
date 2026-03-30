@@ -115,16 +115,25 @@ class XpPointsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Obx(() => controller.isLoading.value
                       ? Center(child: LoadingWidget(color:AppColors.primaryColor,))
-                      : controller.transactionList.isEmpty
-                      ? Center(child: Text("No data available"))
-                      : ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: controller.transactionList.length,
-                    separatorBuilder: (_, __) => fadeDivider(),
-                    itemBuilder: (context, index) {
-                      final transaction = controller.transactionList[index];
-                      return _XpRow(transaction: transaction);
+                      : RefreshIndicator(
+                    color: AppColors.whiteColor,
+                    onRefresh: () async {
+                      await Future.wait([
+                        controller.fetchXpTransaction(isRefresh: true),
+                        controller.profileController.fetchUserProfile(),
+                      ]);
                     },
+                    child: controller.transactionList.isEmpty
+                        ? ListView(children: [Center(child: Text("No data available"))])
+                        : ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: controller.transactionList.length,
+                      separatorBuilder: (_, __) => fadeDivider(),
+                      itemBuilder: (context, index) {
+                        final transaction = controller.transactionList[index];
+                        return _XpRow(transaction: transaction);
+                      },
+                    ),
                   )
                   ),
                 ),
