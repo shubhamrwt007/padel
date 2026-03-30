@@ -1306,7 +1306,6 @@ class BookACourtScreen extends StatelessWidget {
     final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
-
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
 
@@ -1928,7 +1927,7 @@ class BookACourtScreen extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Positioned(
-              top: -20,
+              top: -15,
               left: 0,
               right: 0,
               child: GestureDetector(
@@ -1945,15 +1944,6 @@ class BookACourtScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Color(0xFF003AFF),
                         shape: BoxShape.circle,
-                      ),
-                      child: Transform.translate(
-                        offset: Offset(0, -5),
-                        child: Obx(
-                              () => ArrowAnimation(
-                            isUpward: !isExpanded.value,
-                            color: Colors.white,
-                          ),
-                        ),
                       ),
                     ),
                   ),
@@ -1974,6 +1964,15 @@ class BookACourtScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: Obx(
+                      () => ArrowAnimation(
+                        isUpward: !isExpanded.value,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                   if (isExpanded.value)
                     Flexible(
                       child: SingleChildScrollView(

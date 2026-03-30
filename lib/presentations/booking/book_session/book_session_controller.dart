@@ -352,7 +352,7 @@ var locationsId = "".obs;
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
           final finalDuration = (slot.duration == 90) ? 90 : 60;
-          
+          final userId = storage.read("userId")??"";
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -360,6 +360,7 @@ var locationsId = "".obs;
             "time": slot.time ?? '',
             "bookingTime": slot.time ?? '',
             "duration": finalDuration,
+            "userId":userId
           });
         } else {
           // Single half or full slot - create entries as is
@@ -529,7 +530,6 @@ var locationsId = "".obs;
   // Process slot history for payment - call APIs for all selections
   Future<bool> processSlotHistoryForPayment() async {
     if (multiDateSelections.isEmpty) return false;
-
     try {
       final slots = <Map<String, dynamic>>[];
       final processedSlots = <String>{}; // Track processed slot IDs to avoid duplicates
