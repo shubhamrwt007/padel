@@ -564,16 +564,21 @@ class BookACourtController extends GetxController {
       }
     }
 
-    final supports30Min = clubSupports30MinSlots(resolvedCourtId);
-
+    // ── Check 15 slot limit before adding new selection ──────────────────────
     final fullKey   = '${dateString}_${resolvedCourtId}_$slotId';
     final firstKey  = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
     final secondKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
-
     final hasFullSlot   = realCourtSelections.containsKey(fullKey);
     final hasFirstHalf  = realCourtSelections.containsKey(firstKey);
     final hasSecondHalf = realCourtSelections.containsKey(secondKey);
     final isSelected    = hasFullSlot || hasFirstHalf || hasSecondHalf;
+
+    if (!isSelected && realCourtSelections.length >= 15) {
+      AppToast.error("You can only select up to 15 slots at a time");
+      return;
+    }
+
+    final supports30Min = clubSupports30MinSlots(resolvedCourtId);
 
     // ── NON-30-MIN COURT: simple full-slot toggle ────────────────────────────
     if (!supports30Min) {
@@ -1157,14 +1162,24 @@ class BookACourtController extends GetxController {
       }
     }
 
+    // ── Check 15 slot limit before adding new selection ──────────────────────
+    final firstHalfKey  = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
+    final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
+    final fullSlotKey   = '${dateString}_${resolvedCourtId}_$slotId';
+    final isAlreadySelected = multiDateSelections.containsKey(firstHalfKey) ||
+        multiDateSelections.containsKey(secondHalfKey) ||
+        multiDateSelections.containsKey(fullSlotKey);
+
+    if (!isAlreadySelected && multiDateSelections.length >= 15) {
+      AppToast.error("You can only select up to 15 slots at a time");
+      return;
+    }
+
     selectedTimeSlot.value = slot.time ?? '';
 
     if (is30Slots.value && isHalfSlot == true) {
       if (isPastHalfSlot(slot, isFirstHalf ?? true)) return;
 
-      final firstHalfKey  = '${dateString}_${resolvedCourtId}_${slotId}_first_half';
-      final secondHalfKey = '${dateString}_${resolvedCourtId}_${slotId}_second_half';
-      final fullSlotKey   = '${dateString}_${resolvedCourtId}_$slotId';
       final clickedHalfKey = isFirstHalf == true ? firstHalfKey : secondHalfKey;
 
       if (multiDateSelections.containsKey(clickedHalfKey)) {

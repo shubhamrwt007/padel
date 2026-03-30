@@ -31,6 +31,7 @@ class BookACourtScreen extends StatelessWidget {
   final RxBool isExpanded = false.obs;
   final RxBool isProcessing = false.obs;
   final ScrollController mainScrollController = ScrollController();
+  final ScrollController paymentScrollController = ScrollController();
   final RxInt displayedCourtsCount = 10.obs;
   final GlobalKey availableCourtsKey = GlobalKey();
 
@@ -1305,7 +1306,6 @@ class BookACourtScreen extends StatelessWidget {
     final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
-
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
 
@@ -1911,15 +1911,48 @@ class BookACourtScreen extends StatelessWidget {
         return const SizedBox.shrink();
       }
 
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          AnimatedSize(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            child: AnimatedContainer(
+      final maxHeight = Get.height * 0.6;
+
+      return GestureDetector(
+        onVerticalDragUpdate: (details) {
+          if (details.primaryDelta! < -5) {
+            isExpanded.value = true;
+          } else if (details.primaryDelta! > 5 && isExpanded.value) {
+            if (paymentScrollController.hasClients && paymentScrollController.offset <= 0) {
+              isExpanded.value = false;
+            }
+          }
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              top: -15,
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                onTap: () {
+                  isExpanded.value = !isExpanded.value;
+                },
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    heightFactor: 0.6,
+                    child: Container(
+                      height: 55,
+                      width: 55,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF003AFF),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(16),
+              constraints: BoxConstraints(maxHeight: isExpanded.value ? maxHeight : 200),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF003AFF), Color(0xFF07289A)],
@@ -1931,141 +1964,119 @@ class BookACourtScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    child: isExpanded.value
-                        ? Column(children: [_buildSlotDetails()])
-                        : const SizedBox.shrink(),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 0),
+                    child: Obx(
+                      () => ArrowAnimation(
+                        isUpward: !isExpanded.value,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      isExpanded.value = !isExpanded.value;
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  if (isExpanded.value)
+                    Flexible(
+                      child: SingleChildScrollView(
+                        controller: paymentScrollController,
+                        padding: const EdgeInsets.all(16),
+                        child: _buildSlotDetails(),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Total to Pay',
-                              style: Get.textTheme.bodyMedium!.copyWith(
-                                color: Colors.white,
+                        GestureDetector(
+                          onTap: () {
+                            isExpanded.value = !isExpanded.value;
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total to Pay',
+                                    style: Get.textTheme.bodyMedium!.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Total Slots: ${_getGroupedSlotsCount()}',
+                                    style: Get.textTheme.bodySmall!.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            Text(
-                              'Total Slots: ${_getGroupedSlotsCount()}',
-                              style: Get.textTheme.bodySmall!.copyWith(
-                                color: Colors.white.withValues(alpha: 0.8),
+                              Text(
+                                '₹ ${_getSelectedSlotAmount()}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '₹ ${_getSelectedSlotAmount()}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                            ],
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        CustomButton(
+                          width: Get.width * 0.81,
+                          height: 55,
+                          gradientColors: [Colors.white, Colors.white, Colors.white],
+                          onTap: () async {
+                            isProcessing.value = true;
+
+                            final success = await controller.processSlotHistoryForPayment();
+                            if (!success) {
+                              isProcessing.value = false;
+                              return;
+                            }
+
+                            if (!Get.isRegistered<CartController>()) {
+                              Get.put(CartController());
+                            }
+                            final cartController = Get.find<CartController>();
+                            cartController.totalPrice.value = _getSelectedSlotAmount();
+
+                            final paymentController = Get.put(PaymentMethodController(), permanent: false);
+
+                            try {
+                              await paymentController.createInitialBooking();
+
+                              if (controller.hasCalledSlotHistoryAPI.value) {
+                                await controller.cleanupOnBack();
+                                controller.hasCalledSlotHistoryAPI.value = false;
+                              }
+                            } catch (e) {
+                              CustomLogger.logMessage(msg: "Failed to prepare booking. Please try again.", level: LogLevel.debug);
+                            } finally {
+                              isProcessing.value = false;
+                            }
+                          },
+                          child: isProcessing.value
+                              ? LoadingAnimationWidget.waveDots(
+                            color: AppColors.blackColor,
+                            size: 45,
+                          ).paddingOnly(right: 40)
+                              : Text(
+                            "Pay Now",
+                            style: Get.textTheme.headlineLarge!.copyWith(
+                              color: AppColors.secondaryColor,
+                              fontSize: 16,
+                            ),
+                          ).paddingOnly(right: 40),
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-                  CustomButton(
-                    width: Get.width * 0.81,
-                    height: 55,
-                    gradientColors: [Colors.white, Colors.white, Colors.white],
-                    onTap: () async {
-                      isProcessing.value = true;
-
-                      // Call API to process slot history
-                      final success = await controller.processSlotHistoryForPayment();
-                      if (!success) {
-                        isProcessing.value = false;
-                        return;
-                      }
-
-                      // Sync selected slot amount to CartController
-                      if (!Get.isRegistered<CartController>()) {
-                        Get.put(CartController());
-                      }
-                      final cartController = Get.find<CartController>();
-                      cartController.totalPrice.value = _getSelectedSlotAmount();
-
-                      // ✅ Initialize PaymentMethodController and create booking BEFORE navigation
-                      final paymentController = Get.put(PaymentMethodController(), permanent: false);
-
-                      try {
-                        await paymentController.createInitialBooking();
-
-                        // Now navigate
-
-                        // Optional: cleanup if needed when coming back
-                        if (controller.hasCalledSlotHistoryAPI.value) {
-                          await controller.cleanupOnBack();
-                          controller.hasCalledSlotHistoryAPI.value = false;
-                        }
-                      } catch (e) {
-                        CustomLogger.logMessage(msg: "Failed to prepare booking. Please try again.", level: LogLevel.debug);
-                      } finally {
-                        isProcessing.value = false;
-                      }
-                    },
-                    child: isProcessing.value
-                        ? LoadingAnimationWidget.waveDots(
-                      color: AppColors.blackColor,
-                      size: 45,
-                    ).paddingOnly(right: 40)
-                        : Text(
-                      "Pay Now",
-                      style: Get.textTheme.headlineLarge!.copyWith(
-                        color: AppColors.secondaryColor,
-                        fontSize: 16,
-                      ),
-                    ).paddingOnly(right: 40),
-                  ),
                 ],
               ),
             ),
-          ),
-          Positioned(
-            top: -14,
-            left: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: () {
-                isExpanded.value = !isExpanded.value;
-              },
-              child: ClipRect(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  heightFactor: 0.6,
-                  child: Container(
-                    height: 55,
-                    width: 55,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF003AFF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Transform.translate(
-                      offset: Offset(0, -5),
-                      child: Obx(
-                            () => ArrowAnimation(
-                          isUpward: !isExpanded.value,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       );
     });
   }
