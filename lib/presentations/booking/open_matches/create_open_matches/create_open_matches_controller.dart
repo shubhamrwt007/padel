@@ -214,7 +214,7 @@ class CreateOpenMatchesController extends GetxController {
         final supports30Min = slotSupports30Min(slot);
         final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
-        
+        final userId = storage.read("userId")??"";
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -222,6 +222,7 @@ class CreateOpenMatchesController extends GetxController {
           "time": bookingTime,
           "bookingTime": bookingTime,
           "duration": finalDuration,
+          "userId":userId
         });
       }
       
@@ -254,7 +255,7 @@ class CreateOpenMatchesController extends GetxController {
         final supports30Min = slotSupports30Min(slot);
         final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
-        
+        final userId = storage.read("userId")??"";
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -264,6 +265,7 @@ class CreateOpenMatchesController extends GetxController {
           "bookingTime": bookingTime,
           "duration": finalDuration,
           "totalTime": finalDuration,
+          "userId":userId
         });
       }
       
@@ -906,9 +908,27 @@ class CreateOpenMatchesController extends GetxController {
 
   Future<bool> createAndGetSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
-      log('createAndGetSlotHistory called with slots: $slots');
-      final response = await repository.createAndGetSlotHistory(data: {"slots": slots});
-      return true;
+      log('createAndGetSlotHistory called with body: $slots');
+      final response = await repository.createAndGetSlotHistory(data: slots);
+
+      if (response.data.isEmpty) {
+        CustomLogger.logMessage(msg: "No slot data returned", level: LogLevel.error);
+        return false;
+      }
+
+      final createdSlots = response.data.where((e) => e.created).toList();
+      final lockedSlots = response.data.where((e) => !e.created).toList();
+
+      if (createdSlots.isNotEmpty) {
+        return true;
+      }
+
+      if (lockedSlots.isNotEmpty) {
+        AppToast.error(lockedSlots.first.message ?? "This slot is currently locked. Please try again.");
+        CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
+      }
+
+      return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
       return false;

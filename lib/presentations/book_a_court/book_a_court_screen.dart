@@ -2423,7 +2423,7 @@ class BookACourtScreen extends StatelessWidget {
                       final dateString = selection['date'] as String;
                       final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
                       final duration = isHalfSlot ? 30 : 60;
-
+                      final userId = storage.read("userId")??"";
                       slotsToDelete.add({
                         "slotId": slotId,
                         "courtId": courtId,
@@ -2431,6 +2431,7 @@ class BookACourtScreen extends StatelessWidget {
                         "time": slot.time ?? '',
                         "bookingTime": slot.time ?? '',
                         "duration": duration,
+                        "userId":userId
                       });
                     }
 
