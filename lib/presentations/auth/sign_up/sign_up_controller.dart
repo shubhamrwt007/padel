@@ -47,6 +47,8 @@ class SignUpController extends GetxController {
   String? validatePhone() {
     if (phoneController.text.isEmpty) {
       return "Phone number is required";
+    } else if (phoneController.text.length != 10) {
+      return "Phone number must be exactly 10 digits";
     } else if (!GetUtils.isPhoneNumber(phoneController.text)) {
       return "Invalid phone number";
     } else if (phoneController.text.startsWith(RegExp(r'[1-5]'))) {
