@@ -425,6 +425,7 @@ class BookACourtController extends GetxController {
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
+        final userId = storage.read("userId")??"";
         slotsList.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -432,6 +433,7 @@ class BookACourtController extends GetxController {
           "time": bookingTime,
           "bookingTime": bookingTime,
           "duration": finalDuration,
+          "userId":userId
         });
       }
       log('Bulk delete slot history on back: $slotsList');
@@ -2008,7 +2010,7 @@ class BookACourtController extends GetxController {
             : slot.time ?? '';
         final duration      = isHalfSlot ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
-
+        final userId = storage.read("userId")??"";
         slotsList.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -2018,6 +2020,7 @@ class BookACourtController extends GetxController {
           "bookingTime": bookingTime,
           "duration": finalDuration,
           "totalTime": finalDuration,
+          "userId":userId
         });
       }
       final success = await createAndGetSlotHistory(slots: slotsList);

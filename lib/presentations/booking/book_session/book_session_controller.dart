@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
+import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import '../../../data/request_models/home_models/get_available_court.dart';
@@ -368,7 +369,7 @@ var locationsId = "".obs;
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
             final finalDuration = (slot.duration == 90) ? 90 : duration;
-            
+            final userId = storage.read("userId")??"";
             slots.add({
               "slotId": slotId,
               "courtId": courtId,
@@ -376,6 +377,7 @@ var locationsId = "".obs;
               "time": bookingTime,
               "bookingTime": bookingTime,
               "duration": finalDuration,
+              "userId":userId
             });
           }
         }
@@ -569,7 +571,8 @@ var locationsId = "".obs;
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
           final finalDuration = (slot.duration == 90) ? 90 : 60;
-          
+          final userId = storage.read("userId")??"";
+
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -579,6 +582,7 @@ var locationsId = "".obs;
             "bookingTime": slot.time ?? '',
             "duration": finalDuration,
             "totalTime": finalDuration,
+            "userId":userId
           });
         } else {
           // Single half or full slot - create entries as is
@@ -588,7 +592,7 @@ var locationsId = "".obs;
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
             final finalDuration = (slot.duration == 90) ? 90 : duration;
-            
+            final userId = storage.read("userId")??"";
             slots.add({
               "slotId": slotId,
               "courtId": courtId,
@@ -598,6 +602,7 @@ var locationsId = "".obs;
               "bookingTime": bookingTime,
               "duration": finalDuration,
               "totalTime": finalDuration,
+              "userId":userId
             });
           }
         }
@@ -1999,7 +2004,7 @@ var locationsId = "".obs;
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
           final finalDuration = (slot.duration == 90) ? 90 : 60;
-          
+          final userId = storage.read("userId")??"";
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -2009,6 +2014,7 @@ var locationsId = "".obs;
             "bookingTime": slot.time ?? '',
             "duration": finalDuration,
             "totalTime": finalDuration,
+            "userId":userId
           });
         } else {
           // Single half or full slot - create entries as is
@@ -2018,7 +2024,7 @@ var locationsId = "".obs;
             final isLeftHalf = sel['isLeftHalf'] as bool?;
             final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
             final finalDuration = (slot.duration == 90) ? 90 : duration;
-            
+            final userId = storage.read("userId")??"";
             slots.add({
               "slotId": slotId,
               "courtId": courtId,
@@ -2028,6 +2034,7 @@ var locationsId = "".obs;
               "bookingTime": bookingTime,
               "duration": finalDuration,
               "totalTime": finalDuration,
+              "userId":userId
             });
           }
         }

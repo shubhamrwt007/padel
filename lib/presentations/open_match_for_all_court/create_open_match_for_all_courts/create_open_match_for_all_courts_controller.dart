@@ -428,7 +428,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
-        
+        final userId = storage.read("userId")??"";
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -436,6 +436,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           "time": bookingTime,
           "bookingTime": bookingTime,
           "duration": finalDuration,
+          "userId":userId
         });
       }
       
@@ -2129,7 +2130,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
             : slot.time ?? '';
         final duration = isHalfSlot ? 30 : 60;
         final finalDuration = (slot.duration == 90) ? 90 : duration;
-        
+        final userId = storage.read("userId")??"";
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -2139,6 +2140,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
           "bookingTime": bookingTime,
           "duration": finalDuration,
           "totalTime": finalDuration,
+          "userId":userId
         });
       }
       

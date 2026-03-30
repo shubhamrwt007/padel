@@ -41,7 +41,7 @@ class BookingController extends GetxController with GetSingleTickerProviderState
       await bookSessionController.cleanupOnBack();
     } else {
       // Fallback: call with empty slots
-      await _callDeleteSlotHistoryAPI();
+      // await _callDeleteSlotHistoryAPI();
     }
   }
 
