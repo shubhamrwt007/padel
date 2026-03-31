@@ -22,11 +22,14 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   final Rx<HistoryData?> historyData = Rx<HistoryData?>(null);
   final Rx<StatisticsData?> statisticsData = Rx<StatisticsData?>(null);
   final RxBool isLoadingMatchDetails = false.obs;
+  final RxBool isLoadingHistory = true.obs;
   final RxString matchDetailsError = "".obs;
   
   IO.Socket? _socket;
   final RxBool isSocketConnected = false.obs;
   final RxString youtubeVideoId = "".obs;
+  final RxBool showVideoPlayer = false.obs;
+  final RxBool isStreamLoading = false.obs;
   final Rx<YoutubePlayerController?> youtubeController = Rx<YoutubePlayerController?>(null);
 
   @override
@@ -36,8 +39,8 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     log('🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}');
     log('🔍 Checking matchType for youtube: "${matchType.value}" == "live" → ${matchType.value == "live"}');
     if (matchType.value == "live") {
-      log('▶️ Calling setYoutubeUrl...');
-      setYoutubeUrl("qqxcqo65XGM");
+      log('▶️ Fetching stream url...');
+      fetchStreamUrl();
     }
     if (matchId.value.isNotEmpty) {
       if (matchType.value == "live") {
@@ -58,6 +61,26 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     _disconnectWebSocket();
     youtubeController.value?.dispose();
     super.onClose();
+  }
+
+  Future<void> fetchStreamUrl() async {
+    try {
+      isStreamLoading.value = true;
+      final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
+      final streamKey = response.data?.streamKey;
+      if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
+        showVideoPlayer.value = true;
+        setYoutubeUrl(streamKey);
+      } else {
+        log('⚠️ Stream not available (success=false or no streamKey)');
+        showVideoPlayer.value = false;
+      }
+    } catch (e) {
+      log('❌ fetchStreamUrl error: $e');
+      showVideoPlayer.value = false;
+    } finally {
+      isStreamLoading.value = false;
+    }
   }
 
   void setYoutubeUrl(String videoId) {
@@ -81,6 +104,7 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
       );
       if (type == "history") {
         historyData.value = response.history;
+        isLoadingHistory.value = false;
         _syncHeaderFromHistory();
         _syncSetExpandStateFromHistory();
       } else {
@@ -174,7 +198,7 @@ $data
       
       _socket?.on('connect_error', (err) {
         log('⚠️ Connection failed: $err');
-        matchDetailsError.value = 'Connection failed';
+        matchDetailsError.value = '';
       });
 
       _socket?.on('matchUpdate', (data) {
@@ -203,6 +227,8 @@ $data
           // Handle history
           if (data.containsKey('history')) {
             historyData.value = HistoryData.fromJson(data['history']);
+            isLoadingHistory.value = false;
+            _syncHeaderFromHistory();
             _syncSetExpandStateFromHistory();
           }
           // Handle statistics
@@ -219,6 +245,7 @@ $data
           if (history != null) {
             print('📜 History Data received, updating...');
             historyData.value = HistoryData.fromJson(history);
+            isLoadingHistory.value = false;
             _syncSetExpandStateFromHistory();
           }
         }

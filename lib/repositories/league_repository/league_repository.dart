@@ -6,6 +6,7 @@ import 'package:padel_mobile/data/response_models/league/get_league_leader_board
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_stream_url_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 
 class LeagueRepository {
@@ -151,6 +152,33 @@ class LeagueRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Get League List failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Get Stream Url-------------------------------------------------------------
+  Future<GetStreamUrlModel> getStreamUrl({required String matchId}) async {
+    try {
+      final response = await dioClient.get(
+        "${AppEndpoints.getLeagueMatchDetails}/$matchId/stream-info",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Get Stream Url Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetStreamUrlModel.fromJson(response.data);
+      } else {
+        throw Exception(
+            "Get Stream Url failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Get Stream Url failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

@@ -268,6 +268,14 @@ class NotificationController extends GetxController {
         return;
       }
 
+      if (notificationUrl.startsWith('/league/')) {
+        final leagueId = notificationUrl.split('/league/').last;
+        Get.toNamed(RoutesName.league, arguments: {
+          'leagueId': leagueId,
+        });
+        return;
+      }
+
       switch (notificationUrl) {
         case '/yourMatchRequest':
           Get.toNamed(RoutesName.requests);
