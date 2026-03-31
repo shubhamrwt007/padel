@@ -52,23 +52,29 @@ class LeagueScreen extends StatelessWidget {
                       : "Match Results",
               style: Get.textTheme.headlineMedium,
             ),
-            if(controller.matchTab.value !=1)
-            GestureDetector(
-              onTap: () {
-                Get.toNamed(RoutesName.leagueMatchLists,arguments: {
-                  'matchTab': controller.matchTab.value,
-                  'leagueId': controller.leagueId ?? ''
-                });
-              },
-              child: Container(
-                color: Colors.transparent,
-                child: Text(
-                  "See all",
-                  style: Get.textTheme.labelLarge!
-                      .copyWith(color: AppColors.primaryColor),
-                ),
-              ),
-            ),
+            if (controller.matchTab.value != 1)
+              Obx(() {
+                final hasMatches = controller.matchTab.value == 0
+                    ? (controller.upcomingMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
+                    : (controller.resultMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty;
+                if (!hasMatches) return const SizedBox.shrink();
+                return GestureDetector(
+                  onTap: () {
+                    Get.toNamed(RoutesName.leagueMatchLists, arguments: {
+                      'matchTab': controller.matchTab.value,
+                      'leagueId': controller.leagueId ?? ''
+                    });
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "See all",
+                      style: Get.textTheme.labelLarge!
+                          .copyWith(color: AppColors.primaryColor),
+                    ),
+                  ),
+                );
+              }),
           ],
         ).paddingSymmetric(horizontal: 18,vertical: 8)),
         Expanded(
@@ -1400,82 +1406,73 @@ class LeaderBoardWidget extends StatelessWidget {
       children: [
         Obx(() {
           if (controller.isLoadingLeaderBoard.value) {
-            return Container(
+            return SizedBox(
               height: 200,
               child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
             );
           }
 
           final standings = controller.leaderBoard.value?.data?.standings ?? [];
-          
+
+          if (standings.isEmpty) return const SizedBox.shrink();
+
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey.shade100,
-                      spreadRadius: 1.5,
-                      blurRadius: 5.0,
-                    offset: Offset(0, 3)
-                  )
-                ]
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade100,
+                  spreadRadius: 1.5,
+                  blurRadius: 5.0,
+                  offset: Offset(0, 3),
+                )
+              ],
             ),
             child: Column(
               children: [
-                /// Header Row
                 _headerRow(),
-
-                Divider(color: Colors.grey.shade300,),
-
-                /// List
-                if (standings.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Text(
-                      "No leaderboard data available",
-                      style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                    ),
-                  )
-                else
-                  ...standings.map((standing) {
-                    return Column(
-                      children: [
-                        _teamRow(standing),
-                        Divider(color: Colors.grey.shade300,),
-                      ],
-                    );
-                  }).toList(),
+                Divider(color: Colors.grey.shade300),
+                ...standings.map((standing) {
+                  return Column(
+                    children: [
+                      _teamRow(standing),
+                      Divider(color: Colors.grey.shade300),
+                    ],
+                  );
+                }).toList(),
               ],
             ),
-          );
-        }).paddingOnly(bottom: 20),
+          ).paddingOnly(bottom: 20);
+        }),
         BuildSponsorBanner(controller: Get.find<LeagueController>()),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Upcoming Matches",
-              style: Get.textTheme.headlineMedium,
-            ),
-            GestureDetector(
-              onTap: () {
-                Get.toNamed(RoutesName.leagueMatchLists,arguments: {
-                  'matchTab': 0,
-                  'leagueId': controller.leagueId ?? ''
-                });
-              },
-              child: Container(
-                color: Colors.transparent,
-                child: Text(
-                  "See all",
-                  style: Get.textTheme.labelLarge!
-                      .copyWith(color: AppColors.primaryColor),
+        Obx(() {
+          final hasUpcoming = (controller.upcomingMatches.value?.data ?? [])
+              .expand((d) => d.matches ?? []).isNotEmpty;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Upcoming Matches", style: Get.textTheme.headlineMedium),
+              if (hasUpcoming)
+                GestureDetector(
+                  onTap: () {
+                    Get.toNamed(RoutesName.leagueMatchLists, arguments: {
+                      'matchTab': 0,
+                      'leagueId': controller.leagueId ?? ''
+                    });
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                    child: Text(
+                      "See all",
+                      style: Get.textTheme.labelLarge!
+                          .copyWith(color: AppColors.primaryColor),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ).paddingSymmetric(horizontal: 18,vertical: 8),
+            ],
+          ).paddingSymmetric(horizontal: 18, vertical: 8);
+        }),
         _upcomingList()
       ],
     );

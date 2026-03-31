@@ -233,6 +233,7 @@ class SignUpController extends GetxController {
 
     } else {
       AppToast.error(result.message!);
+      print("ERROR----------------->${result.message!}");
     }
   }
   Future<String?> getFcmToken() async {
