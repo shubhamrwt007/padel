@@ -195,8 +195,8 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                 /// TEAM A
                 Column(
                   children: [
-                    Text(controller.historyData.value?.teamA?.teamName ?? "",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 23)),
+                    Text(controller.historyData.value?.teamA?.clubName ?? "",
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamA),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
@@ -206,7 +206,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
                 /// SCORE
                 Transform.translate(
-                  offset: Offset(3, -5),
+                  offset: Offset(7, 0),
                   child: Text(
                     "${controller.teamAScore.value} : ${controller.teamBScore.value}",
                     style: Get.textTheme.titleLarge!.copyWith(color: Colors.black,fontSize: 40),
@@ -216,8 +216,8 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                 /// TEAM B
                 Column(
                   children: [
-                    Text(controller.historyData.value?.teamB?.teamName ?? "",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 23,color: AppColors.secondaryColor)),
+                    Text(controller.historyData.value?.teamB?.clubName ?? "",
+                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamB),
                         style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),

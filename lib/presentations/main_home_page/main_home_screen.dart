@@ -753,7 +753,7 @@ class MainHomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _teamColumn(
-                        match.teamA?.teamName ?? "Team A",
+                        match.teamA?.clubType ?? "Team A",
                         "https://i.pravatar.cc/150?img=1",
                         "https://i.pravatar.cc/150?img=2",
                         (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
@@ -774,7 +774,7 @@ class MainHomeScreen extends StatelessWidget {
                         ),
                       ),
                       _teamColumn(
-                        match.teamB?.teamName ?? "Team B",
+                        match.teamB?.clubType ?? "Team B",
                         "https://i.pravatar.cc/150?img=3",
                         "https://i.pravatar.cc/150?img=4",
                         (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
@@ -898,7 +898,7 @@ class MainHomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _teamColumn(
-                      firstMatch.teamA?.teamName ?? "Team A",
+                      firstMatch.teamA?.clubName ?? "Team A",
                       "https://i.pravatar.cc/150?img=1",
                       "https://i.pravatar.cc/150?img=2",
                       teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
@@ -915,7 +915,7 @@ class MainHomeScreen extends StatelessWidget {
                           ],
                         )),
                     _teamColumn(
-                      firstMatch.teamB?.teamName ?? "Team B",
+                      firstMatch.teamB?.ckubName ?? "Team B",
                       "https://i.pravatar.cc/150?img=3",
                       "https://i.pravatar.cc/150?img=4",
                       teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
