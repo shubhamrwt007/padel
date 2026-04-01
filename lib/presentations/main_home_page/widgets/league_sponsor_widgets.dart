@@ -177,26 +177,24 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
           return Row(
             children: [
               if (sponsor.logo != null)
-                ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: sponsor.logo!,
-                    width: 20,
-                    height: 20,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                    errorWidget: (context, url, error) =>
-                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                  ),
+                CachedNetworkImage(
+                  imageUrl: sponsor.logo!,
+                  // width: 20,
+                  // height: 20,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+                  errorWidget: (context, url, error) =>
+                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
                 ).paddingOnly(right: 5)
               else
                 const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
                     .paddingOnly(right: 5),
-              Text(
-                sponsor.name ?? "Sponsor",
-                style: Get.textTheme.bodySmall!
-                    .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
-              ),
+              // Text(
+              //   sponsor.name ?? "Sponsor",
+              //   style: Get.textTheme.bodySmall!
+              //       .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
+              // ),
             ],
           ).paddingOnly(right: 16);
         },

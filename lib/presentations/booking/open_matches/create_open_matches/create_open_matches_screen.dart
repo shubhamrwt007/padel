@@ -448,7 +448,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                         duration: const Duration(milliseconds: 250),
                         height: 30,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.white,
+                          color: isSelected ? AppColors.primaryColor : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
 
@@ -467,7 +467,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                             tab["icon"] as IconData,
                             size: 20,
                             color: isSelected
-                                ? AppColors.primaryColor
+                                ? AppColors.whiteColor
                                 : Colors.black87,
                           ),
                         ),

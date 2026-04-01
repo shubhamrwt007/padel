@@ -65,7 +65,7 @@ class SupportScreen extends StatelessWidget {
                         ),
                       ),
                       SelectableText(
-                        "+91 9592226666",
+                        "+91 9115559606",
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -84,7 +84,6 @@ class SupportScreen extends StatelessWidget {
 
               PrimaryTextField(
                 color: AppColors.whiteColor,
-
                 controller: controller.titleController,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {

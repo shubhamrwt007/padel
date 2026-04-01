@@ -2041,8 +2041,41 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       courtsByDuration.value = response;
       isLoadingCourtsByDuration.value = false;
       log('✅ courtsByDuration updated: ${response.data?.length} clubs');
+      _deselectLockedOrBookedSlots(response);
     } catch (e) {
       log('❌ Error parsing courtsByDuration socket data: $e');
+    }
+  }
+
+  void _deselectLockedOrBookedSlots(GetCourtsByDurationModel response) {
+    final Map<String, Map<String, String>> slotStatusMap = {};
+    for (final club in response.data ?? []) {
+      for (final court in club.courts ?? []) {
+        final courtId = court.id ?? '';
+        slotStatusMap[courtId] = {};
+        for (final slot in court.slots ?? []) {
+          slotStatusMap[courtId]![slot.id ?? ''] = _normalizeStatus(slot.status);
+        }
+      }
+    }
+
+    final keysToRemove = <String>[];
+    realCourtSelections.forEach((key, value) {
+      final courtId = value['courtId'] as String;
+      final slot = value['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final status = slotStatusMap[courtId]?[slotId] ?? '';
+      if (status == 'locked' || status == 'lock' || status == 'booked' || status == 'unavailable') {
+        keysToRemove.add(key);
+        log('🔒 Auto-deselecting slot $slotId (status: $status)');
+      }
+    });
+
+    if (keysToRemove.isNotEmpty) {
+      for (final k in keysToRemove) realCourtSelections.remove(k);
+      recalculateRealCourtTotalAmount();
+      realCourtSelections.refresh();
+      // AppToast.error("Some selected slots are no longer available");
     }
   }
 

@@ -861,29 +861,48 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
-  void _handleRealTimeSlotUpdate(dynamic slotData) {
+  void _handleRealTimeSlotUpdate(dynamic socketResponse) {
     try {
-      if (slotData != null) {
-        Map<String, dynamic> dataMap;
-        if (slotData is List) {
-          dataMap = {'data': slotData};
-        } else if (slotData is Map<String, dynamic>) {
-          dataMap = slotData;
-        } else {
-          log('❌ Unexpected data format: \${slotData.runtimeType}');
-          return;
-        }
-        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
-        _updateSocketSlotData(parsedData);
-        log('✅ Real-time slot data updated in UI');
+      if (socketResponse == null) return;
+
+      final responseClubId = socketResponse['clubId']?.toString() ?? '';
+      final responseDate = socketResponse['date']?.toString() ?? '';
+      final slotData = socketResponse['data'] ?? socketResponse;
+
+      final currentClubId = argument.id ?? '';
+      final currentDate = selectedDate.value ?? DateTime.now();
+      final currentDateString = _dateFormatter.format(currentDate);
+
+      if (responseClubId.isNotEmpty && responseClubId != currentClubId) {
+        log('⚠️ Ignoring socket update: clubId mismatch (got $responseClubId, current $currentClubId)');
+        return;
       }
+
+      if (responseDate.isNotEmpty && responseDate != currentDateString) {
+        log('⚠️ Ignoring socket update: date mismatch (got $responseDate, current $currentDateString)');
+        return;
+      }
+
+      Map<String, dynamic> dataMap;
+      if (slotData is List) {
+        dataMap = {'data': slotData};
+      } else if (slotData is Map<String, dynamic>) {
+        dataMap = slotData;
+      } else {
+        log('❌ Unexpected data format: ${slotData.runtimeType}');
+        return;
+      }
+      final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+      _updateSocketSlotData(parsedData);
+      log('✅ Real-time slot data updated in UI');
     } catch (e) {
-      log('❌ Error handling real-time slot update: \$e');
+      log('❌ Error handling real-time slot update: $e');
     }
   }
 
   void _updateSocketSlotData(GetAllActiveCourtsForSlotWiseModel socketData) {
     try {
+      _deSelectAndCleanupConflictingSlots(socketData);
       _allSlotsCache.clear();
       for (var court in socketData.data ?? []) {
         _allSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
@@ -902,7 +921,81 @@ class CreateOpenMatchesController extends GetxController {
       _autoSelectTab();
       log('✅ Socket slot data processed and displayed');
     } catch (e) {
-      log('❌ Error updating socket slot data: \$e');
+      log('❌ Error updating socket slot data: $e');
+    }
+  }
+
+  void _deSelectAndCleanupConflictingSlots(GetAllActiveCourtsForSlotWiseModel socketData) {
+    if (multiDateSelections.isEmpty) return;
+
+    final Map<String, Slots> updatedSlotMap = {};
+    for (final court in socketData.data ?? []) {
+      for (final slot in court.slots ?? []) {
+        if (slot.sId != null) updatedSlotMap[slot.sId!] = slot;
+      }
+    }
+
+    final keysToRemove = <String>[];
+    final slotsToDelete = <Map<String, dynamic>>[];
+
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final updatedSlot = updatedSlotMap[slotId];
+      if (updatedSlot == null) return;
+
+      final status = updatedSlot.status?.toLowerCase() ?? '';
+      if (status == 'booked' || status == 'lock') {
+        keysToRemove.add(key);
+        final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
+        final userId = storage.read('userId') ?? '';
+        slotsToDelete.add({
+          'slotId': slotId,
+          'courtId': courtId,
+          'bookingDate': dateString,
+          'time': bookingTime,
+          'bookingTime': bookingTime,
+          'duration': finalDuration,
+          'userId': userId,
+        });
+      }
+    });
+
+    if (keysToRemove.isEmpty) return;
+
+    final slotIdsToClean = <String>{};
+    final courtIdsToClean = <String, String>{};
+    for (final key in keysToRemove) {
+      final selection = multiDateSelections[key];
+      if (selection != null) {
+        final slot = selection['slot'] as Slots;
+        final courtId = selection['courtId'] as String;
+        slotIdsToClean.add(slot.sId ?? '');
+        courtIdsToClean[slot.sId ?? ''] = courtId;
+      }
+    }
+
+    for (final key in keysToRemove) {
+      multiDateSelections.remove(key);
+    }
+
+    for (final slotId in slotIdsToClean) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      final courtId = courtIdsToClean[slotId] ?? '';
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+
+    _recalculateTotalAmount();
+    log('⚠️ Deselected ${keysToRemove.length} slots that became booked/locked');
+
+    if (slotsToDelete.isNotEmpty) {
+      deleteSlotHistory(slots: slotsToDelete);
     }
   }
 
