@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:padel_mobile/data/request_models/home_models/get_club_name_model.dart';
+import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/booking/home_content/home_content_controller.dart';
@@ -39,7 +40,9 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     if (Get.isRegistered<BookSessionController>()) {
       final bookSessionController = Get.find<BookSessionController>();
       await bookSessionController.cleanupOnBack();
-    } else {
+    } else if (Get.isRegistered<BookACourtController>()){
+      final bookAcourtController = Get.find<BookACourtController>();
+      await bookAcourtController.cleanupOnBack();
       // Fallback: call with empty slots
       // await _callDeleteSlotHistoryAPI();
     }

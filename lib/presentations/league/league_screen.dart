@@ -11,6 +11,7 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
 
 class LeagueScreen extends StatelessWidget {
   final LeagueController controller =Get.put(LeagueController());
@@ -39,7 +40,12 @@ class LeagueScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _liveMatchCard().paddingOnly(bottom: 10),
-        BuildSponsorBanner(controller: controller),
+        BuildTitleSponsor(controller: controller),
+        Obx(() {
+          final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
+          if (sponsors.isEmpty) return const SizedBox.shrink();
+          return BuildMoreSponsor(sponsors: sponsors);
+        }),
         _buildTabs(context),
         Obx(() => Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1455,7 +1461,12 @@ class LeaderBoardWidget extends StatelessWidget {
             ),
           ).paddingOnly(bottom: 20);
         }),
-        BuildSponsorBanner(controller: Get.find<LeagueController>()),
+        BuildTitleSponsor(controller: controller),
+        Obx(() {
+          final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
+          if (sponsors.isEmpty) return const SizedBox.shrink();
+          return BuildMoreSponsor(sponsors: sponsors);
+        }),
         Obx(() {
           final hasUpcoming = (controller.upcomingMatches.value?.data ?? [])
               .expand((d) => d.matches ?? []).isNotEmpty;

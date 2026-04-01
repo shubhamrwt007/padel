@@ -110,9 +110,13 @@ class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.sponsors.isEmpty) return const SizedBox.shrink();
+    final tier3Sponsors = widget.sponsors
+        .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 3')
+        .toList();
 
-    final loopedSponsors = [...widget.sponsors, ...widget.sponsors, ...widget.sponsors];
+    if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
+
+    final loopedSponsors = [...tier3Sponsors, ...tier3Sponsors, ...tier3Sponsors];
 
     return Container(
       height: 30,
@@ -132,26 +136,24 @@ class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
           return Row(
             children: [
               if (sponsor.logo != null)
-                ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: sponsor.logo!,
-                    width: 20,
-                    height: 20,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                    errorWidget: (context, url, error) =>
-                        const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                  ),
+                CachedNetworkImage(
+                  imageUrl: sponsor.logo!,
+                  // width: 20,
+                  // height: 20,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+                  errorWidget: (context, url, error) =>
+                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
                 ).paddingOnly(right: 5)
               else
                 const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
                     .paddingOnly(right: 5),
-              Text(
-                sponsor.name ?? "Sponsor",
-                style: Get.textTheme.bodySmall!
-                    .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
-              ),
+              // Text(
+              //   sponsor.name ?? "Sponsor",
+              //   style: Get.textTheme.bodySmall!
+              //       .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
+              // ),
             ],
           ).paddingOnly(right: 16);
         },
@@ -188,28 +190,21 @@ class BuildTitleSponsor extends StatelessWidget {
               style:
                   Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),
             ).paddingOnly(bottom: 6),
-            if (sponsorData.titleSponsor?.logo != null)
-              CachedNetworkImage(
-                imageUrl: sponsorData.titleSponsor!.logo!,
-                height: 40,
-                placeholder: (context, url) => Container(
-                  height: 40,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Image.asset(
-                  Assets.imagesImgDummyLogo2,
-                  height: 40,
-                ),
-              )
-            else
-              Image.asset(
-                Assets.imagesImgDummyLogo2,
-                height: 40,
-              ),
+            SizedBox(
+              height: 48,
+              width: 120,
+              child: sponsorData.titleSponsor?.logo != null
+                  ? CachedNetworkImage(
+                      imageUrl: sponsorData.titleSponsor!.logo!,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                      errorWidget: (context, url, error) => Image.asset(
+                        Assets.imagesImgDummyLogo2,
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : Image.asset(Assets.imagesImgDummyLogo2, fit: BoxFit.contain),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [
@@ -227,34 +222,29 @@ class BuildTitleSponsor extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: () {
-                  final items = sponsorData.sponsors!.take(3).toList();
+                  final items = sponsorData.sponsors!
+                      .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 2')
+                      .take(3)
+                      .toList();
                   final children = <Widget>[];
 
                   for (final sponsor in items) {
                     children.add(
                       Expanded(
-                        child: sponsor.logo != null
-                            ? CachedNetworkImage(
-                                imageUrl: sponsor.logo!,
-                                height: 25,
-                                placeholder: (context, url) => Container(
-                                  height: 25,
-                                  width: 25,
-                                  child: Center(
-                                    child:LoadingWidget(color: Colors.red,)
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Icon(
-                                  Icons.image_not_supported,
-                                  size: 25,
-                                  color: Colors.grey,
-                                ),
-                              )
-                            : Icon(
-                                Icons.image_not_supported,
-                                size: 25,
-                                color: Colors.grey,
-                              ),
+                        child: Center(
+                          child: SizedBox(
+                            height: 20,
+                            width: 70,
+                            child: sponsor.logo != null
+                                ? CachedNetworkImage(
+                                    imageUrl: sponsor.logo!,
+                                    fit: BoxFit.contain,
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.image_not_supported, size: 20, color: Colors.grey),
+                                  )
+                                : const Icon(Icons.image_not_supported, size: 20, color: Colors.grey),
+                          ),
+                        ),
                       ),
                     );
                     children.add(_divider());

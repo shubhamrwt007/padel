@@ -46,7 +46,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
               radius: 18,
               backgroundColor: AppColors.textFieldColor,
               child: const Icon(Icons.share, size: 18,color: AppColors.primaryColor,),
-            )
+            ).paddingOnly(right: 10)
           ]
       ),
       body: Obx(() {

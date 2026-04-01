@@ -157,8 +157,8 @@ class SocketService extends GetxService {
         // This contains updated slot data when bookings happen
         if (res != null && res['data'] != null) {
           log('📡 Processing slotWise:data with callback');
-          // Handle real-time slot data updates
-          _handleSlotDataUpdateWithCallback(res['data']);
+          // Pass full response (includes date, clubId) so controller can validate
+          _handleSlotDataUpdateWithCallback(res);
         } else {
           log('⚠️ slotWise:data received but no data field found');
         }

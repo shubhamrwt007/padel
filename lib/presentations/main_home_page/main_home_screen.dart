@@ -790,9 +790,13 @@ class MainHomeScreen extends StatelessWidget {
                           print('👆 Live match card tapped');
                           print('🎫 Match ID: $matchId');
                           print('🎫 Match Type: live');
-                          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                            "matchType":"live",
-                            "matchId": matchId ?? ""
+                          // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                          //   'matchType': 'live',
+                          //   'matchId': matchId ?? '',
+                          // });
+                          final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+                          Get.toNamed(RoutesName.league, arguments: {
+                            'leagueId': leagueId,
                           });
                         },
                         child: Container(
@@ -864,87 +868,96 @@ class MainHomeScreen extends StatelessWidget {
         }
       }
 
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Stack(
-          children: [
-            Image.asset(Assets.imagesImgLeagueUpcomingMatch, fit: BoxFit.cover, width: Get.width),
-            Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+      return GestureDetector(
+        onTap: (){
+          final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+          Get.toNamed(RoutesName.leagueMatchLists, arguments: {
+            'matchTab': 0,
+            'leagueId': leagueId
+          });
+        },
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Stack(
+            children: [
+              Image.asset(Assets.imagesImgLeagueUpcomingMatch, fit: BoxFit.cover, width: Get.width),
+              Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
+                        SizedBox(width: 6),
+                        Text(
+                          "Upcoming",
+                          style: Get.textTheme.labelMedium!.copyWith(
+                              fontWeight: FontWeight.w500, color: AppColors.primaryColor),
+                        ),
+                      ],
+                    ),
+                  ).paddingOnly(top: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
-                      SizedBox(width: 6),
-                      Text(
-                        "Upcoming",
-                        style: Get.textTheme.labelMedium!.copyWith(
-                            fontWeight: FontWeight.w500, color: AppColors.primaryColor),
+                      _teamColumn(
+                        firstMatch.teamA?.clubType ?? "Team A",
+                        "https://i.pravatar.cc/150?img=1",
+                        "https://i.pravatar.cc/150?img=2",
+                        teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
+                        teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
+                        AppColors.primaryColor,
+                      ),
+                      Transform.translate(
+                          offset: Offset(0, -8),
+                          child: Column(
+                            children: [
+                              Text(matchData.categoryType ?? "", style: Get.textTheme.labelMedium),
+                              SizedBox(height: 8),
+                              SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                            ],
+                          )),
+                      _teamColumn(
+                        firstMatch.teamB?.clubType ?? "Team B",
+                        "https://i.pravatar.cc/150?img=3",
+                        "https://i.pravatar.cc/150?img=4",
+                        teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
+                        teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 2") : "Player 2",
+                        AppColors.primaryColor,
                       ),
                     ],
                   ),
-                ).paddingOnly(top: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _teamColumn(
-                      firstMatch.teamA?.clubName ?? "Team A",
-                      "https://i.pravatar.cc/150?img=1",
-                      "https://i.pravatar.cc/150?img=2",
-                      teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
-                      teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
-                      AppColors.primaryColor,
+                  GestureDetector(
+                    onTap: () {
+                      // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                      //   "matchType": "upcoming"
+                      // });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                      decoration: BoxDecoration(
+                          color: AppColors.primaryColor,
+                          borderRadius: BorderRadius.circular(30)),
+                      child: Text(formatDate(matchData.date),
+                          style: Get.textTheme.labelMedium!
+                              .copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
                     ),
-                    Transform.translate(
-                        offset: Offset(0, -8),
-                        child: Column(
-                          children: [
-                            Text(matchData.categoryType ?? "", style: Get.textTheme.labelMedium),
-                            SizedBox(height: 8),
-                            SvgPicture.asset(Assets.imagesImgVsUpcoming),
-                          ],
-                        )),
-                    _teamColumn(
-                      firstMatch.teamB?.ckubName ?? "Team B",
-                      "https://i.pravatar.cc/150?img=3",
-                      "https://i.pravatar.cc/150?img=4",
-                      teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
-                      teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 2") : "Player 2",
-                      AppColors.primaryColor,
-                    ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () {
-                    // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                    //   "matchType": "upcoming"
-                    // });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: AppColors.primaryColor,
-                        borderRadius: BorderRadius.circular(30)),
-                    child: Text(formatDate(matchData.date),
-                        style: Get.textTheme.labelMedium!
-                            .copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ).paddingOnly(bottom: 10);
+                ],
+              ),
+            ],
+          ),
+        ).paddingOnly(bottom: 10),
+      );
     });
   }
   Widget _buildLeaguePointsTable(){
@@ -1086,9 +1099,14 @@ class MainHomeScreen extends StatelessWidget {
       child: Column(
         children: [
           /// TEAM LABEL
-          Text(
-            team,
-            style:Get.textTheme.headlineMedium!.copyWith(color: color)
+          Container(
+            width: Get.width*0.2,
+            color: Colors.transparent,
+            child: Text(
+              overflow: TextOverflow.ellipsis,
+              team,
+              style:Get.textTheme.headlineMedium!.copyWith(color: color)
+            ),
           ),
 
           const SizedBox(height: 15),
