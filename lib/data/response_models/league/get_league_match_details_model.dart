@@ -231,11 +231,7 @@ class SetData {
 
   SetData.fromJson(Map<String, dynamic> json) {
     setNumber = json['setNumber'];
-
-    finalScore = json['finalScore'] != null
-        ? FinalScore.fromJson(json['finalScore'])
-        : null;
-
+    finalScore = json['finalScore'] != null ? FinalScore.fromJson(json['finalScore']) : null;
     if (json['rounds'] != null) {
       rounds = <RoundData>[];
       json['rounds'].forEach((v) {
@@ -267,14 +263,8 @@ class RoundData {
 
   RoundData.fromJson(Map<String, dynamic> json) {
     round = json['round'];
-
-    score =
-    json['score'] != null ? FinalScore.fromJson(json['score']) : null;
-
-    pointsAtEnd = json['pointsAtEnd'] != null
-        ? CurrentPoints.fromJson(json['pointsAtEnd'])
-        : null;
-
+    score = json['score'] != null ? FinalScore.fromJson(json['score']) : null;
+    pointsAtEnd = json['pointsAtEnd'] != null ? CurrentPoints.fromJson(json['pointsAtEnd']) : null;
     completedAt = json['completedAt'];
   }
 }

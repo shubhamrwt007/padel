@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
@@ -23,12 +24,12 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
   Widget build(BuildContext context) {
     return Obx(() {
       final ytController = controller.youtubeController.value;
-      if (controller.matchType.value == "live" && ytController != null) {
+      if (controller.matchType.value == "live" && controller.showVideoPlayer.value && ytController != null) {
         return YoutubePlayerBuilder(
           player: YoutubePlayer(
             controller: ytController,
             showVideoProgressIndicator: true,
-            progressIndicatorColor: AppColors.primaryColor,
+
           ),
           builder: (context, player) => _buildScaffold(context, videoPlayer: player),
         );
@@ -54,11 +55,19 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
         final history = controller.historyData.value;
         final sets = history?.sets ?? const [];
 
+        if (controller.isLoadingHistory.value) {
+          return const Center(child: LoadingWidget(color: AppColors.primaryColor,));
+        }
+
         return Column(
           children: [
-            controller.matchType.value == "live"
+            controller.matchType.value == "live" && controller.showVideoPlayer.value
                 ? _buildVideoSection(videoPlayer)
-                : _buildSponsorBannerSafe(),
+                : controller.matchType.value == "live" && controller.isStreamLoading.value
+                    ? const SizedBox(height: 200, child: Center(child: LoadingWidget(color: AppColors.primaryColor,)))
+                    : controller.matchType.value == "live"
+                        ? const SizedBox.shrink()
+                        : _buildSponsorBannerSafe(),
             _buildScoreSection(),
             _buildTabSelector(),
             if (isLoading) LinearProgressIndicator(color: AppColors.primaryColor,minHeight: 1,),
@@ -73,19 +82,16 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
             Expanded(
               child: controller.selectedTab.value == 1
                   ? MatchStatsCard(controller: controller)
-                  : sets.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No history available",
-                            style: Get.textTheme.bodyMedium,
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: sets.length,
-                          itemBuilder: (context, index) {
-                            return _buildSetTwoCard(index).paddingOnly(bottom: 10);
-                          },
-                        ),
+                  : controller.isLoadingHistory.value
+                      ? const Center(child: LoadingWidget( color: AppColors.primaryColor,))
+                      : sets.isEmpty
+                          ? Center(child: Text("No history available", style: Get.textTheme.bodyMedium))
+                          : ListView.builder(
+                              itemCount: sets.length,
+                              itemBuilder: (context, index) {
+                                return _buildSetTwoCard(index).paddingOnly(bottom: 10);
+                              },
+                            ),
             ),
           ],
         );
@@ -109,7 +115,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
           height: 200,
           width: double.infinity,
           color: Colors.black,
-          child: const Center(child: CircularProgressIndicator(color: Colors.white54)),
+          child: const Center(child: LoadingWidget(color: Colors.white54)),
         ),
         // Positioned(left: 16, top: 16, child: _liveBadge()),
       ],
@@ -189,7 +195,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                 /// TEAM A
                 Column(
                   children: [
-                    Text(controller.historyData.value?.teamA?.teamName ?? "Team",
+                    Text(controller.historyData.value?.teamA?.teamName ?? "",
                         style: Get.textTheme.titleLarge!.copyWith(fontSize: 23)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamA),
@@ -210,7 +216,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                 /// TEAM B
                 Column(
                   children: [
-                    Text(controller.historyData.value?.teamB?.teamName ?? "Team",
+                    Text(controller.historyData.value?.teamB?.teamName ?? "",
                         style: Get.textTheme.titleLarge!.copyWith(fontSize: 23,color: AppColors.secondaryColor)),
                     const SizedBox(height: 6),
                     Text(_teamPlayersText(controller.historyData.value?.teamB),
@@ -651,10 +657,10 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
       );
     }
 
-    // Legacy UI layout (R1..R8 grid) with API data injected.
-    final maxCols = 8;
-    final cols = rounds.length >= maxCols ? maxCols : rounds.length;
-    final visibleRounds = rounds.take(maxCols).toList();
+    final visibleRounds = rounds.toList();
+    final cols = visibleRounds.length;
+    const int maxVisible = 8;
+    final needsScroll = cols > maxVisible;
 
     String leftTimeLabel() {
       final completedAt = visibleRounds.first.completedAt ?? "";
@@ -684,107 +690,107 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
       }
     }
 
-    Widget scoreCell(String? v) => _roundCell(Text((v ?? "-").toString()));
-
     return Column(
       children: [
         const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
+        needsScroll
+            ? SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: 50 + (cols * 40.0),
+                  child: _roundsContent(sets, index, visibleRounds, cols),
+                ),
+              )
+            : _roundsContent(sets, index, visibleRounds, cols),
+      ],
+    );
+  }
+
+  Widget _roundsContent(List sets, int index, List visibleRounds, int cols) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const SizedBox(width: 50),
-                      for (int i = 0; i < cols; i++) _roundTitle("R${i + 1}"),
-                      for (int i = cols; i < maxCols; i++) _roundTitle(""),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          RotatedBox(
-                            quarterTurns: 3,
-                            child: Text(
-                              leftTimeLabel(),
-                              style: Get.textTheme.labelSmall!.copyWith(
-                                color: AppColors.labelBlackColor,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 4,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: const Color(0xff2D5BFF),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            (sets[index].finalScore?.teamA ?? 0).toString(),
-                            style: Get.textTheme.headlineMedium!.copyWith(
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      for (int i = 0; i < maxCols; i++)
-                        i < visibleRounds.length
-                            ? scoreCell(visibleRounds[i].score?.teamA?.toString())
-                            : scoreCell("-"),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Divider(thickness: 0.5, color: Colors.grey.shade300).paddingOnly(left: 30),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const SizedBox(width: 25),
-                          Container(
-                            width: 4,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: AppColors.secondaryColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            (sets[index].finalScore?.teamB ?? 0).toString(),
-                            style: Get.textTheme.headlineMedium!.copyWith(
-                              color: AppColors.secondaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      for (int i = 0; i < maxCols; i++)
-                        i < visibleRounds.length
-                            ? scoreCell(visibleRounds[i].score?.teamB?.toString())
-                            : scoreCell("-"),
-                    ],
-                  ),
+                  const SizedBox(width: 50),
+                  for (int i = 0; i < cols; i++) Expanded(child: Center(child: Text("R${i + 1}", style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500)))),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      RotatedBox(
+                        quarterTurns: 3,
+                        child: Text(
+                          visibleRounds.first.completedAt != null ? _parseTime(visibleRounds.first.completedAt!) : "-",
+                          style: Get.textTheme.labelSmall!.copyWith(color: AppColors.labelBlackColor, fontSize: 10),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(width: 4, height: 30, decoration: BoxDecoration(color: const Color(0xff2D5BFF), borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(width: 12),
+                      Text((sets[index].finalScore?.teamA ?? 0).toString(), style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.primaryColor)),
+                    ],
+                  ),
+                  for (int i = 0; i < cols; i++)
+                    Expanded(child: Center(child: Text((visibleRounds[i].score?.teamA ?? "-").toString(), style: Get.textTheme.bodySmall))),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Divider(thickness: 0.5, color: Colors.grey.shade300).paddingOnly(left: 30),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const SizedBox(width: 25),
+                      Container(width: 4, height: 30, decoration: BoxDecoration(color: AppColors.secondaryColor, borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(width: 12),
+                      Text((sets[index].finalScore?.teamB ?? 0).toString(), style: Get.textTheme.headlineMedium!.copyWith(color: AppColors.secondaryColor)),
+                    ],
+                  ),
+                  for (int i = 0; i < cols; i++)
+                    Expanded(child: Center(child: Text((visibleRounds[i].score?.teamB ?? "-").toString(), style: Get.textTheme.bodySmall))),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
+  String _parseTime(String completedAt) {
+    try {
+      if (completedAt.contains('T')) return completedAt.split('T').last.substring(0, 5);
+      if (completedAt.contains(':')) return completedAt.length >= 5 ? completedAt.substring(0, 5) : completedAt;
+      return completedAt.length >= 5 ? completedAt.substring(completedAt.length - 5) : completedAt;
+    } catch (_) {
+      return "-";
+    }
+  }
+
   Widget _buildExpandedSetGrid(int index) => _buildRoundsForSet(index);
+
+  Widget _wlWidget(bool? isWin) {
+    if (isWin == null) return const Text("-");
+    return Text(
+      isWin ? "W" : "L",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+        color: isWin ? AppColors.secondaryColor : Colors.red,
+      ),
+    );
+  }
 
   Widget _roundTitle(String text) {
     const double colWidth = 32;

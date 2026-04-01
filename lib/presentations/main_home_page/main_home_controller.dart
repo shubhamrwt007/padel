@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
@@ -16,12 +14,14 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
-class MainHomeController extends GetxController{
+
+class MainHomeController extends GetxController {
   final ProfileController profileController = Get.put(ProfileController());
   final HomeController homeController = Get.put(HomeController());
   final HomeRepository _homeRepository = HomeRepository();
   final OpenMatchRepository _openMatchRepository = OpenMatchRepository();
   final LeagueRepository _leagueRepository = LeagueRepository();
+
   final Rx<GetNearCityPlayers?> nearCityPlayers = Rx<GetNearCityPlayers?>(null);
   final RxBool isLoadingPlayers = false.obs;
   final RxInt leagueLiveCarouselIndex = 0.obs;
@@ -29,28 +29,18 @@ class MainHomeController extends GetxController{
   final RxBool isLoadingScheduleMatches = false.obs;
   final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
-  // final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
-  final RxBool isLoadingSponsors = false.obs;
-  
+  final RxBool isLoadingLeagueSection = false.obs;
   final Rx<GetLeagueListModel?> activeLeagues = Rx<GetLeagueListModel?>(null);
   final RxBool isLoadingActiveLeagues = false.obs;
   final RxInt leagueCarouselIndex = 0.obs;
-  // Sport Tab Selection
-  final RxInt selectedSportTab = 0.obs; // 0 = Padel, 1 = Pickleball
-  
-  // Category data
+  final RxInt selectedSportTab = 0.obs;
   final Rx<GetCategoryModel?> categoryModel = Rx<GetCategoryModel?>(null);
   final RxBool isLoadingCategory = false.obs;
   final RxString selectedCategoryId = ''.obs;
-  
-  // Open Matches
   final Rx<OpenMatchBookingModel?> openMatches = Rx<OpenMatchBookingModel?>(null);
   final RxBool isLoadingOpenMatches = false.obs;
-
-  // Banner functionality
   final RxInt currentBannerIndex = 0.obs;
-  Timer? _bannerTimer;
-  late PageController pageController;
+  var customerRank = 0.obs;
 
   final List<String> padelBannerImages = [
     Assets.imagesNewHomeBanner,
@@ -77,76 +67,59 @@ class MainHomeController extends GetxController{
   }
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
-    pageController = PageController(initialPage: 1000);
-    
     clearAllData();
-    
-    // Fetch categories first and wait for it to complete
+    _initData();
+  }
+
+  Future<void> _initData() async {
     await fetchCategories();
+    isLoadingLeagueSection.value = true;
     await fetchActiveLeagues();
 
-    // Now fetch bookings with the selected category and location
     final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-    
-    print("🔍 OnInit - CategoryId: ${selectedCategoryId.value}, LocationId: $locationId");
-    
-    await homeController.fetchBookings(
-      categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
-      locationId: locationId,
-    );
-    await fetchNearCityPlayers();
-    await fetCustomerLeaderBoardRank();
-    await fetchOpenMatches();
-    await fetchScheduleMatches();
-    await fetchUpcomingMatches();
-    // await fetchSponsors();
 
-    _startBannerAutoSlide();
+    await Future.wait([
+      homeController.fetchBookings(
+        categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
+        locationId: locationId,
+      ),
+      fetchNearCityPlayers(),
+      fetCustomerLeaderBoardRank(),
+      fetchOpenMatches(),
+      _fetchLeagueData(),
+    ]);
+    isLoadingLeagueSection.value = false;
+  }
+
+  Future<void> _fetchLeagueData() async {
+    await Future.wait([
+      fetchScheduleMatches(),
+      fetchUpcomingMatches(),
+    ]);
   }
 
   @override
   void onClose() {
-    _bannerTimer?.cancel();
-    // pageController.dispose();
     super.onClose();
   }
 
-  void _startBannerAutoSlide() {
-    _bannerTimer = Timer.periodic(Duration(seconds: 2), (timer) {
-      if (pageController.hasClients) {
-        pageController.nextPage(
-          duration: Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
-  }
-
-  /// Handle sport tab changes
   void onSportTabChanged(int index) async {
     selectedSportTab.value = index;
-
-    // Reset banner to first page when switching tabs
     currentBannerIndex.value = 0;
-    if (pageController.hasClients) {
-      pageController.jumpToPage(1000);
-    }
 
     final categories = categoryModel.value?.data ?? [];
     if (categories.isEmpty) return;
 
     String? categoryId;
     if (index == 0 && categories.isNotEmpty) {
-      // Padel - find padel category
       final padelCategory = categories.firstWhere(
         (cat) => cat.name?.toLowerCase() == 'padel',
         orElse: () => categories.first,
       );
       categoryId = padelCategory.sId;
     } else if (index == 1 && categories.length > 1) {
-      // Pickleball - find pickleball category
       final pickleballCategory = categories.firstWhere(
         (cat) => cat.name?.toLowerCase() == 'pickleball',
         orElse: () => categories.last,
@@ -156,10 +129,8 @@ class MainHomeController extends GetxController{
 
     selectedCategoryId.value = categoryId ?? '';
 
-    // Get location ID from profile
     final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
 
-    // Fetch clubs with category and location
     homeController.currentPage.value = 1;
     homeController.fetchClubs(
       isRefresh: true,
@@ -167,14 +138,13 @@ class MainHomeController extends GetxController{
       locationId: locationId,
     );
 
-    // Fetch bookings with category and location
-    await homeController.fetchBookings(
-      categoryId: selectedCategoryId.value,
-      locationId: locationId,
-    );
-
-    // Fetch open matches with category
-    await fetchOpenMatches();
+    await Future.wait([
+      homeController.fetchBookings(
+        categoryId: selectedCategoryId.value,
+        locationId: locationId,
+      ),
+      fetchOpenMatches(),
+    ]);
   }
 
   Future<void> fetchOpenMatches() async {
@@ -183,8 +153,6 @@ class MainHomeController extends GetxController{
       final userId = storage.read('userId') ?? '';
       final formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-
-      print("🎾 Fetching Open Matches - CategoryId: ${selectedCategoryId.value}, LocationId: $locationId");
 
       final response = await _openMatchRepository.getOpenMatchBookings(
         userid: userId,
@@ -196,23 +164,21 @@ class MainHomeController extends GetxController{
       );
 
       openMatches.value = response;
-      print("🎾 Open Matches Fetched: ${response?.data?.length ?? 0} matches");
     } catch (e) {
-      print('Error fetching open matches: $e');
+      // ignore
     } finally {
       isLoadingOpenMatches.value = false;
     }
   }
+
   Future<void> fetchNearCityPlayers() async {
     try {
       isLoadingPlayers.value = true;
-      final userId = storage.read('userId')??"";
-      if (userId != null) {
-        final response = await _homeRepository.getNearCityPlayers(id: userId);
-        nearCityPlayers.value = response;
-      }
+      final userId = storage.read('userId') ?? "";
+      final response = await _homeRepository.getNearCityPlayers(id: userId);
+      nearCityPlayers.value = response;
     } catch (e) {
-      print('Error fetching near city players: $e');
+      // ignore
     } finally {
       isLoadingPlayers.value = false;
     }
@@ -224,7 +190,6 @@ class MainHomeController extends GetxController{
       final response = await _homeRepository.getCategory();
       categoryModel.value = response;
 
-      // Set default to Padel category
       final categories = response.data ?? [];
       if (categories.isNotEmpty) {
         final padelCategory = categories.firstWhere(
@@ -233,9 +198,6 @@ class MainHomeController extends GetxController{
         );
         selectedCategoryId.value = padelCategory.sId ?? '';
 
-        print("🎯 Selected Category: ${padelCategory.name}, ID: ${selectedCategoryId.value}");
-
-        // Fetch clubs with padel category and dynamic location
         final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
         homeController.fetchClubs(
           isRefresh: true,
@@ -244,57 +206,36 @@ class MainHomeController extends GetxController{
         );
       }
     } catch (e) {
-      print('Error fetching categories: $e');
+      // ignore
     } finally {
       isLoadingCategory.value = false;
     }
   }
 
-  var customerRank = 0.obs;
   Future<void> fetCustomerLeaderBoardRank() async {
     try {
-      isLoadingPlayers.value = true;
-      final userId = storage.read('userId')??"";
-      if (userId != null) {
-        final response = await _homeRepository.getCustomerLeaderBoardRank(id: userId);
-        if(response.success == true){
-          customerRank.value = response.rank??0;
-          print(response);
-        }
+      final userId = storage.read('userId') ?? "";
+      final response = await _homeRepository.getCustomerLeaderBoardRank(id: userId);
+      if (response.success == true) {
+        customerRank.value = response.rank ?? 0;
       }
     } catch (e) {
-      print('Error fetching Customer Rank: $e');
-    } finally {
-      isLoadingPlayers.value = false;
+      // ignore
     }
   }
 
   void onBannerTap(int index) {
-    // Handle banner tap based on index
-    switch (index) {
-      case 0:
-        Get.toNamed(RoutesName.bookACourt);
-        break;
-      case 1:
-        Get.toNamed(RoutesName.bookACourt);
-        break;
-      case 2:
-        Get.toNamed(RoutesName.bookACourt);
-        break;
-      case 3:
-        Get.toNamed(RoutesName.bookACourt);
-        break;
-    }
+    Get.toNamed(RoutesName.bookACourt);
   }
 
   Future<void> fetchScheduleMatches() async {
     try {
       isLoadingScheduleMatches.value = true;
       final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live',leagueId: leagueId);
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'live', leagueId: leagueId);
       scheduleMatches.value = response;
     } catch (e) {
-      print('Error fetching schedule matches: $e');
+      // ignore
     } finally {
       isLoadingScheduleMatches.value = false;
     }
@@ -304,26 +245,14 @@ class MainHomeController extends GetxController{
     try {
       isLoadingUpcomingMatches.value = true;
       final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
-      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming',leagueId: leagueId);
+      final response = await _leagueRepository.getAllScheduleLiveMatches(matchStatus: 'upcoming', leagueId: leagueId);
       upcomingMatches.value = response;
     } catch (e) {
-      print('Error fetching upcoming matches: $e');
+      // ignore
     } finally {
       isLoadingUpcomingMatches.value = false;
     }
   }
-  //
-  // Future<void> fetchSponsors() async {
-  //   try {
-  //     isLoadingSponsors.value = true;
-  //     final response = await _leagueRepository.getLeagueSponsors();
-  //     sponsors.value = response;
-  //   } catch (e) {
-  //     print('Error fetching sponsors: $e');
-  //   } finally {
-  //     isLoadingSponsors.value = false;
-  //   }
-  // }
 
   Future<void> fetchActiveLeagues() async {
     try {
@@ -331,7 +260,7 @@ class MainHomeController extends GetxController{
       final response = await _leagueRepository.getLeagueList(status: 'active');
       activeLeagues.value = response;
     } catch (e) {
-      print('Error fetching active leagues: $e');
+      // ignore
     } finally {
       isLoadingActiveLeagues.value = false;
     }

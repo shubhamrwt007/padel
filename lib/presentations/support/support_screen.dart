@@ -65,7 +65,7 @@ class SupportScreen extends StatelessWidget {
                         ),
                       ),
                       SelectableText(
-                        "9115559606",
+                        "+91 9592226666",
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -6,13 +7,11 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
-import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
@@ -29,7 +28,6 @@ import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:developer';
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
@@ -196,6 +194,7 @@ class MainHomeScreen extends StatelessWidget {
                   locationId: locationId,
                 );
                 await controller.fetchActiveLeagues();
+                await controller.fetchScheduleMatches();
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
                 await controller.profileController.fetchUserProfile();
@@ -540,88 +539,11 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
   /// LEAGUE SECTION
-  Widget _buildLeagueComingSoon(){
-    return Obx(() {
-      if (controller.isLoadingActiveLeagues.value) {
-        return Container(
-          height: 200,
-          margin: const EdgeInsets.symmetric(horizontal: 18),
-          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
-        ).paddingOnly(top: 10);
-      }
-
-      final leagues = controller.activeLeagues.value?.data ?? [];
-      
-      if (leagues.isEmpty) {
-        return SizedBox.shrink();
-        //   Column(
-        //   children: [
-        //     _buildSwootTitle(null),
-        //     const SizedBox(height: 12),
-        //     GestureDetector(
-        //       onTap: (){
-        //         Get.toNamed(RoutesName.league);
-        //       },
-        //       child: Container(
-        //         width: Get.width,
-        //         margin: const EdgeInsets.symmetric(horizontal: 14),
-        //         decoration: BoxDecoration(
-        //           borderRadius: BorderRadius.circular(20),
-        //           boxShadow: [
-        //             BoxShadow(
-        //               color: Colors.grey.shade300,
-        //               blurRadius: 8,
-        //               spreadRadius: 2.3,
-        //               offset: const Offset(0, 3),
-        //             ),
-        //           ],
-        //         ),
-        //         // child: Image.asset(Assets.imagesImgLeagueComingSoon),
-        //       ),
-        //     ),
-        //     const SizedBox(height: 12),
-        //     BuildTitleSponsor(controller: controller),
-        //     Obx(() {
-        //       final sponsorData = controller.sponsors.value?.data;
-        //       final sponsorsList = sponsorData?.sponsors ?? [];
-        //       return BuildMoreSponsor(sponsors: sponsorsList);
-        //     }),
-        //   ],
-        // ).paddingOnly(top: 10);
-      }
-
-      return Column(
-        children: [
-          // Dynamic title based on carousel index
-          Obx(() {
-            final currentIndex = controller.leagueCarouselIndex.value;
-            final leagueName = leagues.length > currentIndex 
-                ? leagues[currentIndex].leagueName 
-                : leagues.first.leagueName;
-            return _buildSwootTitle(leagueName);
-          }),
-          const SizedBox(height: 12),
-          leagues.length == 1
-              ? _buildSingleLeagueCard(leagues.first)
-              : _buildLeagueCarousel(leagues),
-          const SizedBox(height: 12),
-          // Dynamic sponsors based on carousel index
-          Obx(() {
-            final currentIndex = controller.leagueCarouselIndex.value;
-            final currentLeague = leagues.length > currentIndex 
-                ? leagues[currentIndex] 
-                : leagues.first;
-            return Column(
-              children: [
-                BuildLeagueTitleSponsor(league: currentLeague),
-                BuildLeagueMoreSponsor(league: currentLeague),
-              ],
-            );
-          }),
-        ],
-      ).paddingOnly(top: 10);
-    });
-  }
+  Widget _buildLeagueComingSoon() => _LeagueComingSoonWidget(
+    controller: controller,
+    buildLiveSlider: () => _buildLeagueLiveMatchSlider([]),
+    buildUpcoming: () => _upcomingMatchCard(),
+  );
 
   Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
     return GestureDetector(
@@ -656,74 +578,11 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildLeagueCarousel(List<LeagueModel.Data> leagues) {
-    return Column(
-      children: [
-        CarouselSlider.builder(
-          itemCount: leagues.length,
-          itemBuilder: (context, index, realIndex) {
-            final leagueData = leagues[index];
-            return GestureDetector(
-              onTap: () {
-                Get.toNamed(RoutesName.league, arguments: {
-                  'leagueId': leagueData.id,
-                });
-              },
-              child: Container(
-                width: Get.width,
-                margin: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade300,
-                      blurRadius: 8,
-                      spreadRadius: 2.3,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
-                      : Image.asset(Assets.imagesImgLeagueComingSoon),
-                ),
-              ),
-            );
-          },
-          options: CarouselOptions(
-            viewportFraction: 1,
-            enableInfiniteScroll: leagues.length > 1,
-            enlargeCenterPage: false,
-            autoPlay: leagues.length > 1,
-            autoPlayInterval: const Duration(seconds: 3),
-            height: 200,
-            onPageChanged: (index, reason) {
-              controller.leagueCarouselIndex.value = index;
-            },
-          ),
-        ),
-        SizedBox(height: 20,),
-        if (leagues.length > 1)
-          Obx(() {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(leagues.length, (i) {
-                final isActive = i == controller.leagueCarouselIndex.value;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  height: 6,
-                  width: isActive ? 18 : 6,
-                  decoration: BoxDecoration(
-                    color: isActive ? AppColors.primaryColor : Colors.black12,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                );
-              }),
-            );
-          }),
-      ],
+    return _LeagueCarouselWidget(
+      leagues: leagues,
+      onPageChanged: (index) {
+        controller.leagueCarouselIndex.value = index;
+      },
     );
   }
 
@@ -1888,7 +1747,7 @@ class MainHomeScreen extends StatelessWidget {
         final leagues = controller.activeLeagues.value?.data ?? [];
         final leagueId = leagues.isNotEmpty ? leagues.first.id : null;
         Get.toNamed(RoutesName.league, arguments: {
-          if (leagueId != null) 'leagueId': "",
+          if (leagueId != null) 'leagueId': leagueId,
         });
 
         break;
@@ -2986,10 +2845,240 @@ class MainHomeScreen extends StatelessWidget {
     if (score == null) return "0";
     if (score is int) return score.toString();
     if (score is ScoreDetail) {
-      // Display sets count for the new format
       return (score.sets ?? 0).toString();
     }
-    // Fallback for any other format
     return score.toString();
+  }
+}
+
+class _LeagueComingSoonWidget extends StatefulWidget {
+  final MainHomeController controller;
+  final Widget Function() buildLiveSlider;
+  final Widget Function() buildUpcoming;
+  const _LeagueComingSoonWidget({
+    required this.controller,
+    required this.buildLiveSlider,
+    required this.buildUpcoming,
+  });
+
+  @override
+  State<_LeagueComingSoonWidget> createState() => _LeagueComingSoonWidgetState();
+}
+
+class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
+  List<LeagueModel.Data> _leagues = [];
+  bool _loading = true;
+  int _carouselIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    ever(widget.controller.isLoadingLeagueSection, (_) => _sync());
+    ever(widget.controller.activeLeagues, (_) => _sync());
+    ever(widget.controller.scheduleMatches, (_) => _sync());
+    ever(widget.controller.upcomingMatches, (_) => _sync());
+    _sync();
+  }
+
+  void _sync() {
+    if (!mounted) return;
+    setState(() {
+      _loading = widget.controller.isLoadingLeagueSection.value;
+      _leagues = widget.controller.activeLeagues.value?.data ?? [];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return Container(
+        height: 200,
+        margin: const EdgeInsets.symmetric(horizontal: 18),
+        child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+      ).paddingOnly(top: 10);
+    }
+
+    if (_leagues.isEmpty) return const SizedBox.shrink();
+
+    final currentLeague = _leagues.length > _carouselIndex ? _leagues[_carouselIndex] : _leagues.first;
+
+    final ctrl = widget.controller;
+    final liveMatches = (ctrl.scheduleMatches.value?.data ?? [])
+        .expand((d) => d.matches ?? [])
+        .toList();
+    final upcomingMatches = (ctrl.upcomingMatches.value?.data ?? [])
+        .expand((d) => d.matches ?? [])
+        .toList();
+
+    Widget matchSection;
+    if (liveMatches.isNotEmpty) {
+      matchSection = widget.buildLiveSlider();
+    } else if (upcomingMatches.isNotEmpty) {
+      matchSection = widget.buildUpcoming();
+    } else {
+      matchSection = _leagues.length == 1
+          ? _buildSingleLeagueCard(_leagues.first)
+          : _LeagueCarouselWidget(
+              leagues: _leagues,
+              onPageChanged: (index) {
+                setState(() => _carouselIndex = index);
+              },
+            );
+    }
+
+    return Column(
+      children: [
+        _buildSwootTitle(currentLeague.leagueName),
+        const SizedBox(height: 12),
+        matchSection,
+        const SizedBox(height: 12),
+        BuildLeagueTitleSponsor(league: currentLeague),
+        BuildLeagueMoreSponsor(league: currentLeague),
+      ],
+    ).paddingOnly(top: 10);
+  }
+
+  Widget _buildSwootTitle(String? leagueName) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(RoutesName.league, arguments: {'leagueId': leagueData.id}),
+      child: Container(
+        width: Get.width,
+        height: 163,
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.shade300, blurRadius: 8, spreadRadius: 2.3, offset: const Offset(0, 3)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+              ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+              : Image.asset(Assets.imagesImgLeagueComingSoon),
+        ),
+      ),
+    );
+  }
+}
+
+class _LeagueCarouselWidget extends StatefulWidget {
+  final List<LeagueModel.Data> leagues;
+  final void Function(int) onPageChanged;
+
+  const _LeagueCarouselWidget({
+    required this.leagues,
+    required this.onPageChanged,
+  });
+
+  @override
+  State<_LeagueCarouselWidget> createState() => _LeagueCarouselWidgetState();
+}
+
+class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
+  late final PageController _pageController;
+  int _currentIndex = 0;
+  Timer? _autoPlayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    if (widget.leagues.length > 1) {
+      _autoPlayTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!mounted || !_pageController.hasClients) return;
+        final next = (_currentIndex + 1) % widget.leagues.length;
+        _pageController.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoPlayTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 170,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.leagues.length,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+              // widget.onPageChanged(index);
+            },
+            itemBuilder: (context, index) {
+              final leagueData = widget.leagues[index];
+              return GestureDetector(
+                onTap: () {
+                  Get.toNamed(RoutesName.league, arguments: {
+                    'leagueId': leagueData.id,
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade300,
+                        blurRadius: 8,
+                        spreadRadius: 1.3,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+                        ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+                        : Image.asset(Assets.imagesImgLeagueComingSoon),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (widget.leagues.length > 1)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.leagues.length, (i) {
+              final isActive = i == _currentIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                height: 6,
+                width: isActive ? 18 : 6,
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.primaryColor : Colors.black12,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              );
+            }),
+          ),
+      ],
+    );
   }
 }
