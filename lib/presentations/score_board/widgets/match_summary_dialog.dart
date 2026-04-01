@@ -7,13 +7,20 @@ bool _isOpeningMatchSummaryDialog = false;
 bool _isOpeningTeamsShuffleSummaryDialog = false;
 
 Future<void> showMatchSummaryDialog(ScoreBoardController controller) async {
+  print('🎭 ========== showMatchSummaryDialog CALLED ==========');
+  print('🎭 _isOpeningMatchSummaryDialog: $_isOpeningMatchSummaryDialog');
+  
   // Prevent stacking the same dialog multiple times due to rapid triggers
-  if (_isOpeningMatchSummaryDialog) return;
+  if (_isOpeningMatchSummaryDialog) {
+    print('⚠️ Dialog already opening, skipping');
+    return;
+  }
   _isOpeningMatchSummaryDialog = true;
 
   try {
     // Close any existing dialogs first
     if (Get.isDialogOpen == true) {
+      print('🚪 Closing existing dialogs...');
       while (Get.isDialogOpen == true) {
         Get.back();
       }
@@ -21,14 +28,23 @@ Future<void> showMatchSummaryDialog(ScoreBoardController controller) async {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
+    print('🔍 Getting match result...');
     final result = _getMatchResult(controller);
+    print('🏆 Match result: $result');
+    
+    print('💬 Showing result dialog...');
     await _showResultDialog(
       result: result,
       controller: controller,
       resetDialogFlagOnClose: true,
     );
+    print('✅ Dialog shown successfully');
+  } catch (e, stackTrace) {
+    print('❌ Error showing dialog: $e');
+    print('❌ Stack trace: $stackTrace');
   } finally {
     _isOpeningMatchSummaryDialog = false;
+    print('🎭 ========== showMatchSummaryDialog COMPLETED ==========');
   }
 }
 
@@ -40,6 +56,77 @@ void _resetDialogFlag(ScoreBoardController controller) {
 enum _MatchResult { win, loss, draw }
 
 _MatchResult _getMatchResult(ScoreBoardController controller) {
+  print('🔍 ========== GET MATCH RESULT ==========');
+  print('🔍 wasSwapDuringMatch: ${controller.wasSwapDuringMatch.value}');
+  
+  // If this is a swap during match, use xpChanges array to determine result
+  if (controller.wasSwapDuringMatch.value) {
+    print('🏆 SWAP DURING MATCH - Using XP changes to determine result');
+    
+    // Get current user ID
+    final currentUserId = controller.currentUserId;
+    print('👤 Current User ID: $currentUserId');
+    
+    // Check if we have XP values set (which means we found user in xpChanges)
+    if (controller.xpEarned.value > 0) {
+      print('✅ User WON - xpEarned: ${controller.xpEarned.value}');
+      return _MatchResult.win;
+    }
+    
+    if (controller.xpLost.value > 0) {
+      print('❌ User LOST - xpLost: ${controller.xpLost.value}');
+      return _MatchResult.loss;
+    }
+    
+    // Fallback to old logic if XP not found
+    print('⚠️ XP values not found, using fallback logic');
+    print('🔍 preShuffleWinner: "${controller.preShuffleWinner.value}"');
+    print('🔍 preShuffleTeamAWins: ${controller.preShuffleTeamAWins.value}');
+    print('🔍 preShuffleTeamBWins: ${controller.preShuffleTeamBWins.value}');
+    print('🔍 preShuffleUserInTeamA: ${controller.preShuffleUserInTeamA.value}');
+    print('🔍 preShuffleUserInTeamB: ${controller.preShuffleUserInTeamB.value}');
+    
+    final preWinner = controller.preShuffleWinner.value.trim().toLowerCase().replaceAll(' ', '');
+    
+    // Check for draw first
+    if (preWinner == 'draw' || preWinner == 'tie' || controller.preShuffleTeamAWins.value == controller.preShuffleTeamBWins.value) {
+      print('🏆 Result: DRAW (equal scores or explicit draw)');
+      return _MatchResult.draw;
+    }
+    
+    // Use PRE-SHUFFLE team membership for determining win/loss
+    final wasUserInTeamA = controller.preShuffleUserInTeamA.value;
+    final wasUserInTeamB = controller.preShuffleUserInTeamB.value;
+    
+    // Determine winner based on pre-shuffle data
+    if (preWinner == 'teama') {
+      final result = wasUserInTeamA ? _MatchResult.win : _MatchResult.loss;
+      print('🏆 Result: ${result == _MatchResult.win ? "WIN" : "LOSS"} (Team A won, user WAS in Team A: $wasUserInTeamA)');
+      return result;
+    }
+    
+    if (preWinner == 'teamb') {
+      final result = wasUserInTeamB ? _MatchResult.win : _MatchResult.loss;
+      print('🏆 Result: ${result == _MatchResult.win ? "WIN" : "LOSS"} (Team B won, user WAS in Team B: $wasUserInTeamB)');
+      return result;
+    }
+    
+    // Fallback: determine by scores
+    if (controller.preShuffleTeamAWins.value > controller.preShuffleTeamBWins.value) {
+      final result = wasUserInTeamA ? _MatchResult.win : _MatchResult.loss;
+      print('🏆 Result: ${result == _MatchResult.win ? "WIN" : "LOSS"} (Team A won by score ${controller.preShuffleTeamAWins.value}-${controller.preShuffleTeamBWins.value}, user WAS in Team A: $wasUserInTeamA)');
+      return result;
+    } else if (controller.preShuffleTeamBWins.value > controller.preShuffleTeamAWins.value) {
+      final result = wasUserInTeamB ? _MatchResult.win : _MatchResult.loss;
+      print('🏆 Result: ${result == _MatchResult.win ? "WIN" : "LOSS"} (Team B won by score ${controller.preShuffleTeamBWins.value}-${controller.preShuffleTeamAWins.value}, user WAS in Team B: $wasUserInTeamB)');
+      return result;
+    } else {
+      print('🏆 Result: DRAW (scores are equal)');
+      return _MatchResult.draw;
+    }
+  }
+  
+  // Normal match completion flow
   final winnerRaw = controller.winner.value.trim();
   final winner = winnerRaw.toLowerCase();
 
@@ -179,16 +266,18 @@ Future<void> _showResultDialog({
                     ),
                     const SizedBox(height: 6),
 
-                    /// XP VALUE
-                    profileController != null
-                        ? Obx(() {
-                      final xp = profileController!
-                          .profileModel.value?.response?.xpPoints
-                          ?.toInt() ??
-                          0;
-                      return _xpText(xp);
-                    })
-                        : _xpText(initialXp),
+                    /// XP VALUE - Show currentXP from socket if available (swap scenario)
+                    controller.wasSwapDuringMatch.value && controller.currentXP.value > 0
+                        ? _xpText(controller.currentXP.value)
+                        : (profileController != null
+                            ? Obx(() {
+                                final xp = profileController!
+                                        .profileModel.value?.response?.xpPoints
+                                        ?.toInt() ??
+                                    0;
+                                return _xpText(xp);
+                              })
+                            : _xpText(initialXp)),
 
                     const SizedBox(height: 18),
 
@@ -225,17 +314,28 @@ Future<void> _showResultDialog({
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: () {
+                onTap: () async {
                   if (resetDialogFlagOnClose) {
                     _resetDialogFlag(controller);
                   }
-                  // If multiple dialogs got stacked for any reason, close all at once
+                  
+                  // Check if this was a swap during match scenario
+                  final wasSwapDuringMatch = controller.wasSwapDuringMatch.value;
+                  
+                  // Close dialog(s)
                   if (Get.isDialogOpen == true) {
                     while (Get.isDialogOpen == true) {
                       Get.back();
                     }
                   } else {
                     Get.back();
+                  }
+                  
+                  // If it was a swap during match, reset the match
+                  if (wasSwapDuringMatch) {
+                    print('🔄 Swap during match detected, resetting match...');
+                    await _restartMatchAfterSwap(controller);
+                    controller.wasSwapDuringMatch.value = false;
                   }
                 },
                 child: Container(
@@ -249,10 +349,20 @@ Future<void> _showResultDialog({
       ),
     ),
     barrierDismissible: true,
-  ).then((_) {
+  ).then((_) async {
     // Reset flag when dialog is dismissed by any means
     if (resetDialogFlagOnClose) {
       _resetDialogFlag(controller);
+    }
+    
+    // Check if this was a swap during match scenario
+    final wasSwapDuringMatch = controller.wasSwapDuringMatch.value;
+    
+    // If it was a swap during match, reset the match
+    if (wasSwapDuringMatch) {
+      print('🔄 Swap during match detected (on dismiss), resetting match...');
+      await _restartMatchAfterSwap(controller);
+      controller.wasSwapDuringMatch.value = false;
     }
   });
 }
@@ -291,6 +401,65 @@ Future<void> showTeamsShuffleResultDialog({
     _resetDialogFlag(controller);
     _isOpeningTeamsShuffleSummaryDialog = false;
   }
+}
+
+/// Reset match after swap during active match
+Future<void> _restartMatchAfterSwap(ScoreBoardController controller) async {
+  print('🔄 Starting match restart after swap...');
+  
+  // Stop the game timer if running
+  if (controller.isGameStarted.value) {
+    try {
+      controller.isGameStarted.value = false;
+      print('✅ Game stopped');
+    } catch (e) {
+      print('⚠️ Error stopping game: $e');
+    }
+  }
+
+  // Clear all sets and scores locally
+  controller.sets.clear();
+  controller.sets.refresh();
+  controller.teamAWins.value = 0;
+  controller.teamBWins.value = 0;
+  controller.winner.value = "";
+  controller.isCompleted.value = false;
+  controller.wasSwapDuringMatch.value = false;
+  
+  // CRITICAL: Reset XP values
+  controller.xpEarned.value = 0;
+  controller.xpLost.value = 0;
+  controller.currentXP.value = 0;
+  print('✅ XP values reset');
+  
+  print('✅ Local state cleared');
+
+  // Reset the match state on the server
+  try {
+    final body = {
+      "scoreboardId": controller.scoreboardId.value,
+      "type": "reset"
+    };
+    final response = await controller.repository.updateScoreBoard(data: body);
+    print('✅ Match reset API response: ${response.success}');
+  } catch (e) {
+    print('❌ Error resetting match on server: $e');
+  }
+
+  // Small delay to ensure server processes the reset
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  // Fetch updated scoreboard to sync with server
+  await controller.fetchScoreBoard(showLoader: false);
+  print('✅ Scoreboard refreshed');
+  
+  // Restart countdown timer if within match time
+  if (controller.isWithinMatchTime.value && !controller.isGameStarted.value) {
+    controller.remainingSeconds.value = controller.calculateRemainingMatchTime();
+    print('✅ Countdown timer restarted with ${controller.remainingSeconds.value} seconds');
+  }
+  
+  print('🔄 Match restarted - ready for new game with new teams');
 }
 
 /// XP TEXT
