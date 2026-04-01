@@ -244,14 +244,24 @@ class UpcomingMatchCard extends StatelessWidget {
                       /// DATE + UPCOMING
                       Row(
                         children: [
-                          Text(
-                              match?.teamA?.teamName ?? "Team A",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                          Container(
+                            color: Colors.transparent,
+                            width: Get.width*0.2,
+                            child: Text(
+                              overflow: TextOverflow.ellipsis,
+                                match?.teamA?.clubType ?? "",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                            ),
                           ),
                           const Spacer(),
-                          Text(
-                              match?.teamB?.teamName ?? "Team B",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                          Container(
+                            color: Colors.transparent,
+                            width: Get.width*0.2,
+                            child: Text(
+                              overflow: TextOverflow.ellipsis,
+                                match?.teamB?.clubType ?? "",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                            ),
                           ),
                         ],
                       ),
@@ -652,12 +662,12 @@ class ResultMatchCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                              match?.teamA?.teamName ?? "Team A",
+                              match?.teamA?.clubType ?? "",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                           const Spacer(),
                           Text(
-                              match?.teamB?.teamName ?? "Team B",
+                              match?.teamB?.clubType ?? "",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                         ],

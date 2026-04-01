@@ -918,6 +918,7 @@ var locationsId = "".obs;
     }
 
     _recalculateTotalAmount();
+    _ensureSubscribedForAllSelectedDates();
   }
 
   bool _ensureMaxSlotsCapacity({required int addCount}) {
@@ -2389,11 +2390,25 @@ var locationsId = "".obs;
   }
 
   /// Subscribe to slot-wise updates using SlotWiseService
+  // Track all currently subscribed dates
+  final Set<String> _subscribedDates = {};
+
   void _subscribeToSlotUpdates() {
     try {
       final date = selectedDate.value ?? DateTime.now();
-      final formattedDay = _getWeekday(date.weekday);
       final formattedDate = _dateFormatter.format(date);
+      _subscribeForDate(formattedDate, fallbackToApi: true);
+    } catch (e) {
+      log('Error subscribing to slot updates: $e');
+      getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+    }
+  }
+
+  void _subscribeForDate(String formattedDate, {bool fallbackToApi = false}) {
+    if (_subscribedDates.contains(formattedDate)) return;
+    try {
+      final date = DateTime.parse(formattedDate);
+      final formattedDay = _getWeekday(date.weekday);
 
       _slotWiseService.subscribeToSlotWise(
         clubId: argument.id ?? '',
@@ -2404,41 +2419,51 @@ var locationsId = "".obs;
         locId: locationsId.value,
         day: formattedDay,
         onInitialData: (data) {
-          log('📡 SlotWise acknowledgment received');
+          log('📡 SlotWise acknowledgment received for date: $formattedDate');
           isSocketDataReceived.value = true;
           _handleInitialSlotData(data);
         },
         onSlotUpdate: (data) {
-          log('🔄 SlotWise real-time update received in BookSessionController');
-          log('📊 Update data: $data');
+          log('🔄 SlotWise real-time update received for date: $formattedDate');
           _handleRealTimeSlotUpdate(data);
         },
       );
-      
+      _subscribedDates.add(formattedDate);
       log('Subscribed to slot-wise updates for club: ${argument.id}, date: $formattedDate');
-      
-      // Fallback: If no socket data received within 3 seconds, use API
-      Timer(const Duration(seconds: 3), () {
-        if (!isSocketDataReceived.value) {
-          log('⚠️ No socket data received, falling back to API');
-          getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
-        }
-      });
+
+      if (fallbackToApi) {
+        Timer(const Duration(seconds: 3), () {
+          if (!isSocketDataReceived.value) {
+            log('⚠️ No socket data received, falling back to API');
+            getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+          }
+        });
+      }
     } catch (e) {
-      log('Error subscribing to slot updates: $e');
-      // Fallback to API on error
-      getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+      log('Error subscribing for date $formattedDate: $e');
+    }
+  }
+
+  /// Subscribe to all dates that have selections (for conflict detection)
+  void _ensureSubscribedForAllSelectedDates() {
+    final selectedDates = <String>{};
+    multiDateSelections.forEach((key, selection) {
+      final dateString = selection['date'] as String;
+      selectedDates.add(dateString);
+    });
+    for (final dateString in selectedDates) {
+      _subscribeForDate(dateString);
     }
   }
 
   /// Unsubscribe from slot-wise updates
   void _unsubscribeFromSlotUpdates() {
     try {
-      final date = selectedDate.value ?? DateTime.now();
-      final formattedDate = _dateFormatter.format(date);
-      
-      _slotWiseService.unsubscribe(argument.id ?? '', formattedDate);
-      log('Unsubscribed from slot-wise updates');
+      for (final date in _subscribedDates) {
+        _slotWiseService.unsubscribe(argument.id ?? '', date);
+        log('Unsubscribed from slot-wise updates for date: $date');
+      }
+      _subscribedDates.clear();
     } catch (e) {
       log('Error unsubscribing from slot updates: $e');
     }
@@ -2448,7 +2473,17 @@ var locationsId = "".obs;
   void resubscribeToSlotUpdates() {
     isSocketDataReceived.value = false;
     isLoadingCourts.value = true;
-    _unsubscribeFromSlotUpdates();
+    // Unsubscribe only dates that have no selections
+    final datesWithSelections = <String>{};
+    multiDateSelections.forEach((key, selection) {
+      datesWithSelections.add(selection['date'] as String);
+    });
+    final datesToUnsub = _subscribedDates.difference(datesWithSelections);
+    for (final date in datesToUnsub) {
+      _slotWiseService.unsubscribe(argument.id ?? '', date);
+    }
+    _subscribedDates.removeAll(datesToUnsub);
+
     Future.delayed(const Duration(milliseconds: 500), () {
       _subscribeToSlotUpdates();
     });
@@ -2492,33 +2527,60 @@ var locationsId = "".obs;
   }
 
   /// Handle real-time slot data updates
-  void _handleRealTimeSlotUpdate(dynamic slotData) {
+  void _handleRealTimeSlotUpdate(dynamic socketResponse) {
     try {
       log('🔄 Handling real-time slot data update');
-      
-      if (slotData != null) {
-        log('Real-time slot data received, updating UI');
-        
-        // Handle both List and Map formats from socket
-        Map<String, dynamic> dataMap;
-        if (slotData is List) {
-          // If data is a list, wrap it in the expected structure
-          dataMap = {'data': slotData};
-        } else if (slotData is Map<String, dynamic>) {
-          dataMap = slotData;
-        } else {
-          log('❌ Unexpected data format: ${slotData.runtimeType}');
+
+      if (socketResponse == null) return;
+
+      // socketResponse is the full res object: {clubId, date, data, ...}
+      final responseClubId = socketResponse['clubId']?.toString() ?? '';
+      final responseDate = socketResponse['date']?.toString() ?? '';
+      final slotData = socketResponse['data'] ?? socketResponse;
+
+      final currentClubId = argument.id ?? '';
+      final currentDate = selectedDate.value ?? DateTime.now();
+      final currentDateString = _dateFormatter.format(currentDate);
+
+      if (responseClubId.isNotEmpty && responseClubId != currentClubId) {
+        log('⚠️ Ignoring socket update: clubId mismatch (got $responseClubId, current $currentClubId)');
+        return;
+      }
+
+      // Only reject if date is not subscribed at all (not current date AND not a selected date)
+      if (responseDate.isNotEmpty && responseDate != currentDateString) {
+        final isSelectedDate = multiDateSelections.values.any(
+          (sel) => (sel['date'] as String?) == responseDate,
+        );
+        if (!isSelectedDate) {
+          log('⚠️ Ignoring socket update: date $responseDate not current or selected');
           return;
         }
-        
-        // Parse the socket data into GetAllActiveCourtsForSlotWiseModel
-        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
-        
-        // Update slot data and refresh UI
-        _updateSocketSlotData(parsedData);
-        
-        log('✅ Real-time slot data successfully updated in UI');
       }
+
+      log('Real-time slot data received for date: $responseDate, updating UI');
+
+      Map<String, dynamic> dataMap;
+      if (slotData is List) {
+        dataMap = {'data': slotData};
+      } else if (slotData is Map<String, dynamic>) {
+        dataMap = slotData;
+      } else {
+        log('❌ Unexpected data format: ${slotData.runtimeType}');
+        return;
+      }
+
+      final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+
+      // If update is for a non-current date, only run conflict detection (don't update UI slots)
+      if (responseDate.isNotEmpty && responseDate != currentDateString) {
+        _deSelectAndCleanupConflictingSlots(parsedData);
+        log('✅ Conflict check done for non-current date: $responseDate');
+        return;
+      }
+
+      _updateSocketSlotData(parsedData);
+      log('✅ Real-time slot data successfully updated in UI');
     } catch (e) {
       log('❌ Error handling real-time slot update: $e');
     }
@@ -2527,6 +2589,9 @@ var locationsId = "".obs;
   /// Update slots with socket data and apply filtering
   void _updateSocketSlotData(GetAllActiveCourtsForSlotWiseModel socketData) {
     try {
+      // Check if any selected slot became booked/locked and deselect + delete history
+      _deSelectAndCleanupConflictingSlots(socketData);
+
       // Store ALL slots (both available and unavailable)
       _allSlotsCache.clear();
       for (var court in socketData.data ?? []) {
@@ -2537,10 +2602,8 @@ var locationsId = "".obs;
       for (var court in socketData.data ?? []) {
         final base = _allSlotsCache[court.sId ?? ''] ?? [];
         if (showUnavailableSlots.value) {
-          // Show BOTH available and unavailable
           court.slots = List<Slots>.from(base);
         } else {
-          // Show only available
           court.slots = base.where((s) => _isAvailableSlot(s)).toList();
         }
       }
@@ -2557,10 +2620,95 @@ var locationsId = "".obs;
       filterSlotsByTimeOfDay();
       _autoSelectTab();
       isLoadingCourts.value = false;
-      
+
       log('✅ Socket slot data successfully processed and displayed');
     } catch (e) {
       log('❌ Error updating socket slot data: $e');
+    }
+  }
+
+  /// Deselect any selected slots that became booked/locked in the new socket data
+  void _deSelectAndCleanupConflictingSlots(GetAllActiveCourtsForSlotWiseModel socketData) {
+    if (multiDateSelections.isEmpty) return;
+
+    // Build a quick lookup: slotId -> updated Slots object
+    final Map<String, Slots> updatedSlotMap = {};
+    for (final court in socketData.data ?? []) {
+      for (final slot in court.slots ?? []) {
+        if (slot.sId != null) updatedSlotMap[slot.sId!] = slot;
+        log('🔍 CONFLICT CHECK - slot sId: ${slot.sId}, status: ${slot.status}');
+      }
+    }
+    log('🔍 CONFLICT CHECK - updatedSlotMap count: ${updatedSlotMap.length}');
+    multiDateSelections.forEach((key, sel) {
+      final s = sel['slot'] as Slots;
+      log('🔍 CONFLICT CHECK - selected sId: ${s.sId}, found in map: ${updatedSlotMap.containsKey(s.sId)}, map status: ${updatedSlotMap[s.sId]?.status}');
+    });
+
+    final keysToRemove = <String>[];
+    final slotsToDelete = <Map<String, dynamic>>[];
+
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final updatedSlot = updatedSlotMap[slotId];
+      if (updatedSlot == null) return;
+
+      final status = updatedSlot.status?.toLowerCase() ?? '';
+      if (status == 'booked' || status == 'lock') {
+        keysToRemove.add(key);
+        final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
+        final userId = storage.read('userId') ?? '';
+        slotsToDelete.add({
+          'slotId': slotId,
+          'courtId': courtId,
+          'bookingDate': dateString,
+          'time': bookingTime,
+          'bookingTime': bookingTime,
+          'duration': finalDuration,
+          'userId': userId,
+        });
+      }
+    });
+
+    if (keysToRemove.isEmpty) return;
+
+    // Collect slot info before removing
+    final slotIdsToClean = <String>{};
+    final courtIdsToClean = <String, String>{};
+    for (final key in keysToRemove) {
+      final selection = multiDateSelections[key];
+      if (selection != null) {
+        final slot = selection['slot'] as Slots;
+        final courtId = selection['courtId'] as String;
+        slotIdsToClean.add(slot.sId ?? '');
+        courtIdsToClean[slot.sId ?? ''] = courtId;
+      }
+    }
+
+    // Remove from multiDateSelections
+    for (final key in keysToRemove) {
+      multiDateSelections.remove(key);
+    }
+
+    // Clean up selectedSlots and selectedSlotsWithCourtInfo
+    for (final slotId in slotIdsToClean) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      final courtId = courtIdsToClean[slotId] ?? '';
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+
+    _recalculateTotalAmount();
+    log('⚠️ Deselected ${keysToRemove.length} slots that became booked/locked');
+
+    if (slotsToDelete.isNotEmpty) {
+      deleteSlotHistory(slots: slotsToDelete);
     }
   }
 

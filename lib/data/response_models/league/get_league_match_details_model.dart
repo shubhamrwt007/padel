@@ -168,13 +168,15 @@ class StatisticsTeam {
 class Team {
   String? teamId;
   String? teamName;
+  String? clubName;
   List<Player>? players;
 
-  Team({this.teamId, this.teamName, this.players});
+  Team({this.teamId, this.teamName, this.clubName, this.players});
 
   Team.fromJson(Map<String, dynamic> json) {
     teamId = json['teamId'];
     teamName = json['teamName'];
+    clubName = json['clubName'];
 
     if (json['players'] != null) {
       players = <Player>[];
