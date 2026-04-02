@@ -2,14 +2,14 @@ class AppEndpoints {
   AppEndpoints._();
 
   /// -----------------------Staging URL-------------------------------------------
-  // static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
-  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
    /// -----------------------New Live URL--------------------------------------
   // static const String base = "https://apimobile.swootapp.com/api/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  static const String base = "http://192.168.0.119:5070/api/";
-  static const String socketUrl = "http://192.168.0.119:5070";
+  // static const String base = "http://192.168.0.126:5070/api/";
+  // static const String socketUrl = "http://192.168.0.126:5070";
 
 
 
@@ -109,6 +109,8 @@ class AppEndpoints {
   static const String getLeagueLeaderBoard = "${base}score/league/";
   static const String getLeagueSponsors = "${baseUrl}court/league/getLeagueSponsors";
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
+  static const String getLeaguePollResult = "${base}poll/results";
+  static const String castLeaguePollVote = "${base}poll/vote";
 }
 class PaymentConfig {
   // Toggle this when switching environment

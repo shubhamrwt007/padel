@@ -1,10 +1,12 @@
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
+import 'package:padel_mobile/data/request_models/league/cast_league_vote_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_upcoming_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_poll_results_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_stream_url_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
@@ -179,6 +181,65 @@ class LeagueRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Get Stream Url failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+  ///Get League Poll Result-----------------------------------------------------
+  Future<GetLeaguePollResultsModel> getLeaguePollResult() async {
+    try {
+      final response = await dioClient.get(
+        AppEndpoints.getLeaguePollResult,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Get League Poll Result Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetLeaguePollResultsModel.fromJson(response.data);
+      } else {
+        throw Exception(
+            "Get League Poll Result failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Get League Poll Result failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  /// Cast League Vote----------------------------------------------------------
+  Future<CastLeagueVoteModel> castLeagueVote({
+    required dynamic data,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Wallet body $data",
+        level: LogLevel.info,
+      );
+      final response = await dioClient.post(
+        AppEndpoints.castLeaguePollVote,
+        data: data,
+      );
+      if (response.statusCode == 200) {
+        CustomLogger.logMessage(
+          msg: "Cast League Vote successfully: ${response.data}",
+          level: LogLevel.info,
+        );
+
+        return CastLeagueVoteModel.fromJson(response.data);
+      } else {
+        throw Exception("Cast League Vote failed. Status code: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Cast League Vote failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

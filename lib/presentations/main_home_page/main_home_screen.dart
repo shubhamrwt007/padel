@@ -198,6 +198,7 @@ class MainHomeScreen extends StatelessWidget {
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
                 await controller.profileController.fetchUserProfile();
+                await controller.fetchPollResults();
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -2952,6 +2953,13 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         const SizedBox(height: 12),
         BuildLeagueTitleSponsor(league: currentLeague),
         BuildLeagueMoreSponsor(league: currentLeague),
+        GestureDetector(
+          onTap: (){
+            widget.controller.fetchPollResults();
+            showVoteDialog(context);
+          },
+          child: Image.asset(Assets.imagesImgPoll),
+        ).paddingOnly(top: 5)
       ],
     ).paddingOnly(top: 10);
   }
@@ -2987,6 +2995,226 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
               : Image.asset(Assets.imagesImgLeagueComingSoon),
         ),
       ),
+    );
+  }
+  void showVoteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (context) {
+        return Obx(() {
+          final pollData = widget.controller.pollResults.value?.data;
+          final clubs = pollData?.clubs ?? [];
+          final maxVotes = clubs.isEmpty ? 1 : clubs.map((c) => c.votes ?? 0).reduce((a, b) => a > b ? a : b);
+          final safeMax = maxVotes == 0 ? 1 : maxVotes;
+
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            child: Container(
+              padding: EdgeInsets.only(top: 20, bottom: 20, right: 20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(colors: [Colors.white, Color(0XFFCBD6FF)]),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        pollData?.poll?.question ?? "Vote Your Club. Make It Count.",
+                        style: Get.textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(color: Colors.transparent, child: Icon(Icons.close)),
+                      ),
+                    ],
+                  ).paddingOnly(left: 20),
+                  Divider(color: Colors.grey.shade300).paddingOnly(left: 20),
+                  const SizedBox(height: 10),
+                  if (clubs.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Text("No poll data available", style: Get.textTheme.bodyMedium),
+                    )
+                  else
+                    ...clubs.map((club) => Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: clubItem(
+                        clubName: club.clubName ?? "",
+                        votes: club.votes ?? 0,
+                        logoUrl: club.logo ?? "",
+                        clubId: club.clubId ?? "",
+                        widthFactor: (club.votes ?? 0) / safeMax,
+                      ),
+                    )),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Widget clubItem({
+    required String clubName,
+    required int votes,
+    required String logoUrl,
+    required String clubId,
+    double widthFactor = 1.0,
+  }) {
+    final colors = [
+      [Color(0xff4A27FF), Color(0xff001E8C)],
+      [Color(0xffC6C000), Color(0xffF4E66A)],
+      [Color(0xff4C8E00), Color(0xff9FD94F)],
+      [Color(0xff8F2D00), Color(0xffE65E2C)],
+      [Color(0xff002E13), Color(0xff006633)],
+    ];
+    final idx = clubName.hashCode.abs() % colors.length;
+    final color1 = colors[idx][0];
+    final color2 = colors[idx][1];
+    final textColor = idx == 1 || idx == 2 ? Colors.black : Colors.white;
+
+    return _ClubVoteItem(
+      clubName: clubName,
+      votes: votes,
+      logoUrl: logoUrl,
+      clubId: clubId,
+      color1: color1,
+      color2: color2,
+      textColor: textColor,
+      widthFactor: widthFactor,
+      onVote: () => widget.controller.castVote(clubId: clubId, clubName: clubName),
+    );
+  }
+}
+
+class _ClubVoteItem extends StatefulWidget {
+  final String clubName;
+  final int votes;
+  final String logoUrl;
+  final String clubId;
+  final Color color1;
+  final Color color2;
+  final Color textColor;
+  final double widthFactor;
+  final Future<bool> Function() onVote;
+
+  const _ClubVoteItem({
+    required this.clubName,
+    required this.votes,
+    required this.logoUrl,
+    required this.clubId,
+    required this.color1,
+    required this.color2,
+    required this.textColor,
+    required this.widthFactor,
+    required this.onVote,
+  });
+
+  @override
+  State<_ClubVoteItem> createState() => _ClubVoteItemState();
+}
+
+class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+  bool _voting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _scaleAnim = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleVote() async {
+    if (_voting) return;
+    setState(() => _voting = true);
+    _animController.forward(from: 0);
+    await widget.onVote();
+    if (mounted) setState(() => _voting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final barWidth = (constraints.maxWidth * widget.widthFactor).clamp(110.0, constraints.maxWidth - 40);
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                width: barWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                  gradient: LinearGradient(colors: [widget.color1, widget.color2]),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(widget.clubName, overflow: TextOverflow.ellipsis,
+                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500, color: widget.textColor)),
+                          Text("${widget.votes} votes",
+                              style: Get.textTheme.displayLarge!.copyWith(color: widget.textColor, fontSize: 8)),
+                        ],
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.white,
+                      child: ClipOval(
+                        child: widget.logoUrl.isNotEmpty
+                            ? CachedNetworkImage(imageUrl: widget.logoUrl, fit: BoxFit.cover, width: 28, height: 28,
+                                errorWidget: (_, __, ___) => Icon(Icons.sports_tennis, size: 16))
+                            : Icon(Icons.sports_tennis, size: 16),
+                      ),
+                    ).paddingOnly(left: 5),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: barWidth + 6,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _handleVote,
+                    child: ScaleTransition(
+                      scale: _scaleAnim,
+                      child: Image.asset(Assets.imagesImgPollVote, scale: 3.9),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
