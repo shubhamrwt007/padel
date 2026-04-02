@@ -121,10 +121,10 @@ class ScoreBoardScreen extends StatelessWidget {
             Obx(() => IconButton(
               icon: Icon(
                 controller.isShuffleMode.value ? Icons.check : Icons.swap_horiz,
-                color: controller.isGameStarted.value ? Colors.white.withOpacity(0.5) : Colors.white,
+                color: Colors.white,
                 size: 25,
               ),
-              onPressed: controller.isGameStarted.value ? null : () {
+              onPressed: () {
                 if (controller.isShuffleMode.value) {
                   controller.savePlayerSwaps();
                 } else {
