@@ -399,13 +399,15 @@ class BookACourtController extends GetxController {
 
   @override
   void onResumed() {
-    cleanupOnBack();
+    // intentionally empty - cleanup only happens on actual close
   }
 
   @override
   void onClose() {
     _unsubscribeFromCourtsByDuration();
-    cleanupOnBack();
+    if (realCourtSelections.isNotEmpty) {
+      cleanupOnBack();
+    }
     selectedSlots.clear();
     multiDateSelections.clear();
     realCourtSelections.clear();
@@ -417,7 +419,8 @@ class BookACourtController extends GetxController {
     if (realCourtSelections.isEmpty) return;
     try {
       final slotsList = [];
-      for (var entry in realCourtSelections.entries) {
+      final snapshot = Map<String, Map<String, dynamic>>.from(realCourtSelections);
+      for (var entry in snapshot.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
         final slotId = slot.sId ?? '';
@@ -1920,6 +1923,8 @@ class BookACourtController extends GetxController {
   }
 
   void _deselectLockedOrBookedSlots(GetCourtsByDurationModel response) {
+    // Agar humne khud slots lock kiye hain (payment flow mein hain), skip karo
+    if (hasCalledSlotHistoryAPI.value) return;
     final Map<String, Map<String, String>> slotStatusMap = {};
     for (final club in response.data ?? []) {
       for (final court in club.courts ?? []) {

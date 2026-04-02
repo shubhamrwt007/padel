@@ -40,9 +40,7 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     if (Get.isRegistered<BookSessionController>()) {
       final bookSessionController = Get.find<BookSessionController>();
       await bookSessionController.cleanupOnBack();
-    } else if (Get.isRegistered<BookACourtController>()){
-      final bookAcourtController = Get.find<BookACourtController>();
-      await bookAcourtController.cleanupOnBack();
+    } else{
       // Fallback: call with empty slots
       // await _callDeleteSlotHistoryAPI();
     }
