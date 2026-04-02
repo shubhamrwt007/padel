@@ -5,6 +5,7 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
@@ -19,8 +20,12 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
 
     return PopScope(
       onPopInvoked: (didPop) {
+        print("object-------------------");
         if (didPop && Get.isRegistered<BookingController>()) {
           Get.find<BookingController>().onPageResumed();
+        }else if (didPop && Get.isRegistered<BookACourtController>()){
+          print("objectobject--------------");
+          Get.find<BookACourtController>().onResumed();
         }
       },
       child: Scaffold(

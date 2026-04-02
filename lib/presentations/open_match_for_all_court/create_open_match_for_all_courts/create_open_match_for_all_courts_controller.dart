@@ -313,6 +313,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   RxBool isSocketDataReceived = false.obs;
   String? _lastSubscribedDate;
   String? _lastSubscribedDuration;
+  RxBool hasCalledSlotHistoryAPI = false.obs;
 
   @override
   void onInit()async {
@@ -400,7 +401,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   @override
   void onClose() {
     _unsubscribeFromCourtsByDuration();
-    _cleanupOnBack();
+    if (realCourtSelections.isNotEmpty) {
+      _cleanupOnBack();
+    }
     selectedSlots.clear();
     multiDateSelections.clear();
     realCourtSelections.clear();
@@ -413,8 +416,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
     
     try {
       final slots = [];
-      
-      for (var entry in realCourtSelections.entries) {
+      final snapshot = Map<String, Map<String, dynamic>>.from(realCourtSelections);
+      for (var entry in snapshot.entries) {
         final selection = entry.value;
         final slot = selection['slot'] as Slots;
         final slotId = slot.sId ?? '';
@@ -2048,6 +2051,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   }
 
   void _deselectLockedOrBookedSlots(GetCourtsByDurationModel response) {
+    // Agar humne khud slots lock kiye hain (payment flow mein hain), skip karo
+    if (hasCalledSlotHistoryAPI.value) return;
     final Map<String, Map<String, String>> slotStatusMap = {};
     for (final club in response.data ?? []) {
       for (final court in club.courts ?? []) {
@@ -2139,10 +2144,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   Future<bool> processSlotHistoryForNext() async {
     if (realCourtSelections.isEmpty) return false;
 
-    // Only call createAndGetSlotHistory for "Pay for All Players" option
     if (!isPayForAllPlayersSelected) {
       log('Skipping createAndGetSlotHistory - Pay your share only selected');
-      return true; // Return true to continue the flow without API call
+      return true;
     }
 
     try {
@@ -2177,7 +2181,9 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
         });
       }
       
-      return await createAndGetSlotHistory(slots: slots);
+      final success = await createAndGetSlotHistory(slots: slots);
+      if (success) hasCalledSlotHistoryAPI.value = true;
+      return success;
     } catch (e) {
       log('Error processing slot history: $e');
       return false;
@@ -2365,8 +2371,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       ),
       isScrollControlled: true,
     ).then((_) {
-      // Cleanup when bottomsheet is closed
       _cleanupOnBack();
+      hasCalledSlotHistoryAPI.value = false;
       Get.delete<QuestionsBottomsheetController>(tag: 'questions');
     });
   }
@@ -2576,8 +2582,8 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
       ),
       isScrollControlled: true,
     ).then((_) {
-      // Cleanup when bottomsheet is closed
       _cleanupOnBack();
+      hasCalledSlotHistoryAPI.value = false;
       Get.delete<QuestionsBottomsheetController>(tag: 'questions');
     });
   }
