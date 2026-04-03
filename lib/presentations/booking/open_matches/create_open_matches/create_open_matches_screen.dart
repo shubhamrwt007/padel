@@ -86,7 +86,6 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
       ),
     );
   }
-
   Widget _durationSection() {
     return Obx(() {
       // Check if any slot has 30-minute pricing available
@@ -339,6 +338,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                                   ],
                                 ),
                               );
+
                             }),
                           );
                         },
