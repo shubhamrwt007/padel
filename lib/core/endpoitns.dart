@@ -8,8 +8,8 @@ class AppEndpoints {
   // static const String base = "https://apimobile.swootapp.com/api/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   ///-----------------------Local URL-------------------------------------------
-  // static const String base = "http://192.168.1.24:5070/api/";
-  // static const String socketUrl = "http://192.168.1.24:5070";
+  // static const String base = "http://192.168.0.119:5070/api/";
+  // static const String socketUrl = "http://192.168.0.119:5070";
 
 
 
@@ -57,6 +57,7 @@ class AppEndpoints {
   static const String createMatches = "${baseUrl}court/openmatch/createOpenMatch";
   static const String createOpenMatchSlotBookOnly = "${baseUrl}court/openmatch/create-openMatchOnly";
   static const String findNearByPlayer = "${baseUrl}court/openmatch/findNearByPLayers";
+  static const String sendBookingInvitations = "${baseUrl}court/openmatch/sendBookingInvitations";
   static const String getCustomerNameByPhoneNumber = "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
   static const String withdrawRequest = "${baseUrl}court/openmatch/withDrawMatchRequest/";
   static const String getPendingRequestCount = "${baseUrl}court/openmatch/getPendingInvitationCount";

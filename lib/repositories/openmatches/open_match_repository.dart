@@ -3,6 +3,7 @@ import 'package:padel_mobile/data/request_models/open%20matches/request_player_t
 import 'package:padel_mobile/data/request_models/open%20matches/withdraw_request_model.dart';
 import 'package:padel_mobile/data/request_models/request_to_join_booking_model.dart';
 import 'package:padel_mobile/data/request_models/respond_to_request_booking_model.dart';
+import 'package:padel_mobile/data/request_models/send_booking_invitation_model.dart';
 import 'package:padel_mobile/data/response_models/get_players_level_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/find_near_by_player_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_customer_data_by_phone_number_model.dart';
@@ -182,6 +183,40 @@ class OpenMatchRepository {
     }
   }
 
+  /// Send Booking Invitation---------------------------------------------------
+  Future<SendBookingInvitationModel> sendBookingInvitation({
+    String? bookingId,
+    bool? sendNotifications,
+  }) async {
+    try {
+      // final queryParams = {
+      //   if (bookingId != null && bookingId.isNotEmpty) "bookingId": bookingId,
+      //   if (sendNotifications != null) "sendNotifications": sendNotifications,
+      // };
+
+      final response = await dioClient.post(
+        "${AppEndpoints.sendBookingInvitations}?bookingId=$bookingId&sendNotifications=$sendNotifications",
+        // queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        CustomLogger.logMessage(
+          msg: "RESPONSE → ${response.data}",
+          level: LogLevel.info,
+        );
+
+        return SendBookingInvitationModel.fromJson(response.data);
+      } else {
+        throw Exception("Failed to Send Booking Invitation: ${response.statusCode}");
+      }
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "ERROR → $e",
+        level: LogLevel.error,
+      );
+      rethrow;
+    }
+  }
 
   // Future<OpenMatchDetailsModel> getParticularMatch(String clubId) async {
   //   log("mes 2");
