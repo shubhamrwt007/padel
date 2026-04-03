@@ -20,6 +20,24 @@ class AppPlayersController extends GetxController {
   RxList<String> requestedPlayerIds = <String>[].obs;
   final OpenMatchRepository repository = OpenMatchRepository();
   RxString bookingType = ''.obs;
+  RxBool invitationSent = false.obs;
+  RxBool isSendingInvitation = false.obs;
+
+  Future<void> sendBookingInvitation(String bookingId) async {
+    try {
+      isSendingInvitation.value = true;
+      print("OBJEDOIJF________________$bookingId,,,,,");
+      final response = await repository.sendBookingInvitation(bookingId: bookingId, sendNotifications: true);
+      if (response.status == 200) {
+        invitationSent.value = true;
+        await fetchNearByPlayers(bookingId: bookingId);
+      }
+    } catch (e) {
+      // handle silently
+    } finally {
+      isSendingInvitation.value = false;
+    }
+  }
 
   Future<void> fetchNearByPlayers({String search = '',required String bookingId}) async {
     try {
@@ -48,17 +66,6 @@ class AppPlayersController extends GetxController {
     }
   }
 }
-String getInitials(String? fullName) {
-  if (fullName == null || fullName.trim().isEmpty) return '';
-
-  final parts = fullName.trim().split(RegExp(r'\s+'));
-
-  if (parts.length == 1) {
-    return parts[0][0].toUpperCase();
-  } else {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-}
 
 class AppPlayersBottomSheetScore extends StatelessWidget {
   final String matchId;
@@ -68,14 +75,14 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   final String? bookingType;
   final List<String>? currentPlayerIds;
   final bool showAddGuestButton;
-  
-  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds, this.showAddGuestButton = true});
+
+  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds, this.showAddGuestButton = true,});
   
   final AppPlayersController controller = Get.put(AppPlayersController());
 
   @override
   Widget build(BuildContext context) {
-    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType");
+    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType,");
     controller.bookingType.value = bookingType ?? '';
     controller.fetchNearByPlayers(bookingId: bookingId??"");
     
@@ -120,6 +127,47 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               //   'Nearby & match your level',
               //   style: Get.textTheme.labelLarge,
               // ),
+              Obx(() => controller.invitationSent.value
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: controller.isSendingInvitation.value
+                          ? null
+                          : () => controller.sendBookingInvitation(bookingId ?? ''),
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffEEF1FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Send Request to Top Players", style: Get.textTheme.headlineSmall),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: controller.isSendingInvitation.value
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      'Send Request',
+                                      style: Get.textTheme.bodyLarge!.copyWith(
+                                        color: AppColors.primaryColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).paddingOnly(top: 5)),
               const SizedBox(height: 12),
               _playersList(bookingId??""),
               const SizedBox(height: 12),
@@ -445,5 +493,16 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           ),
       ],
     );
+  }
+  String getInitials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '';
+
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
   }
 }

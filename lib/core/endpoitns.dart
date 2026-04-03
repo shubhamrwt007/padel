@@ -10,6 +10,11 @@ class AppEndpoints {
   ///-----------------------Local URL-------------------------------------------
   // static const String base = "http://192.168.0.126:5070/api/";
   // static const String socketUrl = "http://192.168.0.126:5070";
+  // static const String base = "http://192.168.0.119:5070/api/";
+  // static const String socketUrl = "http://192.168.0.119:5070";
+
+
+
   static const String baseUrl = "${base}customer/";
 
   // static const String login = "${baseUrl}customerLogin";
@@ -54,6 +59,7 @@ class AppEndpoints {
   static const String createMatches = "${baseUrl}court/openmatch/createOpenMatch";
   static const String createOpenMatchSlotBookOnly = "${baseUrl}court/openmatch/create-openMatchOnly";
   static const String findNearByPlayer = "${baseUrl}court/openmatch/findNearByPLayers";
+  static const String sendBookingInvitations = "${baseUrl}court/openmatch/sendBookingInvitations";
   static const String getCustomerNameByPhoneNumber = "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
   static const String withdrawRequest = "${baseUrl}court/openmatch/withDrawMatchRequest/";
   static const String getPendingRequestCount = "${baseUrl}court/openmatch/getPendingInvitationCount";
