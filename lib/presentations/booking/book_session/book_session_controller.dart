@@ -267,8 +267,13 @@ var locationsId = "".obs;
     locationID.value = Get.arguments['location']??"";
     locationsId.value = Get.arguments['locationsId']??"";
     selectedDate.value = _getInitialDate();
+    
+    // Add listener to check when screen becomes visible again
+    ever(hasCalledSlotHistoryAPI, (value) {
+      log('🔔 hasCalledSlotHistoryAPI changed to: $value');
+    });
+    
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // await fetchAllSlotPrices();
       // Subscribe to slot-wise updates first (with API fallback)
       _subscribeToSlotUpdates();
       _startDateAutoSwitchTimer();
@@ -281,6 +286,31 @@ var locationsId = "".obs;
       return DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
     }
     return now;
+  }
+
+  /// Public method to check and unlock slots when returning from payment
+  Future<void> checkAndUnlockSlotsOnReturn() async {
+    log('🔍 checkAndUnlockSlotsOnReturn() called');
+    log('   - hasCalledSlotHistoryAPI: ${hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections.isNotEmpty: ${multiDateSelections.isNotEmpty}');
+    
+    if (hasCalledSlotHistoryAPI.value && multiDateSelections.isNotEmpty) {
+      log('🔓 Unlocking slots after returning from payment');
+      await cleanupOnBack();
+      hasCalledSlotHistoryAPI.value = false;
+      log('✅ Slots unlocked, refreshing UI');
+      
+      // Refresh the slots to show updated status
+      await getAvailableCourtsById(
+        locationID.value,
+        categoryId.value,
+        sId.value,
+        argument.id!,
+        showUnavailable: true,
+      );
+    } else {
+      log('❌ Conditions not met for unlocking');
+    }
   }
 
   void _startDateAutoSwitchTimer() {
@@ -297,7 +327,11 @@ var locationsId = "".obs;
 
   @override
   void onClose() {
-    cleanupOnBack();
+    // Only cleanup if slots were locked (hasCalledSlotHistoryAPI is true)
+    // and user is leaving without completing payment
+    if (hasCalledSlotHistoryAPI.value) {
+      cleanupOnBack();
+    }
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -384,10 +418,13 @@ var locationsId = "".obs;
         }
       }
       
-      await repository.deleteSlotHistory(data: {"slots": slots});
-      log('Bulk delete slot history on back: $slots');
+      if (slots.isNotEmpty) {
+        log('🔓 Unlocking ${slots.length} slot(s) via deleteSlotHistory API');
+        await repository.deleteSlotHistory(data: {"slots": slots});
+        log('✅ Successfully unlocked slots: $slots');
+      }
     } catch (e) {
-      log('Error in bulk delete on back: $e');
+      log('❌ Error in cleanupOnBack: $e');
     }
   }
 
@@ -701,7 +738,6 @@ var locationsId = "".obs;
           isLeftHalf: false,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
       if (hasRight && !hasLeft && tappingLeft) {
@@ -715,7 +751,6 @@ var locationsId = "".obs;
           isLeftHalf: true,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
 
@@ -747,7 +782,6 @@ var locationsId = "".obs;
             isLeftHalf: false,
           );
           _recalculateTotalAmount();
-          _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
           return;
         }
 
@@ -806,7 +840,6 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
         return;
       }
 
@@ -824,7 +857,6 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -842,7 +874,6 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -860,7 +891,6 @@ var locationsId = "".obs;
           dateString: dateString,
         );
         _recalculateTotalAmount();
-        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
         return;
       }
 
@@ -881,7 +911,6 @@ var locationsId = "".obs;
         dateString: dateString,
       );
       _recalculateTotalAmount();
-      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
       return;
     }
 
@@ -893,7 +922,6 @@ var locationsId = "".obs;
       multiDateSelections.remove(fullKey);
       selectedSlots.removeWhere((s) => s.sId == slotId);
       selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
-      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
     } else {
       if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
       multiDateSelections[fullKey] = {
@@ -914,7 +942,6 @@ var locationsId = "".obs;
         'bookingTime': slot.time ?? '',
         'adjustedAmount': slot.amount ?? 0,
       };
-      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
     }
 
     _recalculateTotalAmount();
@@ -1956,6 +1983,12 @@ var locationsId = "".obs;
 
       final paymentController = Get.put(PaymentMethodController());
       paymentController.setDirectBookingPayload(payload);
+      
+      // Set flag to indicate we're going to payment page
+      // This will be used to check if user returns without completing payment
+      final currentRoute = Get.currentRoute;
+      log('💳 Navigating to payment page from: $currentRoute');
+      
       await paymentController.createInitialBooking();
     } catch (e) {
       log('proceedToPayment error: $e');
@@ -2043,9 +2076,14 @@ var locationsId = "".obs;
         }
       }
       
+      // NOW lock the slots by calling createAndGetSlotHistory
+      log('🔒 Locking slots on Book Now button tap: $slots');
       final success = await createAndGetSlotHistory(slots: slots);
       if (success) {
         hasCalledSlotHistoryAPI.value = true;
+        log('✅ Slots successfully locked');
+      } else {
+        log('❌ Failed to lock slots');
       }
       return success;
     } catch (e) {
@@ -2360,32 +2398,6 @@ var locationsId = "".obs;
       return slotHour >= startHour && slotHour <= endHour;
     } catch (e) {
       return false;
-    }
-  }
-
-  /// Emit slot selection/deselection events via socket
-  void _emitSlotEvent(Slots slot, String courtId, String courtName, String dateString, bool isDeselection) {
-    try {
-      final socketService = SocketService.instance;
-      final eventData = {
-        'slotId': slot.sId ?? '',
-        'courtId': courtId,
-        'courtName': courtName,
-        'time': slot.time ?? '',
-        'date': dateString,
-        'amount': slot.amount ?? 0,
-        'userId': socketService.userId,
-        'clubId': argument.id ?? '',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      
-      if (isDeselection) {
-        socketService.emitSlotDeselection(eventData);
-      } else {
-        socketService.emitSlotSelection(eventData);
-      }
-    } catch (e) {
-      log('Error emitting slot event: $e');
     }
   }
 
