@@ -375,6 +375,7 @@ class SocketService extends GetxService {
   }) {
     if (_socket == null || !_isConnected.value) {
       log('❌ Cannot subscribe to slot updates: socket not connected');
+      log('Socket null: ${_socket == null}, Connected: ${_isConnected.value}');
       return;
     }
 
@@ -393,17 +394,31 @@ class SocketService extends GetxService {
     };
 
     try {
+      log('📤 Emitting slotWise:subscribe with data: $subscriptionData');
+      
       _socket?.emitWithAck('slotWise:subscribe', subscriptionData, ack: (data) {
-        log('✅ slotWise:subscribe acknowledgment received: $data');
+        log('✅ slotWise:subscribe acknowledgment received');
+        log('📊 Ack data: $data');
         
         // Handle initial slot data from acknowledgment
-        if (data != null && data['data'] != null) {
-          log('📡 Initial slot data received in ack: ${data['data']}');
-          onInitialData?.call(data['data']);
+        if (data != null) {
+          // Check if data has 'data' field or is the data itself
+          if (data is Map && data.containsKey('data')) {
+            log('📡 Initial slot data found in ack.data');
+            onInitialData?.call(data['data']);
+          } else if (data is List || (data is Map && data.containsKey('courts'))) {
+            log('📡 Initial slot data found directly in ack');
+            onInitialData?.call(data);
+          } else {
+            log('⚠️ Ack received but no slot data found');
+            log('📊 Ack structure: ${data.runtimeType}');
+          }
+        } else {
+          log('⚠️ Ack received but data is null');
         }
       });
       
-      log('✅ slotWise:subscribe event emitted with ack: $subscriptionData');
+      log('✅ slotWise:subscribe event emitted successfully');
     } catch (e) {
       log('❌ Error emitting slotWise:subscribe: $e');
     }

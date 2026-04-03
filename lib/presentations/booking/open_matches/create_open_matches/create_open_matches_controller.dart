@@ -801,7 +801,7 @@ class CreateOpenMatchesController extends GetxController {
         },
         onSlotUpdate: (data) {
           log('🔄 SlotWise real-time update received in CreateOpenMatchesController');
-          _handleRealTimeSlotUpdate(data);
+          _handleRealTimeSlotUpdate(data);_checkAndUnselectLockedSlots(data);
         },
       );
 
@@ -897,6 +897,79 @@ class CreateOpenMatchesController extends GetxController {
       log('✅ Real-time slot data updated in UI');
     } catch (e) {
       log('❌ Error handling real-time slot update: $e');
+    }
+  }
+
+  void _checkAndUnselectLockedSlots(dynamic socketResponse) {
+    try {
+      if (socketResponse == null) return;
+
+      final slotData = socketResponse['data'] ?? socketResponse;
+      List<dynamic> courts;
+
+      if (slotData is List) {
+        courts = slotData;
+      } else if (slotData is Map<String, dynamic> && slotData['data'] is List) {
+        courts = slotData['data'];
+      } else {
+        return;
+      }
+
+      final currentDate = selectedDate.value ?? DateTime.now();
+      final dateString = _dateFormatter.format(currentDate);
+      final keysToRemove = <String>[];
+
+      for (final court in courts) {
+        final courtId = court['_id'] as String?;
+        if (courtId == null) continue;
+
+        final slotsList = court['slots'] as List<dynamic>?;
+        if (slotsList == null) continue;
+
+        for (final slotData in slotsList) {
+          final slotId = slotData['_id'] as String?;
+          final status = slotData['status'] as String?;
+
+          if (slotId == null || status == null) continue;
+
+          if (status.toLowerCase() == 'lock') {
+            final fullKey = '${dateString}_${courtId}_${slotId}';
+            final leftKey = '${dateString}_${courtId}_${slotId}_L';
+            final rightKey = '${dateString}_${courtId}_${slotId}_R';
+
+            if (multiDateSelections.containsKey(fullKey)) {
+              keysToRemove.add(fullKey);
+              log('Auto-unselecting locked slot: $slotId');
+            }
+
+            if (multiDateSelections.containsKey(leftKey)) {
+              keysToRemove.add(leftKey);
+              log('Auto-unselecting locked left half: $slotId');
+            }
+            if (multiDateSelections.containsKey(rightKey)) {
+              keysToRemove.add(rightKey);
+              log('Auto-unselecting locked right half: $slotId');
+            }
+          }
+        }
+      }
+
+      if (keysToRemove.isNotEmpty) {
+        for (final key in keysToRemove) {
+          final selection = multiDateSelections[key];
+          if (selection != null) {
+            final slot = selection['slot'] as Slots;
+            final courtId = selection['courtId'] as String;
+            selectedSlots.removeWhere((s) => s.sId == slot.sId);
+            selectedSlotsWithCourtInfo.remove('${courtId}_${slot.sId}');
+          }
+          multiDateSelections.remove(key);
+        }
+        _recalculateTotalAmount();
+        // AppToast.error('Some selected slots were locked by another user');
+      }
+    } catch (e) {
+      log('Error checking locked slots: $e');
     }
   }
 

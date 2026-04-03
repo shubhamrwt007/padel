@@ -32,13 +32,23 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
       try {
         final socketService = SocketService.instance;
         log('BookSession: Checking socket connection status');
-        socketService.testConnection();
         
         if (!socketService.isConnected) {
           log('BookSession: Socket not connected, attempting to connect');
           socketService.connect();
+          
+          // Wait a bit for connection to establish
+          Future.delayed(const Duration(seconds: 2), () {
+            if (socketService.isConnected) {
+              log('BookSession: Socket connected successfully');
+              socketService.testConnection();
+            } else {
+              log('BookSession: Socket connection failed after 2 seconds');
+            }
+          });
         } else {
           log('BookSession: Socket already connected');
+          socketService.testConnection();
         }
       } catch (e) {
         log('Socket connection error in book session: $e');
