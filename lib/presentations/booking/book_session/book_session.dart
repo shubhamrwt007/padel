@@ -20,6 +20,7 @@ class BookSession extends StatefulWidget {
 class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClientMixin {
   final BookSessionController controller = Get.put(BookSessionController());
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
+  bool _hasCheckedOnReturn = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -27,6 +28,7 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
+    // Ensure socket is connected when book session screen loads
     // Ensure socket is connected when book session screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
@@ -80,6 +82,21 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
+    log('🔄 BookSession build() called - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}, _hasCheckedOnReturn: $_hasCheckedOnReturn');
+    
+    // Check if returning from payment and unlock slots
+    // Reset the check flag when user navigates away
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      log('📍 PostFrameCallback executed - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}, _hasCheckedOnReturn: $_hasCheckedOnReturn');
+      if (!_hasCheckedOnReturn && controller.hasCalledSlotHistoryAPI.value) {
+        _hasCheckedOnReturn = true;
+        controller.checkAndUnlockSlotsOnReturn();
+      } else {
+        log('⏭️ Skipping unlock check - already checked or not needed');
+      }
+    });
+    
     return Stack(  // Change from Scaffold to Stack
       children: [
         SingleChildScrollView(
@@ -1720,6 +1737,11 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                     CustomLogger.logMessage(msg: "Please select at least one slot before booking.", level: LogLevel.error);
                     return;
                   }
+                  // Reset the check flag so it can check again when user returns
+                  log('🟢 Book Now tapped - Resetting _hasCheckedOnReturn flag');
+                  log('   - Before: _hasCheckedOnReturn = $_hasCheckedOnReturn');
+                  _hasCheckedOnReturn = false;
+                  log('   - After: _hasCheckedOnReturn = $_hasCheckedOnReturn');
                   controller.proceedToPayment();
                 },
                 child: controller.cartLoader.value

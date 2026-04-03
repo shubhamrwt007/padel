@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
@@ -120,6 +122,25 @@ class PaymentMethodController extends GetxController {
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
     isProcessing.value = false;
+    
+    // Unlock slots when payment fails
+    if (Get.isRegistered<BookSessionController>()) {
+      final c = Get.find<BookSessionController>();
+      if (c.hasCalledSlotHistoryAPI.value) {
+        log('❌ Payment failed, unlocking slots');
+        c.cleanupOnBack();
+        c.hasCalledSlotHistoryAPI.value = false;
+      }
+    }
+    
+    if (Get.isRegistered<BookACourtController>()) {
+      final c = Get.find<BookACourtController>();
+      if (c.hasCalledSlotHistoryAPI.value) {
+        log('❌ Payment failed, unlocking slots');
+        c.cleanupOnBack();
+        c.hasCalledSlotHistoryAPI.value = false;
+      }
+    }
     // Get.back();
   }
 
@@ -214,6 +235,8 @@ class PaymentMethodController extends GetxController {
           directBookingPayload = null;
           if (Get.isRegistered<BookSessionController>()) {
             final c = Get.find<BookSessionController>();
+            // Reset the flag since payment was successful
+            c.hasCalledSlotHistoryAPI.value = false;
             c.clearAllSelections();
           }
         }
@@ -308,6 +331,21 @@ class PaymentMethodController extends GetxController {
                         ),
                       ),
                       onPressed: () {
+                        // Unlock slots before going home
+                        if (Get.isRegistered<BookSessionController>()) {
+                          final c = Get.find<BookSessionController>();
+                          if (c.hasCalledSlotHistoryAPI.value) {
+                            c.cleanupOnBack();
+                            c.hasCalledSlotHistoryAPI.value = false;
+                          }
+                        }
+                        if (Get.isRegistered<BookACourtController>()) {
+                          final c = Get.find<BookACourtController>();
+                          if (c.hasCalledSlotHistoryAPI.value) {
+                            c.cleanupOnBack();
+                            c.hasCalledSlotHistoryAPI.value = false;
+                          }
+                        }
                         Get.offAllNamed(RoutesName.bottomNav);
                       },
                       child: const Text(
@@ -490,7 +528,10 @@ class PaymentMethodController extends GetxController {
                     } else {
                       directBookingPayload = null;
                       if (Get.isRegistered<BookSessionController>()) {
-                        Get.find<BookSessionController>().clearAllSelections();
+                        final c = Get.find<BookSessionController>();
+                        // Reset the flag since booking was successful without payment
+                        c.hasCalledSlotHistoryAPI.value = false;
+                        c.clearAllSelections();
                       }
                     }
                     if (isFromBookACourt && bookACourtController != null) {
