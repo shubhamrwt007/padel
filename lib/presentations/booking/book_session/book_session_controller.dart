@@ -254,6 +254,15 @@ class BookSessionController extends GetxController {
   
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
+  
+  // Store the locked slots data for cleanup
+  List<Map<String, dynamic>> _lockedSlotsData = [];
+  
+  // Track if we're currently locking slots (to ignore socket updates temporarily)
+  RxBool isLockingSlots = false.obs;
+  
+  // Store timestamp when slots were locked by current user
+  DateTime? _lastLockTimestamp;
 var sId = "".obs;
 var categoryId = "".obs;
 var locationID = "".obs;
@@ -288,31 +297,6 @@ var locationsId = "".obs;
     return now;
   }
 
-  /// Public method to check and unlock slots when returning from payment
-  Future<void> checkAndUnlockSlotsOnReturn() async {
-    log('🔍 checkAndUnlockSlotsOnReturn() called');
-    log('   - hasCalledSlotHistoryAPI: ${hasCalledSlotHistoryAPI.value}');
-    log('   - multiDateSelections.isNotEmpty: ${multiDateSelections.isNotEmpty}');
-    
-    if (hasCalledSlotHistoryAPI.value && multiDateSelections.isNotEmpty) {
-      log('🔓 Unlocking slots after returning from payment');
-      await cleanupOnBack();
-      hasCalledSlotHistoryAPI.value = false;
-      log('✅ Slots unlocked, refreshing UI');
-      
-      // Refresh the slots to show updated status
-      await getAvailableCourtsById(
-        locationID.value,
-        categoryId.value,
-        sId.value,
-        argument.id!,
-        showUnavailable: true,
-      );
-    } else {
-      log('❌ Conditions not met for unlocking');
-    }
-  }
-
   void _startDateAutoSwitchTimer() {
     Timer.periodic(const Duration(minutes: 1), (timer) {
       final now = DateTime.now();
@@ -327,11 +311,7 @@ var locationsId = "".obs;
 
   @override
   void onClose() {
-    // Only cleanup if slots were locked (hasCalledSlotHistoryAPI is true)
-    // and user is leaving without completing payment
-    if (hasCalledSlotHistoryAPI.value) {
-      cleanupOnBack();
-    }
+    // Don't cleanup here - let the widget handle it when user actually navigates back
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -345,84 +325,24 @@ var locationsId = "".obs;
   }
 
   Future<void> cleanupOnBack() async {
-    if (multiDateSelections.isEmpty) return;
+    log('🧹 cleanupOnBack() called');
+    log('   - _lockedSlotsData count: ${_lockedSlotsData.length}');
+    log('   - multiDateSelections count: ${multiDateSelections.length}');
+    
+    // Use stored locked slots data if available
+    if (_lockedSlotsData.isEmpty) {
+      log('   - No locked slots data to cleanup, returning');
+      return;
+    }
     
     try {
-      final slots = [];
+      log('🔓 Unlocking ${_lockedSlotsData.length} slot(s) via deleteSlotHistory API');
+      log('   - Payload: $_lockedSlotsData');
+      await repository.deleteSlotHistory(data: {"slots": _lockedSlotsData});
+      log('✅ Successfully unlocked slots');
       
-      // Group selections by slot ID to detect both halves
-      final Map<String, List<MapEntry<String, Map<String, dynamic>>>> slotGroups = {};
-      for (var entry in multiDateSelections.entries) {
-        final selection = entry.value;
-        final slot = selection['slot'] as Slots;
-        final slotId = slot.sId ?? '';
-        final courtId = selection['courtId'] as String;
-        final dateString = selection['date'] as String;
-        final groupKey = '${dateString}_${courtId}_${slotId}';
-        
-        if (!slotGroups.containsKey(groupKey)) {
-          slotGroups[groupKey] = [];
-        }
-        slotGroups[groupKey]!.add(entry);
-      }
-      
-      // Process each group
-      for (var group in slotGroups.values) {
-        if (group.isEmpty) continue;
-        
-        final firstEntry = group.first;
-        final selection = firstEntry.value;
-        final slot = selection['slot'] as Slots;
-        final slotId = slot.sId ?? '';
-        final courtId = selection['courtId'] as String;
-        final dateString = selection['date'] as String;
-        final supports30Min = slotSupports30Min(slot);
-        
-        // Check if both halves are selected
-        final hasLeftHalf = group.any((e) => e.value['isLeftHalf'] == true);
-        final hasRightHalf = group.any((e) => e.value['isLeftHalf'] == false);
-        final bothHalvesSelected = hasLeftHalf && hasRightHalf;
-        
-        if (supports30Min && bothHalvesSelected) {
-          // Both halves selected - create ONE entry with 60 minutes
-          final finalDuration = (slot.duration == 90) ? 90 : 60;
-          final userId = storage.read("userId")??"";
-          slots.add({
-            "slotId": slotId,
-            "courtId": courtId,
-            "bookingDate": dateString,
-            "time": slot.time ?? '',
-            "bookingTime": slot.time ?? '',
-            "duration": finalDuration,
-            "userId":userId
-          });
-        } else {
-          // Single half or full slot - create entries as is
-          for (var entry in group) {
-            final sel = entry.value;
-            final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
-            final isLeftHalf = sel['isLeftHalf'] as bool?;
-            final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
-            final finalDuration = (slot.duration == 90) ? 90 : duration;
-            final userId = storage.read("userId")??"";
-            slots.add({
-              "slotId": slotId,
-              "courtId": courtId,
-              "bookingDate": dateString,
-              "time": bookingTime,
-              "bookingTime": bookingTime,
-              "duration": finalDuration,
-              "userId":userId
-            });
-          }
-        }
-      }
-      
-      if (slots.isNotEmpty) {
-        log('🔓 Unlocking ${slots.length} slot(s) via deleteSlotHistory API');
-        await repository.deleteSlotHistory(data: {"slots": slots});
-        log('✅ Successfully unlocked slots: $slots');
-      }
+      // Clear the stored data after successful cleanup
+      _lockedSlotsData.clear();
     } catch (e) {
       log('❌ Error in cleanupOnBack: $e');
     }
@@ -528,29 +448,66 @@ var locationsId = "".obs;
   Future<bool> createAndGetSlotHistory({required List<Map<String, dynamic>> slots}) async {
     try {
       log('createAndGetSlotHistory called with body: $slots');
+      
+      // Set flag to ignore socket updates temporarily
+      isLockingSlots.value = true;
+      _lastLockTimestamp = DateTime.now();
+      
       final response = await repository.createAndGetSlotHistory(data: slots);
 
       if (response.data.isEmpty) {
         CustomLogger.logMessage(msg: "No slot data returned", level: LogLevel.error);
+        isLockingSlots.value = false;
         return false;
       }
 
       final createdSlots = response.data.where((e) => e.created).toList();
       final lockedSlots = response.data.where((e) => !e.created).toList();
+      final currentUserId = storage.read("userId") ?? "";
 
       if (createdSlots.isNotEmpty) {
+        // Delay resetting the flag to ignore socket updates for 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          isLockingSlots.value = false;
+        });
         return true;
       }
 
       if (lockedSlots.isNotEmpty) {
+        // Check if locked slots match with our request (same user trying to lock again)
+        bool allMatchOurRequest = lockedSlots.every((lockedSlot) {
+          final lockedData = lockedSlot.data;
+          if (lockedData == null) return false;
+          
+          // Check if this locked slot matches any slot in our request
+          return slots.any((requestSlot) => 
+            requestSlot['slotId'] == lockedData.slotId &&
+            requestSlot['courtId'] == lockedData.courtId &&
+            requestSlot['bookingDate'] == lockedData.bookingDate &&
+            requestSlot['bookingTime'] == lockedData.bookingTime &&
+            requestSlot['userId'] == currentUserId
+          );
+        });
+        
+        if (allMatchOurRequest) {
+          log('✅ All slots already locked by same user, allowing navigation');
+          // Delay resetting the flag to ignore socket updates for 2 seconds
+          Future.delayed(const Duration(seconds: 2), () {
+            isLockingSlots.value = false;
+          });
+          return true;
+        }
+        
+        isLockingSlots.value = false;
         AppToast.error(lockedSlots.first.message ?? "This slot is currently locked. Please try again.");
         CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
-
       }
 
+      isLockingSlots.value = false;
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
+      isLockingSlots.value = false;
       return false;
     }
   }
@@ -569,7 +526,6 @@ var locationsId = "".obs;
     if (multiDateSelections.isEmpty) return false;
     try {
       final slots = <Map<String, dynamic>>[];
-      final processedSlots = <String>{}; // Track processed slot IDs to avoid duplicates
       
       // Group selections by slot ID to detect both halves
       final Map<String, List<MapEntry<String, Map<String, dynamic>>>> slotGroups = {};
@@ -587,8 +543,11 @@ var locationsId = "".obs;
         slotGroups[groupKey]!.add(entry);
       }
       
+      log('📊 Total slot groups to process: ${slotGroups.length}');
+      
       // Process each group
-      for (var group in slotGroups.values) {
+      for (var groupKey in slotGroups.keys) {
+        final group = slotGroups[groupKey]!;
         if (group.isEmpty) continue;
         
         final firstEntry = group.first;
@@ -599,17 +558,18 @@ var locationsId = "".obs;
         final courtName = selection['courtName'] as String;
         final dateString = selection['date'] as String;
         final supports30Min = slotSupports30Min(slot);
+        final userId = storage.read("userId") ?? "";
         
         // Check if both halves are selected
         final hasLeftHalf = group.any((e) => e.value['isLeftHalf'] == true);
         final hasRightHalf = group.any((e) => e.value['isLeftHalf'] == false);
         final bothHalvesSelected = hasLeftHalf && hasRightHalf;
         
+        log('🔍 Processing group: $groupKey, supports30Min: $supports30Min, hasLeft: $hasLeftHalf, hasRight: $hasRightHalf');
+        
         if (supports30Min && bothHalvesSelected) {
           // Both halves selected - create ONE entry with 60 minutes
           final finalDuration = (slot.duration == 90) ? 90 : 60;
-          final userId = storage.read("userId")??"";
-
           slots.add({
             "slotId": slotId,
             "courtId": courtId,
@@ -619,39 +579,74 @@ var locationsId = "".obs;
             "bookingTime": slot.time ?? '',
             "duration": finalDuration,
             "totalTime": finalDuration,
-            "userId":userId
+            "userId": userId
           });
+          log('✅ Added full slot (both halves): ${slot.time}, duration: $finalDuration');
+        } else if (supports30Min && (hasLeftHalf || hasRightHalf)) {
+          // Only one half selected - create ONE entry with 30 minutes
+          final isLeftHalf = hasLeftHalf;
+          final bookingTime = isLeftHalf ? (slot.time ?? '') : _addMinutesToTime(slot.time ?? '', 30);
+          slots.add({
+            "slotId": slotId,
+            "courtId": courtId,
+            "courtName": courtName,
+            "bookingDate": dateString,
+            "time": bookingTime,
+            "bookingTime": bookingTime,
+            "duration": 30,
+            "totalTime": 30,
+            "userId": userId
+          });
+          log('✅ Added half slot: ${slot.time} (${isLeftHalf ? "left" : "right"}), bookingTime: $bookingTime');
         } else {
-          // Single half or full slot - create entries as is
-          for (var entry in group) {
-            final sel = entry.value;
-            final bookingTime = sel['bookingTime'] as String? ?? slot.time ?? '';
-            final isLeftHalf = sel['isLeftHalf'] as bool?;
-            final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
-            final finalDuration = (slot.duration == 90) ? 90 : duration;
-            final userId = storage.read("userId")??"";
-            slots.add({
-              "slotId": slotId,
-              "courtId": courtId,
-              "courtName": courtName,
-              "bookingDate": dateString,
-              "time": bookingTime,
-              "bookingTime": bookingTime,
-              "duration": finalDuration,
-              "totalTime": finalDuration,
-              "userId":userId
-            });
-          }
+          // Full slot (non-30min support) - create ONE entry
+          final finalDuration = (slot.duration == 90) ? 90 : 60;
+          slots.add({
+            "slotId": slotId,
+            "courtId": courtId,
+            "courtName": courtName,
+            "bookingDate": dateString,
+            "time": slot.time ?? '',
+            "bookingTime": slot.time ?? '',
+            "duration": finalDuration,
+            "totalTime": finalDuration,
+            "userId": userId
+          });
+          log('✅ Added full slot: ${slot.time}, duration: $finalDuration');
         }
       }
       
+      log('📦 Total slots to lock: ${slots.length}');
+      
+      // Store the locked slots data for cleanup
+      _lockedSlotsData = slots.map((s) => {
+        "slotId": s["slotId"],
+        "courtId": s["courtId"],
+        "bookingDate": s["bookingDate"],
+        "time": s["time"],
+        "bookingTime": s["bookingTime"],
+        "duration": s["duration"],
+        "userId": s["userId"],
+      }).toList();
+      
+      log('💾 Stored ${_lockedSlotsData.length} locked slots for cleanup');
+      log('🔒 Calling createAndGetSlotHistory API with ${slots.length} slots');
+      
       final success = await createAndGetSlotHistory(slots: slots);
+      
+      log('📊 API Response - Success: $success');
+      
       if (success) {
         hasCalledSlotHistoryAPI.value = true;
+        log('✅ Slot history API called successfully, flag set to true');
+      } else {
+        log('❌ Slot history API failed, clearing stored data');
+        _lockedSlotsData.clear();
       }
       return success;
     } catch (e) {
       log('Error processing slot history: $e');
+      _lockedSlotsData.clear();
       return false;
     }
   }
@@ -1969,14 +1964,21 @@ var locationsId = "".obs;
 
       cartLoader.value = true;
 
-      final success = await processSlotHistoryForBooking();
+      log('💳 proceedToPayment called with ${multiDateSelections.length} selections');
+      
+      // Use processSlotHistoryForPayment instead of processSlotHistoryForBooking
+      final success = await processSlotHistoryForPayment();
       if (!success) {
+        log('❌ processSlotHistoryForPayment failed');
         cartLoader.value = false;
         return;
       }
 
+      log('✅ processSlotHistoryForPayment succeeded');
+      
       final payload = buildBookingPayloadFromSelections();
       if (payload == null || payload.isEmpty) {
+        log('❌ buildBookingPayloadFromSelections returned empty');
         cartLoader.value = false;
         return;
       }
@@ -2637,6 +2639,21 @@ var locationsId = "".obs;
 
   void _checkAndUnselectLockedSlots(dynamic socketResponse) {
     try {
+      // Ignore socket updates if we're currently locking slots
+      if (isLockingSlots.value) {
+        log('⏸️ Ignoring socket update - currently locking slots');
+        return;
+      }
+      
+      // Ignore socket updates for 3 seconds after locking
+      if (_lastLockTimestamp != null) {
+        final timeSinceLock = DateTime.now().difference(_lastLockTimestamp!);
+        if (timeSinceLock.inSeconds < 3) {
+          log('⏸️ Ignoring socket update - ${3 - timeSinceLock.inSeconds}s remaining after lock');
+          return;
+        }
+      }
+      
       if (socketResponse == null) return;
 
       final slotData = socketResponse['data'] ?? socketResponse;
@@ -2652,6 +2669,7 @@ var locationsId = "".obs;
 
       final currentDate = selectedDate.value ?? DateTime.now();
       final dateString = _dateFormatter.format(currentDate);
+      final currentUserId = storage.read("userId") ?? "";
       final keysToRemove = <String>[];
 
       for (final court in courts) {
@@ -2664,26 +2682,32 @@ var locationsId = "".obs;
         for (final slotData in slotsList) {
           final slotId = slotData['_id'] as String?;
           final status = slotData['status'] as String?;
+          final userId = slotData['userId'] as String?;
 
           if (slotId == null || status == null) continue;
 
           if (status.toLowerCase() == 'lock') {
+            // Only deselect if locked by a DIFFERENT user
+            if (userId != null && userId == currentUserId) {
+              log('✅ Slot $slotId locked by current user - keeping selection');
+              continue;
+            }
             final fullKey = '${dateString}_${courtId}_${slotId}';
             final leftKey = '${dateString}_${courtId}_${slotId}_L';
             final rightKey = '${dateString}_${courtId}_${slotId}_R';
 
             if (multiDateSelections.containsKey(fullKey)) {
               keysToRemove.add(fullKey);
-              log('Auto-unselecting locked slot: $slotId');
+              log('Auto-unselecting locked slot: $slotId (locked by different user)');
             }
 
             if (multiDateSelections.containsKey(leftKey)) {
               keysToRemove.add(leftKey);
-              log('Auto-unselecting locked left half: $slotId');
+              log('Auto-unselecting locked left half: $slotId (locked by different user)');
             }
             if (multiDateSelections.containsKey(rightKey)) {
               keysToRemove.add(rightKey);
-              log('Auto-unselecting locked right half: $slotId');
+              log('Auto-unselecting locked right half: $slotId (locked by different user)');
             }
           }
         }
