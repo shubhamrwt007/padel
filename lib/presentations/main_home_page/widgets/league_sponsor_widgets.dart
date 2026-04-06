@@ -6,6 +6,34 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
 
+class SponsorImagesPage extends StatelessWidget {
+  const SponsorImagesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(Assets.imagesJubilee1),
+              const SizedBox(height: 20),
+              Image.asset(Assets.imagesJubliee2),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class BuildLeagueTitleSponsor extends StatelessWidget {
   final LeagueModel.Data league;
   const BuildLeagueTitleSponsor({super.key, required this.league});
@@ -20,31 +48,36 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
             "Sponsors",
             style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),
           ).paddingOnly(bottom: 6),
-          SizedBox(
-            height: 48,
-            width: 120,
-            child: league.titleSponsor?.logo != null
-                ? CachedNetworkImage(
-                    imageUrl: league.titleSponsor!.logo!,
-                    height: 48,
-                    width: 120,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => Center(
-                      child: LoadingWidget(color: AppColors.primaryColor),
-                    ),
-                    errorWidget: (context, url, error) => Image.asset(
+          GestureDetector(
+            onTap: (){
+              Get.to(() => const SponsorImagesPage());
+            },
+            child: SizedBox(
+              height: 48,
+              width: 120,
+              child: league.titleSponsor?.logo != null
+                  ? CachedNetworkImage(
+                      imageUrl: league.titleSponsor!.logo!,
+                      height: 48,
+                      width: 120,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Center(
+                        child: LoadingWidget(color: AppColors.primaryColor),
+                      ),
+                      errorWidget: (context, url, error) => Image.asset(
+                        Assets.imagesImgDummyLogo2,
+                        height: 48,
+                        width: 120,
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : Image.asset(
                       Assets.imagesImgDummyLogo2,
                       height: 48,
                       width: 120,
                       fit: BoxFit.contain,
                     ),
-                  )
-                : Image.asset(
-                    Assets.imagesImgDummyLogo2,
-                    height: 48,
-                    width: 120,
-                    fit: BoxFit.contain,
-                  ),
+            ),
           ),
           const SizedBox(height: 6),
           Row(

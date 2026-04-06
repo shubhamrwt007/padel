@@ -17,10 +17,10 @@ class BookSession extends StatefulWidget {
   State<BookSession> createState() => _BookSessionState();
 }
 
-class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClientMixin {
+class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   final BookSessionController controller = Get.put(BookSessionController());
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
-  bool _hasCheckedOnReturn = false;
+  bool _isReturningFromPayment = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -28,7 +28,8 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
-    // Ensure socket is connected when book session screen loads
+    WidgetsBinding.instance.addObserver(this);
+    log('🟢 BookSession initState - Observer added');
     // Ensure socket is connected when book session screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
@@ -59,7 +60,52 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    log('📱 App lifecycle state changed to: $state');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections.isNotEmpty: ${controller.multiDateSelections.isNotEmpty}');
+    
+    if (state == AppLifecycleState.resumed) {
+      log('📱 App resumed - checking if slots need to be unlocked');
+      _checkAndUnlockSlots();
+    }
+  }
+
+  Future<void> _checkAndUnlockSlots() async {
+    log('🔍 _checkAndUnlockSlots called');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+    
+    // IMPORTANT: Check the flag BEFORE checking if selections exist
+    // because selections might have been cleared already
+    if (controller.hasCalledSlotHistoryAPI.value) {
+      log('🔓 Unlocking slots after returning to BookSession');
+      
+      // Call cleanup even if selections are empty
+      // The API call was made, so we need to unlock
+      await controller.cleanupOnBack();
+      controller.hasCalledSlotHistoryAPI.value = false;
+      log('✅ Slots unlocked, refreshing UI');
+      
+      // Refresh the slots to show updated status
+      await controller.getAvailableCourtsById(
+        controller.locationID.value,
+        controller.categoryId.value,
+        controller.sId.value,
+        controller.argument.id!,
+        showUnavailable: true,
+      );
+    } else {
+      log('❌ Conditions not met for unlocking');
+      log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    }
+  }
+
+  @override
   void dispose() {
+    log('🔴 BookSession dispose - Removing observer');
+    WidgetsBinding.instance.removeObserver(this);
     try {
       final socketService = SocketService.instance;
       final clubId = controller.argument.id;
@@ -83,17 +129,22 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
     
-    log('🔄 BookSession build() called - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}, _hasCheckedOnReturn: $_hasCheckedOnReturn');
+    log('🔄 BookSession build() called');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+    log('   - _isReturningFromPayment: $_isReturningFromPayment');
     
-    // Check if returning from payment and unlock slots
-    // Reset the check flag when user navigates away
+    // Check when widget becomes visible again
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      log('📍 PostFrameCallback executed - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}, _hasCheckedOnReturn: $_hasCheckedOnReturn');
-      if (!_hasCheckedOnReturn && controller.hasCalledSlotHistoryAPI.value) {
-        _hasCheckedOnReturn = true;
-        controller.checkAndUnlockSlotsOnReturn();
-      } else {
-        log('⏭️ Skipping unlock check - already checked or not needed');
+      log('📍 PostFrameCallback - Checking if need to unlock slots');
+      log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+      log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+      log('   - _isReturningFromPayment: $_isReturningFromPayment');
+      
+      if (!_isReturningFromPayment && controller.hasCalledSlotHistoryAPI.value && controller.multiDateSelections.isNotEmpty) {
+        log('🔓 Triggering slot unlock from PostFrameCallback');
+        _isReturningFromPayment = true;
+        _checkAndUnlockSlots();
       }
     });
     
@@ -1737,11 +1788,8 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
                     CustomLogger.logMessage(msg: "Please select at least one slot before booking.", level: LogLevel.error);
                     return;
                   }
-                  // Reset the check flag so it can check again when user returns
-                  log('🟢 Book Now tapped - Resetting _hasCheckedOnReturn flag');
-                  log('   - Before: _hasCheckedOnReturn = $_hasCheckedOnReturn');
-                  _hasCheckedOnReturn = false;
-                  log('   - After: _hasCheckedOnReturn = $_hasCheckedOnReturn');
+                  log('🟢 Book Now tapped - Setting _isReturningFromPayment to false');
+                  _isReturningFromPayment = false;
                   controller.proceedToPayment();
                 },
                 child: controller.cartLoader.value
