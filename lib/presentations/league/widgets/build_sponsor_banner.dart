@@ -4,6 +4,7 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
 
 class BuildSponsorBanner extends StatelessWidget {
   final dynamic controller;
@@ -190,20 +191,26 @@ class BuildTitleSponsor extends StatelessWidget {
               style:
                   Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),
             ).paddingOnly(bottom: 6),
-            SizedBox(
-              height: 48,
-              width: 120,
-              child: sponsorData.titleSponsor?.logo != null
-                  ? CachedNetworkImage(
-                      imageUrl: sponsorData.titleSponsor!.logo!,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) => Center(child: LoadingWidget(color: AppColors.primaryColor)),
-                      errorWidget: (context, url, error) => Image.asset(
-                        Assets.imagesImgDummyLogo2,
+            GestureDetector(
+              onTap: (){
+                print("DDDDDDDDDD_______sssss__");
+                Get.to(() => const SponsorImagesPage());
+              },
+              child: SizedBox(
+                height: 48,
+                width: 120,
+                child: sponsorData.titleSponsor?.logo != null
+                    ? CachedNetworkImage(
+                        imageUrl: sponsorData.titleSponsor!.logo!,
                         fit: BoxFit.contain,
-                      ),
-                    )
-                  : Image.asset(Assets.imagesImgDummyLogo2, fit: BoxFit.contain),
+                        placeholder: (context, url) => Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                        errorWidget: (context, url, error) => Image.asset(
+                          Assets.imagesImgDummyLogo2,
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    : Image.asset(Assets.imagesImgDummyLogo2, fit: BoxFit.contain),
+              ),
             ),
             const SizedBox(height: 6),
             Row(
