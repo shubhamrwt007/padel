@@ -748,7 +748,17 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
                     ],
                   ),
                   for (int i = 0; i < cols; i++)
-                    Expanded(child: Center(child: Text((visibleRounds[i].score?.teamA ?? "-").toString(), style: Get.textTheme.bodySmall))),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (visibleRounds[i].pointsAtEnd?.teamA != null)
+                              Text(visibleRounds[i].pointsAtEnd!.teamA!, style: Get.textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -766,7 +776,17 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
                     ],
                   ),
                   for (int i = 0; i < cols; i++)
-                    Expanded(child: Center(child: Text((visibleRounds[i].score?.teamB ?? "-").toString(), style: Get.textTheme.bodySmall))),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (visibleRounds[i].pointsAtEnd?.teamB != null)
+                              Text(visibleRounds[i].pointsAtEnd!.teamB!, style: Get.textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
