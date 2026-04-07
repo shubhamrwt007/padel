@@ -97,6 +97,8 @@ class Assets {
   static const String imagesImgVs = 'assets/images/img_vs.svg';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
   static const String imagesImgVsUpcoming = 'assets/images/img_vs_upcoming.svg';
+  static const String imagesJubilee1 = 'assets/images/jubilee1.jpeg';
+  static const String imagesJubliee2 = 'assets/images/jubliee2.jpeg';
   static const String imagesNewHomeBanner = 'assets/images/new_home_banner.jpg';
   static const String imagesNewHomeBanner2 = 'assets/images/new_home_banner_2.jpg';
   static const String imagesNewHomeBanner4 = 'assets/images/new_home_banner_4.jpg';

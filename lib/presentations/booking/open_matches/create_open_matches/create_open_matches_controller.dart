@@ -151,6 +151,15 @@ class CreateOpenMatchesController extends GetxController {
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
   
+  // Store selections for cleanup (in case they get cleared before cleanup)
+  List<Map<String, dynamic>> selectionsForCleanup = [];
+  
+  // Track if we're currently locking slots (to ignore socket updates temporarily)
+  RxBool isLockingSlots = false.obs;
+  
+  // Store timestamp when slots were locked by current user
+  DateTime? _lastLockTimestamp;
+  
   // Payment option selection
   final selectedIndex = 0.obs; // 0 = Pay All, 1 = Pay Share
   void selectPaymentOption(int index) {
@@ -198,39 +207,23 @@ class CreateOpenMatchesController extends GetxController {
   }
 
   Future<void> cleanupSlotHistory() async {
-    if (multiDateSelections.isEmpty || !hasCalledSlotHistoryAPI.value) return;
+    log('🧹 cleanupSlotHistory called');
+    log('selectionsForCleanup.length: ${selectionsForCleanup.length}');
+    log('hasCalledSlotHistoryAPI.value: ${hasCalledSlotHistoryAPI.value}');
+    
+    if (selectionsForCleanup.isEmpty || !hasCalledSlotHistoryAPI.value) {
+      log('⚠️ Cleanup skipped: selections empty=${selectionsForCleanup.isEmpty}, apiCalled=${hasCalledSlotHistoryAPI.value}');
+      return;
+    }
     
     try {
-      final slots = <Map<String, dynamic>>[];
-      
-      for (var entry in multiDateSelections.entries) {
-        final selection = entry.value;
-        final slot = selection['slot'] as Slots;
-        final slotId = slot.sId ?? '';
-        final courtId = selection['courtId'] as String;
-        final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final isLeftHalf = selection['isLeftHalf'] as bool?;
-        final supports30Min = slotSupports30Min(slot);
-        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
-        final finalDuration = (slot.duration == 90) ? 90 : duration;
-        final userId = storage.read("userId")??"";
-        slots.add({
-          "slotId": slotId,
-          "courtId": courtId,
-          "bookingDate": dateString,
-          "time": bookingTime,
-          "bookingTime": bookingTime,
-          "duration": finalDuration,
-          "userId":userId
-        });
-      }
-      
-      await deleteSlotHistory(slots: slots);
-      log('Cleanup slot history: $slots');
+      log('🗑️ Calling deleteSlotHistory with ${selectionsForCleanup.length} slots');
+      await deleteSlotHistory(slots: selectionsForCleanup);
+      log('✅ Cleanup slot history completed: $selectionsForCleanup');
       hasCalledSlotHistoryAPI.value = false;
+      selectionsForCleanup.clear();
     } catch (e) {
-      log('Error in cleanup slot history: $e');
+      log('❌ Error in cleanup slot history: $e');
     }
   }
 
@@ -272,6 +265,11 @@ class CreateOpenMatchesController extends GetxController {
       final success = await createAndGetSlotHistory(slots);
       if (success) {
         hasCalledSlotHistoryAPI.value = true;
+        // Store selections for cleanup
+        selectionsForCleanup = List.from(slots);
+        log('✅ Slot history API called successfully, stored ${selectionsForCleanup.length} slots for cleanup');
+      } else {
+        log('❌ Slot history API failed');
       }
       return success;
     } catch (e) {
@@ -459,6 +457,7 @@ class CreateOpenMatchesController extends GetxController {
       ),
       isScrollControlled: true,
     ).then((_) {
+      log('📱 Bottom sheet closed (Pay Share) - calling cleanup');
       cleanupSlotHistory();
       Get.delete<QuestionsBottomsheetController>(tag: 'questions');
     });
@@ -655,6 +654,7 @@ class CreateOpenMatchesController extends GetxController {
         ),
         isScrollControlled: true,
       ).then((_) {
+        log('📱 Bottom sheet closed (Pay All) - calling cleanup');
         // Cleanup when bottomsheet is closed
         cleanupSlotHistory();
         Get.delete<QuestionsBottomsheetController>(tag: 'questions');
@@ -902,6 +902,21 @@ class CreateOpenMatchesController extends GetxController {
 
   void _checkAndUnselectLockedSlots(dynamic socketResponse) {
     try {
+      // Ignore socket updates if we're currently locking slots
+      if (isLockingSlots.value) {
+        log('⏸️ Ignoring socket update - currently locking slots');
+        return;
+      }
+      
+      // Ignore socket updates for 3 seconds after locking
+      if (_lastLockTimestamp != null) {
+        final timeSinceLock = DateTime.now().difference(_lastLockTimestamp!);
+        if (timeSinceLock.inSeconds < 3) {
+          log('⏸️ Ignoring socket update - ${3 - timeSinceLock.inSeconds}s remaining after lock');
+          return;
+        }
+      }
+      
       if (socketResponse == null) return;
 
       final slotData = socketResponse['data'] ?? socketResponse;
@@ -917,6 +932,7 @@ class CreateOpenMatchesController extends GetxController {
 
       final currentDate = selectedDate.value ?? DateTime.now();
       final dateString = _dateFormatter.format(currentDate);
+      final currentUserId = storage.read("userId") ?? "";
       final keysToRemove = <String>[];
 
       for (final court in courts) {
@@ -929,26 +945,33 @@ class CreateOpenMatchesController extends GetxController {
         for (final slotData in slotsList) {
           final slotId = slotData['_id'] as String?;
           final status = slotData['status'] as String?;
+          final userId = slotData['userId'] as String?;
 
           if (slotId == null || status == null) continue;
 
           if (status.toLowerCase() == 'lock') {
+            // Only deselect if locked by a DIFFERENT user
+            if (userId != null && userId == currentUserId) {
+              log('✅ Slot $slotId locked by current user - keeping selection');
+              continue;
+            }
+            
             final fullKey = '${dateString}_${courtId}_${slotId}';
             final leftKey = '${dateString}_${courtId}_${slotId}_L';
             final rightKey = '${dateString}_${courtId}_${slotId}_R';
 
             if (multiDateSelections.containsKey(fullKey)) {
               keysToRemove.add(fullKey);
-              log('Auto-unselecting locked slot: $slotId');
+              log('Auto-unselecting locked slot: $slotId (locked by different user)');
             }
 
             if (multiDateSelections.containsKey(leftKey)) {
               keysToRemove.add(leftKey);
-              log('Auto-unselecting locked left half: $slotId');
+              log('Auto-unselecting locked left half: $slotId (locked by different user)');
             }
             if (multiDateSelections.containsKey(rightKey)) {
               keysToRemove.add(rightKey);
-              log('Auto-unselecting locked right half: $slotId');
+              log('Auto-unselecting locked right half: $slotId (locked by different user)');
             }
           }
         }
@@ -966,7 +989,7 @@ class CreateOpenMatchesController extends GetxController {
           multiDateSelections.remove(key);
         }
         _recalculateTotalAmount();
-        // AppToast.error('Some selected slots were locked by another user');
+        AppToast.error('Some selected slots were locked by another user');
       }
     } catch (e) {
       log('Error checking locked slots: $e');
@@ -1075,28 +1098,66 @@ class CreateOpenMatchesController extends GetxController {
   Future<bool> createAndGetSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
       log('createAndGetSlotHistory called with body: $slots');
+      
+      // Set flag to ignore socket updates temporarily
+      isLockingSlots.value = true;
+      _lastLockTimestamp = DateTime.now();
+      
       final response = await repository.createAndGetSlotHistory(data: slots);
 
       if (response.data.isEmpty) {
         CustomLogger.logMessage(msg: "No slot data returned", level: LogLevel.error);
+        isLockingSlots.value = false;
         return false;
       }
 
       final createdSlots = response.data.where((e) => e.created).toList();
       final lockedSlots = response.data.where((e) => !e.created).toList();
+      final currentUserId = storage.read("userId") ?? "";
 
       if (createdSlots.isNotEmpty) {
+        // Delay resetting the flag to ignore socket updates for 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          isLockingSlots.value = false;
+        });
         return true;
       }
 
       if (lockedSlots.isNotEmpty) {
+        // Check if locked slots match with our request (same user trying to lock again)
+        bool allMatchOurRequest = lockedSlots.every((lockedSlot) {
+          final lockedData = lockedSlot.data;
+          if (lockedData == null) return false;
+          
+          // Check if this locked slot matches any slot in our request
+          return slots.any((requestSlot) => 
+            requestSlot['slotId'] == lockedData.slotId &&
+            requestSlot['courtId'] == lockedData.courtId &&
+            requestSlot['bookingDate'] == lockedData.bookingDate &&
+            requestSlot['bookingTime'] == lockedData.bookingTime &&
+            requestSlot['userId'] == currentUserId
+          );
+        });
+        
+        if (allMatchOurRequest) {
+          log('✅ All slots already locked by same user, allowing navigation');
+          // Delay resetting the flag to ignore socket updates for 2 seconds
+          Future.delayed(const Duration(seconds: 2), () {
+            isLockingSlots.value = false;
+          });
+          return true;
+        }
+        
+        isLockingSlots.value = false;
         AppToast.error(lockedSlots.first.message ?? "This slot is currently locked. Please try again.");
         CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
       }
 
+      isLockingSlots.value = false;
       return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
+      isLockingSlots.value = false;
       return false;
     }
   }
