@@ -193,20 +193,24 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
               children: [
 
                 /// TEAM A
-                Column(
-                  children: [
-                    Text(controller.historyData.value?.teamA?.clubName ?? "",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
-                    const SizedBox(height: 6),
-                    Text(_teamPlayersText(controller.historyData.value?.teamA),
-                        style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                        textAlign: TextAlign.center),
-                  ],
+                Container(
+                  color: Colors.transparent,
+                  width: Get.width*0.25,
+                  child: Column(
+                    children: [
+                      Text(controller.historyData.value?.teamA?.clubName ?? "",
+                          style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
+                      const SizedBox(height: 6),
+                      Text(_teamPlayersText(controller.historyData.value?.teamA),
+                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                          textAlign: TextAlign.center),
+                    ],
+                  ),
                 ),
 
                 /// SCORE
                 Transform.translate(
-                  offset: Offset(7, 0),
+                  offset: Offset(0, 0),
                   child: Text(
                     "${controller.teamAScore.value} : ${controller.teamBScore.value}",
                     style: Get.textTheme.titleLarge!.copyWith(color: Colors.black,fontSize: 40),
@@ -214,15 +218,19 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                 ),
 
                 /// TEAM B
-                Column(
-                  children: [
-                    Text(controller.historyData.value?.teamB?.clubName ?? "",
-                        style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
-                    const SizedBox(height: 6),
-                    Text(_teamPlayersText(controller.historyData.value?.teamB),
-                        style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                        textAlign: TextAlign.center),
-                  ],
+                Container(
+                  color: Colors.transparent,
+                  width: Get.width*0.25,
+                  child: Column(
+                    children: [
+                      Text(controller.historyData.value?.teamB?.clubName ?? "",
+                          style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
+                      const SizedBox(height: 6),
+                      Text(_teamPlayersText(controller.historyData.value?.teamB),
+                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                          textAlign: TextAlign.center),
+                    ],
+                  ),
                 ),
               ],
             ),
