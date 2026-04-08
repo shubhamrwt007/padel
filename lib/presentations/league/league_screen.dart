@@ -6,12 +6,12 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart' show ScoreDetail;
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
-import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
+import 'package:padel_mobile/presentations/league/widgets/scoreboard_row.dart';
+import 'package:padel_mobile/presentations/league/widgets/leader_board_widget.dart';
 
 class LeagueScreen extends StatelessWidget {
   final LeagueController controller =Get.put(LeagueController());
@@ -250,7 +250,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _liveMatchCard() {
     return Obx(() {
       if (controller.isLoadingLiveMatches.value) {
-        return Container(
+        return SizedBox(
           height: 200,
           child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
         );
@@ -373,6 +373,7 @@ class LeagueScreen extends StatelessWidget {
               ],
             ),
           ),
+          _buildScoreBoard(scheduleData.firstOrNull).paddingOnly(right: Get.width*0.05,left: Get.width*0.05)
         ],
       );
     });
@@ -424,6 +425,110 @@ class LeagueScreen extends StatelessWidget {
     );
   }
   
+  Widget _buildScoreBoard(ScheduleMatchData? matchData) {
+    return Obx(() {
+      final scoreboardData = controller.liveMatchScoreboard.value;
+      
+      if (controller.isLoadingScoreboard.value) {
+        return const Center(
+          child: SizedBox(
+            height: 40,
+            width: 40,
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+      
+      if (scoreboardData == null) {
+        // Fallback to basic match data if scoreboard data is not available
+        if (matchData?.matches == null || matchData!.matches!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final match = matchData.matches!.first;
+        final teamAPlayers = match.teamA?.players ?? [];
+        final teamBPlayers = match.teamB?.players ?? [];
+        
+        return Column(
+          children: [
+            if (teamAPlayers.isNotEmpty)
+              ScoreBoardRow(
+                logo: "",
+                player1: teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
+                player2: teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
+                scores: ["0"],
+                points: "0",
+                isTeamA: true,
+              ),
+            const Divider(),
+            if (teamBPlayers.isNotEmpty)
+              ScoreBoardRow(
+                logo: "",
+                player1: teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 3") : "Player 3",
+                player2: teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 4") : "Player 4",
+                scores: ["0"],
+                points: "0",
+                isTeamA: false,
+              ),
+          ],
+        );
+      }
+
+      final teamAData = scoreboardData['teamA'] as Map<String, dynamic>? ?? {};
+      final teamBData = scoreboardData['teamB'] as Map<String, dynamic>? ?? {};
+
+      final teamAPlayers = teamAData['players'] as List? ?? [];
+      final teamBPlayers = teamBData['players'] as List? ?? [];
+
+      final teamARoundScores = teamAData['roundScores'] as List? ?? [];
+      final teamBRoundScores = teamBData['roundScores'] as List? ?? [];
+      final totalRounds = teamAData['totalRounds'] as int? ?? 0;
+
+      final teamAPoints = teamAData['currentPoints']?.toString() ?? '0';
+      final teamBPoints = teamBData['currentPoints']?.toString() ?? '0';
+
+      return Column(
+        children: [
+          if (teamAPlayers.isNotEmpty)
+            ScoreBoardRow(
+              logo: teamAData['logo']?.toString() ?? "https://via.placeholder.com/50",
+              player1: teamAPlayers.isNotEmpty ? (teamAPlayers[0]['playerName'] ?? "Player 1") : "Player 1",
+              player2: teamAPlayers.length > 1 ? (teamAPlayers[1]['playerName'] ?? "Player 2") : "Player 2",
+              scores: _formatRoundScores(teamARoundScores, totalRounds),
+              points: teamAPoints,
+              isTeamA: true,
+            ),
+          const Divider(height: 1, color: Colors.grey),
+          if (teamBPlayers.isNotEmpty)
+            ScoreBoardRow(
+              logo: teamBData['logo']?.toString() ?? "https://via.placeholder.com/50",
+              player1: teamBPlayers.isNotEmpty ? (teamBPlayers[0]['playerName'] ?? "Player 3") : "Player 3",
+              player2: teamBPlayers.length > 1 ? (teamBPlayers[1]['playerName'] ?? "Player 4") : "Player 4",
+              scores: _formatRoundScores(teamBRoundScores, totalRounds),
+              points: teamBPoints,
+              isTeamA: false,
+            ),
+        ],
+      );
+    });
+  }
+  
+  List<String> _formatRoundScores(List roundScores, int totalRounds) {
+    final scores = <String>[];
+    
+    // Add scores based on actual rounds played
+    for (int i = 0; i < totalRounds && i < roundScores.length; i++) {
+      scores.add(roundScores[i].toString());
+    }
+    
+    // If no rounds played yet, show at least one "0"
+    if (scores.isEmpty) {
+      scores.add("0");
+    }
+    
+    return scores;
+  }
+  
   Widget _avatarWithInitials(String name, double left) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
@@ -458,6 +563,13 @@ class LeagueScreen extends StatelessWidget {
       ),
     );
   }
+
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
 
   Widget _upcomingList() {
     return Obx(() {
@@ -1402,13 +1514,7 @@ class ResultMatchCard extends StatelessWidget {
     }
     return name;
   }
-  
-  String _getScoreText(dynamic score) {
-    if (score == null) return "0";
-    if (score is int) return score.toString();
-    if (score is ScoreDetail) return (score.sets ?? 0).toString();
-    return "0";
-  }
+
 }
 
 class LeaderBoardWidget extends StatelessWidget {
@@ -1456,7 +1562,7 @@ class LeaderBoardWidget extends StatelessWidget {
                       Divider(color: Colors.grey.shade300),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ).paddingOnly(bottom: 20);
@@ -1605,14 +1711,4 @@ class LeaderBoardWidget extends StatelessWidget {
       }),
     );
   }
-}
-String _getScoreText(dynamic score) {
-  if (score == null) return "0";
-  if (score is int) return score.toString();
-  if (score is ScoreDetail) {
-    // Display sets count for the new format
-    return (score.sets ?? 0).toString();
-  }
-  // Fallback for any other format
-  return score.toString();
 }

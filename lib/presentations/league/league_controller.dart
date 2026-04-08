@@ -34,6 +34,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
   
+  // Live match scoreboard data
+  final Rx<Map<String, dynamic>?> liveMatchScoreboard = Rx<Map<String, dynamic>?>(null);
+  final RxBool isLoadingScoreboard = false.obs;
+  
   String? leagueId;
 
   @override
@@ -50,6 +54,13 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     fetchResultMatches();
     fetchSponsors();
     fetchLeaderBoard();
+    
+    // Fetch scoreboard data after live matches are loaded
+    ever(liveMatches, (matches) {
+      if (matches?.data?.isNotEmpty == true) {
+        fetchLiveMatchScoreboard();
+      }
+    });
   }
 
   @override
@@ -151,6 +162,110 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
       print('Error fetching leaderboard: $e');
     } finally {
       isLoadingLeaderBoard.value = false;
+    }
+  }
+  
+  Future<void> fetchLiveMatchScoreboard() async {
+    try {
+      isLoadingScoreboard.value = true;
+      
+      // Get the first live match if available
+      final liveMatchData = liveMatches.value?.data;
+      if (liveMatchData != null && liveMatchData.isNotEmpty) {
+        final firstLiveMatch = liveMatchData.first;
+        final matchId = firstLiveMatch.matchId?.id;
+        
+        if (matchId != null && matchId.isNotEmpty) {
+          // Fetch detailed match history for scoreboard data
+          final response = await _leagueRepository.getLeagueMatchDetails(
+            matchId: matchId,
+            type: 'history',
+          );
+          
+          if (response.history != null) {
+            final history = response.history!;
+            
+            // Extract team data from live match
+            final match = firstLiveMatch.matches?.first;
+            final teamAPlayers = match?.teamA?.players ?? [];
+            final teamBPlayers = match?.teamB?.players ?? [];
+            
+            // Get current set data
+            final currentSet = history.sets?.isNotEmpty == true ? history.sets!.last : null;
+            final rounds = currentSet?.rounds ?? [];
+            
+            // Extract scores from rounds for each team
+            List<int> teamAScores = [];
+            List<int> teamBScores = [];
+            
+            for (var round in rounds) {
+              teamAScores.add(round.score?.teamA ?? 0);
+              teamBScores.add(round.score?.teamB ?? 0);
+            }
+            
+            liveMatchScoreboard.value = {
+              'teamA': {
+                'players': teamAPlayers.map((player) => {
+                  'playerName': player.playerName ?? '',
+                  'playerId': player.playerId ?? '',
+                }).toList(),
+                'currentPoints': history.currentPoints?.teamA ?? '0',
+                'setsWon': history.setsWon?.teamA ?? 0,
+                'roundScores': teamAScores, // Round-wise scores
+                'totalRounds': rounds.length, // Total rounds played
+                'logo': match?.teamA?.clubId?.logo ?? '',
+              },
+              'teamB': {
+                'players': teamBPlayers.map((player) => {
+                  'playerName': player.playerName ?? '',
+                  'playerId': player.playerId ?? '',
+                }).toList(),
+                'currentPoints': history.currentPoints?.teamB ?? '0',
+                'setsWon': history.setsWon?.teamB ?? 0,
+                'roundScores': teamBScores, // Round-wise scores
+                'totalRounds': rounds.length, // Total rounds played
+                'logo': match?.teamB?.clubId?.logo ?? '',
+              },
+            };
+          }
+        } else {
+          // Fallback to basic match data if no matchId
+          final match = firstLiveMatch.matches?.first;
+          if (match != null) {
+            final teamAPlayers = match.teamA?.players ?? [];
+            final teamBPlayers = match.teamB?.players ?? [];
+            
+            liveMatchScoreboard.value = {
+              'teamA': {
+                'players': teamAPlayers.map((player) => {
+                  'playerName': player.playerName ?? '',
+                  'playerId': player.playerId ?? '',
+                }).toList(),
+                'currentPoints': '0',
+                'setsWon': firstLiveMatch.matchId?.setsWon?.teamA ?? 0,
+                'roundScores': [], // Empty for fallback
+                'totalRounds': 0,
+                'logo': match.teamA?.clubId?.logo ?? '',
+              },
+              'teamB': {
+                'players': teamBPlayers.map((player) => {
+                  'playerName': player.playerName ?? '',
+                  'playerId': player.playerId ?? '',
+                }).toList(),
+                'currentPoints': '0',
+                'setsWon': firstLiveMatch.matchId?.setsWon?.teamB ?? 0,
+                'roundScores': [], // Empty for fallback
+                'totalRounds': 0,
+                'logo': match.teamB?.clubId?.logo ?? '',
+              },
+            };
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching live match scoreboard: $e');
+    } finally {
+      isLoadingScoreboard.value = false;
     }
   }
 }
