@@ -9,7 +9,6 @@ import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart'
 import 'package:padel_mobile/services/socket_service.dart';
 import '../../../handler/text_formatter.dart';
 import 'book_session_controller.dart';
-
 class BookSession extends StatefulWidget {
   const BookSession({super.key});
 
@@ -82,20 +81,12 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
     if (controller.hasCalledSlotHistoryAPI.value) {
       log('🔓 Unlocking slots after returning to BookSession');
       
-      // Call cleanup even if selections are empty
-      // The API call was made, so we need to unlock
+      // Call cleanup which will unlock slots, refresh data, and validate selections
       await controller.cleanupOnBack();
       controller.hasCalledSlotHistoryAPI.value = false;
-      log('✅ Slots unlocked, refreshing UI');
+      log('✅ Slots unlocked and selections validated');
       
-      // Refresh the slots to show updated status
-      await controller.getAvailableCourtsById(
-        controller.locationID.value,
-        controller.categoryId.value,
-        controller.sId.value,
-        controller.argument.id!,
-        showUnavailable: true,
-      );
+      // No need to refresh again - cleanupOnBack already does it with preserveSelections: true
     } else {
       log('❌ Conditions not met for unlocking');
       log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');

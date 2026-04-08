@@ -65,6 +65,7 @@ class SlotData {
   final int? duration;
   final int? totalTime;
   final String? bookingTime;
+  final String? userId;
   final String? expiresAt;
   final String? createdAt;
   final String? updatedAt;
@@ -79,6 +80,7 @@ class SlotData {
     this.duration,
     this.totalTime,
     this.bookingTime,
+    this.userId,
     this.expiresAt,
     this.createdAt,
     this.updatedAt,
@@ -95,6 +97,7 @@ class SlotData {
       duration: json['duration'],
       totalTime: json['totalTime'],
       bookingTime: json['bookingTime'],
+      userId: json['userId'],
       expiresAt: json['expiresAt'],
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
@@ -111,6 +114,7 @@ class SlotData {
     "duration": duration,
     "totalTime": totalTime,
     "bookingTime": bookingTime,
+    "userId": userId,
     "expiresAt": expiresAt,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
