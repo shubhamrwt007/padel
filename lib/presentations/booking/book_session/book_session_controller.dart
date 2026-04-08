@@ -11,7 +11,6 @@ import '../../../repositories/home_repository/home_repository.dart';
 import '../../../services/socket_service.dart';
 import '../../../services/slot_wise_service.dart';
 import '../../payment/payment_method_controller.dart';
-
 class BookSessionController extends GetxController {
   final SlotWiseService _slotWiseService = SlotWiseService();
   RxBool isSocketDataReceived = false.obs;
@@ -261,6 +260,12 @@ class BookSessionController extends GetxController {
   // Track if we're currently locking slots (to ignore socket updates temporarily)
   RxBool isLockingSlots = false.obs;
   
+  // Track if user is navigating to payment (to completely ignore socket updates)
+  RxBool isNavigatingToPayment = false.obs;
+  
+  // Track if we're validating selections after return (to ignore socket updates)
+  RxBool isValidatingSelections = false.obs;
+  
   // Store timestamp when slots were locked by current user
   DateTime? _lastLockTimestamp;
 var sId = "".obs;
@@ -318,6 +323,9 @@ var locationsId = "".obs;
     totalAmount.value = 0;
     pageController.dispose();
     
+    // Reset navigation flag
+    isNavigatingToPayment.value = false;
+    
     // Unsubscribe from slot updates
     _unsubscribeFromSlotUpdates();
     
@@ -329,9 +337,24 @@ var locationsId = "".obs;
     log('   - _lockedSlotsData count: ${_lockedSlotsData.length}');
     log('   - multiDateSelections count: ${multiDateSelections.length}');
     
+    // Set flag to prevent socket updates during validation
+    isValidatingSelections.value = true;
+    log('🔒 Set isValidatingSelections = true');
+    
+    // Store current selections before any operations
+    final selectionsBackup = Map<String, Map<String, dynamic>>.from(multiDateSelections);
+    log('💾 Backed up ${selectionsBackup.length} selections');
+    
+    // Reset navigation flag
+    isNavigatingToPayment.value = false;
+    log('🔄 Reset isNavigatingToPayment = false');
+    
     // Use stored locked slots data if available
     if (_lockedSlotsData.isEmpty) {
       log('   - No locked slots data to cleanup, returning');
+      // Restore selections even if no cleanup needed
+      multiDateSelections.value = selectionsBackup;
+      isValidatingSelections.value = false;
       return;
     }
     
@@ -343,12 +366,162 @@ var locationsId = "".obs;
       
       // Clear the stored data after successful cleanup
       _lockedSlotsData.clear();
+      
+      // Restore selections before refresh
+      multiDateSelections.value = selectionsBackup;
+      log('🔄 Restored ${multiDateSelections.length} selections before refresh');
+      
+      // Refresh slots to get updated status WITHOUT clearing selections
+      log('🔄 Refreshing slots to check availability');
+      await getAvailableCourtsById(
+        locationID.value,
+        categoryId.value,
+        sId.value,
+        argument.id!,
+        showUnavailable: true,
+        preserveSelections: true,  // NEW: Keep selections during refresh
+      );
+      
+      // After refresh, check which slots are still available and keep only those selected
+      _validateAndKeepAvailableSelections();
+      
     } catch (e) {
       log('❌ Error in cleanupOnBack: $e');
+      // Restore selections even on error
+      multiDateSelections.value = selectionsBackup;
+      log('🔄 Restored selections after error');
+    } finally {
+      // Always reset validation flag
+      isValidatingSelections.value = false;
+      log('🔓 Reset isValidatingSelections = false');
     }
   }
 
-  Future<void> getAvailableCourtsById(String locationId,String categoryId,String sID, String clubId, {bool showUnavailable = false}) async {
+  /// Validate selections and keep only slots that are still available
+  void _validateAndKeepAvailableSelections() {
+    if (multiDateSelections.isEmpty) {
+      log('⚠️ No selections to validate');
+      return;
+    }
+    
+    log('🔍 Validating ${multiDateSelections.length} selected slots');
+    
+    // Build a map of current slot statuses from the refreshed data
+    final Map<String, Slots> currentSlotMap = {};
+    for (final court in slots.value?.data ?? []) {
+      for (final slot in court.slots ?? []) {
+        if (slot.sId != null) {
+          currentSlotMap[slot.sId!] = slot;
+        }
+      }
+    }
+    
+    final keysToRemove = <String>[];
+    final currentUserId = storage.read("userId") ?? "";
+    int keptCount = 0;
+    
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final currentSlot = currentSlotMap[slotId];
+      
+      if (currentSlot == null) {
+        log('❌ Slot ${slot.time} (${slotId}) not found in refreshed data - removing');
+        keysToRemove.add(key);
+        return;
+      }
+      
+      final status = currentSlot.status?.toLowerCase() ?? '';
+      final slotUserId = currentSlot.userId ?? '';
+      final isLeftHalf = selection['isLeftHalf'] as bool?;
+      final supports30Min = slotSupports30Min(currentSlot);
+      
+      // Check if slot is available or locked by current user
+      if (status == 'available') {
+        log('✅ Slot ${slot.time} (${slotId}) is available - keeping selection');
+        keptCount++;
+        return;
+      }
+      
+      if (status == 'lock' && slotUserId == currentUserId && currentUserId.isNotEmpty) {
+        log('✅ Slot ${slot.time} (${slotId}) is locked by current user - keeping selection');
+        keptCount++;
+        return;
+      }
+      
+      // For 30-min slots, check if the specific half is available
+      if (supports30Min && isLeftHalf != null) {
+        final leftBooked = isLeftHalfBooked(currentSlot);
+        final rightBooked = isRightHalfBooked(currentSlot);
+        
+        if (isLeftHalf && !leftBooked) {
+          log('✅ Slot ${slot.time} left half is available - keeping selection');
+          keptCount++;
+          return;
+        }
+        
+        if (!isLeftHalf && !rightBooked) {
+          log('✅ Slot ${slot.time} right half is available - keeping selection');
+          keptCount++;
+          return;
+        }
+        
+        log('❌ Slot ${slot.time} ${isLeftHalf ? "left" : "right"} half is no longer available - removing');
+        keysToRemove.add(key);
+        return;
+      }
+      
+      // Slot is booked or unavailable - remove it
+      log('❌ Slot ${slot.time} (${slotId}) status is $status - removing');
+      keysToRemove.add(key);
+    });
+    
+    log('📊 Validation results: ${keptCount} kept, ${keysToRemove.length} removed');
+    
+    if (keysToRemove.isNotEmpty) {
+      log('🗑️ Removing ${keysToRemove.length} unavailable slots from selection');
+      
+      // Collect slot info before removing
+      final slotIdsToClean = <String>{};
+      final courtIdsToClean = <String, String>{};
+      for (final key in keysToRemove) {
+        final selection = multiDateSelections[key];
+        if (selection != null) {
+          final slot = selection['slot'] as Slots;
+          final courtId = selection['courtId'] as String;
+          slotIdsToClean.add(slot.sId ?? '');
+          courtIdsToClean[slot.sId ?? ''] = courtId;
+        }
+      }
+      
+      // Remove from multiDateSelections
+      for (final key in keysToRemove) {
+        multiDateSelections.remove(key);
+      }
+      
+      // Clean up selectedSlots and selectedSlotsWithCourtInfo
+      for (final slotId in slotIdsToClean) {
+        selectedSlots.removeWhere((s) => s.sId == slotId);
+        final courtId = courtIdsToClean[slotId] ?? '';
+        selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+      }
+      
+      _recalculateTotalAmount();
+      
+      if (keysToRemove.length > 0) {
+        AppToast.info('${keysToRemove.length} slot(s) were booked by others and removed from your selection');
+      }
+    } else {
+      log('✅ All ${keptCount} selected slots are still available');
+    }
+    
+    // Force UI refresh
+    multiDateSelections.refresh();
+    selectedSlots.refresh();
+    log('🔄 UI refreshed with validated selections');
+  }
+
+  Future<void> getAvailableCourtsById(String locationId,String categoryId,String sID, String clubId, {bool showUnavailable = false, bool preserveSelections = false}) async {
     log("=== DEBUG API CALL ===");
     log("Fetching courts for club: $clubId");
     log("Selected date: ${selectedDate.value}");
@@ -466,33 +639,25 @@ var locationsId = "".obs;
       final currentUserId = storage.read("userId") ?? "";
 
       if (createdSlots.isNotEmpty) {
-        // Delay resetting the flag to ignore socket updates for 2 seconds
-        Future.delayed(const Duration(seconds: 2), () {
+        // Delay resetting the flag to ignore socket updates for 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
           isLockingSlots.value = false;
         });
         return true;
       }
 
       if (lockedSlots.isNotEmpty) {
-        // Check if locked slots match with our request (same user trying to lock again)
-        bool allMatchOurRequest = lockedSlots.every((lockedSlot) {
+        // Check if all locked slots belong to the current user
+        bool allLockedByCurrentUser = lockedSlots.every((lockedSlot) {
           final lockedData = lockedSlot.data;
           if (lockedData == null) return false;
-          
-          // Check if this locked slot matches any slot in our request
-          return slots.any((requestSlot) => 
-            requestSlot['slotId'] == lockedData.slotId &&
-            requestSlot['courtId'] == lockedData.courtId &&
-            requestSlot['bookingDate'] == lockedData.bookingDate &&
-            requestSlot['bookingTime'] == lockedData.bookingTime &&
-            requestSlot['userId'] == currentUserId
-          );
+          return lockedData.userId == currentUserId;
         });
         
-        if (allMatchOurRequest) {
-          log('✅ All slots already locked by same user, allowing navigation');
-          // Delay resetting the flag to ignore socket updates for 2 seconds
-          Future.delayed(const Duration(seconds: 2), () {
+        if (allLockedByCurrentUser) {
+          log('✅ All locked slots belong to current user (userId: $currentUserId), allowing navigation');
+          // Delay resetting the flag to ignore socket updates for 5 seconds
+          Future.delayed(const Duration(seconds: 5), () {
             isLockingSlots.value = false;
           });
           return true;
@@ -1960,40 +2125,49 @@ var locationsId = "".obs;
   Future<void> proceedToPayment() async {
     try {
       if (cartLoader.value) return;
-      if (multiDateSelections.isEmpty) return;
+      if (multiDateSelections.isEmpty) {
+        AppToast.error("Please select at least one slot before booking.");
+        return;
+      }
 
       cartLoader.value = true;
 
       log('💳 proceedToPayment called with ${multiDateSelections.length} selections');
       
-      // Use processSlotHistoryForPayment instead of processSlotHistoryForBooking
+      final payload = buildBookingPayloadFromSelections();
+      if (payload == null || payload.isEmpty) {
+        log('❌ buildBookingPayloadFromSelections returned empty');
+        AppToast.error("Unable to process booking. Please try again.");
+        cartLoader.value = false;
+        return;
+      }
+      
+      // Set flag to completely ignore socket updates during payment navigation
+      isNavigatingToPayment.value = true;
+      log('🚀 Setting isNavigatingToPayment = true');
+      
+      // Use processSlotHistoryForPayment to lock slots
       final success = await processSlotHistoryForPayment();
       if (!success) {
-        log('❌ processSlotHistoryForPayment failed');
+        log('❌ processSlotHistoryForPayment failed - slots may be locked by another user');
+        isNavigatingToPayment.value = false;
         cartLoader.value = false;
         return;
       }
 
       log('✅ processSlotHistoryForPayment succeeded');
-      
-      final payload = buildBookingPayloadFromSelections();
-      if (payload == null || payload.isEmpty) {
-        log('❌ buildBookingPayloadFromSelections returned empty');
-        cartLoader.value = false;
-        return;
-      }
 
       final paymentController = Get.put(PaymentMethodController());
       paymentController.setDirectBookingPayload(payload);
       
-      // Set flag to indicate we're going to payment page
-      // This will be used to check if user returns without completing payment
       final currentRoute = Get.currentRoute;
       log('💳 Navigating to payment page from: $currentRoute');
       
       await paymentController.createInitialBooking();
     } catch (e) {
       log('proceedToPayment error: $e');
+      isNavigatingToPayment.value = false;
+      AppToast.error("An error occurred. Please try again.");
     } finally {
       cartLoader.value = false;
     }
@@ -2639,17 +2813,29 @@ var locationsId = "".obs;
 
   void _checkAndUnselectLockedSlots(dynamic socketResponse) {
     try {
+      // CRITICAL: Ignore ALL socket updates if navigating to payment
+      if (isNavigatingToPayment.value) {
+        log('🚀 Ignoring socket update - navigating to payment');
+        return;
+      }
+      
+      // CRITICAL: Ignore ALL socket updates if validating selections
+      if (isValidatingSelections.value) {
+        log('🔒 Ignoring socket update - validating selections');
+        return;
+      }
+      
       // Ignore socket updates if we're currently locking slots
       if (isLockingSlots.value) {
         log('⏸️ Ignoring socket update - currently locking slots');
         return;
       }
       
-      // Ignore socket updates for 3 seconds after locking
+      // Ignore socket updates for 5 seconds after locking (increased from 3)
       if (_lastLockTimestamp != null) {
         final timeSinceLock = DateTime.now().difference(_lastLockTimestamp!);
-        if (timeSinceLock.inSeconds < 3) {
-          log('⏸️ Ignoring socket update - ${3 - timeSinceLock.inSeconds}s remaining after lock');
+        if (timeSinceLock.inSeconds < 5) {
+          log('⏸️ Ignoring socket update - ${5 - timeSinceLock.inSeconds}s remaining after lock');
           return;
         }
       }
@@ -2671,6 +2857,8 @@ var locationsId = "".obs;
       final dateString = _dateFormatter.format(currentDate);
       final currentUserId = storage.read("userId") ?? "";
       final keysToRemove = <String>[];
+      
+      log('🔍 _checkAndUnselectLockedSlots - Current User ID: $currentUserId');
 
       for (final court in courts) {
         final courtId = court['_id'] as String?;
@@ -2685,11 +2873,13 @@ var locationsId = "".obs;
           final userId = slotData['userId'] as String?;
 
           if (slotId == null || status == null) continue;
+          
+          log('🔍 Checking slot $slotId: status=$status, userId=$userId, currentUserId=$currentUserId');
 
           if (status.toLowerCase() == 'lock') {
             // Only deselect if locked by a DIFFERENT user
-            if (userId != null && userId == currentUserId) {
-              log('✅ Slot $slotId locked by current user - keeping selection');
+            if (userId != null && userId.isNotEmpty && userId == currentUserId && currentUserId.isNotEmpty) {
+              log('✅ Slot $slotId locked by current user ($currentUserId) - keeping selection');
               continue;
             }
             final fullKey = '${dateString}_${courtId}_${slotId}';
@@ -2775,13 +2965,35 @@ var locationsId = "".obs;
 
   /// Deselect any selected slots that became booked/locked in the new socket data
   void _deSelectAndCleanupConflictingSlots(GetAllActiveCourtsForSlotWiseModel socketData) {
+    // CRITICAL: Ignore ALL socket updates if navigating to payment
+    if (isNavigatingToPayment.value) {
+      log('🚀 Ignoring socket update - navigating to payment');
+      return;
+    }
+    
+    // CRITICAL: Ignore ALL socket updates if validating selections
+    if (isValidatingSelections.value) {
+      log('🔒 Ignoring socket update - validating selections');
+      return;
+    }
+    
     if (multiDateSelections.isEmpty) return;
+
+    final currentUserId = storage.read("userId") ?? "";
+    log('🔍 _deSelectAndCleanupConflictingSlots - Current User ID: $currentUserId');
+    log('🔍 Total selections to check: ${multiDateSelections.length}');
 
     // Build a quick lookup: slotId -> updated Slots object
     final Map<String, Slots> updatedSlotMap = {};
     for (final court in socketData.data ?? []) {
       for (final slot in court.slots ?? []) {
-        if (slot.sId != null) updatedSlotMap[slot.sId!] = slot;
+        if (slot.sId != null) {
+          updatedSlotMap[slot.sId!] = slot;
+          // Log slot details for debugging
+          if (slot.status?.toLowerCase() == 'lock' || slot.status?.toLowerCase() == 'booked') {
+            log('🔍 Slot ${slot.time} (${slot.sId}): status=${slot.status}, userId=${slot.userId}');
+          }
+        }
       }
     }
 
@@ -2795,11 +3007,21 @@ var locationsId = "".obs;
       if (updatedSlot == null) return;
 
       final status = updatedSlot.status?.toLowerCase() ?? '';
+      final slotUserId = updatedSlot.userId ?? '';
       final isLeftHalf = selection['isLeftHalf'] as bool?;
       final supports30Min = slotSupports30Min(slot);
       
+      log('🔍 Checking slot ${slot.time} (${slotId}): status=$status, slotUserId=$slotUserId, currentUserId=$currentUserId');
+      
       // Check if slot status is booked or lock
+      // BUT skip if locked/booked by current user
       if (status == 'booked' || status == 'lock') {
+        if (slotUserId.isNotEmpty && slotUserId == currentUserId && currentUserId.isNotEmpty) {
+          log('✅ Slot ${slot.time} (${slotId}) is $status by current user ($currentUserId) - keeping selection');
+          return;
+        }
+        
+        log('❌ Slot ${slot.time} (${slotId}) is $status by different user (slotUserId: $slotUserId, currentUserId: $currentUserId) - will deselect');
         keysToRemove.add(key);
         final courtId = selection['courtId'] as String;
         final dateString = selection['date'] as String;
@@ -2823,7 +3045,16 @@ var locationsId = "".obs;
         final leftBooked = isLeftHalfBooked(updatedSlot);
         final rightBooked = isRightHalfBooked(updatedSlot);
         
+        log('🔍 30-min slot ${slot.time}: leftBooked=$leftBooked, rightBooked=$rightBooked, isLeftHalf=$isLeftHalf');
+        
+        // Skip if booked by current user
         if ((isLeftHalf && leftBooked) || (!isLeftHalf && rightBooked)) {
+          if (slotUserId.isNotEmpty && slotUserId == currentUserId && currentUserId.isNotEmpty) {
+            log('✅ Slot ${slot.time} ${isLeftHalf ? "left" : "right"} half is booked by current user ($currentUserId) - keeping selection');
+            return;
+          }
+          
+          log('❌ Slot ${slot.time} ${isLeftHalf ? "left" : "right"} half is booked by different user - will deselect');
           keysToRemove.add(key);
           final courtId = selection['courtId'] as String;
           final dateString = selection['date'] as String;
