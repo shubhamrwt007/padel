@@ -117,6 +117,7 @@ class MatchStatistics {
 
 class StatisticsTeam {
   int? winners;
+  int? errors;
   int? forcedErrors;
   int? unforcedErrors;
   int? faults;
@@ -132,7 +133,9 @@ class StatisticsTeam {
   int? doubleFaults;
 
   StatisticsTeam(
-      {this.winners,
+      {
+        this.winners,
+        this.errors,
         this.forcedErrors,
         this.unforcedErrors,
         this.faults,
@@ -149,6 +152,7 @@ class StatisticsTeam {
 
   StatisticsTeam.fromJson(Map<String, dynamic> json) {
     winners = json['winners'];
+    errors = json['errors'];
     forcedErrors = json['forcedErrors'];
     unforcedErrors = json['unforcedErrors'];
     faults = json['faults'];
@@ -228,12 +232,14 @@ class SetData {
   int? setNumber;
   FinalScore? finalScore;
   List<RoundData>? rounds;
+  String? setWinner;
 
-  SetData({this.setNumber, this.finalScore, this.rounds});
+  SetData({this.setNumber, this.finalScore, this.rounds, this.setWinner});
 
   SetData.fromJson(Map<String, dynamic> json) {
     setNumber = json['setNumber'];
     finalScore = json['finalScore'] != null ? FinalScore.fromJson(json['finalScore']) : null;
+    setWinner = json['setWinner'];
     if (json['rounds'] != null) {
       rounds = <RoundData>[];
       json['rounds'].forEach((v) {
@@ -260,14 +266,16 @@ class RoundData {
   FinalScore? score;
   CurrentPoints? pointsAtEnd;
   String? completedAt;
+  String? gameWinner;
 
-  RoundData({this.round, this.score, this.pointsAtEnd, this.completedAt});
+  RoundData({this.round, this.score, this.pointsAtEnd, this.completedAt, this.gameWinner});
 
   RoundData.fromJson(Map<String, dynamic> json) {
     round = json['round'];
     score = json['score'] != null ? FinalScore.fromJson(json['score']) : null;
     pointsAtEnd = json['pointsAtEnd'] != null ? CurrentPoints.fromJson(json['pointsAtEnd']) : null;
     completedAt = json['completedAt'];
+    gameWinner = json['gameWinner'];
   }
 }
 
