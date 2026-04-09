@@ -12,6 +12,8 @@ class AppEndpoints {
   // static const String socketUrl = "http://192.168.1.21:5070";
   // static const String base = "http://192.168.0.119:5070/api/";
   // static const String socketUrl = "http://192.168.0.119:5070";
+
+
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";

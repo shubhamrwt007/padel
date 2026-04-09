@@ -121,17 +121,20 @@ class LeagueId {
 class VenueClubId {
   String? id;
   String? clubName;
+  String? logo;
 
-  VenueClubId({this.id, this.clubName});
+  VenueClubId({this.id, this.clubName,this.logo});
 
   factory VenueClubId.fromJson(Map<String, dynamic> json) => VenueClubId(
     id: json['_id'],
     clubName: json['clubName'],
+    logo: json['logo'],
   );
 
   Map<String, dynamic> toJson() => {
     '_id': id,
     'clubName': clubName,
+    'logo': logo,
   };
 }
 

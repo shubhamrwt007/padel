@@ -151,7 +151,12 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
       isSet2Expanded.value = <bool>[].obs;
       return;
     }
-    isSet2Expanded.value = List<bool>.filled(setsLen, false).obs;
+    // Create list with last set expanded (last index is the latest set)
+    final expandedList = List<bool>.filled(setsLen, false);
+    if (setsLen > 0) {
+      expandedList[setsLen - 1] = true; // Expand the last set
+    }
+    isSet2Expanded.value = expandedList.obs;
   }
   
   void _connectWebSocket() {

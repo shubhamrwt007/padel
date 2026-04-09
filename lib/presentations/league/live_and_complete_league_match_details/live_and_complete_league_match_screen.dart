@@ -9,6 +9,7 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_controller.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 
 class LiveAndCompleteLeagueMatchScreen extends StatefulWidget {
   const LiveAndCompleteLeagueMatchScreen({super.key});
@@ -385,6 +386,16 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                           children: [
                             Text(_setScoreText(index),style: Get.textTheme.headlineMedium).paddingOnly(right: 5),
                             Text(_setWinnerText(index),style: Get.textTheme.labelMedium!.copyWith(color: _getWinnerColor(index),fontWeight: FontWeight.w600)),
+                            _hasRoundsAndSetWinner(index)
+                                ? Container(
+                                    padding: EdgeInsets.symmetric(vertical: 4,horizontal: 9),
+                                    decoration: BoxDecoration(
+                                        color: AppColors.textFieldColor,
+                                        borderRadius: BorderRadius.circular(7)
+                                    ),
+                                    child: Text("Tie Brake",style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor,fontSize: 12),),
+                                  ).paddingOnly(left: 10)
+                                : SizedBox.shrink()
                           ],
                         ),
                       ],
@@ -405,7 +416,221 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: controller.isSet2Expanded.length > index && controller.isSet2Expanded[index]
-                  ? _buildExpandedSetGrid(index)
+                  ? (getRounds(index).isEmpty && getSetWinner(index) != null
+                      ? _buildWinnerColumn(index)
+                      : Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // ── Scrollable rounds section ──────────
+                                      SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: IntrinsicWidth(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              // ── ROUND HEADERS R1, R2... ───
+                                              Row(
+                                                children: [
+                                                  const SizedBox(width: 80),
+                                                  // ← team name space
+                                                  ...List.generate(
+                                                    getRounds(index).length,
+                                                    (i) => SizedBox(
+                                                      width: 40,
+                                                      // ← fixed width per round
+                                                      child: Text(
+                                                        'R${i + 1}',
+                                                        textAlign: TextAlign.center,
+                                                        style: Get.textTheme.bodyMedium!.copyWith(
+                                                          fontSize: 10,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              // ── TEAM A ROW ──────────────────
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: [
+                                                  // ── Team A label + score ───
+                                                  SizedBox(
+                                                    width: 80,
+                                                    child: Row(
+                                                      children: [
+                                                        RotatedBox(
+                                                          quarterTurns: 3,
+                                                          child: Text(
+                                                            controller.historyData.value?.teamA?.teamName ?? 'Team A',
+                                                            style: Get.textTheme.displaySmall!.copyWith(
+                                                              fontSize: 9,
+                                                              color: AppColors.labelBlackColor,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Container(
+                                                          width: 4,
+                                                          height: 30,
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xff2D5BFF),
+                                                            borderRadius: BorderRadius.circular(4),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Text(
+                                                          '${getFinalScore(index)?.teamA ?? 0}',
+                                                          style: Get.textTheme.headlineMedium!.copyWith(
+                                                            color: AppColors.primaryColor,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // ── Points per round ────────
+                                                  ...List.generate(getRounds(index).length, (i) {
+                                                    final rounds = getRounds(index);
+                                                    final pts = rounds[i].pointsAtEnd?.teamA ?? '-';
+                                                    final bool isWinner = rounds[i].gameWinner == 'teamA';
+                                                    return SizedBox(
+                                                      width: 40,
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          if (isWinner)
+                                                            Transform.rotate(
+                                                              angle: -0.3,
+                                                              child: SizedBox(
+                                                                width: 14,
+                                                                height: 14,
+                                                                child: Image.asset(
+                                                                  Assets.imagesIcCrown,
+                                                                  width: 14,
+                                                                  height: 14,
+                                                                ),
+                                                              ),
+                                                            )
+                                                          else
+                                                            const SizedBox(height: 14),
+                                                          Text(
+                                                            pts.toString(),
+                                                            textAlign: TextAlign.center,
+                                                            style: Get.textTheme.titleSmall!.copyWith(
+                                                              fontWeight: FontWeight.w600,
+                                                              fontSize: 12,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 0),
+                                              Divider(
+                                                thickness: 0.5,
+                                                color: Colors.grey.shade300,
+                                              ).paddingOnly(left: 15),
+                                              const SizedBox(height: 0),
+                                              // ── TEAM B ROW ──────────────────
+                                              Row(
+                                                children: [
+                                                  // ── Team B label + score ───
+                                                  SizedBox(
+                                                    width: 80,
+                                                    child: Row(
+                                                      children: [
+                                                        RotatedBox(
+                                                          quarterTurns: 3,
+                                                          child: Text(
+                                                            controller.historyData.value?.teamB?.teamName ?? 'Team B',
+                                                            style: Get.textTheme.displaySmall!.copyWith(
+                                                              fontSize: 9,
+                                                              color: AppColors.labelBlackColor,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 5),
+                                                        Container(
+                                                          width: 4,
+                                                          height: 30,
+                                                          decoration: BoxDecoration(
+                                                            color: AppColors.secondaryColor,
+                                                            borderRadius: BorderRadius.circular(4),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Text(
+                                                          '${getFinalScore(index)?.teamB ?? 0}',
+                                                          style: Get.textTheme.headlineMedium!.copyWith(
+                                                            color: AppColors.secondaryColor,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // ── Points per round ────────
+                                                  ...List.generate(getRounds(index).length, (i) {
+                                                    final rounds = getRounds(index);
+                                                    final pts = rounds[i].pointsAtEnd?.teamB ?? '-';
+                                                    final bool isWinner = rounds[i].gameWinner == 'teamB';
+                                                    return SizedBox(
+                                                      width: 40,
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          if (isWinner)
+                                                            Transform.rotate(
+                                                              angle: -0.3,
+                                                              child: SizedBox(
+                                                                width: 14,
+                                                                height: 14,
+                                                                child: Image.asset(
+                                                                  Assets.imagesIcCrown,
+                                                                  width: 14,
+                                                                  height: 14,
+                                                                ),
+                                                              ),
+                                                            )
+                                                          else
+                                                            const SizedBox(height: 14),
+                                                          Text(
+                                                            pts.toString(),
+                                                            textAlign: TextAlign.center,
+                                                            style: Get.textTheme.titleSmall!.copyWith(
+                                                              fontWeight: FontWeight.w600,
+                                                              fontSize: 12,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ))
                   : const SizedBox.shrink(),
             ),
           ],
@@ -467,8 +692,9 @@ class MatchStatsCard extends StatelessWidget {
             _statRow("Break Points won", teamA?.breakPointsWon ?? 0, teamB?.breakPointsWon ?? 0),
             _statRow("Golden Point", teamA?.goldenPoints ?? 0, teamB?.goldenPoints ?? 0),
             _statRow("Winners", teamA?.winners ?? 0, teamB?.winners ?? 0),
-            _statRow("Forced Errors", teamA?.forcedErrors ?? 0, teamB?.forcedErrors ?? 0),
-            _statRow("Unforced Errors", teamA?.unforcedErrors ?? 0, teamB?.unforcedErrors ?? 0),
+            _statRow("Errors", teamA?.winners ?? 0, teamB?.errors ?? 0),
+            // _statRow("Forced Errors", teamA?.forcedErrors ?? 0, teamB?.forcedErrors ?? 0),
+            // _statRow("Unforced Errors", teamA?.unforcedErrors ?? 0, teamB?.unforcedErrors ?? 0),
             _statRow("First Serve%", teamA?.firstServePercentage ?? 0, teamB?.firstServePercentage ?? 0, isPercentage: true),
           ],
         ),
@@ -804,6 +1030,71 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
     } catch (_) {
       return "-";
     }
+  }
+
+  bool _hasRoundsAndSetWinner(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return false;
+    final rounds = sets[index].rounds ?? const [];
+    final setWinner = sets[index].setWinner;
+    return rounds.isEmpty && setWinner != null;
+  }
+
+  List<RoundData> getRounds(int setIndex) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (setIndex >= sets.length) return [];
+    return sets[setIndex].rounds ?? [];
+  }
+
+  String? getSetWinner(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return null;
+    return sets[index].setWinner;
+  }
+
+  FinalScore? getFinalScore(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return null;
+    return sets[index].finalScore;
+  }
+
+  Widget _buildWinnerColumn(int index) {
+    final sets = controller.historyData.value?.sets ?? const [];
+    if (index < 0 || index >= sets.length) return const SizedBox.shrink();
+    
+    final setWinner = sets[index].setWinner;
+    if (setWinner == null) return const SizedBox.shrink();
+    
+    final winnerTeamName = setWinner == 'teamA'
+        ? controller.historyData.value?.teamA?.teamName ?? 'Team A'
+        : controller.historyData.value?.teamB?.teamName ?? 'Team B';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        children: [
+          Transform.rotate(
+            angle: -0.3,
+            child: Image.asset(
+              Assets.imagesIcCrown,
+              width: 30,
+              height: 30,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            winnerTeamName,
+            style: Get.textTheme.headlineMedium!.copyWith(
+              fontSize: 14,
+              color: setWinner == 'teamA'
+                  ? AppColors.primaryColor
+                  : AppColors.secondaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildExpandedSetGrid(int index) => _buildRoundsForSet(index);
