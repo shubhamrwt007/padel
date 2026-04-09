@@ -267,8 +267,9 @@ class RoundData {
   CurrentPoints? pointsAtEnd;
   String? completedAt;
   String? gameWinner;
+  String? winType;
 
-  RoundData({this.round, this.score, this.pointsAtEnd, this.completedAt, this.gameWinner});
+  RoundData({this.round, this.score, this.pointsAtEnd, this.completedAt, this.gameWinner,this.winType});
 
   RoundData.fromJson(Map<String, dynamic> json) {
     round = json['round'];
@@ -276,6 +277,7 @@ class RoundData {
     pointsAtEnd = json['pointsAtEnd'] != null ? CurrentPoints.fromJson(json['pointsAtEnd']) : null;
     completedAt = json['completedAt'];
     gameWinner = json['gameWinner'];
+    winType = json['winType'];
   }
 }
 
