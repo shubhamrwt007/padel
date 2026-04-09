@@ -119,7 +119,6 @@ class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    
     log('🔄 BookSession build() called');
     log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
     log('   - multiDateSelections count: ${controller.multiDateSelections.length}');

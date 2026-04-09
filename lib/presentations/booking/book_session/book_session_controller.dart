@@ -406,7 +406,14 @@ var locationsId = "".obs;
     
     log('🔍 Validating ${multiDateSelections.length} selected slots');
     
+    // Get current selected date to know which slots to validate
+    final currentDate = selectedDate.value ?? DateTime.now();
+    final currentDateString = _dateFormatter.format(currentDate);
+    
+    log('📅 Current date for validation: $currentDateString');
+    
     // Build a map of current slot statuses from the refreshed data
+    // NOTE: API only returns slots for the CURRENT selected date
     final Map<String, Slots> currentSlotMap = {};
     for (final court in slots.value?.data ?? []) {
       for (final slot in court.slots ?? []) {
@@ -419,10 +426,21 @@ var locationsId = "".obs;
     final keysToRemove = <String>[];
     final currentUserId = storage.read("userId") ?? "";
     int keptCount = 0;
+    int skippedOtherDates = 0;
     
     multiDateSelections.forEach((key, selection) {
       final slot = selection['slot'] as Slots;
       final slotId = slot.sId ?? '';
+      final selectionDateString = selection['date'] as String;
+      
+      // CRITICAL FIX: Only validate slots for the CURRENT date
+      // Slots from other dates are not in the API response, so skip them
+      if (selectionDateString != currentDateString) {
+        skippedOtherDates++;
+        log('⏭️ Skipping validation for slot ${slot.time} on different date: $selectionDateString');
+        return; // Skip validation for other dates
+      }
+      
       final currentSlot = currentSlotMap[slotId];
       
       if (currentSlot == null) {
@@ -476,7 +494,7 @@ var locationsId = "".obs;
       keysToRemove.add(key);
     });
     
-    log('📊 Validation results: ${keptCount} kept, ${keysToRemove.length} removed');
+    log('📊 Validation results: ${keptCount} kept, ${keysToRemove.length} removed, ${skippedOtherDates} skipped (other dates)');
     
     if (keysToRemove.isNotEmpty) {
       log('🗑️ Removing ${keysToRemove.length} unavailable slots from selection');
@@ -512,7 +530,7 @@ var locationsId = "".obs;
         AppToast.info('${keysToRemove.length} slot(s) were booked by others and removed from your selection');
       }
     } else {
-      log('✅ All ${keptCount} selected slots are still available');
+      log('✅ All ${keptCount} selected slots (current date) are still available');
     }
     
     // Force UI refresh
@@ -1111,10 +1129,7 @@ var locationsId = "".obs;
   bool _ensureMaxSlotsCapacity({required int addCount}) {
     if (addCount <= 0) return true;
     if (multiDateSelections.length + addCount > maxSlots) {
-      CustomLogger.logMessage(
-        msg: "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.",
-        level: LogLevel.error,
-      );
+      AppToast.error("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
       return false;
     }
     return true;
@@ -2594,7 +2609,8 @@ var locationsId = "".obs;
 
   void _subscribeForDate(String formattedDate, {bool fallbackToApi = false}) {
     if (_subscribedDates.contains(formattedDate)) {
-      log('Already subscribed to date: $formattedDate');
+      log('Already subscribed to date: $formattedDate - skipping re-fetch');
+      // Don't fetch again if already subscribed - just ensure UI is updated
       return;
     }
     
@@ -2698,6 +2714,18 @@ var locationsId = "".obs;
   void resubscribeToSlotUpdates() {
     isSocketDataReceived.value = false;
     isLoadingCourts.value = true;
+    
+    final currentDate = selectedDate.value ?? DateTime.now();
+    final currentDateString = _dateFormatter.format(currentDate);
+    
+    // Check if we're already subscribed to this date
+    if (_subscribedDates.contains(currentDateString)) {
+      log('Already subscribed to current date: $currentDateString - fetching fresh data');
+      // Fetch fresh data from API to ensure slots are up-to-date
+      getAvailableCourtsById(locationID.value, categoryId.value, sId.value, argument.id!, showUnavailable: true);
+      return;
+    }
+    
     // Unsubscribe only dates that have no selections
     final datesWithSelections = <String>{};
     multiDateSelections.forEach((key, selection) {
@@ -2709,6 +2737,9 @@ var locationsId = "".obs;
     }
     _subscribedDates.removeAll(datesToUnsub);
 
+    // Force refresh multiDateSelections to trigger UI update
+    multiDateSelections.refresh();
+    
     Future.delayed(const Duration(milliseconds: 500), () {
       _subscribeToSlotUpdates();
     });
