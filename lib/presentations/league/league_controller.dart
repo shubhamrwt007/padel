@@ -1,9 +1,13 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../core/network/dio_client.dart';
 
 class LeagueController extends GetxController with GetSingleTickerProviderStateMixin {
   final RxInt selectedTab = 0.obs;
@@ -38,6 +42,11 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   final Rx<Map<String, dynamic>?> liveMatchScoreboard = Rx<Map<String, dynamic>?>(null);
   final RxBool isLoadingScoreboard = false.obs;
   
+  // Socket connection
+  IO.Socket? _socket;
+  final RxBool isSocketConnected = false.obs;
+  final RxBool _socketInitialized = false.obs;
+  
   String? leagueId;
 
   @override
@@ -55,16 +64,20 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     fetchSponsors();
     fetchLeaderBoard();
     
-    // Fetch scoreboard data after live matches are loaded
+    // Fetch scoreboard data after live matches are loaded (only once)
     ever(liveMatches, (matches) {
-      if (matches?.data?.isNotEmpty == true) {
+      if (matches?.data?.isNotEmpty == true && !_socketInitialized.value) {
         fetchLiveMatchScoreboard();
+        _connectWebSocket();
+        _socketInitialized.value = true;
       }
     });
   }
 
   @override
   void onClose() {
+    _disconnectWebSocket();
+    _socketInitialized.value = false;
     pageController.dispose();
     tabController.dispose();
     super.onClose();
@@ -167,6 +180,9 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   
   Future<void> fetchLiveMatchScoreboard() async {
     try {
+      // Prevent multiple simultaneous calls
+      if (isLoadingScoreboard.value) return;
+      
       isLoadingScoreboard.value = true;
       
       // Get the first live match if available
@@ -176,6 +192,7 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         final matchId = firstLiveMatch.matchId?.id;
         
         if (matchId != null && matchId.isNotEmpty) {
+          print('📊 Fetching scoreboard for matchId: $matchId');
           // Fetch detailed match history for scoreboard data
           final response = await _leagueRepository.getLeagueMatchDetails(
             matchId: matchId,
@@ -190,17 +207,24 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
             final teamAPlayers = match?.teamA?.players ?? [];
             final teamBPlayers = match?.teamB?.players ?? [];
             
-            // Get current set data
-            final currentSet = history.sets?.isNotEmpty == true ? history.sets!.last : null;
-            final rounds = currentSet?.rounds ?? [];
+            // Get all sets data to extract final scores
+            final sets = history.sets ?? [];
             
-            // Extract scores from rounds for each team
-            List<int> teamAScores = [];
-            List<int> teamBScores = [];
+            // Extract final scores from completed sets
+            List<String> teamASetScores = [];
+            List<String> teamBSetScores = [];
             
-            for (var round in rounds) {
-              teamAScores.add(round.score?.teamA ?? 0);
-              teamBScores.add(round.score?.teamB ?? 0);
+            for (var set in sets) {
+              final rounds = set.rounds ?? [];
+              if (rounds.isNotEmpty) {
+                // Get the last round's score as the final score for this set
+                final lastRound = rounds.last;
+                final teamAScore = lastRound.score?.teamA?.toString() ?? '0';
+                final teamBScore = lastRound.score?.teamB?.toString() ?? '0';
+                
+                teamASetScores.add(teamAScore);
+                teamBSetScores.add(teamBScore);
+              }
             }
             
             liveMatchScoreboard.value = {
@@ -211,8 +235,8 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
                 }).toList(),
                 'currentPoints': history.currentPoints?.teamA ?? '0',
                 'setsWon': history.setsWon?.teamA ?? 0,
-                'roundScores': teamAScores, // Round-wise scores
-                'totalRounds': rounds.length, // Total rounds played
+                'roundScores': teamASetScores, // Set final scores instead of round scores
+                'totalRounds': teamASetScores.length, // Total sets played
                 'logo': match?.teamA?.clubId?.logo ?? '',
               },
               'teamB': {
@@ -222,8 +246,8 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
                 }).toList(),
                 'currentPoints': history.currentPoints?.teamB ?? '0',
                 'setsWon': history.setsWon?.teamB ?? 0,
-                'roundScores': teamBScores, // Round-wise scores
-                'totalRounds': rounds.length, // Total rounds played
+                'roundScores': teamBSetScores, // Set final scores instead of round scores
+                'totalRounds': teamBSetScores.length, // Total sets played
                 'logo': match?.teamB?.clubId?.logo ?? '',
               },
             };
@@ -266,6 +290,203 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
       print('Error fetching live match scoreboard: $e');
     } finally {
       isLoadingScoreboard.value = false;
+    }
+  }
+  
+  void _connectWebSocket() {
+    try {
+      // Prevent multiple connections
+      if (_socket != null && isSocketConnected.value) {
+        print('🔌 League - Socket already connected');
+        return;
+      }
+      
+      final liveMatchData = liveMatches.value?.data;
+      if (liveMatchData == null || liveMatchData.isEmpty) return;
+      
+      final firstLiveMatch = liveMatchData.first;
+      final matchId = firstLiveMatch.matchId?.id;
+      
+      if (matchId == null || matchId.isEmpty) return;
+      
+      print('🔌 League - Connecting WebSocket for matchId: $matchId');
+      
+      final userId = storage.read('userId')?.toString() ?? '';
+      _socket = IO.io(
+        "${AppEndpoints.socketUrl}/score",
+        IO.OptionBuilder()
+            .setTransports(['websocket'])
+            .setAuth({'userId': userId})
+            .build(),
+      );
+      
+      _socket?.on('connect', (_) {
+        print('✅ League - Socket connected. ID: ${_socket?.id}');
+        isSocketConnected.value = true;
+        _socket?.emit('joinScoreMatch', matchId);
+      });
+      
+      _socket?.on('disconnect', (reason) {
+        log('❌ League - Socket disconnected: $reason');
+        isSocketConnected.value = false;
+      });
+      
+      _socket?.on('connect_error', (err) {
+        log('⚠️ League - Socket connection failed: $err');
+      });
+      
+      _socket?.on('scoreUpdate', (data) {
+        print('📊 League - Score update received');
+        print('📊 League - Full scoreUpdate data: ${data.toString().substring(0, data.toString().length > 1000 ? 1000 : data.toString().length)}...');
+        if (data is Map<String, dynamic>) {
+          final scoreboard = data['scoreboard'];
+          print('📋 League - Scoreboard keys: ${scoreboard is Map ? (scoreboard as Map).keys.toList() : 'Not a map'}');
+          _updateLiveScoreboard(scoreboard);
+        }
+      });
+      
+      _socket?.on('scoreMatchJoined', (data) {
+        print('🎯 League - Match joined event received');
+        print('🎯 League - Full scoreMatchJoined data: ${data.toString().substring(0, data.toString().length > 1000 ? 1000 : data.toString().length)}...');
+        if (data is Map<String, dynamic> && data.containsKey('scoreboard')) {
+          final scoreboard = data['scoreboard'];
+          print('📋 League - Scoreboard keys: ${scoreboard is Map ? (scoreboard as Map).keys.toList() : 'Not a map'}');
+          _updateLiveScoreboard(data['scoreboard']);
+        }
+      });
+      
+      _socket?.on('matchFinished', (data) {
+        log('🏁 League - Match finished event received');
+        fetchLiveMatches();
+        fetchResultMatches();
+      });
+      
+    } catch (e) {
+      log('❌ League - WebSocket error: $e');
+    }
+  }
+  
+  void _disconnectWebSocket() {
+    _socket?.disconnect();
+    _socket?.dispose();
+    _socket = null;
+    isSocketConnected.value = false;
+  }
+  
+  void _updateLiveScoreboard(dynamic scoreboard) {
+    try {
+      print('🔄 League - Updating scoreboard with data: $scoreboard');
+      if (scoreboard is Map<String, dynamic>) {
+        // Extract current points and sets data
+        final points = scoreboard['points'] as Map<String, dynamic>? ?? {};
+        final setsWon = scoreboard['setsWon'] as Map<String, dynamic>? ?? {};
+        final sets = scoreboard['sets'] as List? ?? [];
+        
+        print('📊 League - Extracted data: points=$points, setsWon=$setsWon, sets=${sets.length} sets');
+        
+        // Update the live matches data with new scores
+        final currentLiveMatches = liveMatches.value;
+        if (currentLiveMatches?.data?.isNotEmpty == true) {
+          final updatedData = currentLiveMatches!.data!.map((matchData) {
+            if (matchData.matchId?.setsWon != null) {
+              final newTeamAScore = setsWon['teamA'] ?? matchData.matchId!.setsWon!.teamA;
+              final newTeamBScore = setsWon['teamB'] ?? matchData.matchId!.setsWon!.teamB;
+              
+              print('📊 League - Updating scores: TeamA: ${matchData.matchId!.setsWon!.teamA} -> $newTeamAScore, TeamB: ${matchData.matchId!.setsWon!.teamB} -> $newTeamBScore');
+              
+              matchData.matchId!.setsWon!.teamA = newTeamAScore;
+              matchData.matchId!.setsWon!.teamB = newTeamBScore;
+            }
+            return matchData;
+          }).toList();
+          
+          // Force update the observable with a new instance to trigger UI rebuild
+          final newLiveMatches = GetAllScheduleLiveMatchesModel(
+            success: currentLiveMatches.success,
+            data: updatedData,
+            pagination: currentLiveMatches.pagination,
+          );
+          
+          liveMatches.value = newLiveMatches;
+          
+          // Force refresh the observable to ensure UI updates
+          liveMatches.refresh();
+          
+          print('✅ League - Live matches updated successfully. New scores: TeamA: ${updatedData.first.matchId?.setsWon?.teamA}, TeamB: ${updatedData.first.matchId?.setsWon?.teamB}');
+        }
+        
+        // Update the detailed scoreboard data for the scoreboard widget
+        final currentScoreboard = liveMatchScoreboard.value ?? {};
+        final updatedScoreboard = Map<String, dynamic>.from(currentScoreboard);
+        
+        // Extract completed sets' final scores for ScoreBoardRow
+        List<String> teamASetScores = [];
+        List<String> teamBSetScores = [];
+        
+        // Process each set with detailed logging
+        for (int i = 0; i < sets.length; i++) {
+          final set = sets[i];
+          if (set is Map<String, dynamic>) {
+            print('🔍 League - Set $i structure: ${set.keys.toList()}');
+            print('🔍 League - Set $i data: $set');
+            
+            // Check for finalScore first (this should be the correct format)
+            final finalScore = set['finalScore'] as Map<String, dynamic>?;
+            final setWinner = set['setWinner'] as String?;
+            final setNumber = set['setNumber'];
+            
+            if (finalScore != null && finalScore.isNotEmpty) {
+              final teamAScore = finalScore['teamA']?.toString() ?? '0';
+              final teamBScore = finalScore['teamB']?.toString() ?? '0';
+              
+              teamASetScores.add(teamAScore);
+              teamBSetScores.add(teamBScore);
+              
+              print('🎯 League - Set $setNumber Final Score: TeamA=$teamAScore, TeamB=$teamBScore, Winner=$setWinner');
+            }
+            // Fallback to direct teamA/teamB scores if finalScore not available
+            else {
+              final teamAScore = set['teamA'];
+              final teamBScore = set['teamB'];
+              
+              if (teamAScore != null && teamBScore != null) {
+                teamASetScores.add(teamAScore.toString());
+                teamBSetScores.add(teamBScore.toString());
+                
+                print('🎯 League - Set Direct Score: TeamA=$teamAScore, TeamB=$teamBScore');
+              }
+            }
+          }
+        }
+        
+        // Current points for ongoing set
+        final teamAPoints = points['teamA']?.toString() ?? '0';
+        final teamBPoints = points['teamB']?.toString() ?? '0';
+        
+        print('🎯 League - Current points: TeamA=$teamAPoints, TeamB=$teamBPoints');
+        print('🎯 League - Completed sets scores: TeamA=$teamASetScores, TeamB=$teamBSetScores');
+        
+        // Update scoreboard data
+        if (updatedScoreboard.containsKey('teamA')) {
+          updatedScoreboard['teamA']['currentPoints'] = teamAPoints;
+          updatedScoreboard['teamA']['setsWon'] = setsWon['teamA'] ?? 0;
+          updatedScoreboard['teamA']['roundScores'] = teamASetScores; // Use set scores instead of round scores
+          updatedScoreboard['teamA']['totalRounds'] = teamASetScores.length;
+        }
+        
+        if (updatedScoreboard.containsKey('teamB')) {
+          updatedScoreboard['teamB']['currentPoints'] = teamBPoints;
+          updatedScoreboard['teamB']['setsWon'] = setsWon['teamB'] ?? 0;
+          updatedScoreboard['teamB']['roundScores'] = teamBSetScores; // Use set scores instead of round scores
+          updatedScoreboard['teamB']['totalRounds'] = teamBSetScores.length;
+        }
+        
+        liveMatchScoreboard.value = updatedScoreboard;
+        liveMatchScoreboard.refresh(); // Force UI update
+        print('✅ League - Detailed scoreboard updated with current points: TeamA=$teamAPoints, TeamB=$teamBPoints and completed sets: ${teamASetScores.length}');
+      }
+    } catch (e) {
+      print('❌ League - Error updating scoreboard: $e');
     }
   }
 }
