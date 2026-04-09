@@ -1177,9 +1177,6 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                         ],
                       ),
                     ),
-
-
-
                   /// TIME AND PRICE - NORMAL FOR UNSELECTED SLOTS
                   if ((!supports30Min && !isSelected && !isPartOfGroup) ||
                       (supports30Min && !_isLeftHalfSelected(slot, courtId) && !_isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId)))
