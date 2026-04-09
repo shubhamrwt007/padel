@@ -1118,8 +1118,8 @@ class MainHomeScreen extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _avatarWithInitials(name1, 0),
-                _avatarWithInitials(name2, 24),
+                _avatarWithInitials(name1, 0,color),
+                _avatarWithInitials(name2, 24,color),
               ],
             ),
           ),
@@ -1129,14 +1129,14 @@ class MainHomeScreen extends StatelessWidget {
           Text(
               "$name1 &\n$name2",
               textAlign: TextAlign.center,
-              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11)
           ),
         ],
       ),
     );
   }
   
-  Widget _avatarWithInitials(String name, double left) {
+  Widget _avatarWithInitials(String name, double left,Color? color) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
       final words = fullName.trim().split(' ');
@@ -1155,7 +1155,7 @@ class MainHomeScreen extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          color: AppColors.primaryColor,
+          color: color,
         ),
         child: Center(
           child: Text(

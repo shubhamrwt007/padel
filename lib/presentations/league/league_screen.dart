@@ -11,7 +11,6 @@ import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 import 'package:padel_mobile/presentations/league/widgets/scoreboard_row.dart';
-import 'package:padel_mobile/presentations/league/widgets/leader_board_widget.dart';
 
 class LeagueScreen extends StatelessWidget {
   final LeagueController controller =Get.put(LeagueController());
@@ -284,12 +283,15 @@ class LeagueScreen extends StatelessWidget {
                         color: Color(0xFFCD3529),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircleAvatar(radius: 4, backgroundColor: Colors.white),
-                          SizedBox(width: 6),
-                          Text(
+                          Obx(() => CircleAvatar(
+                            radius: 4, 
+                            backgroundColor: controller.isSocketConnected.value ? Colors.white : Colors.white54
+                          )),
+                          const SizedBox(width: 6),
+                          const Text(
                             "LIVE",
                             style: TextStyle(
                                 color: Colors.white,
@@ -318,9 +320,12 @@ class LeagueScreen extends StatelessWidget {
                             children: [
                               Text(categoryType, style: Get.textTheme.labelMedium),
                               SizedBox(height: 8),
-                              Text(
-                                  "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
-                                  style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                              Obx(() {
+                                final currentSetsWon = controller.liveMatches.value?.data?.firstOrNull?.matchId?.setsWon;
+                                return Text(
+                                "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
+                                    style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42));
+                              }),
                             ],
                           ),
                         ),
@@ -407,8 +412,8 @@ class LeagueScreen extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _avatarWithInitials(name1, 0),
-                _avatarWithInitials(name2, 24),
+                _avatarWithInitials(name1, 0,color),
+                _avatarWithInitials(name2, 24,color),
               ],
             ),
           ),
@@ -418,7 +423,7 @@ class LeagueScreen extends StatelessWidget {
           Text(
               "$name1 &\n$name2",
               textAlign: TextAlign.center,
-              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11)
           ),
         ],
       ),
@@ -428,6 +433,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _buildScoreBoard(ScheduleMatchData? matchData) {
     return Obx(() {
       final scoreboardData = controller.liveMatchScoreboard.value;
+      final liveMatchData = controller.liveMatches.value?.data?.first; // This will trigger updates
       
       if (controller.isLoadingScoreboard.value) {
         return const Center(
@@ -439,13 +445,16 @@ class LeagueScreen extends StatelessWidget {
         );
       }
       
+      // Use live match data for real-time scores - this is the key change
+      final currentMatchData = liveMatchData ?? matchData;
+      
       if (scoreboardData == null) {
         // Fallback to basic match data if scoreboard data is not available
-        if (matchData?.matches == null || matchData!.matches!.isEmpty) {
+        if (currentMatchData?.matches == null || currentMatchData!.matches!.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        final match = matchData.matches!.first;
+        final match = currentMatchData.matches!.first;
         final teamAPlayers = match.teamA?.players ?? [];
         final teamBPlayers = match.teamB?.players ?? [];
         
@@ -480,10 +489,12 @@ class LeagueScreen extends StatelessWidget {
       final teamAPlayers = teamAData['players'] as List? ?? [];
       final teamBPlayers = teamBData['players'] as List? ?? [];
 
+      // Use updated round scores from socket or fallback to stored data
       final teamARoundScores = teamAData['roundScores'] as List? ?? [];
       final teamBRoundScores = teamBData['roundScores'] as List? ?? [];
       final totalRounds = teamAData['totalRounds'] as int? ?? 0;
 
+      // Use updated points from socket or fallback to stored data
       final teamAPoints = teamAData['currentPoints']?.toString() ?? '0';
       final teamBPoints = teamBData['currentPoints']?.toString() ?? '0';
 
@@ -529,7 +540,7 @@ class LeagueScreen extends StatelessWidget {
     return scores;
   }
   
-  Widget _avatarWithInitials(String name, double left) {
+  Widget _avatarWithInitials(String name, double left,Color? color) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
       final words = fullName.trim().split(' ');
@@ -548,7 +559,7 @@ class LeagueScreen extends StatelessWidget {
             color: Colors.white,
             width: 2,
           ),
-          color:AppColors.primaryColor,
+          color:color,
         ),
         child: Center(
           child: Text(

@@ -41,14 +41,14 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
   Widget _buildScaffold(BuildContext context, {Widget? videoPlayer}) {
     return Scaffold(
-      appBar: primaryAppBar(title: Text("SPL"),centerTitle: true, context: context,
-          action: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.textFieldColor,
-              child: const Icon(Icons.share, size: 18,color: AppColors.primaryColor,),
-            ).paddingOnly(right: 10)
-          ]
+      appBar: primaryAppBar(title: Text(controller.matchType.value == "live" ?"Live Match":"Match Details"),centerTitle: true, context: context,
+          // action: [
+          //   CircleAvatar(
+          //     radius: 18,
+          //     backgroundColor: AppColors.textFieldColor,
+          //     child: const Icon(Icons.share, size: 18,color: AppColors.primaryColor,),
+          //   ).paddingOnly(right: 10)
+          // ]
       ),
       body: Obx(() {
         final isLoading = controller.isLoadingMatchDetails.value;
@@ -203,7 +203,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                           style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
                       const SizedBox(height: 6),
                       Text(_teamPlayersText(controller.historyData.value?.teamA),
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
                           textAlign: TextAlign.center),
                     ],
                   ),
@@ -228,7 +228,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                           style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
                       const SizedBox(height: 6),
                       Text(_teamPlayersText(controller.historyData.value?.teamB),
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
                           textAlign: TextAlign.center),
                     ],
                   ),
@@ -501,23 +501,47 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                     final rounds = getRounds(index);
                                                     final pts = rounds[i].pointsAtEnd?.teamA ?? '-';
                                                     final bool isWinner = rounds[i].gameWinner == 'teamA';
+                                                    final winType = rounds[i].winType;
                                                     return SizedBox(
                                                       width: 40,
                                                       child: Column(
                                                         mainAxisSize: MainAxisSize.min,
                                                         children: [
                                                           if (isWinner)
-                                                            Transform.rotate(
-                                                              angle: -0.3,
-                                                              child: SizedBox(
-                                                                width: 14,
-                                                                height: 14,
-                                                                child: Image.asset(
-                                                                  Assets.imagesIcCrown,
-                                                                  width: 14,
-                                                                  height: 14,
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                Transform.rotate(
+                                                                  angle: -0.3,
+                                                                  child: SizedBox(
+                                                                    width: 14,
+                                                                    height: 14,
+                                                                    child: Image.asset(
+                                                                      Assets.imagesIcCrown,
+                                                                      width: 14,
+                                                                      height: 14,
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                              ),
+                                                                if (winType == 'ADVANTAGE')
+                                                                  Text(
+                                                                    'AD',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.primaryColor,
+                                                                    ),
+                                                                  ),
+                                                                if (winType == 'GOLDEN_POINT')
+                                                                  Text(
+                                                                    'GP',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.primaryColor,
+                                                                    ),
+                                                                  ),
+                                                              ],
                                                             )
                                                           else
                                                             const SizedBox(height: 14),
@@ -585,23 +609,47 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                     final rounds = getRounds(index);
                                                     final pts = rounds[i].pointsAtEnd?.teamB ?? '-';
                                                     final bool isWinner = rounds[i].gameWinner == 'teamB';
+                                                    final winType = rounds[i].winType;
                                                     return SizedBox(
                                                       width: 40,
                                                       child: Column(
                                                         mainAxisSize: MainAxisSize.min,
                                                         children: [
                                                           if (isWinner)
-                                                            Transform.rotate(
-                                                              angle: -0.3,
-                                                              child: SizedBox(
-                                                                width: 14,
-                                                                height: 14,
-                                                                child: Image.asset(
-                                                                  Assets.imagesIcCrown,
-                                                                  width: 14,
-                                                                  height: 14,
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                Transform.rotate(
+                                                                  angle: -0.3,
+                                                                  child: SizedBox(
+                                                                    width: 14,
+                                                                    height: 14,
+                                                                    child: Image.asset(
+                                                                      Assets.imagesIcCrown,
+                                                                      width: 14,
+                                                                      height: 14,
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                              ),
+                                                                if (winType == 'ADVANTAGE')
+                                                                  Text(
+                                                                    'AD',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.secondaryColor,
+                                                                    ),
+                                                                  ),
+                                                                if (winType == 'GOLDEN_POINT')
+                                                                  Text(
+                                                                    'GP',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.secondaryColor,
+                                                                    ),
+                                                                  ),
+                                                              ],
                                                             )
                                                           else
                                                             const SizedBox(height: 14),
