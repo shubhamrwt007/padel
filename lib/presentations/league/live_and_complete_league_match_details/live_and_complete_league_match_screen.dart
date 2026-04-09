@@ -41,14 +41,14 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
   Widget _buildScaffold(BuildContext context, {Widget? videoPlayer}) {
     return Scaffold(
-      appBar: primaryAppBar(title: Text("SPL"),centerTitle: true, context: context,
-          action: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.textFieldColor,
-              child: const Icon(Icons.share, size: 18,color: AppColors.primaryColor,),
-            ).paddingOnly(right: 10)
-          ]
+      appBar: primaryAppBar(title: Text(controller.matchType.value == "live" ?"Live Match":"Match Details"),centerTitle: true, context: context,
+          // action: [
+          //   CircleAvatar(
+          //     radius: 18,
+          //     backgroundColor: AppColors.textFieldColor,
+          //     child: const Icon(Icons.share, size: 18,color: AppColors.primaryColor,),
+          //   ).paddingOnly(right: 10)
+          // ]
       ),
       body: Obx(() {
         final isLoading = controller.isLoadingMatchDetails.value;
@@ -532,6 +532,15 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                       color: AppColors.primaryColor,
                                                                     ),
                                                                   ),
+                                                                if (winType == 'GOLDEN_POINT')
+                                                                  Text(
+                                                                    'GP',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.primaryColor,
+                                                                    ),
+                                                                  ),
                                                               ],
                                                             )
                                                           else
@@ -625,6 +634,15 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                 if (winType == 'ADVANTAGE')
                                                                   Text(
                                                                     'AD',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.secondaryColor,
+                                                                    ),
+                                                                  ),
+                                                                if (winType == 'GOLDEN_POINT')
+                                                                  Text(
+                                                                    'GP',
                                                                     style: Get.textTheme.bodySmall!.copyWith(
                                                                       fontSize: 8,
                                                                       fontWeight: FontWeight.bold,
