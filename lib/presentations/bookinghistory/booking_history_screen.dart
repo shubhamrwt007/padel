@@ -1813,23 +1813,26 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
   }
 
   void _navigateToScoreboard(dynamic booking) {
-    if (booking.scoreboard == null) {
+    if (kDebugMode) {
+      print("=== SCOREBOARD DEBUG ===");
+      print("booking.scoreboard: ${booking.scoreboard}");
+      print("booking.scoreboard?.sId: ${booking.scoreboard?.sId}");
+      print("booking.sId: ${booking.sId}");
+    }
+    
+    final scoreboardId = booking.scoreboard?.sId;
+    if (scoreboardId == null || scoreboardId.isEmpty) {
       AppToast.error("Scoreboard not available");
       return;
     }
     
-    final bookingId = booking.sId;
-    if (bookingId != null && bookingId.isNotEmpty) {
-      Get.toNamed(
-        RoutesName.scoreBoard,
-        arguments: {
-          "bookingId": bookingId,
-          "fromBookingHistory": true,
-        },
-      );
-    } else {
-      AppToast.error("Booking ID not available");
-    }
+    Get.toNamed(
+      RoutesName.scoreBoard,
+      arguments: {
+        "scoreboardId": scoreboardId,
+        "fromBookingHistory": true,
+      },
+    );
   }
 
   String formatDate(String? dateStr) {

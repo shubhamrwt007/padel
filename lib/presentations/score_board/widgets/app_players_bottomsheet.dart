@@ -46,17 +46,19 @@ class AppPlayersController extends GetxController {
       
       final response = await repository.findNearByPlayer(search: search,bookingId: bookingId);
       if(response.status == 200 && response.players != null){
-        nearbyPlayers.value = response.players!.map((player) => {
-          'id': player.id ?? '',
-          'name': player.name ?? '',
-          'profilePic': player.profilePic ?? '',
-          'city': player.city ?? '',
-          'cityName': player.cityName ?? '',
-          'level': player.level ?? '',
-          'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
-          'xpPoints': player.xpPoints ?? '',
-          "hasPendingRequest":player.hasPendingRequest??false
-          // 'preferredTeam': player.preferredTeam ?? 'teamA',
+        nearbyPlayers.value = response.players!.map((player) {
+          print('Player: ${player.name}, Level: ${player.level}');
+          return {
+            'id': player.id ?? '',
+            'name': player.name ?? '',
+            'profilePic': player.profilePic ?? '',
+            'city': player.city ?? '',
+            'cityName': player.cityName ?? '',
+            'level': player.level ?? '',
+            'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+            'xpPoints': player.xpPoints ?? '',
+            "hasPendingRequest":player.hasPendingRequest??false
+          };
         }).toList();
       }
     } catch (e) {
@@ -142,7 +144,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Send Request to Top Players", style: Get.textTheme.headlineSmall),
+                            Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
@@ -294,14 +296,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Text(
-                              '${player['level'] ?? 'Beginner'} • ',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
-                            ),
                             Container(
-                              // height: 25,
-                              // width: 55,
                               padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
@@ -318,10 +313,15 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0}Games Played',
+                              ' • ${player['level'] ?? 'Beginner'}',
                               style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 12, color: Colors.grey),
+                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primaryColor),
                             ),
+                            // Text(
+                            //   ' • ${player['totalMatchesPlayed'] ?? 0}Games Played',
+                            //   style: Get.textTheme.bodySmall!
+                            //       .copyWith(fontSize: 12, color: Colors.grey),
+                            // ),
                           ],
                         ),
                         Row(

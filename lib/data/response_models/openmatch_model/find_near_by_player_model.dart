@@ -55,7 +55,7 @@ class Player {
       name: json['name'],
       city: json['city'],
       cityName: json['cityName'],
-      level: json['playerLevel'],
+      level: json['level'],
       profilePic: json['profilePic'],
       totalMatchesPlayed: json['totalMatchesPlayed'],
       hasPendingRequest: json['hasPendingRequest'],
