@@ -29,6 +29,7 @@ class OtpController extends GetxController {
   RxBool isLoading = false.obs;
   late OTPTextEditController otpController;
   late OTPInteractor otpInteractor;
+  bool _otpToastShown = false;
 
   String getMaskedPhoneNumber() {
     final phoneNumber = arguments['phoneNumber'] ?? '';
@@ -125,7 +126,26 @@ class OtpController extends GetxController {
     });
     startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      pinFocusNode.requestFocus();
+      // Show OTP at top of screen only once
+      if (arguments['otp'] != null && !_otpToastShown) {
+        _otpToastShown = true;
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.rawSnackbar(
+            message: "OTP: ${arguments['otp']}",
+            backgroundColor: Colors.green,
+            snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 5),
+            margin: EdgeInsets.zero,
+            borderRadius: 0,
+            padding: EdgeInsets.only(
+              top: Get.mediaQuery.padding.top + 10,
+              bottom: 15,
+              left: 20,
+              right: 20,
+            ),
+          );
+        });
+      }
     });
   }
 
