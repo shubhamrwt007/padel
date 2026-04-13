@@ -12,6 +12,7 @@ class AppEndpoints {
   // static const String socketUrl = "http://192.168.0.119:5070";
 
 
+
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
@@ -108,6 +109,8 @@ class AppEndpoints {
   static const String getLeagueLeaderBoard = "${base}score/league/";
   static const String getLeagueSponsors = "${baseUrl}court/league/getLeagueSponsors";
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
+  static const String getLeaguePollResult = "${base}poll/results";
+  static const String castLeaguePollVote = "${base}poll/vote";
 }
 class PaymentConfig {
   // Toggle this when switching environment

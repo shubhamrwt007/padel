@@ -90,6 +90,8 @@ class Assets {
   static const String imagesImgOtherUpi = 'assets/images/img_other_upi.png';
   static const String imagesImgPaytm = 'assets/images/img_paytm.png';
   static const String imagesImgPhonePay = 'assets/images/img_phone_pay.png';
+  static const String imagesImgPoll = 'assets/images/img_poll.jpg';
+  static const String imagesImgPollVote = 'assets/images/img_poll_vote.png';
   static const String imagesImgRoundBackground = 'assets/images/img_round_background.svg';
   static const String imagesImgScoreView = 'assets/images/img_score_view.svg';
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
