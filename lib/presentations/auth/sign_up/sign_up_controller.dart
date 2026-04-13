@@ -153,18 +153,12 @@ class SignUpController extends GetxController {
           // "email": emailController.text.trim(),
           "phoneNumber": phoneController.text.trim(),
           "type": OtpScreenType.createAccount,
+          "otp": result.otp,
           // "name": firstNameController.text.trim(),
           // "lastName": lastNameController.text.trim(),
         },
       );
-      // Fluttertoast.showToast(
-      //   msg: "OTP: ${result.otp}",
-      //   backgroundColor: Colors.green,
-      //   textColor: Colors.white,
-      //   fontSize: 16.0,
-      //   toastLength: Toast.LENGTH_LONG,
-      //   timeInSecForIosWeb: 5,
-      // );
+
     } else {
       AppToast.error(result.message!);
     }
