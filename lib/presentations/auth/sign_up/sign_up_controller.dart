@@ -157,14 +157,14 @@ class SignUpController extends GetxController {
           // "lastName": lastNameController.text.trim(),
         },
       );
-      Fluttertoast.showToast(
-        msg: "OTP: ${result.otp}",
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        toastLength: Toast.LENGTH_LONG,
-        timeInSecForIosWeb: 5,
-      );
+      // Fluttertoast.showToast(
+      //   msg: "OTP: ${result.otp}",
+      //   backgroundColor: Colors.green,
+      //   textColor: Colors.white,
+      //   fontSize: 16.0,
+      //   toastLength: Toast.LENGTH_LONG,
+      //   timeInSecForIosWeb: 5,
+      // );
     } else {
       AppToast.error(result.message!);
     }
