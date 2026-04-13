@@ -8,6 +8,7 @@ import 'package:padel_mobile/data/response_models/league/get_league_list_model.d
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_poll_results_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_schedule_dates_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_stream_url_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 
@@ -23,11 +24,23 @@ class LeagueRepository {
   LeagueRepository._internal();
 
   ///Get All Schedule Live Matches---------------------------------------------------
-  Future<GetAllScheduleLiveMatchesModel> getAllScheduleLiveMatches(
-      {required String matchStatus,required String leagueId}) async {
+  Future<GetAllScheduleLiveMatchesModel> getAllScheduleLiveMatches({
+    required String matchStatus,
+    required String leagueId,
+    String? userId,
+    String? date
+  }) async {
     try {
+      final queryParams = {
+        "matchStatus": matchStatus,
+        "leagueId": leagueId,
+        if (userId != null && userId.isNotEmpty) "userId": userId,
+        if (date != null && date.isNotEmpty) "date": date,
+      };
+
       final response = await dioClient.get(
-        "${AppEndpoints.getAllScheduleLiveMatches}matchStatus=$matchStatus&leagueId=$leagueId",
+        AppEndpoints.getAllScheduleLiveMatches,
+        queryParameters: queryParams,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -43,6 +56,42 @@ class LeagueRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Get All Schedule Live Matches failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Get Schedule Dates---------------------------------------------------------
+  Future<GetScheduleDatesModel> getScheduleDates({
+    required String leagueId,
+    required String? matchStatus,
+  }) async {
+    try {
+      final queryParams = {
+        "matchStatus": matchStatus,
+        "leagueId": leagueId,
+      };
+
+      final response = await dioClient.get(
+        AppEndpoints.getScheduleDates,
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Get Schedule Dates Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetScheduleDatesModel.fromJson(response.data);
+      } else {
+        throw Exception(
+            "Get Schedule Dates failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Get Schedule Dates failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

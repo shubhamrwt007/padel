@@ -2817,50 +2817,67 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
 
   Widget _buildSwootTitle(String? leagueName) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
       child: Row(
         children: [
+          SvgPicture.asset(
+            Assets.imagesIcPadelBall,
+            height: 18,width: 18,
+          ).paddingOnly(right: 10),
           Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
         ],
       ),
     );
   }
   Widget _buildLeaguePointsTable(){
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.grey.shade100,
-                spreadRadius: 1.5,
-                blurRadius: 5.0,
-                offset: Offset(0, 3)
-            )
-          ]
-      ),
-      child: Column(
-        children: [
-          /// Header Row
-          _headerRow(),
+    return Obx(() {
+      if (widget.controller.isLoadingLeaderBoard.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
 
-          Divider(color: Colors.grey.shade300,),
+      final standings = widget.controller.leaderBoard.value?.data?.standings ?? [];
+      if (standings.isEmpty) return const SizedBox.shrink();
 
-          /// List
-          ...List.generate(6, (index) {
-            return Column(
-              children: [
-                _teamRow(index + 1),
-                Divider(color: Colors.grey.shade300,),
-              ],
-            );
-          }),
-        ],
-      ),
-    ).paddingOnly(top: 10);
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.grey.shade100,
+                  spreadRadius: 1.5,
+                  blurRadius: 5.0,
+                  offset: Offset(0, 3)
+              )
+            ]
+        ),
+        child: Column(
+          children: [
+            /// Header Row
+            _headerRow(),
+
+            Divider(color: Colors.grey.shade300,),
+
+            /// List
+            ...standings.take(6).map((standing) {
+              return Column(
+                children: [
+                  _teamRow(standing),
+                  Divider(color: Colors.grey.shade300,),
+                ],
+              );
+            }),
+          ],
+        ),
+      ).paddingOnly(top: 10);
+    });
   }
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
@@ -2881,61 +2898,81 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       ],
     );
   }
-  Widget _teamRow(int index) {
-    List<String> teams = [
-      "Terrakort",
-      "Padel Haus",
-      "Courtline",
-      "Terrakort",
-      "Padel Haus",
-      "Courtline"
-    ];
-
+  Widget _teamRow(dynamic standing) {
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("$index",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
         Expanded(
           flex: 3,
           child: Row(
             children: [
               CircleAvatar(
                 radius: 11,
-                backgroundColor: Colors.black12,
-                backgroundImage: NetworkImage(
-                  "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
+                backgroundColor: AppColors.primaryColor,
+                child: Text(
+                  (standing.clubName ?? "?")[0].toUpperCase(),
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                teams[index - 1],
-                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+              Expanded(
+                child: Text(
+                  standing.clubName ?? "Unknown",
+                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
         ),
 
-        // SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
         Expanded(
           flex: 3,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children:  [
-              _buildResultIcon(false),
-              _buildResultIcon(true),
-              _buildResultIcon(false),
-              _buildResultIcon(true),
-              _buildResultIcon(false),
-            ],
+            children: _buildRecentFormIcons(standing.recentForm ?? []),
           ),
         )
 
       ],
     );
   }
-  Widget _buildResultIcon(bool win) {
+  List<Widget> _buildRecentFormIcons(List<dynamic> recentForm) {
+    // Take last 5 matches or pad with empty if less than 5
+    final formList = recentForm.take(5).toList();
+    final widgets = <Widget>[];
+    
+    for (int i = 0; i < 5; i++) {
+      if (i < formList.length) {
+        final result = formList[i].toString().toUpperCase();
+        final isWin = result == 'W';
+        widgets.add(_buildResultIcon(isWin));
+      } else {
+        // Add placeholder for missing matches
+        widgets.add(_buildResultIcon(null));
+      }
+    }
+    
+    return widgets;
+  }
+  
+  Widget _buildResultIcon(bool? win) {
+    if (win == null) {
+      // Placeholder for no match data
+      return Container(
+        margin: const EdgeInsets.only(right: 4),
+        height: 16,
+        width: 16,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+    
     return Container(
       margin: const EdgeInsets.only(right: 4),
       height: 16,
@@ -3380,7 +3417,7 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFCD3529).withOpacity(_pulseAnimation.value * 0.6),
+                    color: Color(0xFFCD3529).withValues(alpha:  _pulseAnimation.value * 0.6),
                     blurRadius: 8 + (_pulseAnimation.value * 4),
                     spreadRadius: _pulseAnimation.value * 2,
                   ),
@@ -3523,7 +3560,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryColor.withOpacity(0.4 + (_pulseAnimation.value * 0.3)),
+                    color: AppColors.primaryColor.withValues(alpha: 0.4 + (_pulseAnimation.value * 0.3)),
                     blurRadius: 8 + (_pulseAnimation.value * 4),
                     spreadRadius: 1 + (_pulseAnimation.value * 2),
                     offset: Offset(0, 2),
@@ -3541,7 +3578,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                           gradient: LinearGradient(
                             colors: [
                               Colors.transparent,
-                              Colors.white.withOpacity(0.2),
+                              Colors.white.withValues(alpha: 0.2),
                               Colors.transparent,
                             ],
                             stops: [0.0, 0.5, 1.0],
@@ -3561,10 +3598,10 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),

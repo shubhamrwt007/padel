@@ -6,6 +6,7 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
@@ -16,25 +17,139 @@ class LeagueMatchListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: primaryAppBar(title: Text(
+      appBar: primaryAppBar(
+        title: Text(
           controller.matchTab.value == 0?
           "Upcoming Matches":
           controller.matchTab.value == 1?
               "Live Matches":"Match Results"
-      ),centerTitle: true, context: context),
+        ),
+        // centerTitle: true,
+        context: context,
+        action: [
+          PopupMenuButton<String>(
+            offset: const Offset(0, 30),
+            onSelected: (date) => controller.updateDate(date),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 4),
+              decoration: BoxDecoration(
+                color: AppColors.textFieldColor,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Icon(
+                Icons.calendar_month,
+                color: Colors.black,
+                size: 20,
+              ),
+            ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: '',
+                height: 40,
+                child: Obx(() => Text(
+                  'All Dates',
+                  style: Get.textTheme.labelSmall?.copyWith(
+                    color: controller.selectedDate.value.isEmpty
+                        ? AppColors.primaryColor
+                        : Colors.black,
+                    fontWeight: controller.selectedDate.value.isEmpty
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                )),
+              ),
+              ...controller.availableDates.map((date) {
+                return PopupMenuItem(
+                  value: date,
+                  height: 40,
+                  child: Obx(() => Text(
+                    _formatDate(date),
+                    style: Get.textTheme.labelSmall?.copyWith(
+                      color: controller.selectedDate.value == date
+                          ? AppColors.primaryColor
+                          : Colors.black,
+                      fontWeight: controller.selectedDate.value == date
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  )),
+                );
+              }).toList(),
+            ],
+          ).paddingOnly(right: 5),
+          Obx(() => Container(
+            margin: EdgeInsets.only(right: 16),
+            padding: EdgeInsets.symmetric(vertical: 2,horizontal: 2),
+            decoration: BoxDecoration(
+              color: AppColors.textFieldColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => controller.updateFilter('all'),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: controller.selectedFilter.value == 'all' ? AppColors.primaryColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'All',
+                      style: TextStyle(
+                        color: controller.selectedFilter.value == 'all' ? AppColors.whiteColor : Colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => controller.updateFilter('my'),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: controller.selectedFilter.value == 'my' ? AppColors.primaryColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'My',
+                      style: TextStyle(
+                        color: controller.selectedFilter.value == 'my' ? AppColors.whiteColor : Colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
       body: Obx(() {
         if (controller.matchTab.value == 0) {
           return _upcomingList();
         }
-        // else if (controller.matchTab.value == 1) {
-          // return _liveList();
-        // }
         else {
           return _resultsList();
         }
       }),
     );
   }
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return "TBD";
+    try {
+      final date = DateTime.parse(dateStr);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}";
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Widget _upcomingList() {
     return Obx(() {
       if (controller.isLoadingUpcomingMatches.value) {
@@ -291,7 +406,7 @@ class UpcomingMatchCard extends StatelessWidget {
                                       .take(2)
                                       .map<Widget>((e) => Text(
                                     overflow: TextOverflow.ellipsis,
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
                                   ))
@@ -312,7 +427,9 @@ class UpcomingMatchCard extends StatelessWidget {
                           Column(
                             children: [
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
-                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+
                             ],
                           ),
                           Row(
@@ -325,7 +442,7 @@ class UpcomingMatchCard extends StatelessWidget {
                                       ? match!.teamB!.players!
                                       .take(2)
                                       .map<Widget>((e) => Text(
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     overflow: TextOverflow.ellipsis,
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
@@ -698,7 +815,7 @@ class ResultMatchCard extends StatelessWidget {
                                       .take(2)
                                       .map<Widget>((e) => Text(
                                     overflow: TextOverflow.ellipsis,
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
                                   ))
@@ -727,7 +844,8 @@ class ResultMatchCard extends StatelessWidget {
                                   Text("${setsWon?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                 ],
                               ),
-                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
                             ],
                           ),
 
@@ -741,7 +859,7 @@ class ResultMatchCard extends StatelessWidget {
                                       ? match!.teamB!.players!
                                       .take(2)
                                       .map<Widget>((e) => Text(
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     overflow: TextOverflow.ellipsis,
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),

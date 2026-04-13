@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
@@ -236,7 +237,7 @@ class LeagueScreen extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
-                      child: const Text('Leader Board'),
+                      child: const Text('Fixture’s'),
                     ),
                   ],
                 ),
@@ -771,7 +772,7 @@ class UpcomingMatchCard extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Color(0xffFFFFFF),
-                    Color(0xffCBD6FF),
+                    Color(0xffDEE5FF),
                   ],
                 ),
               ),
@@ -839,7 +840,7 @@ class UpcomingMatchCard extends StatelessWidget {
                                       .take(2)
                                       .map<Widget>((e) => Text(
                                     overflow: TextOverflow.ellipsis,
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
                                   ))
@@ -859,7 +860,8 @@ class UpcomingMatchCard extends StatelessWidget {
                           Column(
                             children: [
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
-                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
                             ],
                           ),
                           Row(
@@ -872,7 +874,7 @@ class UpcomingMatchCard extends StatelessWidget {
                                       ? match!.teamB!.players!
                                       .take(2)
                                       .map<Widget>((e) => Text(
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     overflow: TextOverflow.ellipsis,
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
@@ -1011,7 +1013,7 @@ class LiveMatchCard extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Color(0xffFFFFFF),
-                    Color(0xffFFC6C2),
+                    Color(0xffFFD3CF),
                   ],
                 ),
               ),
@@ -1085,7 +1087,7 @@ class LiveMatchCard extends StatelessWidget {
                                       .take(2)
                                       .map((e) => Text(
                                     overflow: TextOverflow.ellipsis,
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
                                   ))
@@ -1113,7 +1115,8 @@ class LiveMatchCard extends StatelessWidget {
                                   Text("${setsWon?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                 ],
                               ),
-                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
                             ],
                           ),
                           Row(
@@ -1126,7 +1129,7 @@ class LiveMatchCard extends StatelessWidget {
                                       ? match!.teamB!.players!
                                       .take(2)
                                       .map((e) => Text(
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     overflow: TextOverflow.ellipsis,
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
@@ -1322,7 +1325,7 @@ class ResultMatchCard extends StatelessWidget {
                                       .take(2)
                                       .map<Widget>((e) => Text(
                                     overflow: TextOverflow.ellipsis,
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
                                   ))
@@ -1351,7 +1354,9 @@ class ResultMatchCard extends StatelessWidget {
                                   Text("${setsWon?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
                                 ],
                               ),
-                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,)
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+
                             ],
                           ),
 
@@ -1365,7 +1370,7 @@ class ResultMatchCard extends StatelessWidget {
                                       ? match!.teamB!.players!
                                       .take(2)
                                       .map<Widget>((e) => Text(
-                                    formatName(e.playerName ?? ''),
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
                                     overflow: TextOverflow.ellipsis,
                                     style: Get.textTheme.labelMedium!.copyWith(
                                         fontWeight: FontWeight.w500, color: Colors.black),
@@ -1471,8 +1476,18 @@ class LeaderBoardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<LeagueController>();
     
-    return Column(
-      children: [
+    return RefreshIndicator(
+      color: AppColors.whiteColor,
+      onRefresh: () async {
+        await Future.wait([
+          controller.fetchLeaderBoard(),
+          controller.fetchUpcomingMatches(),
+        ]);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
         Obx(() {
           if (controller.isLoadingLeaderBoard.value) {
             return SizedBox(
@@ -1486,7 +1501,7 @@ class LeaderBoardWidget extends StatelessWidget {
           if (standings.isEmpty) return const SizedBox.shrink();
 
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -1502,11 +1517,14 @@ class LeaderBoardWidget extends StatelessWidget {
               children: [
                 _headerRow(),
                 Divider(color: Colors.grey.shade300),
-                ...standings.map((standing) {
+                ...standings.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final standing = entry.value;
                   return Column(
                     children: [
                       _teamRow(standing),
-                      Divider(color: Colors.grey.shade300),
+                      if (index < standings.length - 1)
+                        Divider(color: Colors.grey.shade300),
                     ],
                   );
                 }),
@@ -1547,28 +1565,31 @@ class LeaderBoardWidget extends StatelessWidget {
             ],
           ).paddingSymmetric(horizontal: 18, vertical: 8);
         }),
-        _upcomingList()
-      ],
+          _upcomingListForLeaderboard(),
+            SizedBox(height: 20,)
+          ],
+        ),
+      ),
     );
   }
 
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    return  Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Row(
       children: [
-        SizedBox(width: 20, child: Text("#",style: style,)),
+        SizedBox(width: 25, child: Text("#", style: style)),
         Expanded(
-            flex: 3,
-            child: SizedBox(width: 35,child: Text("Teams",style: style))),
-        SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(width: 30, child: Text("W",style: style)),
-        SizedBox(width: 30, child: Text("L",style: style)),
-        SizedBox(width: 30, child: Text("PTS",style: style)),
-        SizedBox(width: 30, child: Text("A/B",style: style)),
-        SizedBox(width: 30, child: Text("C/D",style: style)),
-        SizedBox(width: 30, child: Text("MX",style: style)),
-        SizedBox(width: 30, child: Text("WM",style: style)),
+          flex: 3,
+          child: Text("Teams", style: style),
+        ),
+        SizedBox(width: 30, child: Center(child: Text("M", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("W", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("L", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700)))),
+        SizedBox(width: 30, child: Center(child: Text("Adv", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Int", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Mx", style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Wm", style: style))),
       ],
     );
   }
@@ -1576,7 +1597,7 @@ class LeaderBoardWidget extends StatelessWidget {
   Widget _teamRow(standing) {
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        SizedBox(width: 25, child: Text("${standing.position ?? 0}", style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600, fontSize: 10))),
         Expanded(
           flex: 3,
           child: Row(
@@ -1600,15 +1621,14 @@ class LeaderBoardWidget extends StatelessWidget {
             ],
           ),
         ),
-
-         SizedBox(width: 30, child: Text("${standing.played ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.wins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.losses ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600))),
-         SizedBox(width: 30, child: Text("${standing.abWins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.cdWins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.mixedWins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
-         SizedBox(width: 30, child: Text("${standing.womensWins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),)),
+        SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.abWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.cdWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.mixedWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.womensWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
       ],
     );
   }
@@ -1657,6 +1677,62 @@ class LeaderBoardWidget extends StatelessWidget {
         );
       }),
     );
+  }
+
+  Widget _upcomingListForLeaderboard() {
+    return Obx(() {
+      final controller = Get.find<LeagueController>();
+      
+      if (controller.isLoadingUpcomingMatches.value) {
+        return SizedBox(
+          height: 200,
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+        );
+      }
+
+      final scheduleData = controller.upcomingMatches.value?.data ?? [];
+      if (scheduleData.isEmpty) {
+        return SizedBox(
+          height: 200,
+          child: Center(
+            child: Text(
+              "No upcoming matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      if (allMatches.isEmpty) {
+        return SizedBox(
+          height: 200,
+          child: Center(
+            child: Text(
+              "No upcoming matches available",
+              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      return Column(
+        children: List.generate(
+          allMatches.length > 5 ? 5 : allMatches.length,
+          (index) {
+            final matchData = scheduleData.firstWhere(
+              (data) => data.matches?.contains(allMatches[index]) ?? false,
+              orElse: () => scheduleData.first,
+            );
+            return UpcomingMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+              date: matchData.date,
+            );
+          },
+        ),
+      );
+    });
   }
 }
 class _AnimatedLiveTag extends StatefulWidget {

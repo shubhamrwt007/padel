@@ -186,11 +186,11 @@ class BuildTitleSponsor extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            Text(
-              "Sponsors",
-              style:
-                  Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),
-            ).paddingOnly(bottom: 6),
+            // Text(
+            //   "Sponsors",
+            //   style:
+            //       Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w400),
+            // ).paddingOnly(bottom: 6),
             GestureDetector(
               onTap: (){
                 print("DDDDDDDDDD_______sssss__");

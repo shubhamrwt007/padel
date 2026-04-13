@@ -15,6 +15,7 @@ import 'package:padel_mobile/repositories/league_repository/league_repository.da
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_poll_results_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
 
@@ -46,6 +47,8 @@ class MainHomeController extends GetxController {
   var customerRank = 0.obs;
   final Rx<GetLeaguePollResultsModel?> pollResults = Rx<GetLeaguePollResultsModel?>(null);
   final RxBool isLoadingPoll = false.obs;
+  final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
+  final RxBool isLoadingLeaderBoard = false.obs;
 
   final List<String> padelBannerImages = [
     Assets.imagesNewHomeBanner,
@@ -95,6 +98,7 @@ class MainHomeController extends GetxController {
       fetchOpenMatches(),
       _fetchLeagueData(),
       fetchPollResults(),
+      fetchLeaderBoard(),
     ]);
     isLoadingLeagueSection.value = false;
   }
@@ -281,6 +285,21 @@ class MainHomeController extends GetxController {
       // ignore
     } finally {
       isLoadingPoll.value = false;
+    }
+  }
+
+  Future<void> fetchLeaderBoard() async {
+    try {
+      isLoadingLeaderBoard.value = true;
+      final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
+      final response = await _leagueRepository.getLeagueLeaderBoard(
+        leagueId: leagueId,
+      );
+      leaderBoard.value = response;
+    } catch (e) {
+      // ignore
+    } finally {
+      isLoadingLeaderBoard.value = false;
     }
   }
 

@@ -104,7 +104,8 @@ class AppEndpoints {
   static const String support = "${baseUrl}support/send";
 
   ///League---------------------------------------------------------------------
-  static const String getAllScheduleLiveMatches = "${baseUrl}court/league-schedule/getAllSchedulesByStatus?";
+  static const String getAllScheduleLiveMatches = "${baseUrl}court/league-schedule/getAllSchedulesByStatus";
+  static const String getScheduleDates = "${baseUrl}court/league-schedule/getScheduleDates";
   static const String getLeagueMatchDetails = "${base}score";
   static const String getLeagueLeaderBoard = "${base}score/league/";
   static const String getLeagueSponsors = "${baseUrl}court/league/getLeagueSponsors";
