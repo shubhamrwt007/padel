@@ -18,8 +18,9 @@ class LeagueScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String leagueTitle = Get.arguments?['leagueTitle'] ?? 'League';
     return Obx(()=> Scaffold(
-        appBar: primaryAppBar(title: Text("League"),centerTitle: true, context: context,),
+        appBar: primaryAppBar(title: Text(leagueTitle),centerTitle: true, context: context,),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -276,31 +277,7 @@ class LeagueScreen extends StatelessWidget {
                 Column(
                   children: [
                     /// LIVE TAG
-                    Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFCD3529),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Obx(() => CircleAvatar(
-                            radius: 4, 
-                            backgroundColor: controller.isSocketConnected.value ? Colors.white : Colors.white54
-                          )),
-                          const SizedBox(width: 6),
-                          const Text(
-                            "LIVE",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ).paddingOnly(top: 10),
+                    _AnimatedLiveTag(),
                     /// SCORE ROW
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -341,36 +318,12 @@ class LeagueScreen extends StatelessWidget {
                     ),
                     Column(
                       children: [
-                        GestureDetector(
-                          onTap: (){
-                            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                              "matchType":"live",
-                              "matchId": scheduleData.firstOrNull?.matchId?.id ?? ""
-                            });
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                                color: const Color(0xff27AE60),
-                                borderRadius:
-                                BorderRadius.circular(30)),
-                            child:  Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(
-                                  radius: 11,
-                                  backgroundColor: AppColors.primaryColor,
-                                  child: Icon(Icons.play_arrow,
-                                      color: Colors.white, size: 18),
-                                ),
-                                SizedBox(width: 8),
-                                Text("Watch Live",
-                                    style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
-                              ],
-                            ),
-                          ),
-                        ),
+                        _AnimatedWatchLiveButton(onTap: (){
+                          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                            "matchType":"live",
+                            "matchId": scheduleData.firstOrNull?.matchId?.id ?? ""
+                          });
+                        }),
                       ],
                     ),
                   ],
@@ -1046,24 +999,7 @@ class LiveMatchCard extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                    "Live",
-                    style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
-                ),
-              ],
-            ),
+            child: _AnimatedLiveIndicator(),
           ),
           /// MAIN Container
           ClipPath(
@@ -1720,6 +1656,365 @@ class LeaderBoardWidget extends StatelessWidget {
           },
         );
       }),
+    );
+  }
+}
+class _AnimatedLiveTag extends StatefulWidget {
+  @override
+  _AnimatedLiveTagState createState() => _AnimatedLiveTagState();
+}
+
+class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _scaleController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _pulseAnimation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _pulseController.repeat(reverse: true);
+    _scaleController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentGeometry.centerRight,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _scaleController]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 0.9 + (_scaleAnimation.value * 0.1),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: Color(0xFFCD3529),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFCD3529).withOpacity(_pulseAnimation.value * 0.6),
+                    blurRadius: 8 + (_pulseAnimation.value * 4),
+                    spreadRadius: _pulseAnimation.value * 2,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.7 + (_pulseAnimation.value * 0.3)),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(_pulseAnimation.value * 0.5),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    "LIVE",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ).paddingOnly(top: 10,right: 10),
+    );
+  }
+}
+class _AnimatedLiveIndicator extends StatefulWidget {
+  @override
+  _AnimatedLiveIndicatorState createState() => _AnimatedLiveIndicatorState();
+}
+
+class _AnimatedLiveIndicatorState extends State<_AnimatedLiveIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _animation = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+    _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform.scale(
+              scale: 0.8 + (_animation.value * 0.4),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.6 + (_animation.value * 0.4)),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(_animation.value * 0.6),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "Live",
+              style: Get.textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+class _AnimatedWatchLiveButton extends StatefulWidget {
+  final VoidCallback onTap;
+  
+  const _AnimatedWatchLiveButton({required this.onTap});
+
+  @override
+  _AnimatedWatchLiveButtonState createState() => _AnimatedWatchLiveButtonState();
+}
+
+class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _shimmerController;
+  late AnimationController _iconController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _shimmerAnimation;
+  late Animation<double> _iconAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _pulseAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _shimmerAnimation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(
+      parent: _shimmerController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _iconAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _iconController,
+      curve: Curves.elasticInOut,
+    ));
+    
+    _pulseController.repeat(reverse: true);
+    _shimmerController.repeat();
+    _iconController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _shimmerController.dispose();
+    _iconController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _shimmerController, _iconController]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 1.0 + (_pulseAnimation.value * 0.05),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryColor,
+                    AppColors.secondaryColor,
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.4 + (_pulseAnimation.value * 0.3)),
+                    blurRadius: 8 + (_pulseAnimation.value * 4),
+                    spreadRadius: 1 + (_pulseAnimation.value * 2),
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // Shimmer effect
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.white.withOpacity(0.2),
+                              Colors.transparent,
+                            ],
+                            stops: [0.0, 0.5, 1.0],
+                            begin: Alignment(_shimmerAnimation.value - 1, 0),
+                            end: Alignment(_shimmerAnimation.value, 0),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Button content
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Transform.scale(
+                        scale: _iconAnimation.value,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Watch Live",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
