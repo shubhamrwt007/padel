@@ -14,6 +14,7 @@ import 'package:padel_mobile/presentations/cart/cart_screen.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
 import 'package:padel_mobile/presentations/profile/edit_profile/edit_profile_screen.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomDrawerUi extends GetView<ProfileController> {
@@ -195,6 +196,28 @@ class CustomDrawerUi extends GetView<ProfileController> {
                   },
 
                 ),
+              ),
+              Obx(
+                    () {
+                  final mainHomeController = Get.isRegistered<MainHomeController>() 
+                      ? Get.find<MainHomeController>() 
+                      : null;
+                  final leagueId = mainHomeController?.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+                  final leagueTitle = mainHomeController?.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
+                  
+                  return ProfileRow(
+                    icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 14 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                    title: "League",
+                    isSelected: controller.selectedIndex.value == 14,
+                    onTap: () {
+                      controller.selectedIndex.value = 14;
+                      Get.toNamed(RoutesName.league, arguments: {
+                        'leagueId': leagueId,
+                        'leagueTitle': leagueTitle
+                      });
+                    },
+                  );
+                },
               ),
               Obx(
                     () => ProfileRow(

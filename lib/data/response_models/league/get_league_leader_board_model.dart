@@ -55,6 +55,7 @@ class Standings {
   final int? womensWins;
   final int? mixedWins;
   final int? hybridWins;
+  final List<String>? recentForm;
 
   Standings({
     this.position,
@@ -72,6 +73,7 @@ class Standings {
     this.womensWins,
     this.mixedWins,
     this.hybridWins,
+    this.recentForm,
   });
 
   factory Standings.fromJson(Map<String, dynamic> json) {
@@ -91,6 +93,9 @@ class Standings {
       womensWins: json['womensWins'],
       mixedWins: json['mixedWins'],
       hybridWins: json['hybridWins'],
+      recentForm: (json['recentForm'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 
@@ -110,5 +115,6 @@ class Standings {
     'womensWins': womensWins,
     'mixedWins': mixedWins,
     'hybridWins': hybridWins,
+    'recentForm': recentForm,
   };
 }

@@ -158,6 +158,7 @@ class SignUpController extends GetxController {
           // "lastName": lastNameController.text.trim(),
         },
       );
+
     } else {
       AppToast.error(result.message!);
     }

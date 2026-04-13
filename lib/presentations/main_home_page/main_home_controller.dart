@@ -14,6 +14,10 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_poll_results_model.dart';
+import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 
 class MainHomeController extends GetxController {
   final ProfileController profileController = Get.put(ProfileController());
@@ -41,6 +45,10 @@ class MainHomeController extends GetxController {
   final RxBool isLoadingOpenMatches = false.obs;
   final RxInt currentBannerIndex = 0.obs;
   var customerRank = 0.obs;
+  final Rx<GetLeaguePollResultsModel?> pollResults = Rx<GetLeaguePollResultsModel?>(null);
+  final RxBool isLoadingPoll = false.obs;
+  final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
+  final RxBool isLoadingLeaderBoard = false.obs;
 
   final List<String> padelBannerImages = [
     Assets.imagesNewHomeBanner,
@@ -89,6 +97,8 @@ class MainHomeController extends GetxController {
       fetCustomerLeaderBoardRank(),
       fetchOpenMatches(),
       _fetchLeagueData(),
+      fetchPollResults(),
+      fetchLeaderBoard(),
     ]);
     isLoadingLeagueSection.value = false;
   }
@@ -263,6 +273,58 @@ class MainHomeController extends GetxController {
       // ignore
     } finally {
       isLoadingActiveLeagues.value = false;
+    }
+  }
+
+  Future<void> fetchPollResults() async {
+    try {
+      isLoadingPoll.value = true;
+      final response = await _leagueRepository.getLeaguePollResult();
+      pollResults.value = response;
+    } catch (e) {
+      // ignore
+    } finally {
+      isLoadingPoll.value = false;
+    }
+  }
+
+  Future<void> fetchLeaderBoard() async {
+    try {
+      isLoadingLeaderBoard.value = true;
+      final leagueId = activeLeagues.value?.data?.firstOrNull?.id ?? '';
+      final response = await _leagueRepository.getLeagueLeaderBoard(
+        leagueId: leagueId,
+      );
+      leaderBoard.value = response;
+    } catch (e) {
+      // ignore
+    } finally {
+      isLoadingLeaderBoard.value = false;
+    }
+  }
+
+  Future<bool> castVote({required String clubId, required String clubName}) async {
+    try {
+      final pollId = pollResults.value?.data?.poll?.id ?? '';
+      final userId = storage.read('userId') ?? '';
+      String deviceId = '';
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        deviceId = (await deviceInfo.androidInfo).id;
+      } else if (Platform.isIOS) {
+        deviceId = (await deviceInfo.iosInfo).identifierForVendor ?? '';
+      }
+      await _leagueRepository.castLeagueVote(data: {
+        'pollId': pollId,
+        'clubId': clubId,
+        'deviceId': deviceId,
+      });
+      // Refresh poll results silently
+      final response = await _leagueRepository.getLeaguePollResult();
+      pollResults.value = response;
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }

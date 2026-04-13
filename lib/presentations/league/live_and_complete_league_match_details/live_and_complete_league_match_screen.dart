@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
@@ -202,7 +203,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                       Text(controller.historyData.value?.teamA?.clubName ?? "",
                           style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
                       const SizedBox(height: 6),
-                      Text(_teamPlayersText(controller.historyData.value?.teamA),
+                      Text(_teamPlayersText(controller.historyData.value?.teamA).capitalizeFirstChar(),
                           style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
                           textAlign: TextAlign.center),
                     ],
@@ -227,7 +228,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                       Text(controller.historyData.value?.teamB?.clubName ?? "",
                           style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
                       const SizedBox(height: 6),
-                      Text(_teamPlayersText(controller.historyData.value?.teamB),
+                      Text(_teamPlayersText(controller.historyData.value?.teamB).capitalizeFirstChar(),
                           style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
                           textAlign: TextAlign.center),
                     ],

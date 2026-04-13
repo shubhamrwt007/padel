@@ -198,6 +198,7 @@ class MainHomeScreen extends StatelessWidget {
                 await controller.fetchOpenMatches();
                 await controller.fetchNearCityPlayers();
                 await controller.profileController.fetchUserProfile();
+                await controller.fetchPollResults();
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -545,46 +546,47 @@ class MainHomeScreen extends StatelessWidget {
     buildUpcoming: () => _upcomingMatchCard(),
   );
 
-  Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
-    return GestureDetector(
-      onTap: () {
-        Get.toNamed(RoutesName.league, arguments: {
-          'leagueId': leagueData.id,
-        });
-      },
-      child: Container(
-        width: Get.width,
-        height: 163,
-        margin: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 8,
-              spreadRadius: 2.3,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-              ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
-              : Image.asset(Assets.imagesImgLeagueComingSoon),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLeagueCarousel(List<LeagueModel.Data> leagues) {
-    return _LeagueCarouselWidget(
-      leagues: leagues,
-      onPageChanged: (index) {
-        controller.leagueCarouselIndex.value = index;
-      },
-    );
-  }
+  // Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
+  //   return GestureDetector(
+  //     onTap: () {
+  //       Get.toNamed(RoutesName.league, arguments: {
+  //         'leagueId': leagueData.id,
+  //         'leagueTitle': leagueData.leagueName,
+  //       });
+  //     },
+  //     child: Container(
+  //       width: Get.width,
+  //       height: 163,
+  //       margin: const EdgeInsets.symmetric(horizontal: 14),
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(20),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.grey.shade300,
+  //             blurRadius: 8,
+  //             spreadRadius: 2.3,
+  //             offset: const Offset(0, 3),
+  //           ),
+  //         ],
+  //       ),
+  //       child: ClipRRect(
+  //         borderRadius: BorderRadius.circular(20),
+  //         child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
+  //             ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+  //             : Image.asset(Assets.imagesImgLeagueComingSoon),
+  //       ),
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildLeagueCarousel(List<LeagueModel.Data> leagues) {
+  //   return _LeagueCarouselWidget(
+  //     leagues: leagues,
+  //     onPageChanged: (index) {
+  //       controller.leagueCarouselIndex.value = index;
+  //     },
+  //   );
+  // }
 
 
   Widget _buildLeagueLiveMatch(){
@@ -634,7 +636,7 @@ class MainHomeScreen extends StatelessWidget {
             BuildLeagueTitleSponsor(league: currentLeague),
             BuildLeagueMoreSponsor(league: currentLeague),
           ],
-          _buildLeaguePointsTable(),
+          // _buildLeaguePointsTable(),
         ],
       ).paddingOnly(top: 10);
     });
@@ -712,81 +714,68 @@ class MainHomeScreen extends StatelessWidget {
     
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(horizontal: 18),
-          decoration:  BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Stack(
-            children: [
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,)),
-              Column(
-                children: [
-                  /// LIVE TAG
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFCD3529),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+        GestureDetector(
+          onTap: (){
+            final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+            final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
+            Get.toNamed(RoutesName.league, arguments: {
+              'leagueId': leagueId,
+              'leagueTitle': leagueTitle,
+            });
+          },
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            decoration:  BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Stack(
+              children: [
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,)),
+                Column(
+                  children: [
+                    /// LIVE TAG
+                    _AnimatedLiveTag(),
+                    /// SCORE ROW
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        CircleAvatar(radius: 4, backgroundColor: Colors.white),
-                        SizedBox(width: 6),
-                        Text(
-                          "LIVE",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold),
+                        _teamColumn(
+                          match.teamA?.clubType ?? "Team A",
+                          "https://i.pravatar.cc/150?img=1",
+                          "https://i.pravatar.cc/150?img=2",
+                          (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
+                          (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
+                          AppColors.primaryColor,
+                        ),
+
+                        Transform.translate(
+                          offset: Offset(0, 0),
+                          child: Column(
+                            children: [
+                              Text(categoryType ?? "", style: Get.textTheme.labelMedium),
+                              SizedBox(height: 8),
+                              Text(
+                                  "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
+                                  style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                            ],
+                          ),
+                        ),
+                        _teamColumn(
+                          match.teamB?.clubType ?? "Team B",
+                          "https://i.pravatar.cc/150?img=3",
+                          "https://i.pravatar.cc/150?img=4",
+                          (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
+                          (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 2",
+                          AppColors.secondaryColor,
                         ),
                       ],
                     ),
-                  ).paddingOnly(top: 10),
-                  /// SCORE ROW
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _teamColumn(
-                        match.teamA?.clubType ?? "Team A",
-                        "https://i.pravatar.cc/150?img=1",
-                        "https://i.pravatar.cc/150?img=2",
-                        (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
-                        (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
-                        AppColors.primaryColor,
-                      ),
-
-                      Transform.translate(
-                        offset: Offset(0, 0),
-                        child: Column(
-                          children: [
-                            Text(categoryType ?? "", style: Get.textTheme.labelMedium),
-                            SizedBox(height: 8),
-                            Text(
-                                "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
-                                style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
-                          ],
-                        ),
-                      ),
-                      _teamColumn(
-                        match.teamB?.clubType ?? "Team B",
-                        "https://i.pravatar.cc/150?img=3",
-                        "https://i.pravatar.cc/150?img=4",
-                        (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
-                        (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 2",
-                        AppColors.secondaryColor,
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      GestureDetector(
-                        onTap: (){
+                    Column(
+                      children: [
+                        _AnimatedWatchLiveButton(onTap: (){
                           print('👆 Live match card tapped');
                           print('🎫 Match ID: $matchId');
                           print('🎫 Match Type: live');
@@ -795,38 +784,18 @@ class MainHomeScreen extends StatelessWidget {
                           //   'matchId': matchId ?? '',
                           // });
                           final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+                          final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
                           Get.toNamed(RoutesName.league, arguments: {
                             'leagueId': leagueId,
+                            'leagueTitle': leagueTitle,
                           });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                              color: const Color(0xff27AE60),
-                              borderRadius:
-                              BorderRadius.circular(30)),
-                          child:  Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                radius: 11,
-                                backgroundColor: AppColors.primaryColor,
-                                child: Icon(Icons.play_arrow,
-                                    color: Colors.white, size: 18),
-                              ),
-                              SizedBox(width: 8),
-                              Text("Watch Live",
-                                  style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontWeight: FontWeight.w500))
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                        }),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -871,9 +840,11 @@ class MainHomeScreen extends StatelessWidget {
       return GestureDetector(
         onTap: (){
           final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+          final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
           Get.toNamed(RoutesName.leagueMatchLists, arguments: {
             'matchTab': 0,
-            'leagueId': leagueId
+            'leagueId': leagueId,
+            'leagueTitle': leagueTitle
           });
         },
         child: Container(
@@ -960,132 +931,9 @@ class MainHomeScreen extends StatelessWidget {
       );
     });
   }
-  Widget _buildLeaguePointsTable(){
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.grey.shade100,
-                spreadRadius: 1.5,
-                blurRadius: 5.0,
-                offset: Offset(0, 3)
-            )
-          ]
-      ),
-      child: Column(
-        children: [
-          /// Header Row
-          _headerRow(),
 
-          Divider(color: Colors.grey.shade300,),
 
-          /// List
-          ...List.generate(6, (index) {
-            return Column(
-              children: [
-                _teamRow(index + 1),
-                Divider(color: Colors.grey.shade300,),
-              ],
-            );
-          }),
-        ],
-      ),
-    ).paddingOnly(top: 10);
-  }
-  Widget _headerRow() {
-    final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    return  Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        SizedBox(width: 20, child: Text("#",style: style,)),
-        Expanded(
-            flex: 3,
-            child: SizedBox(width: 35,child: Text("Teams",style: style))),
-        // SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(width: 30, child: Center(child: Text("W",style: style))),
-        SizedBox(width: 30, child: Center(child: Text("L",style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Pts",style: style))),
-        Expanded(
-            flex: 3,
-            child: Center(child: Text("Last 5",style: style))),
-      ],
-    );
-  }
-  Widget _teamRow(int index) {
-    List<String> teams = [
-      "Terrakort",
-      "Padel Haus",
-      "Courtline",
-      "Terrakort",
-      "Padel Haus",
-      "Courtline"
-    ];
 
-    return Row(
-      children: [
-        SizedBox(width: 25, child: Text("$index",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
-        Expanded(
-          flex: 3,
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 11,
-                backgroundColor: Colors.black12,
-                backgroundImage: NetworkImage(
-                  "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                teams[index - 1],
-                style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-
-        // SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("30",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("15",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        Expanded(
-          flex: 3,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children:  [
-              _buildResultIcon(false),
-              _buildResultIcon(true),
-              _buildResultIcon(false),
-              _buildResultIcon(true),
-              _buildResultIcon(false),
-            ],
-          ),
-        )
-
-      ],
-    );
-  }
-  Widget _buildResultIcon(bool win) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      height: 16,
-      width: 16,
-      decoration: BoxDecoration(
-        color: win ? Colors.green : Colors.red,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        win ? Icons.check : Icons.close,
-        size: 10,
-        color: Colors.white,
-      ),
-    );
-  }
   Widget _teamColumn(
       String team,
       String img1,
@@ -1763,11 +1611,14 @@ class MainHomeScreen extends StatelessWidget {
         break;
       case 'league':
         final leagues = controller.activeLeagues.value?.data ?? [];
-        final leagueId = leagues.isNotEmpty ? leagues.first.id : null;
-        Get.toNamed(RoutesName.league, arguments: {
-          if (leagueId != null) 'leagueId': leagueId,
-        });
-
+        if (leagues.isNotEmpty) {
+          final leagueId = leagues.first.id;
+          final leagueTitle = leagues.first.leagueName;
+          Get.toNamed(RoutesName.league, arguments: {
+            'leagueId': leagueId,
+            'leagueTitle': leagueTitle,
+          });
+        }
         break;
       case 'player':
         Get.bottomSheet(
@@ -2952,24 +2803,199 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         const SizedBox(height: 12),
         BuildLeagueTitleSponsor(league: currentLeague),
         BuildLeagueMoreSponsor(league: currentLeague),
+        _buildLeaguePointsTable(),
+        GestureDetector(
+          onTap: (){
+            widget.controller.fetchPollResults();
+            showVoteDialog(context);
+          },
+          child: Image.asset(Assets.imagesImgPoll),
+        ).paddingOnly(top: 5)
       ],
     ).paddingOnly(top: 10);
   }
 
   Widget _buildSwootTitle(String? leagueName) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
       child: Row(
         children: [
+          SvgPicture.asset(
+            Assets.imagesIcPadelBall,
+            height: 18,width: 18,
+          ).paddingOnly(right: 10),
           Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
         ],
       ),
     );
   }
+  Widget _buildLeaguePointsTable(){
+    return Obx(() {
+      if (widget.controller.isLoadingLeaderBoard.value) {
+        return Container(
+          height: 200,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+        );
+      }
 
+      final standings = widget.controller.leaderBoard.value?.data?.standings ?? [];
+      if (standings.isEmpty) return const SizedBox.shrink();
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.grey.shade100,
+                  spreadRadius: 1.5,
+                  blurRadius: 5.0,
+                  offset: Offset(0, 3)
+              )
+            ]
+        ),
+        child: Column(
+          children: [
+            /// Header Row
+            _headerRow(),
+
+            Divider(color: Colors.grey.shade300,),
+
+            /// List
+            ...standings.take(6).map((standing) {
+              return Column(
+                children: [
+                  _teamRow(standing),
+                  Divider(color: Colors.grey.shade300,),
+                ],
+              );
+            }),
+          ],
+        ),
+      ).paddingOnly(top: 10);
+    });
+  }
+  Widget _headerRow() {
+    final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
+    return  Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(width: 20, child: Text("#",style: style,)),
+        Expanded(
+            flex: 3,
+            child: SizedBox(width: 35,child: Text("Teams",style: style))),
+        // SizedBox(width: 30, child: Text("M",style: style)),
+        SizedBox(width: 30, child: Center(child: Text("W",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("L",style: style))),
+        SizedBox(width: 30, child: Center(child: Text("Pts",style: style))),
+        Expanded(
+            flex: 3,
+            child: Center(child: Text("Last 5",style: style))),
+      ],
+    );
+  }
+  Widget _teamRow(dynamic standing) {
+    return Row(
+      children: [
+        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        Expanded(
+          flex: 3,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 11,
+                backgroundColor: AppColors.primaryColor,
+                child: Text(
+                  (standing.clubName ?? "?")[0].toUpperCase(),
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  standing.clubName ?? "Unknown",
+                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        Expanded(
+          flex: 3,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: _buildRecentFormIcons(standing.recentForm ?? []),
+          ),
+        )
+
+      ],
+    );
+  }
+  List<Widget> _buildRecentFormIcons(List<dynamic> recentForm) {
+    // Take last 5 matches or pad with empty if less than 5
+    final formList = recentForm.take(5).toList();
+    final widgets = <Widget>[];
+    
+    for (int i = 0; i < 5; i++) {
+      if (i < formList.length) {
+        final result = formList[i].toString().toUpperCase();
+        final isWin = result == 'W';
+        widgets.add(_buildResultIcon(isWin));
+      } else {
+        // Add placeholder for missing matches
+        widgets.add(_buildResultIcon(null));
+      }
+    }
+    
+    return widgets;
+  }
+  
+  Widget _buildResultIcon(bool? win) {
+    if (win == null) {
+      // Placeholder for no match data
+      return Container(
+        margin: const EdgeInsets.only(right: 4),
+        height: 16,
+        width: 16,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+    
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      height: 16,
+      width: 16,
+      decoration: BoxDecoration(
+        color: win ? Colors.green : Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        win ? Icons.check : Icons.close,
+        size: 10,
+        color: Colors.white,
+      ),
+    );
+  }
   Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
     return GestureDetector(
-      onTap: () => Get.toNamed(RoutesName.league, arguments: {'leagueId': leagueData.id}),
+      onTap: (){
+        Get.toNamed(RoutesName.league, arguments: {
+          'leagueId': leagueData.id,
+          'leagueTitle': leagueData.leagueName,
+        });
+      },
       child: Container(
         width: Get.width,
         height: 163,
@@ -2987,6 +3013,226 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
               : Image.asset(Assets.imagesImgLeagueComingSoon),
         ),
       ),
+    );
+  }
+  void showVoteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (context) {
+        return Obx(() {
+          final pollData = widget.controller.pollResults.value?.data;
+          final clubs = pollData?.clubs ?? [];
+          final maxVotes = clubs.isEmpty ? 1 : clubs.map((c) => c.votes ?? 0).reduce((a, b) => a > b ? a : b);
+          final safeMax = maxVotes == 0 ? 1 : maxVotes;
+
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            child: Container(
+              padding: EdgeInsets.only(top: 20, bottom: 20, right: 20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(colors: [Colors.white, Color(0XFFCBD6FF)]),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        pollData?.poll?.question ?? "Vote Your Club. Make It Count.",
+                        style: Get.textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(color: Colors.transparent, child: Icon(Icons.close)),
+                      ),
+                    ],
+                  ).paddingOnly(left: 20),
+                  Divider(color: Colors.grey.shade300).paddingOnly(left: 20),
+                  const SizedBox(height: 10),
+                  if (clubs.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Text("No poll data available", style: Get.textTheme.bodyMedium),
+                    )
+                  else
+                    ...clubs.map((club) => Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: clubItem(
+                        clubName: club.clubName ?? "",
+                        votes: club.votes ?? 0,
+                        logoUrl: club.logo ?? "",
+                        clubId: club.clubId ?? "",
+                        widthFactor: (club.votes ?? 0) / safeMax,
+                      ),
+                    )),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Widget clubItem({
+    required String clubName,
+    required int votes,
+    required String logoUrl,
+    required String clubId,
+    double widthFactor = 1.0,
+  }) {
+    final colors = [
+      [Color(0xff4A27FF), Color(0xff001E8C)],
+      [Color(0xffC6C000), Color(0xffF4E66A)],
+      [Color(0xff4C8E00), Color(0xff9FD94F)],
+      [Color(0xff8F2D00), Color(0xffE65E2C)],
+      [Color(0xff002E13), Color(0xff006633)],
+    ];
+    final idx = clubName.hashCode.abs() % colors.length;
+    final color1 = colors[idx][0];
+    final color2 = colors[idx][1];
+    final textColor = idx == 1 || idx == 2 ? Colors.black : Colors.white;
+
+    return _ClubVoteItem(
+      clubName: clubName,
+      votes: votes,
+      logoUrl: logoUrl,
+      clubId: clubId,
+      color1: color1,
+      color2: color2,
+      textColor: textColor,
+      widthFactor: widthFactor,
+      onVote: () => widget.controller.castVote(clubId: clubId, clubName: clubName),
+    );
+  }
+}
+
+class _ClubVoteItem extends StatefulWidget {
+  final String clubName;
+  final int votes;
+  final String logoUrl;
+  final String clubId;
+  final Color color1;
+  final Color color2;
+  final Color textColor;
+  final double widthFactor;
+  final Future<bool> Function() onVote;
+
+  const _ClubVoteItem({
+    required this.clubName,
+    required this.votes,
+    required this.logoUrl,
+    required this.clubId,
+    required this.color1,
+    required this.color2,
+    required this.textColor,
+    required this.widthFactor,
+    required this.onVote,
+  });
+
+  @override
+  State<_ClubVoteItem> createState() => _ClubVoteItemState();
+}
+
+class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+  bool _voting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _scaleAnim = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleVote() async {
+    if (_voting) return;
+    setState(() => _voting = true);
+    _animController.forward(from: 0);
+    await widget.onVote();
+    if (mounted) setState(() => _voting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final barWidth = (constraints.maxWidth * widget.widthFactor).clamp(110.0, constraints.maxWidth - 40);
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                width: barWidth,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                  gradient: LinearGradient(colors: [widget.color1, widget.color2]),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(widget.clubName, overflow: TextOverflow.ellipsis,
+                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500, color: widget.textColor)),
+                          Text("${widget.votes} votes",
+                              style: Get.textTheme.displayLarge!.copyWith(color: widget.textColor, fontSize: 8)),
+                        ],
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.white,
+                      child: ClipOval(
+                        child: widget.logoUrl.isNotEmpty
+                            ? CachedNetworkImage(imageUrl: widget.logoUrl, fit: BoxFit.cover, width: 28, height: 28,
+                                errorWidget: (_, __, ___) => Icon(Icons.sports_tennis, size: 16))
+                            : Icon(Icons.sports_tennis, size: 16),
+                      ),
+                    ).paddingOnly(left: 5),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: barWidth + 6,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _handleVote,
+                    child: ScaleTransition(
+                      scale: _scaleAnim,
+                      child: Image.asset(Assets.imagesImgPollVote, scale: 3.9),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -3052,6 +3298,7 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
                 onTap: () {
                   Get.toNamed(RoutesName.league, arguments: {
                     'leagueId': leagueData.id,
+                    'leagueTitle': leagueData.leagueName,
                   });
                 },
                 child: Container(
@@ -3097,6 +3344,292 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
             }),
           ),
       ],
+    );
+  }
+}
+
+class _AnimatedLiveTag extends StatefulWidget {
+  @override
+  _AnimatedLiveTagState createState() => _AnimatedLiveTagState();
+}
+
+class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _scaleController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _pulseAnimation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _pulseController.repeat(reverse: true);
+    _scaleController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: AlignmentGeometry.centerRight,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _scaleController]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 0.9 + (_scaleAnimation.value * 0.1),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: Color(0xFFCD3529),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFCD3529).withValues(alpha:  _pulseAnimation.value * 0.6),
+                    blurRadius: 8 + (_pulseAnimation.value * 4),
+                    spreadRadius: _pulseAnimation.value * 2,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.7 + (_pulseAnimation.value * 0.3)),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withValues(alpha:_pulseAnimation.value * 0.5),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    "LIVE",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ).paddingOnly(top: 10,right: 10),
+    );
+  }
+}
+class _AnimatedWatchLiveButton extends StatefulWidget {
+  final VoidCallback onTap;
+  
+  const _AnimatedWatchLiveButton({required this.onTap});
+
+  @override
+  _AnimatedWatchLiveButtonState createState() => _AnimatedWatchLiveButtonState();
+}
+
+class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _shimmerController;
+  late AnimationController _iconController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _shimmerAnimation;
+  late Animation<double> _iconAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _iconController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _pulseAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _shimmerAnimation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(
+      parent: _shimmerController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _iconAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _iconController,
+      curve: Curves.elasticInOut,
+    ));
+    
+    _pulseController.repeat(reverse: true);
+    _shimmerController.repeat();
+    _iconController.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _shimmerController.dispose();
+    _iconController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulseController, _shimmerController, _iconController]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 1.0 + (_pulseAnimation.value * 0.05),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryColor,
+                    AppColors.secondaryColor,
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withValues(alpha: 0.4 + (_pulseAnimation.value * 0.3)),
+                    blurRadius: 8 + (_pulseAnimation.value * 4),
+                    spreadRadius: 1 + (_pulseAnimation.value * 2),
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // Shimmer effect
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              Colors.white.withValues(alpha: 0.2),
+                              Colors.transparent,
+                            ],
+                            stops: [0.0, 0.5, 1.0],
+                            begin: Alignment(_shimmerAnimation.value - 1, 0),
+                            end: Alignment(_shimmerAnimation.value, 0),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Button content
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Transform.scale(
+                        scale: _iconAnimation.value,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Watch Live",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
