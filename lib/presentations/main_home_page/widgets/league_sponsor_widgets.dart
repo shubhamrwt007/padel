@@ -6,6 +6,7 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
+import 'package:url_launcher/url_launcher.dart';
 
 class SponsorImagesPage extends StatelessWidget {
   const SponsorImagesPage({super.key});
@@ -97,21 +98,32 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
             for (final sponsor in tier2Sponsors) {
               children.add(
                 Expanded(
-                  child: Center(
-                    child: SizedBox(
-                      height: 20,
-                      width: 70,
-                      child: sponsor.logo != null
-                          ? CachedNetworkImage(
-                              imageUrl: sponsor.logo!,
-                              fit: BoxFit.contain,
-                              errorWidget: (context, url, error) => const Icon(
-                                Icons.image_not_supported,
-                                size: 20,
-                                color: Colors.grey,
-                              ),
-                            )
-                          : const Icon(Icons.image_not_supported, size: 20, color: Colors.grey),
+                  child: GestureDetector(
+                    onTap: () async {
+                      final url = sponsor.url;
+                      if (url != null && url.isNotEmpty) {
+                        final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      }
+                    },
+                    child: Center(
+                      child: SizedBox(
+                        height: 20,
+                        width: 70,
+                        child: sponsor.logo != null
+                            ? CachedNetworkImage(
+                                imageUrl: sponsor.logo!,
+                                fit: BoxFit.contain,
+                                errorWidget: (context, url, error) => const Icon(
+                                  Icons.image_not_supported,
+                                  size: 20,
+                                  color: Colors.grey,
+                                ),
+                              )
+                            : const Icon(Icons.image_not_supported, size: 20, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),

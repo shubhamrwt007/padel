@@ -721,6 +721,11 @@ class MainHomeScreen extends StatelessWidget {
             Get.toNamed(RoutesName.league, arguments: {
               'leagueId': leagueId,
               'leagueTitle': leagueTitle,
+            })?.then((_) {
+              controller.fetchPollResults();
+              controller.fetchScheduleMatches();
+              controller.fetchActiveLeagues();
+              controller.fetchLeaderBoard();
             });
           },
           child: Container(
@@ -779,15 +784,16 @@ class MainHomeScreen extends StatelessWidget {
                           print('👆 Live match card tapped');
                           print('🎫 Match ID: $matchId');
                           print('🎫 Match Type: live');
-                          // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                          //   'matchType': 'live',
-                          //   'matchId': matchId ?? '',
-                          // });
                           final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
                           final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
                           Get.toNamed(RoutesName.league, arguments: {
                             'leagueId': leagueId,
                             'leagueTitle': leagueTitle,
+                          })?.then((_) {
+                            controller.fetchPollResults();
+                            controller.fetchScheduleMatches();
+                            controller.fetchActiveLeagues();
+                            controller.fetchLeaderBoard();
                           });
                         }),
                       ],
@@ -977,7 +983,7 @@ class MainHomeScreen extends StatelessWidget {
           Text(
               "$name1 &\n$name2",
               textAlign: TextAlign.center,
-              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11)
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,fontSize: 11)
           ),
         ],
       ),
@@ -1617,6 +1623,11 @@ class MainHomeScreen extends StatelessWidget {
           Get.toNamed(RoutesName.league, arguments: {
             'leagueId': leagueId,
             'leagueTitle': leagueTitle,
+          })?.then((_) {
+            controller.fetchPollResults();
+            controller.fetchScheduleMatches();
+            controller.fetchActiveLeagues();
+            controller.fetchLeaderBoard();
           });
         }
         break;
@@ -2994,6 +3005,11 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         Get.toNamed(RoutesName.league, arguments: {
           'leagueId': leagueData.id,
           'leagueTitle': leagueData.leagueName,
+        })?.then((_) {
+          widget.controller.fetchPollResults();
+          widget.controller.fetchScheduleMatches();
+          widget.controller.fetchActiveLeagues();
+          widget.controller.fetchLeaderBoard();
         });
       },
       child: Container(
@@ -3299,6 +3315,13 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
                   Get.toNamed(RoutesName.league, arguments: {
                     'leagueId': leagueData.id,
                     'leagueTitle': leagueData.leagueName,
+                  })?.then((_) {
+                    // Refresh APIs when coming back from league screen
+                    final controller = Get.find<MainHomeController>();
+                    controller.fetchPollResults();
+                    controller.fetchScheduleMatches();
+                    controller.fetchActiveLeagues();
+                    controller.fetchLeaderBoard();
                   });
                 },
                 child: Container(
@@ -3411,15 +3434,15 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
           return Transform.scale(
             scale: 0.9 + (_scaleAnimation.value * 0.1),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: Color(0xFFCD3529),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFCD3529).withValues(alpha:  _pulseAnimation.value * 0.6),
-                    blurRadius: 8 + (_pulseAnimation.value * 4),
-                    spreadRadius: _pulseAnimation.value * 2,
+                    color: Color(0xFFCD3529).withValues(alpha:  _pulseAnimation.value * 0.5),
+                    blurRadius: 6 + (_pulseAnimation.value * 3),
+                    spreadRadius: _pulseAnimation.value * 1.5,
                   ),
                 ],
               ),
@@ -3429,29 +3452,29 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
                   Transform.scale(
                     scale: _scaleAnimation.value,
                     child: Container(
-                      width: 8,
-                      height: 8,
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.7 + (_pulseAnimation.value * 0.3)),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withValues(alpha:_pulseAnimation.value * 0.5),
-                            blurRadius: 4,
-                            spreadRadius: 1,
+                            color: Colors.white.withValues(alpha:_pulseAnimation.value * 0.4),
+                            blurRadius: 3,
+                            spreadRadius: 0.5,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   const Text(
                     "LIVE",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
+                      fontSize: 8,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ],
@@ -3547,7 +3570,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
           return Transform.scale(
             scale: 1.0 + (_pulseAnimation.value * 0.05),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -3557,13 +3580,13 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primaryColor.withValues(alpha: 0.4 + (_pulseAnimation.value * 0.3)),
-                    blurRadius: 8 + (_pulseAnimation.value * 4),
-                    spreadRadius: 1 + (_pulseAnimation.value * 2),
-                    offset: Offset(0, 2),
+                    blurRadius: 6 + (_pulseAnimation.value * 3),
+                    spreadRadius: 0.5 + (_pulseAnimation.value * 1),
+                    offset: Offset(0, 1),
                   ),
                 ],
               ),
@@ -3572,7 +3595,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                   // Shimmer effect
                   Positioned.fill(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(20),
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -3596,30 +3619,30 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                       Transform.scale(
                         scale: _iconAnimation.value,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.3),
-                              width: 1,
+                              width: 0.8,
                             ),
                           ),
                           child: Icon(
                             Icons.play_arrow,
                             color: Colors.white,
-                            size: 16,
+                            size: 12,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         "Watch Live",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],

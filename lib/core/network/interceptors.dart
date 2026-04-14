@@ -32,6 +32,7 @@ class LoggerInterceptor extends Interceptor {
     // Handle 401 Unauthorized (Token expired)
     if (err.response?.statusCode == 401) {
       final token = storage.read('token');
+      print("DDDDDDDDDDDDDDDDDDDDDDDDDD------------$token");
       if (token != null && token.isNotEmpty) {
         log("Token expired - redirecting to session expired page");
         await _handleTokenExpiration();

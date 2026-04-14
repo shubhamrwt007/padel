@@ -80,12 +80,14 @@ class Sponsors {
   CategoryId? categoryId;
   String? id;
   String? logo;
+  String? url;
 
-  Sponsors({this.name, this.categoryId, this.id, this.logo});
+  Sponsors({this.name, this.categoryId, this.id, this.url,this.logo});
 
   factory Sponsors.fromJson(Map<String, dynamic> json) {
     return Sponsors(
       name: json['name'],
+      url: json['url'],
       categoryId: json['categoryId'] != null
           ? CategoryId.fromJson(json['categoryId'])
           : null,
@@ -96,6 +98,7 @@ class Sponsors {
 
   Map<String, dynamic> toJson() => {
     'name': name,
+    'url': url,
     'categoryId': categoryId?.toJson(),
     '_id': id,
     'logo': logo,

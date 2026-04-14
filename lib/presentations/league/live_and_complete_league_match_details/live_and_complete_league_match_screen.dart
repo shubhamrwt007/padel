@@ -187,54 +187,79 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
         ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40,vertical: 35),
-          child: Obx(
-                () => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+        Transform.translate(
+          offset:controller.winnerTeam != null? Offset(0, -10):Offset(0, 0),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40,vertical: 35),
+            child: Obx(
+                  () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
 
-                /// TEAM A
-                Container(
-                  color: Colors.transparent,
-                  width: Get.width*0.25,
-                  child: Column(
-                    children: [
-                      Text(controller.historyData.value?.teamA?.clubName ?? "",
-                          style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
-                      const SizedBox(height: 6),
-                      Text(_teamPlayersText(controller.historyData.value?.teamA).capitalizeFirstChar(),
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
-                          textAlign: TextAlign.center),
-                    ],
+                  /// TEAM A
+                  Container(
+                    color: Colors.transparent,
+                    width: Get.width*0.25,
+                    child: Column(
+                      children: [
+                        if (controller.winnerTeam != null)
+                          Obx(() => controller.winnerTeam == 'teamA'
+                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              : const SizedBox(height: 24)),
+                        Text(controller.historyData.value?.teamA?.clubName ?? "",
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
+                        const SizedBox(height: 6),
+                        Text(_teamPlayersText(controller.historyData.value?.teamA).capitalizeFirstChar(),
+                            style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,fontSize: 11),
+                            textAlign: TextAlign.center),
+                      ],
+                    ),
                   ),
-                ),
 
-                /// SCORE
-                Transform.translate(
-                  offset: Offset(0, 0),
-                  child: Text(
-                    "${controller.teamAScore.value} : ${controller.teamBScore.value}",
-                    style: Get.textTheme.titleLarge!.copyWith(color: Colors.black,fontSize: 40),
+                  /// SCORE
+                  Transform.translate(
+                    offset: Offset(0, 8),
+                    child: Column(
+                      children: [
+                        Text(
+                          "${controller.teamAScore.value} : ${controller.teamBScore.value}",
+                          style: Get.textTheme.titleLarge!.copyWith(color: Colors.black,fontSize: 40),
+                        ),
+                        Text(
+                          controller.historyData.value?.categoryType ?? "",
+                          style: Get.textTheme.headlineSmall!.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                /// TEAM B
-                Container(
-                  color: Colors.transparent,
-                  width: Get.width*0.25,
-                  child: Column(
-                    children: [
-                      Text(controller.historyData.value?.teamB?.clubName ?? "",
-                          style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
-                      const SizedBox(height: 6),
-                      Text(_teamPlayersText(controller.historyData.value?.teamB).capitalizeFirstChar(),
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11),
-                          textAlign: TextAlign.center),
-                    ],
+                  /// TEAM B
+                  Container(
+                    color: Colors.transparent,
+                    width: Get.width*0.25,
+                    child: Column(
+                      children: [
+                        if (controller.winnerTeam != null)
+                          Obx(() => controller.winnerTeam == 'teamB'
+                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              : const SizedBox(height: 24)),
+                        Text(controller.historyData.value?.teamB?.clubName ?? "",
+                            overflow: TextOverflow.ellipsis,
+                            style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
+                        const SizedBox(height: 6),
+                        Text(_teamPlayersText(controller.historyData.value?.teamB).capitalizeFirstChar(),
+                            style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,fontSize: 11),
+                            textAlign: TextAlign.center),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -394,7 +419,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                         color: AppColors.textFieldColor,
                                         borderRadius: BorderRadius.circular(7)
                                     ),
-                                    child: Text("Tie Brake",style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor,fontSize: 12),),
+                                    child: Text("Tie Break",style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor,fontSize: 12),),
                                   ).paddingOnly(left: 10)
                                 : SizedBox.shrink()
                           ],
@@ -542,6 +567,15 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                       color: AppColors.primaryColor,
                                                                     ),
                                                                   ),
+                                                                      if (winType == 'TIEBREAK')
+                                                                  Text(
+                                                                    'TB',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.primaryColor,
+                                                                    ),
+                                                                  ),
                                                               ],
                                                             )
                                                           else
@@ -644,6 +678,15 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                 if (winType == 'GOLDEN_POINT')
                                                                   Text(
                                                                     'GP',
+                                                                    style: Get.textTheme.bodySmall!.copyWith(
+                                                                      fontSize: 8,
+                                                                      fontWeight: FontWeight.bold,
+                                                                      color: AppColors.secondaryColor,
+                                                                    ),
+                                                                  ),
+                                                                        if (winType == 'TIEBREAK')
+                                                                  Text(
+                                                                    'TB',
                                                                     style: Get.textTheme.bodySmall!.copyWith(
                                                                       fontSize: 8,
                                                                       fontWeight: FontWeight.bold,
