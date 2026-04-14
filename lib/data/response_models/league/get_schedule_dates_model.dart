@@ -1,13 +1,34 @@
 class GetScheduleDatesModel {
   final bool? success;
   final List<String>? data;
+  final List<String>? categories;
 
-  GetScheduleDatesModel({this.success, this.data});
+  GetScheduleDatesModel({this.success, this.data, this.categories});
 
   factory GetScheduleDatesModel.fromJson(Map<String, dynamic> json) {
+    final List<String> dates = [];
+    final Set<String> categorySet = {};
+    
+    if (json['data'] is List) {
+      for (var item in json['data']) {
+        if (item is Map<String, dynamic>) {
+          if (item['date'] != null) {
+            final dateStr = item['date'].toString();
+            if (!dates.contains(dateStr)) {
+              dates.add(dateStr);
+            }
+          }
+          if (item['categoryType'] != null) {
+            categorySet.add(item['categoryType'].toString());
+          }
+        }
+      }
+    }
+    
     return GetScheduleDatesModel(
       success: json['success'],
-      data: (json['data'] as List?)?.map((e) => e.toString()).toList(),
+      data: dates,
+      categories: categorySet.toList(),
     );
   }
 
@@ -15,6 +36,7 @@ class GetScheduleDatesModel {
     return {
       'success': success,
       'data': data,
+      'categories': categories,
     };
   }
 }

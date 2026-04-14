@@ -25,17 +25,19 @@ class LeagueRepository {
 
   ///Get All Schedule Live Matches---------------------------------------------------
   Future<GetAllScheduleLiveMatchesModel> getAllScheduleLiveMatches({
-    required String matchStatus,
+    String? matchStatus,
     required String leagueId,
     String? userId,
-    String? date
+    String? date,
+    String? categoryType
   }) async {
     try {
       final queryParams = {
-        "matchStatus": matchStatus,
         "leagueId": leagueId,
+        if (matchStatus != null && matchStatus.isNotEmpty) "matchStatus": matchStatus,
         if (userId != null && userId.isNotEmpty) "userId": userId,
         if (date != null && date.isNotEmpty) "date": date,
+        if (categoryType != null && categoryType.isNotEmpty) "categoryType": categoryType,
       };
 
       final response = await dioClient.get(
@@ -66,12 +68,13 @@ class LeagueRepository {
   ///Get Schedule Dates---------------------------------------------------------
   Future<GetScheduleDatesModel> getScheduleDates({
     required String leagueId,
-    required String? matchStatus,
+    String? matchStatus,
   }) async {
     try {
       final queryParams = {
-        "matchStatus": matchStatus,
         "leagueId": leagueId,
+        if (matchStatus != null && matchStatus.isNotEmpty)
+          "matchStatus": matchStatus,
       };
 
       final response = await dioClient.get(
@@ -87,7 +90,8 @@ class LeagueRepository {
         return GetScheduleDatesModel.fromJson(response.data);
       } else {
         throw Exception(
-            "Get Schedule Dates failed: ${response.statusCode}");
+          "Get Schedule Dates failed: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(

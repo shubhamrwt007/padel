@@ -20,82 +20,111 @@ class LeagueScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String leagueTitle = Get.arguments?['leagueTitle'] ?? 'League';
-    return Obx(()=> Scaffold(
+    return Scaffold(
         appBar: primaryAppBar(title: Text(leagueTitle),centerTitle: true, context: context,),
-        body: Column(
+        body: Obx(() {
+          if (controller.isInitialLoading.value || controller.isRefreshingTab.value) {
+            return Center(
+              child: LoadingWidget(color: AppColors.primaryColor),
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTabSelector(),
+              Expanded(
+                child: controller.selectedTab.value == 0
+                    ? _liveMatchContent(context).paddingOnly(top: 10)
+                    : const LeaderBoardWidget().paddingOnly(top: 20),
+              ),
+            ],
+          );
+        }),
+      );
+  }
+  Widget _liveMatchContent(BuildContext context){
+    return RefreshIndicator(
+      color: Colors.white,
+      onRefresh: () async {
+        await Future.wait([
+          controller.fetchUpcomingMatches(),
+          controller.fetchLiveMatches(),
+          controller.fetchResultMatches(),
+        ]);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTabSelector(),
-            Expanded(
-              child: controller.selectedTab.value == 0
-                  ? _liveMatchContent(context).paddingOnly(top: 10)
-                  : const LeaderBoardWidget().paddingOnly(top: 20),
+            Obx(() {
+              if (controller.isLoadingLiveMatches.value) {
+                return SizedBox(
+                  height: 200,
+                  child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                );
+              }
+              return _liveMatchCard();
+            }).paddingOnly(bottom: 10),
+            BuildTitleSponsor(controller: controller),
+            Obx(() {
+              final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
+              if (sponsors.isEmpty) return const SizedBox.shrink();
+              return BuildMoreSponsor(sponsors: sponsors);
+            }),
+            _buildTabs(context),
+            Obx(() => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  controller.matchTab.value == 0
+                      ? "Upcoming Matches"
+                      : controller.matchTab.value == 1
+                          ? "Live Matches"
+                          : "Match Results",
+                  style: Get.textTheme.headlineMedium,
+                ),
+                Obx(() {
+                  final hasMatches = controller.matchTab.value == 0
+                      ? (controller.upcomingMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
+                      : controller.matchTab.value == 1
+                          ? (controller.liveMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
+                          : (controller.resultMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty;
+                  if (!hasMatches) return const SizedBox.shrink();
+                  return GestureDetector(
+                    onTap: () {
+                      Get.toNamed(RoutesName.leagueMatchLists, arguments: {
+                        'leagueId': controller.leagueId ?? '',
+                        'initialTab': controller.matchTab.value
+                      });
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Text(
+                        "See all",
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(color: AppColors.primaryColor),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ).paddingSymmetric(horizontal: 18,vertical: 8)),
+            SizedBox(
+              height: Get.height * 0.45,
+              child: PageView(
+                controller: controller.pageController,
+                onPageChanged: controller.onPageChanged,
+                children: [
+                  _upcomingList(),
+                  _liveList(),
+                  _resultsList(),
+                ],
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-  Widget _liveMatchContent(BuildContext context){
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _liveMatchCard().paddingOnly(bottom: 10),
-        BuildTitleSponsor(controller: controller),
-        Obx(() {
-          final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
-          if (sponsors.isEmpty) return const SizedBox.shrink();
-          return BuildMoreSponsor(sponsors: sponsors);
-        }),
-        _buildTabs(context),
-        Obx(() => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              controller.matchTab.value == 0
-                  ? "Upcoming Matches"
-                  : controller.matchTab.value == 1
-                      ? "Live Matches"
-                      : "Match Results",
-              style: Get.textTheme.headlineMedium,
-            ),
-            if (controller.matchTab.value != 1)
-              Obx(() {
-                final hasMatches = controller.matchTab.value == 0
-                    ? (controller.upcomingMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
-                    : (controller.resultMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty;
-                if (!hasMatches) return const SizedBox.shrink();
-                return GestureDetector(
-                  onTap: () {
-                    Get.toNamed(RoutesName.leagueMatchLists, arguments: {
-                      'matchTab': controller.matchTab.value,
-                      'leagueId': controller.leagueId ?? ''
-                    });
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Text(
-                      "See all",
-                      style: Get.textTheme.labelLarge!
-                          .copyWith(color: AppColors.primaryColor),
-                    ),
-                  ),
-                );
-              }),
-          ],
-        ).paddingSymmetric(horizontal: 18,vertical: 8)),
-        Expanded(
-          child: PageView(
-            controller: controller.pageController,
-            onPageChanged: controller.onPageChanged,
-            children: [
-              _upcomingList(),
-              _liveList(),
-              _resultsList(),
-            ],
-          ),
-        ),
-      ],
     );
   }
   Widget _buildTabs(BuildContext context) {
@@ -249,23 +278,15 @@ class LeagueScreen extends StatelessWidget {
     );
   }
   Widget _liveMatchCard() {
-    return Obx(() {
-      if (controller.isLoadingLiveMatches.value) {
-        return SizedBox(
-          height: 200,
-          child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
-        );
-      }
+    final scheduleData = controller.liveMatches.value?.data ?? [];
+    if (scheduleData.isEmpty) return const SizedBox.shrink();
 
-      final scheduleData = controller.liveMatches.value?.data ?? [];
-      if (scheduleData.isEmpty) return const SizedBox.shrink();
+    final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+    if (allMatches.isEmpty) return const SizedBox.shrink();
 
-      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-      if (allMatches.isEmpty) return const SizedBox.shrink();
-
-      final firstMatch = allMatches.first;
-      final categoryType = scheduleData.firstOrNull?.categoryType ?? "Mixed Doubles";
-      final setsWon = scheduleData.firstOrNull?.matchId?.setsWon;
+    final firstMatch = allMatches.first;
+    final categoryType = scheduleData.firstOrNull?.categoryType ?? "Mixed Doubles";
+    final setsWon = scheduleData.firstOrNull?.matchId?.setsWon;
 
       return Column(
         children: [
@@ -285,8 +306,8 @@ class LeagueScreen extends StatelessWidget {
                       children: [
                         _teamColumn(
                           firstMatch.teamA?.clubType ?? "",
-                          "https://i.pravatar.cc/150?img=1",
-                          "https://i.pravatar.cc/150?img=2",
+                          "",
+                          "",
                           (firstMatch.teamA?.players?.isNotEmpty ?? false) ? (firstMatch.teamA!.players![0].playerName ?? "") : "Player 1",
                           (firstMatch.teamA?.players != null && firstMatch.teamA!.players!.length > 1) ? (firstMatch.teamA!.players![1].playerName ?? "") : "Player 2",
                           AppColors.primaryColor,
@@ -309,8 +330,8 @@ class LeagueScreen extends StatelessWidget {
                         ),
                         _teamColumn(
                           firstMatch.teamB?.clubType ?? "",
-                          "https://i.pravatar.cc/150?img=3",
-                          "https://i.pravatar.cc/150?img=4",
+                          "",
+                          "",
                           (firstMatch.teamB?.players?.isNotEmpty ?? false) ? (firstMatch.teamB!.players![0].playerName ?? "") : "Player 3",
                           (firstMatch.teamB?.players != null && firstMatch.teamB!.players!.length > 1) ? (firstMatch.teamB!.players![1].playerName ?? "") : "Player 4",
                           AppColors.secondaryColor,
@@ -335,7 +356,6 @@ class LeagueScreen extends StatelessWidget {
           _buildScoreBoard(scheduleData.firstOrNull).paddingOnly(right: Get.width*0.05,left: Get.width*0.05)
         ],
       );
-    });
   }
 
   Widget _teamColumn(
@@ -377,7 +397,7 @@ class LeagueScreen extends StatelessWidget {
           Text(
               "$name1 &\n$name2",
               textAlign: TextAlign.center,
-              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,fontSize: 11)
+              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,fontSize: 11)
           ),
         ],
       ),
@@ -456,7 +476,7 @@ class LeagueScreen extends StatelessWidget {
         children: [
           if (teamAPlayers.isNotEmpty)
             ScoreBoardRow(
-              logo: teamAData['logo']?.toString() ?? "https://via.placeholder.com/50",
+              logo: teamAData['logo']?.toString() ?? "",
               player1: teamAPlayers.isNotEmpty ? (teamAPlayers[0]['playerName'] ?? "Player 1") : "Player 1",
               player2: teamAPlayers.length > 1 ? (teamAPlayers[1]['playerName'] ?? "Player 2") : "Player 2",
               scores: _formatRoundScores(teamARoundScores, totalRounds),
@@ -466,7 +486,7 @@ class LeagueScreen extends StatelessWidget {
           const Divider(height: 1, color: Colors.grey),
           if (teamBPlayers.isNotEmpty)
             ScoreBoardRow(
-              logo: teamBData['logo']?.toString() ?? "https://via.placeholder.com/50",
+              logo: teamBData['logo']?.toString() ?? "",
               player1: teamBPlayers.isNotEmpty ? (teamBPlayers[0]['playerName'] ?? "Player 3") : "Player 3",
               player2: teamBPlayers.length > 1 ? (teamBPlayers[1]['playerName'] ?? "Player 4") : "Player 4",
               scores: _formatRoundScores(teamBRoundScores, totalRounds),
@@ -538,55 +558,40 @@ class LeagueScreen extends StatelessWidget {
 
   Widget _upcomingList() {
     return Obx(() {
-      if (controller.isLoadingUpcomingMatches.value) {
-        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
-      }
-
       final scheduleData = controller.upcomingMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchUpcomingMatches,
-          child: Center(
-            child: Text(
-              "No upcoming matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No upcoming matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
       final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
       if (allMatches.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchUpcomingMatches,
-          child: Center(
-            child: Text(
-              "No upcoming matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No upcoming matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
-      return RefreshIndicator(
-        color: Colors.white,
-        onRefresh: controller.fetchUpcomingMatches,
-        child: ListView.builder(
-          itemCount: allMatches.length > 5 ? 5 : allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            return UpcomingMatchCard(
-              match: allMatches[index],
-              categoryType: matchData.categoryType,
-              date: matchData.date,
-            );
-          },
-        ),
+      return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: allMatches.length > 5 ? 5 : allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return UpcomingMatchCard(
+            match: allMatches[index],
+            categoryType: matchData.categoryType,
+            date: matchData.date,
+          );
+        },
       );
     });
   }
@@ -594,134 +599,105 @@ class LeagueScreen extends StatelessWidget {
 
   Widget _liveList() {
     return Obx(() {
-      if (controller.isLoadingLiveMatches.value) {
-        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
-      }
-
       final scheduleData = controller.liveMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchLiveMatches,
-          child: Center(
-            child: Text(
-              "No live matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No live matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
       final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
       if (allMatches.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchLiveMatches,
-          child: Center(
-            child: Text(
-              "No live matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No live matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
-      return RefreshIndicator(
-        color: Colors.white,
-        onRefresh: controller.fetchLiveMatches,
-        child: ListView.builder(
-          itemCount: allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            return GestureDetector(
-              onTap: () {
-                final matchData = scheduleData.firstWhere(
-                  (data) => data.matches?.contains(allMatches[index]) ?? false,
-                  orElse: () => scheduleData.first,
-                );
-                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                  "matchType": "live",
-                  "matchId": matchData.matchId?.id ?? ""
-                });
-              },
-              child: LiveMatchCard(
-                match: allMatches[index],
-                categoryType: matchData.categoryType,
-                setsWon: matchData.matchId?.setsWon,
-              ),
-            );
-          },
-        ),
+      return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return GestureDetector(
+            onTap: () {
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                "matchType": "live",
+                "matchId": matchData.matchId?.id ?? ""
+              });
+            },
+            child: LiveMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+              setsWon: matchData.matchId?.setsWon,
+            ),
+          );
+        },
       );
     });
   }
   Widget _resultsList() {
     return Obx(() {
-      if (controller.isLoadingResultMatches.value) {
-        return Center(child: LoadingWidget(color: AppColors.primaryColor,));
-      }
-
       final scheduleData = controller.resultMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchResultMatches,
-          child: Center(
-            child: Text(
-              "No result matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No result matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
       final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
       if (allMatches.isEmpty) {
-        return RefreshIndicator(
-          color: Colors.white,
-          onRefresh: controller.fetchResultMatches,
-          child: Center(
-            child: Text(
-              "No result matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
+        return Center(
+          child: Text(
+            "No result matches available",
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
-      return RefreshIndicator(
-        color: Colors.white,
-        onRefresh: controller.fetchResultMatches,
-        child: ListView.builder(
-          itemCount: allMatches.length > 4 ? 4 : allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            return GestureDetector(
-              onTap: () {
-                final matchData = scheduleData.firstWhere(
-                  (data) => data.matches?.contains(allMatches[index]) ?? false,
-                  orElse: () => scheduleData.first,
-                );
-                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                  "matchType": "result",
-                  "matchId": matchData.matchId?.id ?? ""
-                });
-              },
-              child: ResultMatchCard(
-                match: allMatches[index],
-                categoryType: matchData.categoryType,
-                date: matchData.date,
-                setsWon: matchData.matchId?.setsWon,
-              ),
-            );
-          },
-        ),
+      return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: allMatches.length > 4 ? 4 : allMatches.length,
+        itemBuilder: (context, index) {
+          final matchData = scheduleData.firstWhere(
+            (data) => data.matches?.contains(allMatches[index]) ?? false,
+            orElse: () => scheduleData.first,
+          );
+          return GestureDetector(
+            onTap: () {
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                "matchType": "result",
+                "matchId": matchData.matchId?.id ?? ""
+              });
+            },
+            child: ResultMatchCard(
+              match: allMatches[index],
+              categoryType: matchData.categoryType,
+              date: matchData.date,
+              setsWon: matchData.matchId?.setsWon,
+            ),
+          );
+        },
       );
     });
   }
@@ -1228,6 +1204,8 @@ class ResultMatchCard extends StatelessWidget {
     
     final teamAPlayers = match?.teamA?.players ?? [];
     final teamBPlayers = match?.teamB?.players ?? [];
+    final teamAWon = (setsWon?.teamA ?? 0) > (setsWon?.teamB ?? 0);
+    final teamBWon = (setsWon?.teamB ?? 0) > (setsWon?.teamA ?? 0);
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
@@ -1288,14 +1266,34 @@ class ResultMatchCard extends StatelessWidget {
                       /// DATE + UPCOMING
                       Row(
                         children: [
-                          Text(
-                              match?.teamA?.clubType ?? "",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                          Row(
+                            children: [
+                              if (teamAWon)
+                                Image.asset(
+                                  Assets.imagesIcCrown,
+                                  height: 12,
+                                  width: 12,
+                                ).paddingOnly(right: 4),
+                              Text(
+                                  match?.teamA?.clubType ?? "",
+                                  style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                              ),
+                            ],
                           ),
                           const Spacer(),
-                          Text(
-                              match?.teamB?.clubType ?? "",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                          Row(
+                            children: [
+                              Text(
+                                  match?.teamB?.clubType ?? "",
+                                  style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                              ),
+                              if (teamBWon)
+                                Image.asset(
+                                  Assets.imagesIcCrown,
+                                  height: 12,
+                                  width: 12,
+                                ).paddingOnly(left: 4),
+                            ],
                           ),
                         ],
                       ),
@@ -1489,13 +1487,6 @@ class LeaderBoardWidget extends StatelessWidget {
         child: Column(
           children: [
         Obx(() {
-          if (controller.isLoadingLeaderBoard.value) {
-            return SizedBox(
-              height: 200,
-              child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
-            );
-          }
-
           final standings = controller.leaderBoard.value?.data?.standings ?? [];
 
           if (standings.isEmpty) return const SizedBox.shrink();
@@ -1513,21 +1504,34 @@ class LeaderBoardWidget extends StatelessWidget {
                 )
               ],
             ),
-            child: Column(
+            child: Stack(
               children: [
-                _headerRow(),
-                Divider(color: Colors.grey.shade300),
-                ...standings.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final standing = entry.value;
-                  return Column(
-                    children: [
-                      _teamRow(standing),
-                      if (index < standings.length - 1)
-                        Divider(color: Colors.grey.shade300),
-                    ],
-                  );
-                }),
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0,
+                    child: Image.asset(
+                      Assets.imagesImgIconSwoot,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    _headerRow(),
+                    Divider(color: Colors.grey.shade300),
+                    ...standings.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final standing = entry.value;
+                      return Column(
+                        children: [
+                          _teamRow(standing),
+                          if (index < standings.length - 1)
+                            Divider(color: Colors.grey.shade300),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
               ],
             ),
           ).paddingOnly(bottom: 20);
@@ -1549,7 +1553,7 @@ class LeaderBoardWidget extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     Get.toNamed(RoutesName.leagueMatchLists, arguments: {
-                      'matchTab': 0,
+                      // 'matchTab': 0,
                       'leagueId': controller.leagueId ?? ''
                     });
                   },
@@ -1630,52 +1634,6 @@ class LeaderBoardWidget extends StatelessWidget {
         SizedBox(width: 30, child: Center(child: Text("${standing.mixedWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.womensWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
       ],
-    );
-  }
-  Widget _upcomingList() {
-    return Expanded(
-      child: Obx(() {
-        final controller = Get.find<LeagueController>();
-        
-        if (controller.isLoadingUpcomingMatches.value) {
-          return Center(child: LoadingWidget(color: AppColors.primaryColor,));
-        }
-
-        final scheduleData = controller.upcomingMatches.value?.data ?? [];
-        if (scheduleData.isEmpty) {
-          return Center(
-            child: Text(
-              "No upcoming matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-          );
-        }
-
-        final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-        if (allMatches.isEmpty) {
-          return Center(
-            child: Text(
-              "No upcoming matches available",
-              style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: allMatches.length > 5 ? 5 : allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            return UpcomingMatchCard(
-              match: allMatches[index],
-              categoryType: matchData.categoryType,
-              date: matchData.date,
-            );
-          },
-        );
-      }),
     );
   }
 
@@ -1798,15 +1756,15 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
           return Transform.scale(
             scale: 0.9 + (_scaleAnimation.value * 0.1),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: Color(0xFFCD3529),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFCD3529).withOpacity(_pulseAnimation.value * 0.6),
-                    blurRadius: 8 + (_pulseAnimation.value * 4),
-                    spreadRadius: _pulseAnimation.value * 2,
+                    color: Color(0xFFCD3529).withOpacity(_pulseAnimation.value * 0.5),
+                    blurRadius: 6 + (_pulseAnimation.value * 3),
+                    spreadRadius: _pulseAnimation.value * 1.5,
                   ),
                 ],
               ),
@@ -1816,29 +1774,29 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
                   Transform.scale(
                     scale: _scaleAnimation.value,
                     child: Container(
-                      width: 8,
-                      height: 8,
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.7 + (_pulseAnimation.value * 0.3)),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withOpacity(_pulseAnimation.value * 0.5),
-                            blurRadius: 4,
-                            spreadRadius: 1,
+                            color: Colors.white.withOpacity(_pulseAnimation.value * 0.4),
+                            blurRadius: 3,
+                            spreadRadius: 0.5,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   const Text(
                     "LIVE",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
+                      fontSize: 8,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ],
@@ -2008,7 +1966,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
           return Transform.scale(
             scale: 1.0 + (_pulseAnimation.value * 0.05),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -2018,13 +1976,13 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primaryColor.withOpacity(0.4 + (_pulseAnimation.value * 0.3)),
-                    blurRadius: 8 + (_pulseAnimation.value * 4),
-                    spreadRadius: 1 + (_pulseAnimation.value * 2),
-                    offset: Offset(0, 2),
+                    blurRadius: 6 + (_pulseAnimation.value * 3),
+                    spreadRadius: 0.5 + (_pulseAnimation.value * 1),
+                    offset: Offset(0, 1),
                   ),
                 ],
               ),
@@ -2033,7 +1991,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                   // Shimmer effect
                   Positioned.fill(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(20),
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -2057,30 +2015,30 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
                       Transform.scale(
                         scale: _iconAnimation.value,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Colors.white.withOpacity(0.3),
-                              width: 1,
+                              width: 0.8,
                             ),
                           ),
                           child: Icon(
                             Icons.play_arrow,
                             color: Colors.white,
-                            size: 16,
+                            size: 12,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         "Watch Live",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],

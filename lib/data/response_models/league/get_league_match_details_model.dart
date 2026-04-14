@@ -33,6 +33,7 @@ class HistoryData {
   String? matchId;
   String? status;
   String? winner;
+  String? categoryType;
   Team? teamA;
   Team? teamB;
   CurrentPoints? currentPoints;
@@ -44,6 +45,7 @@ class HistoryData {
       {this.matchId,
         this.status,
         this.winner,
+        this.categoryType,
         this.teamA,
         this.teamB,
         this.currentPoints,
@@ -55,6 +57,7 @@ class HistoryData {
     matchId = json['matchId'];
     status = json['status'];
     winner = json['winner'];
+    categoryType = json['categoryType'];
     teamA = json['teamA'] != null ? Team.fromJson(json['teamA']) : null;
     teamB = json['teamB'] != null ? Team.fromJson(json['teamB']) : null;
 

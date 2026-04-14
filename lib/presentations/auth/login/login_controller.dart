@@ -152,7 +152,7 @@ class LoginController extends GetxController {
         await storage.write('token', result.response!.token);
         await storage.write('userId', result.response!.user!.id);
         
-        log("🔑 User logged in - userId: ${result.response!.user!.id}");
+        log("🔑 User logged in - userId: ${result.response!.user!.id} ${result.response!.token}");
         
         // Delete old controllers to prevent showing old user data
         Get.delete<HomeController>(force: true);

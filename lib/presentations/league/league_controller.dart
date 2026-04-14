@@ -11,16 +11,36 @@ import '../../core/network/dio_client.dart';
 
 class LeagueController extends GetxController with GetSingleTickerProviderStateMixin {
   final RxInt selectedTab = 0.obs;
+  final RxBool isRefreshingTab = false.obs;
+  final RxBool isInitialLoading = true.obs;
 
-  void setSelectedTab(int index) {
+  void setSelectedTab(int index) async {
     selectedTab.value = index;
+    isRefreshingTab.value = true;
+    
     if (index == 0) {
+      // Live Match tab - refresh live match data
+      await Future.wait([
+        fetchLiveMatches(),
+        fetchUpcomingMatches(),
+        fetchResultMatches(),
+        fetchSponsors(),
+      ]);
       matchTab.value = 1;
       tabController.animateTo(1);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (pageController.hasClients) pageController.jumpToPage(1);
       });
+    } else if (index == 1) {
+      // Fixture's tab - refresh leaderboard and upcoming matches
+      await Future.wait([
+        fetchLeaderBoard(),
+        fetchUpcomingMatches(),
+        fetchSponsors(),
+      ]);
     }
+    
+    isRefreshingTab.value = false;
   }
   final RxInt matchTab = 1.obs; // 0: Upcoming, 1: Live, 2: Results
   late PageController pageController;
@@ -58,11 +78,8 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     
     pageController = PageController(initialPage: 1);
     tabController = TabController(length: 3, vsync: this, initialIndex: 1);
-    fetchLiveMatches();
-    fetchUpcomingMatches();
-    fetchResultMatches();
-    fetchSponsors();
-    fetchLeaderBoard();
+    
+    _loadInitialData();
     
     // Fetch scoreboard data after live matches are loaded (only once)
     ever(liveMatches, (matches) {
@@ -72,6 +89,18 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         _socketInitialized.value = true;
       }
     });
+  }
+  
+  Future<void> _loadInitialData() async {
+    isInitialLoading.value = true;
+    await Future.wait([
+      fetchLiveMatches(),
+      fetchUpcomingMatches(),
+      fetchResultMatches(),
+      fetchSponsors(),
+      fetchLeaderBoard(),
+    ]);
+    isInitialLoading.value = false;
   }
 
   @override

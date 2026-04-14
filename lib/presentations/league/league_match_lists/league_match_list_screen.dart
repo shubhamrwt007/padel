@@ -18,127 +18,262 @@ class LeagueMatchListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: primaryAppBar(
-        title: Text(
-          controller.matchTab.value == 0?
-          "Upcoming Matches":
-          controller.matchTab.value == 1?
-              "Live Matches":"Match Results"
-        ),
-        // centerTitle: true,
+        centerTitle: true,
+        title: Obx(() => Text(
+          controller.matchStatus.value == ''
+              ? "Matche Schedule"
+              : "Match Results"
+        )),
         context: context,
-        action: [
-          PopupMenuButton<String>(
-            offset: const Offset(0, 30),
-            onSelected: (date) => controller.updateDate(date),
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 4),
+      ),
+      body: Column(
+        children: [
+          _buildFilters(),
+          Expanded(
+            child: Obx(() {
+              if (controller.matchStatus.value == '') {
+                return _upcomingList();
+              } else {
+                return _resultsList();
+              }
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildFilters() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Obx(() => Container(
+              padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
               decoration: BoxDecoration(
                 color: AppColors.textFieldColor,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: Colors.grey.shade300),
               ),
-              child: const Icon(
-                Icons.calendar_month,
-                color: Colors.black,
-                size: 20,
-              ),
-            ),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: '',
-                height: 40,
-                child: Obx(() => Text(
-                  'All Dates',
-                  style: Get.textTheme.labelSmall?.copyWith(
-                    color: controller.selectedDate.value.isEmpty
-                        ? AppColors.primaryColor
-                        : Colors.black,
-                    fontWeight: controller.selectedDate.value.isEmpty
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.updateFilter('all'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical:7),
+                        decoration: BoxDecoration(
+                          color: controller.selectedFilter.value == 'all' ? AppColors.primaryColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'All',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: controller.selectedFilter.value == 'all' ? AppColors.whiteColor : Colors.black,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                )),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.updateFilter('my'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: controller.selectedFilter.value == 'my' ? AppColors.primaryColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'My',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: controller.selectedFilter.value == 'my' ? AppColors.whiteColor : Colors.black,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              ...controller.availableDates.map((date) {
-                return PopupMenuItem(
-                  value: date,
+            )),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: PopupMenuButton<String>(
+              offset: const Offset(0, 40),
+              onSelected: (date) => controller.updateDate(date),
+              child: Obx(() => Container(
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.textFieldColor,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        controller.selectedDate.value.isEmpty 
+                          ? 'Date' 
+                          : _formatDate(controller.selectedDate.value),
+                        style: Get.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.calendar_month,
+                      color: Colors.black,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              )),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: '',
                   height: 40,
                   child: Obx(() => Text(
-                    _formatDate(date),
+                    'All Dates',
                     style: Get.textTheme.labelSmall?.copyWith(
-                      color: controller.selectedDate.value == date
+                      color: controller.selectedDate.value.isEmpty
                           ? AppColors.primaryColor
                           : Colors.black,
-                      fontWeight: controller.selectedDate.value == date
+                      fontWeight: controller.selectedDate.value.isEmpty
                           ? FontWeight.w600
                           : FontWeight.normal,
                     ),
                   )),
-                );
-              }).toList(),
-            ],
-          ).paddingOnly(right: 5),
-          Obx(() => Container(
-            margin: EdgeInsets.only(right: 16),
-            padding: EdgeInsets.symmetric(vertical: 2,horizontal: 2),
-            decoration: BoxDecoration(
-              color: AppColors.textFieldColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => controller.updateFilter('all'),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: controller.selectedFilter.value == 'all' ? AppColors.primaryColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'All',
-                      style: TextStyle(
-                        color: controller.selectedFilter.value == 'all' ? AppColors.whiteColor : Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
                 ),
-                GestureDetector(
-                  onTap: () => controller.updateFilter('my'),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: controller.selectedFilter.value == 'my' ? AppColors.primaryColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'My',
-                      style: TextStyle(
-                        color: controller.selectedFilter.value == 'my' ? AppColors.whiteColor : Colors.black,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                ...controller.availableDates.map((date) {
+                  return PopupMenuItem(
+                    value: date,
+                    height: 40,
+                    child: Obx(() => Text(
+                      _formatDate(date),
+                      style: Get.textTheme.labelSmall?.copyWith(
+                        color: controller.selectedDate.value == date
+                            ? AppColors.primaryColor
+                            : Colors.black,
+                        fontWeight: controller.selectedDate.value == date
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
-                    ),
-                  ),
-                ),
+                    )),
+                  );
+                }).toList(),
               ],
+            ),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: PopupMenuButton<String>(
+              offset: const Offset(0, 40),
+              onSelected: (category) => controller.updateCategory(category),
+              child: Obx(() => Container(
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.textFieldColor,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        controller.selectedCategory.value.isEmpty 
+                          ? 'Category' 
+                          : controller.selectedCategory.value,
+                        style: Get.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.category,
+                      color: Colors.black,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              )),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: '',
+                  height: 40,
+                  child: Obx(() => Text(
+                    'All Categories',
+                    style: Get.textTheme.labelSmall?.copyWith(
+                      color: controller.selectedCategory.value.isEmpty
+                          ? AppColors.primaryColor
+                          : Colors.black,
+                      fontWeight: controller.selectedCategory.value.isEmpty
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  )),
+                ),
+                ...controller.availableCategories.map((category) {
+                  return PopupMenuItem(
+                    value: category,
+                    height: 40,
+                    child: Obx(() => Text(
+                      category,
+                      style: Get.textTheme.labelSmall?.copyWith(
+                        color: controller.selectedCategory.value == category
+                            ? AppColors.primaryColor
+                            : Colors.black,
+                        fontWeight: controller.selectedCategory.value == category
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    )),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          Obx(() => GestureDetector(
+            onTap: () => controller.switchToHistory(),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: controller.isHistoryEnabled.value
+                    ? AppColors.secondaryColor
+                    : AppColors.textFieldColor,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Icon(
+                Icons.history,
+                color: controller.isHistoryEnabled.value
+                    ? Colors.white
+                    : Colors.black,
+                size: 18,
+              ),
             ),
           )),
         ],
       ),
-      body: Obx(() {
-        if (controller.matchTab.value == 0) {
-          return _upcomingList();
-        }
-        else {
-          return _resultsList();
-        }
-      }),
     );
   }
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return "TBD";
     try {
@@ -194,22 +329,27 @@ class LeagueMatchListScreen extends StatelessWidget {
               (data) => data.matches?.contains(allMatches[index]) ?? false,
               orElse: () => scheduleData.first,
             );
+            final isLive = matchData.matchStatus?.toLowerCase() == 'live';
             return GestureDetector(
               onTap: () {
-                // final matchData = scheduleData.firstWhere(
-                //   (data) => data.matches?.contains(allMatches[index]) ?? false,
-                //   orElse: () => scheduleData.first,
-                // );
-                // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                //   "matchType": "upcoming",
-                //   "matchId": matchData.matchId ?? ""
-                // });
+                if (isLive) {
+                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                    "matchType": "live",
+                    "matchId": matchData.matchId?.id ?? ""
+                  });
+                }
               },
-              child: UpcomingMatchCard(
-                match: allMatches[index],
-                categoryType: matchData.categoryType,
-                date: matchData.date,
-              ),
+              child: isLive
+                  ? LiveMatchCard(
+                      match: allMatches[index],
+                      categoryType: matchData.categoryType,
+                      setsWon: matchData.matchId?.setsWon,
+                    )
+                  : UpcomingMatchCard(
+                      match: allMatches[index],
+                      categoryType: matchData.categoryType,
+                      date: matchData.date,
+                    ),
             );
           },
         ),
@@ -539,172 +679,259 @@ class UpcomingMatchCard extends StatelessWidget {
     return name;
   }
 }
-// class LiveMatchCard extends StatelessWidget {
-//   const LiveMatchCard({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-//       child: Stack(
-//         alignment: Alignment.topCenter,
-//         children: [
-//
-//           /// MAIN Container
-//           Container(
-//             decoration: BoxDecoration(
-//               borderRadius: BorderRadius.circular(12),
-//               border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-//               gradient: LinearGradient(
-//                 colors: [
-//                   Color(0xffFFFFFF),
-//                   Color(0xffFFC6C2),
-//                 ],
-//               ),
-//             ),
-//             child: Stack(
-//               children: [
-//                 Positioned(
-//                   left: -40,
-//                   top: -10,
-//                   child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,color: Colors.red,),
-//                 ),
-//                 Positioned(
-//                   right: -30,
-//                   bottom: -20,
-//                   child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,color: Colors.red,),
-//                 ),
-//                 Column(
-//                   children: [
-//                     /// DATE + UPCOMING
-//                     Row(
-//                       children: [
-//                         Text(
-//                             "Team A",
-//                             style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
-//                         ),
-//                         const Spacer(),
-//                         Text(
-//                             "Team B",
-//                             style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
-//                         ),
-//                       ],
-//                     ),
-//
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         Row(
-//                           children: [
-//                             SizedBox(
-//                               height: 30,
-//                               width: 40,
-//                               child: Stack(
-//                                 clipBehavior: Clip.none,
-//                                 children: [
-//                                   _avatar("https://i.pravatar.cc/150?img=1", 0,0),
-//                                   _avatar("https://i.pravatar.cc/150?img=1", 12,8),
-//                                 ],
-//                               ),
-//                             ).paddingOnly(right: 5),
-//                             Text(
-//                                 "Eleanor Pena \nKristin Watson",
-//                                 style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
-//                             ),
-//                           ],
-//                         ),
-//                         Row(
-//                           children: [
-//                             Text("2", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-//                             const SizedBox(width: 6),
-//                             Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-//                             const SizedBox(width: 6),
-//                             Text("0", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
-//                           ],
-//                         ),
-//                         Row(
-//                           children: [
-//                             Text(
-//                                 "Theresa Webb \nRonald Richards",
-//                                 textAlign: TextAlign.right,
-//                                 style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500,color: Colors.black)
-//                             ),
-//                             SizedBox(
-//                               height: 30,
-//                               width: 40,
-//                               child: Stack(
-//                                 clipBehavior: Clip.none,
-//                                 children: [
-//                                   _avatar("https://i.pravatar.cc/150?img=1", 12,0),
-//                                   _avatar("https://i.pravatar.cc/150?img=1", 0,8),
-//                                 ],
-//                               ),
-//                             ).paddingOnly(left: 5),
-//                           ],
-//                         ),
-//                       ],
-//                     )
-//                   ],
-//                 ).paddingOnly(top: 10,left: 15,bottom: 10,right: 15),
-//               ],
-//             ),
-//           ),
-//           Container(
-//             height: 25,
-//             width: 100,
-//             decoration: const BoxDecoration(
-//               color: AppColors.liveMatchRed,
-//               borderRadius: BorderRadius.only(
-//                 bottomLeft: Radius.circular(14),
-//                 bottomRight: Radius.circular(14),
-//               ),
-//             ),
-//             alignment: Alignment.center,
-//             child: Row(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Container(
-//                   width: 8,
-//                   height: 8,
-//                   decoration: const BoxDecoration(
-//                     color: Colors.white,
-//                     shape: BoxShape.circle,
-//                   ),
-//                 ),
-//                 const SizedBox(width: 6),
-//                 Text(
-//                     "Live",
-//                     style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//   Widget _avatar(String url, double left,double top) {
-//     return Positioned(
-//       left: left,
-//       top: top,
-//       child: Container(
-//         height: 25,
-//         width: 25,
-//         decoration: BoxDecoration(
-//           shape: BoxShape.circle,
-//           border: Border.all(
-//             color: Colors.white,
-//             width: 2,
-//           ),
-//           image: DecorationImage(
-//             image: NetworkImage(url),
-//             fit: BoxFit.cover,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+class LiveMatchCard extends StatelessWidget {
+  final dynamic match;
+  final String? categoryType;
+  final SetsWon? setsWon;
+  
+  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon});
+
+  @override
+  Widget build(BuildContext context) {
+    if (match == null) return const SizedBox.shrink();
+    
+    final teamAPlayers = match?.teamA?.players ?? [];
+    final teamBPlayers = match?.teamB?.players ?? [];
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Container(
+            height: 25,
+            width: 140,
+            decoration: const BoxDecoration(
+              color: AppColors.liveMatchRed,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                    "Live",
+                    style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
+                ),
+              ],
+            ),
+          ),
+          ClipPath(
+            clipper: MatchCardClipper(),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xffFFFFFF),
+                    Color(0xffFFD3CF),
+                  ],
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: -40,
+                    top: -10,
+                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
+                  ),
+                  Positioned(
+                    right: -30,
+                    bottom: -20,
+                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
+                  ),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            color: Colors.transparent,
+                            width: Get.width*0.2,
+                            child: Text(
+                              overflow: TextOverflow.ellipsis,
+                              match?.teamA?.clubType ?? "",
+                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            color: Colors.transparent,
+                            width: Get.width*0.2,
+                            child: Text(
+                              overflow: TextOverflow.ellipsis,
+                              match?.teamB?.clubType ?? "",
+                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 30,
+                                width: 40,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    _avatar(teamAPlayers.isNotEmpty ? teamAPlayers[0].playerName ?? "" : "Player 1", 0, 0),
+                                    _avatar(teamAPlayers.length > 1 ? teamAPlayers[1].playerName ?? "" : "Player 2", 12, 8),
+                                  ],
+                                ),
+                              ).paddingOnly(right: 5),
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: (match?.teamA?.players?.isNotEmpty ?? false)
+                                      ? match!.teamA!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 1",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 2",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Text("${setsWon?.teamA ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text(":", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                  const SizedBox(width: 6),
+                                  Text("${setsWon?.teamB ?? 0}", style: Get.textTheme.titleLarge!.copyWith(color: Colors.black)),
+                                ],
+                              ),
+                              Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
+                              Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 50,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: (match?.teamB?.players?.isNotEmpty ?? false)
+                                      ? match!.teamB!.players!
+                                      .take(2)
+                                      .map<Widget>((e) => Text(
+                                    formatName(e.playerName ?? '').capitalizeFirstChar(),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                        fontWeight: FontWeight.w500, color: Colors.black),
+                                  ))
+                                      .toList()
+                                      : [
+                                    Text("Player 3",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                    Text("Player 4",
+                                        style: Get.textTheme.labelMedium!
+                                            .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 30,
+                                width: 40,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    _avatar(teamBPlayers.isNotEmpty ? teamBPlayers[0].playerName ?? "" : "Player 3", 12, 0),
+                                    _avatar(teamBPlayers.length > 1 ? teamBPlayers[1].playerName ?? "" : "Player 4", 0, 8),
+                                  ],
+                                ),
+                              ).paddingOnly(left: 5),
+                            ],
+                          ),
+                        ],
+                      )
+                    ],
+                  ).paddingOnly(top: 10,left: 15,bottom: 10,right: 15),
+                ],
+              ),
+            ),
+          ),
+
+        ],
+      ),
+    );
+  }
+  
+  Widget _avatar(String name, double left, double top) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
+    return Positioned(
+      left: left,
+      top: top,
+      child: Container(
+        height: 25,
+        width: 25,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  String formatName(String name) {
+    final parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts.first} ${parts.last[0]}";
+    }
+    return name;
+  }
+}
 class ResultMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
@@ -719,7 +946,8 @@ class ResultMatchCard extends StatelessWidget {
     
     final teamAPlayers = match?.teamA?.players ?? [];
     final teamBPlayers = match?.teamB?.players ?? [];
-    
+    final teamAWon = (setsWon?.teamA ?? 0) > (setsWon?.teamB ?? 0);
+    final teamBWon = (setsWon?.teamB ?? 0) > (setsWon?.teamA ?? 0);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -778,14 +1006,34 @@ class ResultMatchCard extends StatelessWidget {
                       /// DATE + UPCOMING
                       Row(
                         children: [
-                          Text(
-                              match?.teamA?.clubType ?? "",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                          Row(
+                            children: [
+                              if (teamAWon)
+                                Image.asset(
+                                  Assets.imagesIcCrown,
+                                  height: 12,
+                                  width: 12,
+                                ).paddingOnly(right: 4),
+                              Text(
+                                  match?.teamA?.clubType ?? "",
+                                  style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                              ),
+                            ],
                           ),
                           const Spacer(),
-                          Text(
-                              match?.teamB?.clubType ?? "",
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                          Row(
+                            children: [
+                              if (teamBWon)
+                                Image.asset(
+                                  Assets.imagesIcCrown,
+                                  height: 12,
+                                  width: 12,
+                                ).paddingOnly(left: 4),
+                              Text(
+                                  match?.teamB?.clubType ?? "",
+                                  style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
+                              ),
+                            ],
                           ),
                         ],
                       ),

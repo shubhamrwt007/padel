@@ -112,9 +112,11 @@ class TitleSponsor {
   String? categoryId;
   String? logo;
   String? banner;
+  String? url;
 
   TitleSponsor.fromJson(Map<String, dynamic> json) {
     name = json['name'];
+    url = json['url'];
     categoryId = json['categoryId'];
     logo = json['logo'];
     banner = json['titleSponsorBanner'];
@@ -181,9 +183,11 @@ class Sponsors {
   String? name;
   CategoryId? categoryId;
   String? logo;
+  String? url;
 
   Sponsors.fromJson(Map<String, dynamic> json) {
     name = json['name'];
+    url = json['url'];
     categoryId = json['categoryId'] != null
         ? CategoryId.fromJson(json['categoryId'])
         : null;

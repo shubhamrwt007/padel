@@ -7,6 +7,8 @@ import 'package:padel_mobile/repositories/league_repository/league_repository.da
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:padel_mobile/configs/components/app_toast.dart';
+import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/widgets/match_finished_dialog.dart';
 
 import '../../../core/network/dio_client.dart';
 
@@ -14,6 +16,12 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   RxInt teamAScore = 0.obs;
   RxInt teamBScore = 0.obs;
   final RxInt selectedTab = 0.obs;
+  
+  String? get winnerTeam {
+    final winner = historyData.value?.winner;
+    if (winner == null || winner.isEmpty) return null;
+    return winner;
+  }
   var matchType = "".obs;
   var matchId = "".obs;
   RxList<bool> isSet2Expanded = <bool>[false, false, false, false].obs;
@@ -24,6 +32,8 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   final RxBool isLoadingMatchDetails = false.obs;
   final RxBool isLoadingHistory = true.obs;
   final RxString matchDetailsError = "".obs;
+  int _previousRoundCount = 0;
+  int _previousSetCount = 0;
   
   IO.Socket? _socket;
   final RxBool isSocketConnected = false.obs;
@@ -38,6 +48,12 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     matchId.value = Get.arguments["matchId"] ?? "";
     log('🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}');
     log('🔍 Checking matchType for youtube: "${matchType.value}" == "live" → ${matchType.value == "live"}');
+    
+    // Debug: Print current historyData
+    log('👀 Current historyData winner: ${historyData.value?.winner}');
+    log('👀 Current historyData teamA: ${historyData.value?.teamA?.teamName}');
+    log('👀 Current historyData teamB: ${historyData.value?.teamB?.teamName}');
+    
     if (matchType.value == "live") {
       log('▶️ Fetching stream url...');
       fetchStreamUrl();
@@ -231,7 +247,10 @@ $data
           }
           // Handle history
           if (data.containsKey('history')) {
-            historyData.value = HistoryData.fromJson(data['history']);
+            final newHistoryData = HistoryData.fromJson(data['history']);
+            log('📚 scoreMatchJoined - TeamA: ${newHistoryData.teamA?.teamName}, TeamB: ${newHistoryData.teamB?.teamName}, Winner: ${newHistoryData.winner}');
+            _initializeRoundCount(newHistoryData);
+            historyData.value = newHistoryData;
             isLoadingHistory.value = false;
             _syncHeaderFromHistory();
             _syncSetExpandStateFromHistory();
@@ -249,7 +268,9 @@ $data
           final history = data['history'];
           if (history != null) {
             print('📜 History Data received, updating...');
-            historyData.value = HistoryData.fromJson(history);
+            final newHistoryData = HistoryData.fromJson(history);
+            _checkRoundCompletion(newHistoryData);
+            historyData.value = newHistoryData;
             isLoadingHistory.value = false;
             _syncSetExpandStateFromHistory();
           }
@@ -270,6 +291,29 @@ $data
       _socket?.on('matchFinished', (data) {
         log('🏁 matchFinished event received');
         log('🏁 Match Finished Data: $data');
+        
+        String winnerTeamName = 'Winner';
+        
+        if (data is Map<String, dynamic>) {
+          final winner = data['winner'];
+          log('🏆 Winner from socket: $winner');
+          log('🏆 TeamA name: ${historyData.value?.teamA?.teamName}');
+          log('🏆 TeamB name: ${historyData.value?.teamB?.teamName}');
+          
+          if (winner == 'teamA') {
+            winnerTeamName = historyData.value?.teamA?.teamName ?? historyData.value?.teamA?.clubName ?? 'Team A';
+          } else if (winner == 'teamB') {
+            winnerTeamName = historyData.value?.teamB?.teamName ?? historyData.value?.teamB?.clubName ?? 'Team B';
+          }
+          
+          log('🏆 Final winner team name: $winnerTeamName');
+        }
+        
+        Get.dialog(
+          MatchFinishedDialog(winnerTeamName: winnerTeamName),
+          barrierDismissible: false,
+        );
+        
         if (Get.isRegistered<LeagueController>()) {
           final leagueController = Get.find<LeagueController>();
           leagueController.fetchLiveMatches();
@@ -339,5 +383,38 @@ $data
     } catch (e) {
       print('❌ Error updating scoreboard: $e');
     }
+  }
+
+  void _initializeRoundCount(HistoryData? data) {
+    if (data?.sets == null) return;
+    int totalRounds = 0;
+    for (var set in data!.sets!) {
+      totalRounds += set.rounds?.length ?? 0;
+    }
+    _previousRoundCount = totalRounds;
+    _previousSetCount = data.sets?.length ?? 0;
+  }
+
+  void _checkRoundCompletion(HistoryData? newData) {
+    if (newData?.sets == null) return;
+    
+    int currentRoundCount = 0;
+    for (var set in newData!.sets!) {
+      currentRoundCount += set.rounds?.length ?? 0;
+    }
+    
+    int currentSetCount = newData.sets?.length ?? 0;
+    
+    // Check if new set completed
+    if (currentSetCount > _previousSetCount && _previousSetCount > 0) {
+      AppToast.success('Set $currentSetCount completed! 🎾');
+    }
+    // Check if new round completed
+    else if (currentRoundCount > _previousRoundCount && _previousRoundCount > 0) {
+      AppToast.info('Round completed! 🎾');
+    }
+    
+    _previousRoundCount = currentRoundCount;
+    _previousSetCount = currentSetCount;
   }
 }
