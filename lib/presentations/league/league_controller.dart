@@ -19,36 +19,32 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     isRefreshingTab.value = true;
     
     if (index == 0) {
-      // Live Match tab - refresh live match data
+      // Matches tab - refresh match data
       await Future.wait([
-        fetchLiveMatches(),
         fetchUpcomingMatches(),
         fetchResultMatches(),
         fetchSponsors(),
       ]);
-      matchTab.value = 1;
-      tabController.animateTo(1);
+      matchTab.value = 0;
+      tabController.animateTo(0);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (pageController.hasClients) pageController.jumpToPage(1);
+        if (pageController.hasClients) pageController.jumpToPage(0);
       });
     } else if (index == 1) {
-      // Fixture's tab - refresh leaderboard and upcoming matches
+      // Fixture's tab - refresh leaderboard
       await Future.wait([
         fetchLeaderBoard(),
-        fetchUpcomingMatches(),
         fetchSponsors(),
       ]);
     }
     
     isRefreshingTab.value = false;
   }
-  final RxInt matchTab = 1.obs; // 0: Upcoming, 1: Live, 2: Results
+  final RxInt matchTab = 0.obs; // 0: Upcoming (includes live), 1: Results
   late PageController pageController;
   late TabController tabController;
   
   final LeagueRepository _leagueRepository = LeagueRepository();
-  final Rx<GetAllScheduleLiveMatchesModel?> liveMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
-  final RxBool isLoadingLiveMatches = false.obs;
   final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
   final Rx<GetAllScheduleLiveMatchesModel?> resultMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
@@ -76,17 +72,20 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     leagueId = Get.arguments?['leagueId'];
     print('🎯 League Controller - Received leagueId: $leagueId');
     
-    pageController = PageController(initialPage: 1);
-    tabController = TabController(length: 3, vsync: this, initialIndex: 1);
+    pageController = PageController(initialPage: 0);
+    tabController = TabController(length: 2, vsync: this, initialIndex: 0);
     
     _loadInitialData();
     
-    // Fetch scoreboard data after live matches are loaded (only once)
-    ever(liveMatches, (matches) {
+    // Fetch scoreboard data after upcoming matches are loaded (only once)
+    ever(upcomingMatches, (matches) {
       if (matches?.data?.isNotEmpty == true && !_socketInitialized.value) {
-        fetchLiveMatchScoreboard();
-        _connectWebSocket();
-        _socketInitialized.value = true;
+        final hasLiveMatch = matches!.data!.any((data) => data.matchStatus == 'live');
+        if (hasLiveMatch) {
+          fetchLiveMatchScoreboard();
+          _connectWebSocket();
+          _socketInitialized.value = true;
+        }
       }
     });
   }
@@ -94,7 +93,6 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   Future<void> _loadInitialData() async {
     isInitialLoading.value = true;
     await Future.wait([
-      fetchLiveMatches(),
       fetchUpcomingMatches(),
       fetchResultMatches(),
       fetchSponsors(),
@@ -135,26 +133,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
     tabController.animateTo(index);
   }
 
-  Future<void> fetchLiveMatches() async {
-    try {
-      isLoadingLiveMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'live',
-        leagueId: leagueId ?? '',
-      );
-      liveMatches.value = response;
-    } catch (e) {
-      print('Error fetching live matches: $e');
-    } finally {
-      isLoadingLiveMatches.value = false;
-    }
-  }
-
   Future<void> fetchUpcomingMatches() async {
     try {
       isLoadingUpcomingMatches.value = true;
       final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'upcoming',
         leagueId: leagueId ?? '',
       );
       upcomingMatches.value = response;
@@ -214,8 +196,9 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
       
       isLoadingScoreboard.value = true;
       
-      // Get the first live match if available
-      final liveMatchData = liveMatches.value?.data;
+      // Get the first live match from upcoming matches
+      final allMatches = upcomingMatches.value?.data;
+      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'live').toList();
       if (liveMatchData != null && liveMatchData.isNotEmpty) {
         final firstLiveMatch = liveMatchData.first;
         final matchId = firstLiveMatch.matchId?.id;
@@ -330,7 +313,8 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         return;
       }
       
-      final liveMatchData = liveMatches.value?.data;
+      final allMatches = upcomingMatches.value?.data;
+      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'live').toList();
       if (liveMatchData == null || liveMatchData.isEmpty) return;
       
       final firstLiveMatch = liveMatchData.first;
@@ -386,7 +370,7 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
       
       _socket?.on('matchFinished', (data) {
         log('🏁 League - Match finished event received');
-        fetchLiveMatches();
+        fetchUpcomingMatches();
         fetchResultMatches();
       });
       
@@ -413,10 +397,10 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         
         print('📊 League - Extracted data: points=$points, setsWon=$setsWon, sets=${sets.length} sets');
         
-        // Update the live matches data with new scores
-        final currentLiveMatches = liveMatches.value;
-        if (currentLiveMatches?.data?.isNotEmpty == true) {
-          final updatedData = currentLiveMatches!.data!.map((matchData) {
+        // Update the upcoming matches data with new scores for live matches
+        final currentMatches = upcomingMatches.value;
+        if (currentMatches?.data?.isNotEmpty == true) {
+          final updatedData = currentMatches!.data!.map((matchData) {
             if (matchData.matchId?.setsWon != null) {
               final newTeamAScore = setsWon['teamA'] ?? matchData.matchId!.setsWon!.teamA;
               final newTeamBScore = setsWon['teamB'] ?? matchData.matchId!.setsWon!.teamB;
@@ -430,16 +414,16 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
           }).toList();
           
           // Force update the observable with a new instance to trigger UI rebuild
-          final newLiveMatches = GetAllScheduleLiveMatchesModel(
-            success: currentLiveMatches.success,
+          final newMatches = GetAllScheduleLiveMatchesModel(
+            success: currentMatches.success,
             data: updatedData,
-            pagination: currentLiveMatches.pagination,
+            pagination: currentMatches.pagination,
           );
           
-          liveMatches.value = newLiveMatches;
+          upcomingMatches.value = newMatches;
           
           // Force refresh the observable to ensure UI updates
-          liveMatches.refresh();
+          upcomingMatches.refresh();
           
           print('✅ League - Live matches updated successfully. New scores: TeamA: ${updatedData.first.matchId?.setsWon?.teamA}, TeamB: ${updatedData.first.matchId?.setsWon?.teamB}');
         }

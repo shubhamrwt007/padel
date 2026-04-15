@@ -202,8 +202,12 @@ class CustomDrawerUi extends GetView<ProfileController> {
                   final mainHomeController = Get.isRegistered<MainHomeController>() 
                       ? Get.find<MainHomeController>() 
                       : null;
-                  final leagueId = mainHomeController?.activeLeagues.value?.data?.firstOrNull?.id ?? '';
-                  final leagueTitle = mainHomeController?.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
+                  final hasLeagues = mainHomeController?.activeLeagues.value?.data?.isNotEmpty ?? false;
+                  
+                  if (!hasLeagues) return const SizedBox.shrink();
+                  
+                  final leagueId = mainHomeController!.activeLeagues.value!.data!.first.id ?? '';
+                  final leagueTitle = mainHomeController.activeLeagues.value!.data!.first.leagueName ?? 'League';
                   
                   return ProfileRow(
                     icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 14 ? AppColors.primaryColor : AppColors.labelBlackColor),

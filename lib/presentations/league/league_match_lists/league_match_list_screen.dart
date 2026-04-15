@@ -48,64 +48,6 @@ class LeagueMatchListScreen extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Obx(() => Container(
-              padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-              decoration: BoxDecoration(
-                color: AppColors.textFieldColor,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => controller.updateFilter('all'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical:7),
-                        decoration: BoxDecoration(
-                          color: controller.selectedFilter.value == 'all' ? AppColors.primaryColor : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'All',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: controller.selectedFilter.value == 'all' ? AppColors.whiteColor : Colors.black,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => controller.updateFilter('my'),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: controller.selectedFilter.value == 'my' ? AppColors.primaryColor : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'My',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: controller.selectedFilter.value == 'my' ? AppColors.whiteColor : Colors.black,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ),
-          SizedBox(width: 8),
-          Expanded(
             child: PopupMenuButton<String>(
               offset: const Offset(0, 40),
               onSelected: (date) => controller.updateDate(date),
@@ -249,6 +191,64 @@ class LeagueMatchListScreen extends StatelessWidget {
             ),
           ),
           SizedBox(width: 8),
+          Expanded(
+            child: Obx(() => Container(
+              padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+              decoration: BoxDecoration(
+                color: AppColors.textFieldColor,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.updateFilter('all'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical:7),
+                        decoration: BoxDecoration(
+                          color: controller.selectedFilter.value == 'all' ? AppColors.primaryColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'All',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: controller.selectedFilter.value == 'all' ? AppColors.whiteColor : Colors.black,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.updateFilter('my'),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: controller.selectedFilter.value == 'my' ? AppColors.primaryColor : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'My',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: controller.selectedFilter.value == 'my' ? AppColors.whiteColor : Colors.black,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ),
+          SizedBox(width: 8),
           Obx(() => GestureDetector(
             onTap: () => controller.switchToHistory(),
             child: Container(
@@ -322,36 +322,52 @@ class LeagueMatchListScreen extends StatelessWidget {
       return RefreshIndicator(
         color: Colors.white,
         onRefresh: controller.fetchUpcomingMatches,
-        child: ListView.builder(
-          itemCount: allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            final isLive = matchData.matchStatus?.toLowerCase() == 'live';
-            return GestureDetector(
-              onTap: () {
-                if (isLive) {
-                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                    "matchType": "live",
-                    "matchId": matchData.matchId?.id ?? ""
-                  });
-                }
-              },
-              child: isLive
-                  ? LiveMatchCard(
-                      match: allMatches[index],
-                      categoryType: matchData.categoryType,
-                      setsWon: matchData.matchId?.setsWon,
-                    )
-                  : UpcomingMatchCard(
-                      match: allMatches[index],
-                      categoryType: matchData.categoryType,
-                      date: matchData.date,
-                    ),
-            );
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification scrollInfo) {
+            if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+              controller.loadMoreUpcoming();
+            }
+            return false;
           },
+          child: ListView.builder(
+            itemCount: allMatches.length + (controller.hasMoreUpcoming.value ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == allMatches.length) {
+                return Obx(() => controller.isLoadingMoreUpcoming.value
+                    ? Center(child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: LoadingWidget(color: AppColors.primaryColor),
+                      ))
+                    : SizedBox.shrink());
+              }
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              final isLive = matchData.matchStatus?.toLowerCase() == 'live';
+              return GestureDetector(
+                onTap: () {
+                  if (isLive) {
+                    Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                      "matchType": "live",
+                      "matchId": matchData.matchId?.id ?? ""
+                    });
+                  }
+                },
+                child: isLive
+                    ? LiveMatchCard(
+                        match: allMatches[index],
+                        categoryType: matchData.categoryType,
+                        setsWon: matchData.matchId?.setsWon,
+                      )
+                    : UpcomingMatchCard(
+                        match: allMatches[index],
+                        categoryType: matchData.categoryType,
+                        date: matchData.date,
+                      ),
+              );
+            },
+          ),
         ),
       );
     });
@@ -401,32 +417,48 @@ class LeagueMatchListScreen extends StatelessWidget {
       return RefreshIndicator(
         color: Colors.white,
         onRefresh: controller.fetchResultMatches,
-        child: ListView.builder(
-          itemCount: allMatches.length,
-          itemBuilder: (context, index) {
-            final matchData = scheduleData.firstWhere(
-              (data) => data.matches?.contains(allMatches[index]) ?? false,
-              orElse: () => scheduleData.first,
-            );
-            return GestureDetector(
-              onTap: () {
-                final matchData = scheduleData.firstWhere(
-                  (data) => data.matches?.contains(allMatches[index]) ?? false,
-                  orElse: () => scheduleData.first,
-                );
-                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                  "matchType": "result",
-                  "matchId": matchData.matchId?.id ?? ""
-                });
-              },
-              child: ResultMatchCard(
-                match: allMatches[index],
-                categoryType: matchData.categoryType,
-                date: matchData.date,
-                setsWon: matchData.matchId?.setsWon,
-              ),
-            );
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification scrollInfo) {
+            if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 200) {
+              controller.loadMoreResult();
+            }
+            return false;
           },
+          child: ListView.builder(
+            itemCount: allMatches.length + (controller.hasMoreResult.value ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == allMatches.length) {
+                return Obx(() => controller.isLoadingMoreResult.value
+                    ? Center(child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: LoadingWidget(color: AppColors.primaryColor),
+                      ))
+                    : SizedBox.shrink());
+              }
+              final matchData = scheduleData.firstWhere(
+                (data) => data.matches?.contains(allMatches[index]) ?? false,
+                orElse: () => scheduleData.first,
+              );
+              return GestureDetector(
+                onTap: () {
+                  final matchData = scheduleData.firstWhere(
+                    (data) => data.matches?.contains(allMatches[index]) ?? false,
+                    orElse: () => scheduleData.first,
+                  );
+                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                    "matchType": "result",
+                    "matchId": matchData.matchId?.id ?? ""
+                  });
+                },
+                child: ResultMatchCard(
+                  match: allMatches[index],
+                  categoryType: matchData.categoryType,
+                  date: matchData.date,
+                  setsWon: matchData.matchId?.setsWon,
+                ),
+              );
+            },
+          ),
         ),
       );
     });

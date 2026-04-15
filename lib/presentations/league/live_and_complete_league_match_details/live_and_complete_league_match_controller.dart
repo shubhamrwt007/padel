@@ -316,7 +316,6 @@ $data
         
         if (Get.isRegistered<LeagueController>()) {
           final leagueController = Get.find<LeagueController>();
-          leagueController.fetchLiveMatches();
           leagueController.fetchResultMatches();
           leagueController.fetchUpcomingMatches();
         }

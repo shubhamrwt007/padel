@@ -55,6 +55,7 @@ class Assets {
   static const String imagesIcSearch = 'assets/images/ic_search.png';
   static const String imagesIcSecondPlace = 'assets/images/ic_second_place.svg';
   static const String imagesIcShareBooking = 'assets/images/ic_share_booking.svg';
+  static const String imagesIcSpl = 'assets/images/ic_spl.svg';
   static const String imagesIcThirdPlace = 'assets/images/ic_third_place.svg';
   static const String imagesIcTradingDown = 'assets/images/ic_trading_down.svg';
   static const String imagesIcTreadingUp = 'assets/images/ic_treading_up.svg';
@@ -96,6 +97,7 @@ class Assets {
   static const String imagesImgRoundBackground = 'assets/images/img_round_background.svg';
   static const String imagesImgScoreView = 'assets/images/img_score_view.svg';
   static const String imagesImgSwootBanner = 'assets/images/img_swoot_banner.png';
+  static const String imagesImgSwootPadelLeague = 'assets/images/img_swoot_padel_league.svg';
   static const String imagesImgTournamentLeaderboard = 'assets/images/img_tournament_leaderboard.svg';
   static const String imagesImgVs = 'assets/images/img_vs.svg';
   static const String imagesImgVsRounds = 'assets/images/img_vs_rounds.svg';
