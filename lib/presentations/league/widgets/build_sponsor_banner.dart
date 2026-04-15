@@ -80,6 +80,7 @@ class BuildMoreSponsor extends StatefulWidget {
 
 class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
   late final ScrollController _scrollController;
+  double _currentScroll = 0;
 
   @override
   void initState() {
@@ -89,18 +90,30 @@ class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
   }
 
   void _startScrolling() async {
+    await Future.delayed(const Duration(milliseconds: 100));
     if (!_scrollController.hasClients) return;
+    
     final maxScroll = _scrollController.position.maxScrollExtent;
     if (maxScroll <= 0) return;
-
+    
+    // Start from middle position for seamless loop
+    _currentScroll = maxScroll / 5;
+    _scrollController.jumpTo(_currentScroll);
+    
     while (mounted) {
-      await _scrollController.animateTo(
-        maxScroll,
-        duration: Duration(milliseconds: (maxScroll * 20).toInt()),
-        curve: Curves.linear,
-      );
-      if (!mounted) break;
-      _scrollController.jumpTo(0);
+      await Future.delayed(const Duration(milliseconds: 20));
+      if (!mounted || !_scrollController.hasClients) break;
+      
+      _currentScroll += 1.5;
+      final currentMax = _scrollController.position.maxScrollExtent;
+      
+      if (currentMax > 0 && _currentScroll >= (currentMax / 5) * 2) {
+        _currentScroll = currentMax / 5;
+      }
+      
+      if (_currentScroll <= currentMax) {
+        _scrollController.jumpTo(_currentScroll);
+      }
     }
   }
 
@@ -118,15 +131,22 @@ class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
 
     if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
 
-    final loopedSponsors = [...tier3Sponsors, ...tier3Sponsors, ...tier3Sponsors];
+    final loopedSponsors = [
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+    ];
 
     return Container(
       height: 30,
       width: Get.width,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF3513EA), Color(0xFF002091)],
-        ),
+      decoration:  BoxDecoration(
+          color: AppColors.primaryColor.withValues(alpha: 0.1)
+        // gradient: LinearGradient(
+        //   colors: [Color(0xFF3513EA), Color(0xFF002091)],
+        // ),
       ),
       child: ListView.builder(
         controller: _scrollController,
@@ -251,8 +271,8 @@ class BuildTitleSponsor extends StatelessWidget {
                           },
                           child: Center(
                             child: SizedBox(
-                              height: 20,
-                              width: 70,
+                              height: 30,
+                              width: 80,
                               child: sponsor.logo != null
                                   ? CachedNetworkImage(
                                       imageUrl: sponsor.logo!,

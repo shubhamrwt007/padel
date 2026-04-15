@@ -43,6 +43,7 @@ class Standings {
   final int? position;
   final String? clubId;
   final String? clubName;
+  final String? clubLogo;
   final int? played;
   final int? wins;
   final int? losses;
@@ -61,6 +62,7 @@ class Standings {
     this.position,
     this.clubId,
     this.clubName,
+    this.clubLogo,
     this.played,
     this.wins,
     this.losses,
@@ -81,6 +83,7 @@ class Standings {
       position: json['position'],
       clubId: json['clubId'],
       clubName: json['clubName'],
+      clubLogo: json['clubLogo'],
       played: json['played'],
       wins: json['wins'],
       losses: json['losses'],
@@ -103,6 +106,7 @@ class Standings {
     'position': position,
     'clubId': clubId,
     'clubName': clubName,
+    'clubLogo': clubLogo,
     'played': played,
     'wins': wins,
     'losses': losses,

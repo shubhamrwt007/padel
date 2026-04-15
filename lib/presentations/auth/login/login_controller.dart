@@ -89,14 +89,6 @@ class LoginController extends GetxController {
             'phoneNumber': phoneController.text.trim(),
             'type': OtpScreenType.login,
           });
-          // Fluttertoast.showToast(
-          //   msg: "OTP: ${result.otp}",
-          //   backgroundColor: Colors.green,
-          //   textColor: Colors.white,
-          //   fontSize: 16.0,
-          //   toastLength: Toast.LENGTH_LONG,
-          //   timeInSecForIosWeb: 5,
-          // );
         } else {
           CustomLogger.logMessage(msg: result.message!, level: LogLevel.error);
         }

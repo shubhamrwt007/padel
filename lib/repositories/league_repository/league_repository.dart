@@ -29,7 +29,9 @@ class LeagueRepository {
     required String leagueId,
     String? userId,
     String? date,
-    String? categoryType
+    String? categoryType,
+    int? page,
+    int? limit
   }) async {
     try {
       final queryParams = {
@@ -38,6 +40,8 @@ class LeagueRepository {
         if (userId != null && userId.isNotEmpty) "userId": userId,
         if (date != null && date.isNotEmpty) "date": date,
         if (categoryType != null && categoryType.isNotEmpty) "categoryType": categoryType,
+        if (limit != null) "limit": limit,
+        if (page != null) "page": page,
       };
 
       final response = await dioClient.get(

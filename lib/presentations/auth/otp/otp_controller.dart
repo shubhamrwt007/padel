@@ -125,28 +125,28 @@ class OtpController extends GetxController {
       return exp.stringMatch(code ?? '') ?? '';
     });
     startTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Show OTP at top of screen only once
-      if (arguments['otp'] != null && !_otpToastShown) {
-        _otpToastShown = true;
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Get.rawSnackbar(
-            message: "OTP: ${arguments['otp']}",
-            backgroundColor: Colors.green,
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 5),
-            margin: EdgeInsets.zero,
-            borderRadius: 0,
-            padding: EdgeInsets.only(
-              top: Get.mediaQuery.padding.top + 10,
-              bottom: 15,
-              left: 20,
-              right: 20,
-            ),
-          );
-        });
-      }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   // Show OTP at top of screen only once
+    //   if (arguments['otp'] != null && !_otpToastShown) {
+    //     _otpToastShown = true;
+    //     Future.delayed(const Duration(milliseconds: 500), () {
+    //       Get.rawSnackbar(
+    //         message: "OTP: ${arguments['otp']}",
+    //         backgroundColor: Colors.green,
+    //         snackPosition: SnackPosition.TOP,
+    //         duration: const Duration(seconds: 5),
+    //         margin: EdgeInsets.zero,
+    //         borderRadius: 0,
+    //         padding: EdgeInsets.only(
+    //           top: Get.mediaQuery.padding.top + 10,
+    //           bottom: 15,
+    //           left: 20,
+    //           right: 20,
+    //         ),
+    //       );
+    //     });
+    //   }
+    // });
   }
 
   @override

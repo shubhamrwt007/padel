@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
@@ -20,6 +21,14 @@ class LeagueScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String leagueTitle = Get.arguments?['leagueTitle'] ?? 'League';
+    final int initialTab = Get.arguments?['initialTab'] ?? 0;
+    
+    if (initialTab == 1 && controller.selectedTab.value == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.setSelectedTab(1);
+      });
+    }
+    
     return Scaffold(
         appBar: primaryAppBar(title: Text(leagueTitle),centerTitle: true, context: context,),
         body: Obx(() {
@@ -48,7 +57,6 @@ class LeagueScreen extends StatelessWidget {
       onRefresh: () async {
         await Future.wait([
           controller.fetchUpcomingMatches(),
-          controller.fetchLiveMatches(),
           controller.fetchResultMatches(),
         ]);
       },
@@ -58,14 +66,14 @@ class LeagueScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Obx(() {
-              if (controller.isLoadingLiveMatches.value) {
+              if (controller.isLoadingUpcomingMatches.value) {
                 return SizedBox(
                   height: 200,
                   child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
                 );
               }
               return _liveMatchCard();
-            }).paddingOnly(bottom: 10),
+            }).paddingOnly(bottom: 20),
             BuildTitleSponsor(controller: controller),
             Obx(() {
               final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
@@ -79,17 +87,13 @@ class LeagueScreen extends StatelessWidget {
                 Text(
                   controller.matchTab.value == 0
                       ? "Upcoming Matches"
-                      : controller.matchTab.value == 1
-                          ? "Live Matches"
-                          : "Match Results",
+                      : "Match Results",
                   style: Get.textTheme.headlineMedium,
                 ),
                 Obx(() {
                   final hasMatches = controller.matchTab.value == 0
                       ? (controller.upcomingMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
-                      : controller.matchTab.value == 1
-                          ? (controller.liveMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty
-                          : (controller.resultMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty;
+                      : (controller.resultMatches.value?.data ?? []).expand((d) => d.matches ?? []).isNotEmpty;
                   if (!hasMatches) return const SizedBox.shrink();
                   return GestureDetector(
                     onTap: () {
@@ -117,7 +121,6 @@ class LeagueScreen extends StatelessWidget {
                 onPageChanged: controller.onPageChanged,
                 children: [
                   _upcomingList(),
-                  _liveList(),
                   _resultsList(),
                 ],
               ),
@@ -141,7 +144,6 @@ class LeagueScreen extends StatelessWidget {
         labelStyle:Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500) ,
         tabs: const [
           Tab(text: "Upcoming"),
-          Tab(text: "Live"),
           Tab(text: "Results"),
         ],
       ),
@@ -221,7 +223,7 @@ class LeagueScreen extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
-                      child: const Text('Live Match'),
+                      child: const Text('Matches'),
                     ),
                   ],
                 ),
@@ -278,82 +280,95 @@ class LeagueScreen extends StatelessWidget {
     );
   }
   Widget _liveMatchCard() {
-    final scheduleData = controller.liveMatches.value?.data ?? [];
-    if (scheduleData.isEmpty) return const SizedBox.shrink();
+    final scheduleData = controller.upcomingMatches.value?.data ?? [];
+    final liveData = scheduleData.where((data) => data.matchStatus == 'live').toList();
+    
+    if (liveData.isEmpty) return const SizedBox.shrink();
 
-    final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+    final allMatches = liveData.expand((data) => data.matches ?? []).toList();
     if (allMatches.isEmpty) return const SizedBox.shrink();
 
     final firstMatch = allMatches.first;
-    final categoryType = scheduleData.firstOrNull?.categoryType ?? "Mixed Doubles";
-    final setsWon = scheduleData.firstOrNull?.matchId?.setsWon;
+    final categoryType = liveData.firstOrNull?.categoryType ?? "Mixed Doubles";
+    final setsWon = liveData.firstOrNull?.matchId?.setsWon;
 
       return Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 0),
-            child: Stack(
-              children: [
-                SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
-                Column(
-                  children: [
-                    /// LIVE TAG
-                    _AnimatedLiveTag(),
-                    /// SCORE ROW
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _teamColumn(
-                          firstMatch.teamA?.clubType ?? "",
-                          "",
-                          "",
-                          (firstMatch.teamA?.players?.isNotEmpty ?? false) ? (firstMatch.teamA!.players![0].playerName ?? "") : "Player 1",
-                          (firstMatch.teamA?.players != null && firstMatch.teamA!.players!.length > 1) ? (firstMatch.teamA!.players![1].playerName ?? "") : "Player 2",
-                          AppColors.primaryColor,
-                        ),
-
-                          Transform.translate(
-                          offset: Offset(0, 0),
-                          child: Column(
-                            children: [
-                              Text(categoryType, style: Get.textTheme.labelMedium),
-                              SizedBox(height: 8),
-                              Obx(() {
-                                final currentSetsWon = controller.liveMatches.value?.data?.firstOrNull?.matchId?.setsWon;
-                                return Text(
-                                "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
-                                    style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42));
-                              }),
-                            ],
+          GestureDetector(
+            onTap: (){
+              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                "matchType":"live",
+                "matchId": liveData.firstOrNull?.matchId?.id ?? ""
+              });
+              print("MATCH ID-> ${ liveData.firstOrNull?.matchId?.id}");
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 0),
+              child: Stack(
+                children: [
+                  SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
+                  Column(
+                    children: [
+                      /// LIVE TAG
+                      _AnimatedLiveTag(),
+                      /// SCORE ROW
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _teamColumn(
+                            firstMatch.teamA?.clubType ?? "",
+                            "",
+                            "",
+                            (firstMatch.teamA?.players?.isNotEmpty ?? false) ? (firstMatch.teamA!.players![0].playerName ?? "") : "Player 1",
+                            (firstMatch.teamA?.players != null && firstMatch.teamA!.players!.length > 1) ? (firstMatch.teamA!.players![1].playerName ?? "") : "Player 2",
+                            AppColors.primaryColor,
                           ),
-                        ),
-                        _teamColumn(
-                          firstMatch.teamB?.clubType ?? "",
-                          "",
-                          "",
-                          (firstMatch.teamB?.players?.isNotEmpty ?? false) ? (firstMatch.teamB!.players![0].playerName ?? "") : "Player 3",
-                          (firstMatch.teamB?.players != null && firstMatch.teamB!.players!.length > 1) ? (firstMatch.teamB!.players![1].playerName ?? "") : "Player 4",
-                          AppColors.secondaryColor,
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        _AnimatedWatchLiveButton(onTap: (){
-                          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                            "matchType":"live",
-                            "matchId": scheduleData.firstOrNull?.matchId?.id ?? ""
-                          });
-                        }),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+
+                            Transform.translate(
+                            offset: Offset(0, -15),
+                            child: Column(
+                              children: [
+                                Text(categoryType, style: Get.textTheme.labelMedium),
+                                SizedBox(height: 8),
+                                Obx(() {
+                                  final currentSetsWon = controller.upcomingMatches.value?.data
+                                    ?.where((data) => data.matchStatus == 'live')
+                                    .firstOrNull?.matchId?.setsWon;
+                                  return Text(
+                                  "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
+                                      style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42));
+                                }),
+                              ],
+                            ),
+                          ),
+                          _teamColumn(
+                            firstMatch.teamB?.clubType ?? "",
+                            "",
+                            "",
+                            (firstMatch.teamB?.players?.isNotEmpty ?? false) ? (firstMatch.teamB!.players![0].playerName ?? "") : "Player 3",
+                            (firstMatch.teamB?.players != null && firstMatch.teamB!.players!.length > 1) ? (firstMatch.teamB!.players![1].playerName ?? "") : "Player 4",
+                            AppColors.secondaryColor,
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          _AnimatedWatchLiveButton(onTap: (){
+                            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
+                              "matchType":"live",
+                              "matchId": liveData.firstOrNull?.matchId?.id ?? ""
+                            });
+                          }),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          _buildScoreBoard(scheduleData.firstOrNull).paddingOnly(right: Get.width*0.05,left: Get.width*0.05)
+          _buildScoreBoard(liveData.firstOrNull).paddingOnly(right: Get.width*0.05,left: Get.width*0.05,top: 10)
         ],
       );
   }
@@ -371,10 +386,15 @@ class LeagueScreen extends StatelessWidget {
       child: Column(
         children: [
           /// TEAM LABEL
-          Text(
-            team,
-              style:Get.textTheme.headlineMedium!.copyWith(color: color)
+          Container(
+            width: Get.width*0.2,
+            color: Colors.transparent,
+            alignment: Alignment.center,
+            child: Text(
+              team,
+                style:Get.textTheme.headlineMedium!.copyWith(color: color)
 
+            ),
           ),
 
           const SizedBox(height: 15),
@@ -407,7 +427,9 @@ class LeagueScreen extends StatelessWidget {
   Widget _buildScoreBoard(ScheduleMatchData? matchData) {
     return Obx(() {
       final scoreboardData = controller.liveMatchScoreboard.value;
-      final liveMatchData = controller.liveMatches.value?.data?.first; // This will trigger updates
+      final liveMatchData = controller.upcomingMatches.value?.data
+        ?.where((data) => data.matchStatus == 'live')
+        .firstOrNull;
       
       if (controller.isLoadingScoreboard.value) {
         return const Center(
@@ -562,93 +584,61 @@ class LeagueScreen extends StatelessWidget {
       if (scheduleData.isEmpty) {
         return Center(
           child: Text(
-            "No upcoming matches available",
+            "No matches available",
             style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
-      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-      if (allMatches.isEmpty) {
+      final allSchedules = scheduleData.take(5).toList();
+      if (allSchedules.isEmpty) {
         return Center(
           child: Text(
-            "No upcoming matches available",
+            "No matches available",
             style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),
         );
       }
 
       return ListView.builder(
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: allMatches.length > 5 ? 5 : allMatches.length,
-        itemBuilder: (context, index) {
-          final matchData = scheduleData.firstWhere(
-            (data) => data.matches?.contains(allMatches[index]) ?? false,
-            orElse: () => scheduleData.first,
-          );
-          return UpcomingMatchCard(
-            match: allMatches[index],
-            categoryType: matchData.categoryType,
-            date: matchData.date,
-          );
-        },
-      );
-    });
-  }
-
-
-  Widget _liveList() {
-    return Obx(() {
-      final scheduleData = controller.liveMatches.value?.data ?? [];
-      if (scheduleData.isEmpty) {
-        return Center(
-          child: Text(
-            "No live matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-          ),
-        );
-      }
-
-      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-      if (allMatches.isEmpty) {
-        return Center(
-          child: Text(
-            "No live matches available",
-            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-          ),
-        );
-      }
-
-      return ListView.builder(
-        physics: NeverScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
-        itemCount: allMatches.length,
+        itemCount: allSchedules.length,
         itemBuilder: (context, index) {
-          final matchData = scheduleData.firstWhere(
-            (data) => data.matches?.contains(allMatches[index]) ?? false,
-            orElse: () => scheduleData.first,
-          );
-          return GestureDetector(
-            onTap: () {
-              final matchData = scheduleData.firstWhere(
-                (data) => data.matches?.contains(allMatches[index]) ?? false,
-                orElse: () => scheduleData.first,
-              );
-              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                "matchType": "live",
-                "matchId": matchData.matchId?.id ?? ""
-              });
-            },
-            child: LiveMatchCard(
-              match: allMatches[index],
-              categoryType: matchData.categoryType,
-              setsWon: matchData.matchId?.setsWon,
-            ),
+          final scheduleItem = allSchedules[index];
+          final matches = scheduleItem.matches ?? [];
+          
+          if (matches.isEmpty) return const SizedBox.shrink();
+          
+          final match = matches.first;
+          
+          if (scheduleItem.matchStatus == 'live') {
+            return GestureDetector(
+              onTap: () {
+                Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                  "matchType": "live",
+                  "matchId": scheduleItem.matchId?.id ?? ""
+                });
+              },
+              child: LiveMatchCard(
+                match: match,
+                categoryType: scheduleItem.categoryType,
+                setsWon: scheduleItem.matchId?.setsWon,
+              ),
+            );
+          }
+          
+          return UpcomingMatchCard(
+            match: match,
+            categoryType: scheduleItem.categoryType,
+            date: scheduleItem.date,
           );
         },
       );
     });
   }
+
+
+
   Widget _resultsList() {
     return Obx(() {
       final scheduleData = controller.resultMatches.value?.data ?? [];
@@ -672,7 +662,7 @@ class LeagueScreen extends StatelessWidget {
       }
 
       return ListView.builder(
-        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
         itemCount: allMatches.length > 4 ? 4 : allMatches.length,
         itemBuilder: (context, index) {
           final matchData = scheduleData.firstWhere(
@@ -1589,7 +1579,7 @@ class LeaderBoardWidget extends StatelessWidget {
         SizedBox(width: 30, child: Center(child: Text("M", style: style))),
         SizedBox(width: 30, child: Center(child: Text("W", style: style))),
         SizedBox(width: 30, child: Center(child: Text("L", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700)))),
+        SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
         SizedBox(width: 30, child: Center(child: Text("Adv", style: style))),
         SizedBox(width: 30, child: Center(child: Text("Int", style: style))),
         SizedBox(width: 30, child: Center(child: Text("Mx", style: style))),
@@ -1606,14 +1596,38 @@ class LeaderBoardWidget extends StatelessWidget {
           flex: 3,
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 11,
-                backgroundColor: AppColors.primaryColor,
-                child: Text(
-                  (standing.clubName ?? "?")[0].toUpperCase(),
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
+              standing.clubLogo != null && standing.clubLogo!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: standing.clubLogo!,
+                      imageBuilder: (context, imageProvider) => CircleAvatar(
+                        radius: 11,
+                        backgroundImage: imageProvider,
+                      ),
+                      placeholder: (context, url) => CircleAvatar(
+                        radius: 11,
+                        backgroundColor: AppColors.primaryColor,
+                        child: Text(
+                          (standing.clubName ?? "?")[0].toUpperCase(),
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => CircleAvatar(
+                        radius: 11,
+                        backgroundColor: AppColors.primaryColor,
+                        child: Text(
+                          (standing.clubName ?? "?")[0].toUpperCase(),
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    )
+                  : CircleAvatar(
+                      radius: 11,
+                      backgroundColor: AppColors.primaryColor,
+                      child: Text(
+                        (standing.clubName ?? "?")[0].toUpperCase(),
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1628,7 +1642,7 @@ class LeaderBoardWidget extends StatelessWidget {
         SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600)))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.abWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.cdWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
         SizedBox(width: 30, child: Center(child: Text("${standing.mixedWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),

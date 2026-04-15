@@ -14,17 +14,37 @@ class SponsorImagesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: primaryAppBar(title: Text("Sponsors"), centerTitle: true,context: context),
+      // appBar: primaryAppBar(title: Text("Sponsors"), centerTitle: true,context: context),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(Assets.imagesJubilee1),
-              const SizedBox(height: 20),
-              Image.asset(Assets.imagesJubliee2),
-            ],
-          ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(Assets.imagesJubilee1),
+                  const SizedBox(height: 20),
+                  Image.asset(Assets.imagesJubliee2),
+                ],
+              ),
+            ),
+            Positioned(
+                top: 50,
+                left: 20,
+                child: GestureDetector(
+                  onTap: (){
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    height: 30,width: 30,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child:  Icon(Icons.arrow_back,color: Colors.black,),
+                  ),
+                )),
+          ],
         ),
       ),
     );
@@ -110,8 +130,8 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
                     },
                     child: Center(
                       child: SizedBox(
-                        height: 20,
-                        width: 70,
+                        height: 30,
+                        width: 80,
                         child: sponsor.logo != null
                             ? CachedNetworkImage(
                                 imageUrl: sponsor.logo!,
@@ -150,42 +170,48 @@ class BuildLeagueMoreSponsor extends StatefulWidget {
   State<BuildLeagueMoreSponsor> createState() => _BuildLeagueMoreSponsorState();
 }
 
-class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
-    with SingleTickerProviderStateMixin {
+class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor> {
   late final ScrollController _scrollController;
-  late final AnimationController _animController;
+  double _currentScroll = 0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 20),
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
   }
 
   void _startScrolling() async {
+    await Future.delayed(const Duration(milliseconds: 100));
     if (!_scrollController.hasClients) return;
+    
     final maxScroll = _scrollController.position.maxScrollExtent;
     if (maxScroll <= 0) return;
-
+    
+    // Start from middle position for seamless loop
+    _currentScroll = maxScroll / 5;
+    _scrollController.jumpTo(_currentScroll);
+    
     while (mounted) {
-      await _scrollController.animateTo(
-        maxScroll,
-        duration: Duration(milliseconds: (maxScroll * 20).toInt()),
-        curve: Curves.linear,
-      );
-      if (!mounted) break;
-      _scrollController.jumpTo(0);
+      await Future.delayed(const Duration(milliseconds: 20));
+      if (!mounted || !_scrollController.hasClients) break;
+      
+      _currentScroll += 1.5;
+      final currentMax = _scrollController.position.maxScrollExtent;
+      
+      if (currentMax > 0 && _currentScroll >= (currentMax / 5) * 2) {
+        _currentScroll = currentMax / 5;
+      }
+      
+      if (_currentScroll <= currentMax) {
+        _scrollController.jumpTo(_currentScroll);
+      }
     }
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _animController.dispose();
     super.dispose();
   }
 
@@ -197,16 +223,19 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
 
     if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
 
-    // Duplicate list to create seamless loop effect
-    final loopedSponsors = [...tier3Sponsors, ...tier3Sponsors, ...tier3Sponsors];
+    final loopedSponsors = [
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+      ...tier3Sponsors,
+    ];
 
     return Container(
       height: 30,
       width: Get.width,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF3513EA), Color(0xFF002091)],
-        ),
+      decoration: BoxDecoration(
+        color: AppColors.primaryColor.withValues(alpha: 0.1)
       ),
       child: ListView.builder(
         controller: _scrollController,
@@ -220,8 +249,6 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
               if (sponsor.logo != null)
                 CachedNetworkImage(
                   imageUrl: sponsor.logo!,
-                  // width: 20,
-                  // height: 20,
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
                       const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
@@ -231,11 +258,6 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
               else
                 const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
                     .paddingOnly(right: 5),
-              // Text(
-              //   sponsor.name ?? "Sponsor",
-              //   style: Get.textTheme.bodySmall!
-              //       .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
-              // ),
             ],
           ).paddingOnly(right: 16);
         },

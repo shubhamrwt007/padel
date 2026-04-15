@@ -18,6 +18,7 @@ import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/presentations/booking/booking_controller.dart';
@@ -721,6 +722,7 @@ class MainHomeScreen extends StatelessWidget {
             Get.toNamed(RoutesName.league, arguments: {
               'leagueId': leagueId,
               'leagueTitle': leagueTitle,
+              'initialTab': 0,
             })?.then((_) {
               controller.fetchPollResults();
               controller.fetchScheduleMatches();
@@ -729,6 +731,7 @@ class MainHomeScreen extends StatelessWidget {
             });
           },
           child: Container(
+            height: 170,
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 18),
             decoration:  BoxDecoration(
@@ -736,9 +739,13 @@ class MainHomeScreen extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,)),
+                Builder(
+                  builder: (context) {
+                    return ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,alignment: AlignmentGeometry.topCenter,));
+                  }
+                ),
                 Column(
                   children: [
                     /// LIVE TAG
@@ -757,7 +764,7 @@ class MainHomeScreen extends StatelessWidget {
                         ),
 
                         Transform.translate(
-                          offset: Offset(0, 0),
+                          offset: Offset(0, -15),
                           child: Column(
                             children: [
                               Text(categoryType ?? "", style: Get.textTheme.labelMedium),
@@ -781,14 +788,12 @@ class MainHomeScreen extends StatelessWidget {
                     Column(
                       children: [
                         _AnimatedWatchLiveButton(onTap: (){
-                          print('👆 Live match card tapped');
-                          print('🎫 Match ID: $matchId');
-                          print('🎫 Match Type: live');
                           final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
                           final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
                           Get.toNamed(RoutesName.league, arguments: {
                             'leagueId': leagueId,
                             'leagueTitle': leagueTitle,
+                            'initialTab': 0,
                           })?.then((_) {
                             controller.fetchPollResults();
                             controller.fetchScheduleMatches();
@@ -847,10 +852,10 @@ class MainHomeScreen extends StatelessWidget {
         onTap: (){
           final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
           final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
-          Get.toNamed(RoutesName.leagueMatchLists, arguments: {
-            'matchTab': 0,
+          Get.toNamed(RoutesName.league, arguments: {
             'leagueId': leagueId,
-            'leagueTitle': leagueTitle
+            'leagueTitle': leagueTitle,
+            'initialTab': 1,
           });
         },
         child: Container(
@@ -956,6 +961,7 @@ class MainHomeScreen extends StatelessWidget {
           Container(
             width: Get.width*0.2,
             color: Colors.transparent,
+            alignment: Alignment.center,
             child: Text(
               overflow: TextOverflow.ellipsis,
               team,
@@ -1490,12 +1496,12 @@ class MainHomeScreen extends StatelessWidget {
         "offset": Offset(0, 4)
       },
       {
-        "icon": Assets.imagesIcAmericanoNew,
+        "icon": Assets.imagesIcSpl,
         "title": "League",
         "action": "league",
         "boxSize": 70.0,
-        "iconSize": 40.0,
-        "offset": Offset(0, 3)
+        "iconSize": 37.0,
+        "offset": Offset(0, 6)
       },
     ];
 
@@ -1623,6 +1629,7 @@ class MainHomeScreen extends StatelessWidget {
           Get.toNamed(RoutesName.league, arguments: {
             'leagueId': leagueId,
             'leagueTitle': leagueTitle,
+            'initialTab': 1,
           })?.then((_) {
             controller.fetchPollResults();
             controller.fetchScheduleMatches();
@@ -2831,11 +2838,12 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
       child: Row(
         children: [
-          SvgPicture.asset(
-            Assets.imagesIcPadelBall,
-            height: 18,width: 18,
-          ).paddingOnly(right: 10),
-          Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
+          SvgPicture.asset(Assets.imagesImgSwootPadelLeague,height: 12,width: 15,)
+          // SvgPicture.asset(
+          //   Assets.imagesIcPadelBall,
+          //   height: 18,width: 18,
+          // ).paddingOnly(right: 10),
+          // Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
         ],
       ),
     );
@@ -2898,33 +2906,57 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         SizedBox(width: 20, child: Text("#",style: style,)),
         Expanded(
             flex: 3,
-            child: SizedBox(width: 35,child: Text("Teams",style: style))),
+            child: SizedBox(width: 35,child: Text(" Teams",style: style))),
         // SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(width: 30, child: Center(child: Text("W",style: style))),
-        SizedBox(width: 30, child: Center(child: Text("L",style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Pts",style: style))),
+        SizedBox(width: 30, child: Center(child: Text(" W",style: style))),
+        SizedBox(width: 30, child: Center(child: Text(" L",style: style))),
+        SizedBox(width: 30, child: Center(child: Text(" Pts",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
         Expanded(
-            flex: 3,
-            child: Center(child: Text("Last 5",style: style))),
+            flex: 4,
+            child: Center(child: Text("Last 5 ",style: style))),
       ],
     );
   }
   Widget _teamRow(dynamic standing) {
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600),)),
+        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,fontSize: 10),)),
         Expanded(
           flex: 3,
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 11,
-                backgroundColor: AppColors.primaryColor,
-                child: Text(
-                  (standing.clubName ?? "?")[0].toUpperCase(),
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
+              standing.clubLogo != null && standing.clubLogo!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: standing.clubLogo!,
+                      imageBuilder: (context, imageProvider) => CircleAvatar(
+                        radius: 11,
+                        backgroundImage: imageProvider,
+                      ),
+                      placeholder: (context, url) => CircleAvatar(
+                        radius: 11,
+                        backgroundColor: AppColors.primaryColor,
+                        child: Text(
+                          (standing.clubName ?? "?")[0].toUpperCase(),
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => CircleAvatar(
+                        radius: 11,
+                        backgroundColor: AppColors.primaryColor,
+                        child: Text(
+                          (standing.clubName ?? "?")[0].toUpperCase(),
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    )
+                  : CircleAvatar(
+                      radius: 11,
+                      backgroundColor: AppColors.primaryColor,
+                      child: Text(
+                        (standing.clubName ?? "?")[0].toUpperCase(),
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2939,12 +2971,17 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
 
         SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
         SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
+        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor),))),
         Expanded(
-          flex: 3,
+          flex: 4,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: _buildRecentFormIcons(standing.recentForm ?? []),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _buildRecentFormIcons(standing.recentForm ?? []),
+              ),
+              Icon(Icons.arrow_back,size: 9,color: Colors.black,)
+            ],
           ),
         )
 
@@ -2952,19 +2989,19 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
     );
   }
   List<Widget> _buildRecentFormIcons(List<dynamic> recentForm) {
-    // Take last 5 matches or pad with empty if less than 5
     final formList = recentForm.take(5).toList();
     final widgets = <Widget>[];
     
-    for (int i = 0; i < 5; i++) {
-      if (i < formList.length) {
-        final result = formList[i].toString().toUpperCase();
-        final isWin = result == 'W';
-        widgets.add(_buildResultIcon(isWin));
-      } else {
-        // Add placeholder for missing matches
-        widgets.add(_buildResultIcon(null));
-      }
+    // Add placeholders first (left side) if less than 5 matches
+    final emptyCount = 5 - formList.length;
+    for (int i = 0; i < emptyCount; i++) {
+      widgets.add(_buildResultIcon(null));
+    }
+    
+    // Then add actual match results
+    for (var result in formList) {
+      final isWin = result.toString().toUpperCase() == 'W';
+      widgets.add(_buildResultIcon(isWin));
     }
     
     return widgets;
