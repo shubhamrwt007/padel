@@ -47,17 +47,20 @@ class BuildSponsorBanner extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: CachedNetworkImage(
-                    imageUrl: sponsorData.titleSponsor!.titleSponsorBanner!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 120,
-                      color: Colors.grey[200],
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
-                    ),
-                    errorWidget: (context, url, error) => Image.asset(
-                      Assets.imagesImgLeagueSponsor,
-                      fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width - 28,
+                    child: CachedNetworkImage(
+                      imageUrl: sponsorData.titleSponsor!.titleSponsorBanner!,
+                      fit: BoxFit.fitWidth,
+                      placeholder: (context, url) => Container(
+                        height: 120,
+                        color: Colors.grey[200],
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
+                      ),
+                      errorWidget: (context, url, error) => Image.asset(
+                        Assets.imagesImgLeagueSponsor,
+                        fit: BoxFit.fitWidth,
+                      ),
                     ),
                   ),
                 ),
@@ -177,21 +180,27 @@ class _SeamlessSponsorTickerState extends State<_SeamlessSponsorTicker>
   }
 
   Widget _buildSponsorLogo(dynamic sponsor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        width: 60,
-        height: 20,
+    return SizedBox(
+      width: _tileWidth,
+      height: 30,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: sponsor.logo != null
             ? CachedNetworkImage(
                 imageUrl: sponsor.logo!,
                 fit: BoxFit.contain,
-                placeholder: (context, url) =>
-                    const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                errorWidget: (context, url, error) =>
-                    const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+                placeholder: (context, url) => const SizedBox.shrink(),
+                errorWidget: (context, url, error) => const Icon(
+                  Icons.image_not_supported,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               )
-            : const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
+            : const Icon(
+                Icons.image_not_supported,
+                size: 16,
+                color: Colors.grey,
+              ),
       ),
     );
   }
