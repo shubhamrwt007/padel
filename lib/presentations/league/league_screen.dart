@@ -399,6 +399,7 @@ class LeagueScreen extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               team,
+                overflow: TextOverflow.ellipsis,
                 style:Get.textTheme.headlineMedium!.copyWith(color: color)
 
             ),
