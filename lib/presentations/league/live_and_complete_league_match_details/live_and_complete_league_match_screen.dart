@@ -467,18 +467,27 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                   // ← team name space
                                                   ...List.generate(
                                                     getRounds(index).length,
-                                                    (i) => SizedBox(
-                                                      width: 40,
-                                                      // ← fixed width per round
-                                                      child: Text(
-                                                        'R${i + 1}',
-                                                        textAlign: TextAlign.center,
-                                                        style: Get.textTheme.bodyMedium!.copyWith(
-                                                          fontSize: 10,
-                                                          fontWeight: FontWeight.w500,
+                                                    (i) {
+                                                      final rounds = getRounds(index);
+                                                      final winType = rounds[i].winType;
+                                                      String displayText = 'R${i + 1}';
+                                                      if (winType == 'TIEBREAK') {
+                                                        displayText = 'TB';
+                                                      } else if (winType == 'SUPER_TIEBREAK') {
+                                                        displayText = 'STB';
+                                                      }
+                                                      return SizedBox(
+                                                        width: 40,
+                                                        child: Text(
+                                                          displayText,
+                                                          textAlign: TextAlign.center,
+                                                          style: Get.textTheme.bodyMedium!.copyWith(
+                                                            fontSize: 10,
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ),
+                                                      );
+                                                    },
                                                   ),
                                                 ],
                                               ),
