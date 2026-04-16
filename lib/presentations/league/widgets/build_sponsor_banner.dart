@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
@@ -46,17 +47,20 @@ class BuildSponsorBanner extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: CachedNetworkImage(
-                    imageUrl: sponsorData.titleSponsor!.titleSponsorBanner!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 120,
-                      color: Colors.grey[200],
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
-                    ),
-                    errorWidget: (context, url, error) => Image.asset(
-                      Assets.imagesImgLeagueSponsor,
-                      fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width - 28,
+                    child: CachedNetworkImage(
+                      imageUrl: sponsorData.titleSponsor!.titleSponsorBanner!,
+                      fit: BoxFit.fitWidth,
+                      placeholder: (context, url) => Container(
+                        height: 120,
+                        color: Colors.grey[200],
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryColor)),
+                      ),
+                      errorWidget: (context, url, error) => Image.asset(
+                        Assets.imagesImgLeagueSponsor,
+                        fit: BoxFit.fitWidth,
+                      ),
                     ),
                   ),
                 ),
@@ -70,117 +74,135 @@ class BuildSponsorBanner extends StatelessWidget {
   }
 }
 
-class BuildMoreSponsor extends StatefulWidget {
+class BuildMoreSponsor extends StatelessWidget {
   final List<dynamic> sponsors;
   const BuildMoreSponsor({super.key, required this.sponsors});
 
   @override
-  State<BuildMoreSponsor> createState() => _BuildMoreSponsorState();
-}
-
-class _BuildMoreSponsorState extends State<BuildMoreSponsor> {
-  late final ScrollController _scrollController;
-  double _currentScroll = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
-  }
-
-  void _startScrolling() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    if (!_scrollController.hasClients) return;
-    
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
-    
-    // Start from middle position for seamless loop
-    _currentScroll = maxScroll / 5;
-    _scrollController.jumpTo(_currentScroll);
-    
-    while (mounted) {
-      await Future.delayed(const Duration(milliseconds: 20));
-      if (!mounted || !_scrollController.hasClients) break;
-      
-      _currentScroll += 1.5;
-      final currentMax = _scrollController.position.maxScrollExtent;
-      
-      if (currentMax > 0 && _currentScroll >= (currentMax / 5) * 2) {
-        _currentScroll = currentMax / 5;
-      }
-      
-      if (_currentScroll <= currentMax) {
-        _scrollController.jumpTo(_currentScroll);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final tier3Sponsors = widget.sponsors
+    final tier3Sponsors = sponsors
         .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 3')
         .toList();
 
     if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
 
-    final loopedSponsors = [
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-    ];
-
     return Container(
       height: 30,
       width: Get.width,
-      decoration:  BoxDecoration(
-          color: AppColors.primaryColor.withValues(alpha: 0.1)
-        // gradient: LinearGradient(
-        //   colors: [Color(0xFF3513EA), Color(0xFF002091)],
-        // ),
+      decoration: BoxDecoration(
+        color: AppColors.primaryColor.withValues(alpha: 0.1),
       ),
-      child: ListView.builder(
-        controller: _scrollController,
-        itemCount: loopedSponsors.length,
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          final sponsor = loopedSponsors[index];
-          return Row(
-            children: [
-              if (sponsor.logo != null)
-                CachedNetworkImage(
-                  imageUrl: sponsor.logo!,
-                  // width: 20,
-                  // height: 20,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                  errorWidget: (context, url, error) =>
-                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                ).paddingOnly(right: 5)
-              else
-                const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
-                    .paddingOnly(right: 5),
-              // Text(
-              //   sponsor.name ?? "Sponsor",
-              //   style: Get.textTheme.bodySmall!
-              //       .copyWith(fontWeight: FontWeight.w500, color: Colors.white),
-              // ),
-            ],
-          ).paddingOnly(right: 16);
-        },
-      ).paddingOnly(left: 10),
+      child: _SeamlessSponsorTicker(sponsors: tier3Sponsors),
     ).paddingOnly(top: 10);
+  }
+}
+
+class _SeamlessSponsorTicker extends StatefulWidget {
+  final List<dynamic> sponsors;
+  const _SeamlessSponsorTicker({required this.sponsors});
+
+  @override
+  State<_SeamlessSponsorTicker> createState() => _SeamlessSponsorTickerState();
+}
+
+class _SeamlessSponsorTickerState extends State<_SeamlessSponsorTicker>
+    with SingleTickerProviderStateMixin {
+  static const double _tileWidth = 100; // 60(width) + 20*2(padding)
+  static const Duration _fullLoopDuration = Duration(seconds: 20);
+
+  late final Ticker _ticker;
+  final ValueNotifier<double> _dx = ValueNotifier<double>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker((elapsed) {
+      final len = widget.sponsors.length;
+      if (len == 0) return;
+
+      final trackWidth = len * _tileWidth;
+      if (trackWidth <= 0) return;
+
+      final loopMicros = _fullLoopDuration.inMicroseconds;
+      if (loopMicros <= 0) return;
+
+      final traveledMicros = elapsed.inMicroseconds % loopMicros;
+      final traveled = (traveledMicros / loopMicros) * trackWidth;
+
+      // Pixel snapping to avoid sub-pixel shimmer on some devices.
+      _dx.value = (-traveled).roundToDouble();
+    })..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _dx.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.sponsors.isEmpty) return const SizedBox.shrink();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final len = widget.sponsors.length;
+        if (len == 0) return const SizedBox.shrink();
+
+        final viewportWidth = constraints.maxWidth;
+        final trackWidth = len * _tileWidth;
+        final cycles = (viewportWidth / trackWidth).ceil() + 2;
+
+        final repeatedSponsors = List<dynamic>.generate(
+          cycles * len,
+          (index) => widget.sponsors[index % len],
+        );
+
+        final row = Row(
+          children: repeatedSponsors.map(_buildSponsorLogo).toList(),
+        );
+
+        return ClipRect(
+          child: ValueListenableBuilder<double>(
+            valueListenable: _dx,
+            builder: (context, dx, child) {
+              return Transform.translate(
+                offset: Offset(dx, 0),
+                child: child,
+              );
+            },
+            child: row,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSponsorLogo(dynamic sponsor) {
+    return SizedBox(
+      width: _tileWidth,
+      height: 30,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: sponsor.logo != null
+            ? CachedNetworkImage(
+                imageUrl: sponsor.logo!,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => const SizedBox.shrink(),
+                errorWidget: (context, url, error) => const Icon(
+                  Icons.image_not_supported,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+              )
+            : const Icon(
+                Icons.image_not_supported,
+                size: 16,
+                color: Colors.grey,
+              ),
+      ),
+    );
   }
 }
 

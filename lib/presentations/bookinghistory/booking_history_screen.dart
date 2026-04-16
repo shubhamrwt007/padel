@@ -371,6 +371,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                 ),
               ),
 
+
+
               // Score
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
