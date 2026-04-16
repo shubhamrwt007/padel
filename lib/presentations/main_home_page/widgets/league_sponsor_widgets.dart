@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
@@ -170,48 +171,35 @@ class BuildLeagueMoreSponsor extends StatefulWidget {
   State<BuildLeagueMoreSponsor> createState() => _BuildLeagueMoreSponsorState();
 }
 
-class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor> {
-  late final ScrollController _scrollController;
-  double _currentScroll = 0;
+class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
+    with SingleTickerProviderStateMixin {
+  static const double _tileWidth = 90;
+  static const Duration _loopDuration = Duration(seconds: 18);
+
+  late final Ticker _ticker;
+  final ValueNotifier<double> _dx = ValueNotifier<double>(0);
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
-  }
+    _ticker = createTicker((elapsed) {
+      final sponsors = (widget.league.sponsors ?? [])
+          .where((s) => s.categoryId?.name?.toLowerCase() == 'tier 3')
+          .toList();
+      final trackWidth = sponsors.length * _tileWidth;
+      if (trackWidth <= 0) return;
 
-  void _startScrolling() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    if (!_scrollController.hasClients) return;
-    
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
-    
-    // Start from middle position for seamless loop
-    _currentScroll = maxScroll / 5;
-    _scrollController.jumpTo(_currentScroll);
-    
-    while (mounted) {
-      await Future.delayed(const Duration(milliseconds: 20));
-      if (!mounted || !_scrollController.hasClients) break;
-      
-      _currentScroll += 1.5;
-      final currentMax = _scrollController.position.maxScrollExtent;
-      
-      if (currentMax > 0 && _currentScroll >= (currentMax / 5) * 2) {
-        _currentScroll = currentMax / 5;
-      }
-      
-      if (_currentScroll <= currentMax) {
-        _scrollController.jumpTo(_currentScroll);
-      }
-    }
+      final loopMicros = _loopDuration.inMicroseconds;
+      final traveledMicros = elapsed.inMicroseconds % loopMicros;
+      final traveled = (traveledMicros / loopMicros) * trackWidth;
+      _dx.value = -traveled;
+    })..start();
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _ticker.dispose();
+    _dx.dispose();
     super.dispose();
   }
 
@@ -223,45 +211,60 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor> {
 
     if (tier3Sponsors.isEmpty) return const SizedBox.shrink();
 
-    final loopedSponsors = [
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-      ...tier3Sponsors,
-    ];
-
     return Container(
-      height: 30,
+      height: 50,
       width: Get.width,
       decoration: BoxDecoration(
         color: AppColors.primaryColor.withValues(alpha: 0.1)
       ),
-      child: ListView.builder(
-        controller: _scrollController,
-        itemCount: loopedSponsors.length,
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          final sponsor = loopedSponsors[index];
-          return Row(
-            children: [
-              if (sponsor.logo != null)
-                CachedNetworkImage(
-                  imageUrl: sponsor.logo!,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                  errorWidget: (context, url, error) =>
-                      const CircleAvatar(radius: 10, backgroundColor: Colors.grey),
-                ).paddingOnly(right: 5)
-              else
-                const CircleAvatar(radius: 10, backgroundColor: Colors.grey)
-                    .paddingOnly(right: 5),
-            ],
-          ).paddingOnly(right: 16);
+      clipBehavior: Clip.hardEdge,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final trackWidth = tier3Sponsors.length * _tileWidth;
+          final cycles = (constraints.maxWidth / trackWidth).ceil() + 2;
+          final repeatedSponsors = List<dynamic>.generate(
+            cycles * tier3Sponsors.length,
+            (index) => tier3Sponsors[index % tier3Sponsors.length],
+          );
+
+          final row = Row(
+            children: repeatedSponsors.map(_buildTier3Sponsor).toList(),
+          );
+
+          return ClipRect(
+            child: ValueListenableBuilder<double>(
+              valueListenable: _dx,
+              builder: (context, dx, child) {
+                return Transform.translate(
+                  offset: Offset(dx, 0),
+                  child: child,
+                );
+              },
+              child: row,
+            ),
+          );
         },
-      ).paddingOnly(left: 10),
+      ),
     ).paddingOnly(top: 10);
+  }
+
+  Widget _buildTier3Sponsor(dynamic sponsor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        width: 50,
+        height: 50,
+        child: sponsor.logo != null
+            ? CachedNetworkImage(
+                imageUrl: sponsor.logo!,
+                width: 50,
+                height: 50,
+                fit: BoxFit.fill,
+                placeholder: (context, url) => const ColoredBox(color: Colors.grey),
+                errorWidget: (context, url, error) => const ColoredBox(color: Colors.grey),
+              )
+            : const ColoredBox(color: Colors.grey),
+      ),
+    );
   }
 }

@@ -84,25 +84,35 @@ class LeaderboardScreen extends StatelessWidget {
               }),
             ],
           ),
-          body: Stack(
-            children: [
-              Column(
-                children: [
-                  TopTabBar(),
-                  const SizedBox(height: 16),
-                  const SizedBox(height: 20),
+          body: RefreshIndicator(
+            onRefresh: () => controller.fetchLeaderboardData(isRefresh: true),
+            color: AppColors.whiteColor,
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: Get.height,
+                    child: Column(
+                      children: [
+                        TopTabBar(),
+                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
-                  // ✅ Directly reactive podium
-                  Obx(() {
-                    final top3 = controller.topThreePlayers;
-                    return _buildPodiumSectionFor(top3);
-                  }),
-                ],
-              ),
+                        // ✅ Directly reactive podium
+                        Obx(() {
+                          final top3 = controller.topThreePlayers;
+                          return _buildPodiumSectionFor(top3);
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
 
-              // ✅ Directly reactive leaderboard sheet
-              _buildLeaderboardSheet(context, buttonType??""),
-            ],
+                // ✅ Directly reactive leaderboard sheet
+                _buildLeaderboardSheet(context, buttonType??""),
+              ],
+            ),
           ),
         ),
       ),
@@ -427,16 +437,6 @@ class LeaderboardScreen extends StatelessWidget {
                                       child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
                                     );
                                   }
-                                  // if (!controller.hasMoreData.value && data.isNotEmpty) {
-                                  //   return Padding(
-                                  //     padding: EdgeInsets.only(bottom: 20, top: 16),
-                                  //     child: Text(
-                                  //       'No more data to load',
-                                  //       style: TextStyle(color: Colors.grey),
-                                  //       textAlign: TextAlign.center,
-                                  //     ),
-                                  //   );
-                                  // }
                                   return const SizedBox(height: 20);
                                 });
                               },

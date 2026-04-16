@@ -22,6 +22,7 @@ class LeagueScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final String leagueTitle = Get.arguments?['leagueTitle'] ?? 'League';
     final int initialTab = Get.arguments?['initialTab'] ?? 0;
+    print(leagueTitle);
     
     if (initialTab == 1 && controller.selectedTab.value == 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -30,7 +31,13 @@ class LeagueScreen extends StatelessWidget {
     }
     
     return Scaffold(
-        appBar: primaryAppBar(title: Text(leagueTitle),centerTitle: true, context: context,),
+        appBar: primaryAppBar(
+          title: leagueTitle == 'Swoot Padel League'
+              ? SvgPicture.asset(Assets.imagesImgSwootPadelLeague, height: 22, width: 25)
+              : Text(leagueTitle),
+          centerTitle: true,
+          context: context,
+        ),
         body: Obx(() {
           if (controller.isInitialLoading.value || controller.isRefreshingTab.value) {
             return Center(

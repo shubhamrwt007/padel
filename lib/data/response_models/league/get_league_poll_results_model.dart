@@ -72,6 +72,7 @@ class Clubs {
   String? clubId;
   int? votes;
   dynamic? percentage;
+  String? rgbColor;
 
   Clubs({
     this.clubName,
@@ -79,6 +80,7 @@ class Clubs {
     this.clubId,
     this.votes,
     this.percentage,
+    this.rgbColor,
   });
 
   factory Clubs.fromJson(Map<String, dynamic> json) {
@@ -88,6 +90,7 @@ class Clubs {
       clubId: json['clubId'],
       votes: json['votes'],
       percentage: json['percentage'],
+      rgbColor: json['rgbColor'],
     );
   }
 
@@ -98,6 +101,7 @@ class Clubs {
       'clubId': clubId,
       'votes': votes,
       'percentage': percentage,
+      'rgbColor': rgbColor,
     };
   }
 }

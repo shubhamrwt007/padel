@@ -7,7 +7,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
 import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
+import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart'
+    as LeagueModel;
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/drawer/zoom_drawer_controller.dart';
@@ -15,6 +16,7 @@ import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart'
 import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/find_a_player_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/widgets/league_sponsor_widgets.dart';
+import 'package:padel_mobile/presentations/main_home_page/widgets/seamless_banner_swiper.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:padel_mobile/presentations/home/widget/custom_skelton_loader.dart';
@@ -30,6 +32,7 @@ import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import '../../data/request_models/home_models/get_club_name_model.dart';
 import '../../data/request_models/booking/boking_history_model.dart';
 import 'dart:developer';
+
 class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
   final WalletController walletController = Get.put(WalletController());
@@ -84,9 +87,16 @@ class MainHomeScreen extends StatelessWidget {
           ],
         ),
         action: [
-          IconButton(onPressed: (){
-            Get.to(TutorialScreen(buttonType: "home",));
-          }, icon: Icon(CupertinoIcons.question_circle,size: 24,color: Colors.white,)),
+          IconButton(
+            onPressed: () {
+              Get.to(TutorialScreen(buttonType: "home"));
+            },
+            icon: Icon(
+              CupertinoIcons.question_circle,
+              size: 24,
+              color: Colors.white,
+            ),
+          ),
           GestureDetector(
             onTap: () {
               Get.toNamed(RoutesName.notification);
@@ -101,8 +111,7 @@ class MainHomeScreen extends StatelessWidget {
                     color: Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child:
-                  Icon(
+                  child: Icon(
                     Icons.notifications,
                     color: AppColors.whiteColor,
                     size: 25,
@@ -142,9 +151,9 @@ class MainHomeScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
-              onTap: ()=>Get.toNamed(RoutesName.wallet),
+              onTap: () => Get.toNamed(RoutesName.wallet),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 7,vertical: 2),
+                padding: EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: Colors.transparent,
@@ -157,15 +166,23 @@ class MainHomeScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    SvgPicture.asset(Assets.imagesIcWallet2,height: 20,width: 20,).paddingOnly(right: 4),
-                    Obx(() => Text(
-                      formatWalletAmount(walletController.walletBalance.value),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.whiteColor,
+                    SvgPicture.asset(
+                      Assets.imagesIcWallet2,
+                      height: 20,
+                      width: 20,
+                    ).paddingOnly(right: 4),
+                    Obx(
+                      () => Text(
+                        formatWalletAmount(
+                          walletController.walletBalance.value,
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.whiteColor,
+                        ),
                       ),
-                    ))
+                    ),
                   ],
                 ),
               ),
@@ -184,7 +201,15 @@ class MainHomeScreen extends StatelessWidget {
             child: RefreshIndicator(
               color: Colors.white,
               onRefresh: () async {
-                final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+                final locationId =
+                    controller
+                        .profileController
+                        .profileModel
+                        .value
+                        ?.response
+                        ?.city
+                        ?.sId ??
+                    "68c94a94d72a6f9769712ff0";
                 await controller.homeController.fetchBookings(
                   categoryId: controller.selectedCategoryId.value,
                   locationId: locationId,
@@ -216,8 +241,10 @@ class MainHomeScreen extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Obx(() {
-                        final profile = controller.profileController.profileModel.value;
-                        final recentMatches = profile?.response?.recentMatches ?? [];
+                        final profile =
+                            controller.profileController.profileModel.value;
+                        final recentMatches =
+                            profile?.response?.recentMatches ?? [];
 
                         if (recentMatches.length >= 5) {
                           return Column(
@@ -264,7 +291,9 @@ class MainHomeScreen extends StatelessWidget {
                         return Column(
                           children: [
                             _sectionTitle("Top players near you", () {
-                              Get.to(()=>LeaderboardScreen(buttonType: "drawer",));
+                              Get.to(
+                                () => LeaderboardScreen(buttonType: "drawer"),
+                              );
                             }),
                             const SizedBox(height: 5),
                             _players(),
@@ -276,7 +305,8 @@ class MainHomeScreen extends StatelessWidget {
                     }),
                     Obx(() {
                       final matches = controller.openMatches.value?.data ?? [];
-                      if (matches.isEmpty && !controller.isLoadingOpenMatches.value) {
+                      if (matches.isEmpty &&
+                          !controller.isLoadingOpenMatches.value) {
                         return const SizedBox.shrink();
                       }
                       return Column(
@@ -299,6 +329,7 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
+
   /// SPORT TAB SELECTOR
   Widget _buildSportTabSelector() {
     return Container(
@@ -307,10 +338,7 @@ class MainHomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.creamColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE8E8E8),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE8E8E8), width: 1),
       ),
       child: Obx(() {
         final selected = controller.selectedSportTab.value;
@@ -332,10 +360,7 @@ class MainHomeScreen extends StatelessWidget {
                     gradient: const LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFFEEF2FF),
-                        Color(0xFFE0E7FF),
-                      ],
+                      colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
@@ -463,6 +488,7 @@ class MainHomeScreen extends StatelessWidget {
       }),
     );
   }
+
   Widget _buildAppBarTitle(BuildContext context) {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
@@ -493,16 +519,18 @@ class MainHomeScreen extends StatelessWidget {
                   TextSpan(
                     text: AppStrings.hello,
                     style: Get.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                        fontSize: 15),
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
                   ),
                   TextSpan(
                     text: "$displayName!",
                     style: Get.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        fontSize: 15),
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
@@ -515,7 +543,9 @@ class MainHomeScreen extends StatelessWidget {
                   Text(
                     location,
                     style: Get.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w500, color: Colors.white),
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -526,20 +556,15 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildSwootTitle(String? leagueName){
+  Widget _buildSwootTitle(String? leagueName) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: [
-          Text(
-            leagueName ?? "",
-            style: Get.textTheme.headlineMedium,
-          ),
-
-        ],
+        children: [Text(leagueName ?? "", style: Get.textTheme.headlineMedium)],
       ),
     );
   }
+
   /// LEAGUE SECTION
   Widget _buildLeagueComingSoon() => _LeagueComingSoonWidget(
     controller: controller,
@@ -589,26 +614,30 @@ class MainHomeScreen extends StatelessWidget {
   //   );
   // }
 
-
-  Widget _buildLeagueLiveMatch(){
+  Widget _buildLeagueLiveMatch() {
     return Obx(() {
       final scheduleData = controller.scheduleMatches.value?.data ?? [];
       final upcomingData = controller.upcomingMatches.value?.data ?? [];
-      
-      final allLiveMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-      final allUpcomingMatches = upcomingData.expand((data) => data.matches ?? []).toList();
-      
+
+      final allLiveMatches = scheduleData
+          .expand((data) => data.matches ?? [])
+          .toList();
+      final allUpcomingMatches = upcomingData
+          .expand((data) => data.matches ?? [])
+          .toList();
+
       // If both live and upcoming are empty, show coming soon
-      if (allLiveMatches.isEmpty && allUpcomingMatches.isEmpty && 
-          !controller.isLoadingScheduleMatches.value && 
+      if (allLiveMatches.isEmpty &&
+          allUpcomingMatches.isEmpty &&
+          !controller.isLoadingScheduleMatches.value &&
           !controller.isLoadingUpcomingMatches.value) {
         return _buildLeagueComingSoon();
       }
-      
+
       // Get league data from active leagues
       final leagues = controller.activeLeagues.value?.data ?? [];
       final currentLeague = leagues.isNotEmpty ? leagues.first : null;
-      
+
       // Otherwise show the league section
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,20 +646,24 @@ class MainHomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Obx(() {
             final scheduleData = controller.scheduleMatches.value?.data ?? [];
-            final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
-            
+            final allMatches = scheduleData
+                .expand((data) => data.matches ?? [])
+                .toList();
+
             if (controller.isLoadingScheduleMatches.value) {
               return Container(
                 height: 200,
                 margin: const EdgeInsets.symmetric(horizontal: 18),
-                child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
+                child: Center(
+                  child: LoadingWidget(color: AppColors.primaryColor),
+                ),
               );
             }
-            
+
             if (scheduleData.isEmpty || allMatches.isEmpty) {
               return _upcomingMatchCard();
             }
-            
+
             return _buildLeagueLiveMatchSlider([]);
           }),
           if (currentLeague != null) ...[
@@ -646,7 +679,7 @@ class MainHomeScreen extends StatelessWidget {
   Widget _buildLeagueLiveMatchSlider(List<Widget> cards) {
     return Obx(() {
       final scheduleData = controller.scheduleMatches.value?.data ?? [];
-      
+
       if (controller.isLoadingScheduleMatches.value) {
         return Container(
           height: 200,
@@ -654,14 +687,23 @@ class MainHomeScreen extends StatelessWidget {
           child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
         );
       }
-      
+
       if (scheduleData.isEmpty) return const SizedBox.shrink();
 
-      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      final allMatches = scheduleData
+          .expand((data) => data.matches ?? [])
+          .toList();
       if (allMatches.isEmpty) return const SizedBox.shrink();
 
       final liveMatchCards = scheduleData.expand((data) {
-        return (data.matches ?? []).map((match) => _liveMatchCard(match, data.categoryType, data.matchId?.id, data.matchId?.setsWon));
+        return (data.matches ?? []).map(
+          (match) => _liveMatchCard(
+            match,
+            data.categoryType,
+            data.matchId?.id,
+            data.matchId?.setsWon,
+          ),
+        );
       }).toList();
 
       if (liveMatchCards.length == 1) return liveMatchCards.first;
@@ -687,7 +729,10 @@ class MainHomeScreen extends StatelessWidget {
             if (idx >= liveMatchCards.length) {
               controller.leagueLiveCarouselIndex.value = 0;
             }
-            final activeIndex = controller.leagueLiveCarouselIndex.value.clamp(0, liveMatchCards.length - 1);
+            final activeIndex = controller.leagueLiveCarouselIndex.value.clamp(
+              0,
+              liveMatchCards.length - 1,
+            );
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(liveMatchCards.length, (i) {
@@ -705,25 +750,37 @@ class MainHomeScreen extends StatelessWidget {
               }),
             );
           }),
-          SizedBox(height: 10,)
+          SizedBox(height: 10),
         ],
       );
     });
   }
-  Widget _liveMatchCard(Matches? match, String? categoryType, String? matchId, SetsWon? setsWon) {
+
+  Widget _liveMatchCard(
+    Matches? match,
+    String? categoryType,
+    String? matchId,
+    SetsWon? setsWon,
+  ) {
     if (match == null) return const SizedBox.shrink();
-    
+
     return Column(
       children: [
         GestureDetector(
-          onTap: (){
-            final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
-            final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
-            Get.toNamed(RoutesName.league, arguments: {
-              'leagueId': leagueId,
-              'leagueTitle': leagueTitle,
-              'initialTab': 0,
-            })?.then((_) {
+          onTap: () {
+            final leagueId =
+                controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+            final leagueTitle =
+                controller.activeLeagues.value?.data?.firstOrNull?.leagueName ??
+                'League';
+            Get.toNamed(
+              RoutesName.league,
+              arguments: {
+                'leagueId': leagueId,
+                'leagueTitle': leagueTitle,
+                'initialTab': 0,
+              },
+            )?.then((_) {
               controller.fetchPollResults();
               controller.fetchScheduleMatches();
               controller.fetchActiveLeagues();
@@ -734,22 +791,27 @@ class MainHomeScreen extends StatelessWidget {
             height: 170,
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 18),
-            decoration:  BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
             child: Stack(
               children: [
                 Builder(
                   builder: (context) {
                     return ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,alignment: AlignmentGeometry.topCenter,));
-                  }
+                      borderRadius: BorderRadius.circular(20),
+                      child: SvgPicture.asset(
+                        Assets.imagesFipPromesisBg,
+                        fit: BoxFit.cover,
+                        width: Get.width,
+                        alignment: AlignmentGeometry.topCenter,
+                      ),
+                    );
+                  },
                 ),
                 Column(
                   children: [
                     /// LIVE TAG
                     _AnimatedLiveTag(),
+
                     /// SCORE ROW
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -758,8 +820,13 @@ class MainHomeScreen extends StatelessWidget {
                           match.teamA?.clubType ?? "Team A",
                           "https://i.pravatar.cc/150?img=1",
                           "https://i.pravatar.cc/150?img=2",
-                          (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
-                          (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
+                          (match.teamA?.players?.isNotEmpty ?? false)
+                              ? (match.teamA!.players![0].playerName ?? "")
+                              : "Player 1",
+                          (match.teamA?.players != null &&
+                                  match.teamA!.players!.length > 1)
+                              ? (match.teamA!.players![1].playerName ?? "")
+                              : "Player 2",
                           AppColors.primaryColor,
                         ),
 
@@ -767,11 +834,18 @@ class MainHomeScreen extends StatelessWidget {
                           offset: Offset(0, -15),
                           child: Column(
                             children: [
-                              Text(categoryType ?? "", style: Get.textTheme.labelMedium),
+                              Text(
+                                categoryType ?? "",
+                                style: Get.textTheme.labelMedium,
+                              ),
                               SizedBox(height: 8),
                               Text(
-                                  "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
-                                  style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42)),
+                                "${setsWon?.teamA ?? 0} : ${setsWon?.teamB ?? 0}",
+                                style: Get.textTheme.titleLarge!.copyWith(
+                                  color: AppColors.blackColor,
+                                  fontSize: 42,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -779,28 +853,52 @@ class MainHomeScreen extends StatelessWidget {
                           match.teamB?.clubType ?? "Team B",
                           "https://i.pravatar.cc/150?img=3",
                           "https://i.pravatar.cc/150?img=4",
-                          (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 1",
-                          (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 2",
+                          (match.teamB?.players?.isNotEmpty ?? false)
+                              ? (match.teamB!.players![0].playerName ?? "")
+                              : "Player 1",
+                          (match.teamB?.players != null &&
+                                  match.teamB!.players!.length > 1)
+                              ? (match.teamB!.players![1].playerName ?? "")
+                              : "Player 2",
                           AppColors.secondaryColor,
                         ),
                       ],
                     ),
                     Column(
                       children: [
-                        _AnimatedWatchLiveButton(onTap: (){
-                          final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
-                          final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
-                          Get.toNamed(RoutesName.league, arguments: {
-                            'leagueId': leagueId,
-                            'leagueTitle': leagueTitle,
-                            'initialTab': 0,
-                          })?.then((_) {
-                            controller.fetchPollResults();
-                            controller.fetchScheduleMatches();
-                            controller.fetchActiveLeagues();
-                            controller.fetchLeaderBoard();
-                          });
-                        }),
+                        _AnimatedWatchLiveButton(
+                          onTap: () {
+                            final leagueId =
+                                controller
+                                    .activeLeagues
+                                    .value
+                                    ?.data
+                                    ?.firstOrNull
+                                    ?.id ??
+                                '';
+                            final leagueTitle =
+                                controller
+                                    .activeLeagues
+                                    .value
+                                    ?.data
+                                    ?.firstOrNull
+                                    ?.leagueName ??
+                                'League';
+                            Get.toNamed(
+                              RoutesName.league,
+                              arguments: {
+                                'leagueId': leagueId,
+                                'leagueTitle': leagueTitle,
+                                'initialTab': 0,
+                              },
+                            )?.then((_) {
+                              controller.fetchPollResults();
+                              controller.fetchScheduleMatches();
+                              controller.fetchActiveLeagues();
+                              controller.fetchLeaderBoard();
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ],
@@ -812,7 +910,8 @@ class MainHomeScreen extends StatelessWidget {
       ],
     );
   }
-  Widget _upcomingMatchCard(){
+
+  Widget _upcomingMatchCard() {
     return Obx(() {
       if (controller.isLoadingUpcomingMatches.value) {
         return Container(
@@ -825,7 +924,9 @@ class MainHomeScreen extends StatelessWidget {
       final scheduleData = controller.upcomingMatches.value?.data ?? [];
       if (scheduleData.isEmpty) return const SizedBox.shrink();
 
-      final allMatches = scheduleData.expand((data) => data.matches ?? []).toList();
+      final allMatches = scheduleData
+          .expand((data) => data.matches ?? [])
+          .toList();
       if (allMatches.isEmpty) return const SizedBox.shrink();
 
       final firstMatch = allMatches.first;
@@ -841,7 +942,20 @@ class MainHomeScreen extends StatelessWidget {
         if (dateStr == null || dateStr.isEmpty) return "TBD";
         try {
           final date = DateTime.parse(dateStr);
-          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          final months = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec',
+          ];
           return "${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]}, ${date.year}";
         } catch (e) {
           return dateStr;
@@ -849,28 +963,39 @@ class MainHomeScreen extends StatelessWidget {
       }
 
       return GestureDetector(
-        onTap: (){
-          final leagueId = controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
-          final leagueTitle = controller.activeLeagues.value?.data?.firstOrNull?.leagueName ?? 'League';
-          Get.toNamed(RoutesName.league, arguments: {
-            'leagueId': leagueId,
-            'leagueTitle': leagueTitle,
-            'initialTab': 1,
-          });
+        onTap: () {
+          final leagueId =
+              controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+          final leagueTitle =
+              controller.activeLeagues.value?.data?.firstOrNull?.leagueName ??
+              'League';
+          Get.toNamed(
+            RoutesName.league,
+            arguments: {
+              'leagueId': leagueId,
+              'leagueTitle': leagueTitle,
+              'initialTab': 1,
+            },
+          );
         },
         child: Container(
           width: double.infinity,
           margin: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
           child: Stack(
             children: [
-              Image.asset(Assets.imagesImgLeagueUpcomingMatch, fit: BoxFit.cover, width: Get.width),
+              Image.asset(
+                Assets.imagesImgLeagueUpcomingMatch,
+                fit: BoxFit.cover,
+                width: Get.width,
+              ),
               Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -878,12 +1003,17 @@ class MainHomeScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircleAvatar(radius: 4, backgroundColor: AppColors.primaryColor),
+                        CircleAvatar(
+                          radius: 4,
+                          backgroundColor: AppColors.primaryColor,
+                        ),
                         SizedBox(width: 6),
                         Text(
                           "Upcoming",
                           style: Get.textTheme.labelMedium!.copyWith(
-                              fontWeight: FontWeight.w500, color: AppColors.primaryColor),
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primaryColor,
+                          ),
                         ),
                       ],
                     ),
@@ -895,25 +1025,37 @@ class MainHomeScreen extends StatelessWidget {
                         firstMatch.teamA?.clubType ?? "Team A",
                         "https://i.pravatar.cc/150?img=1",
                         "https://i.pravatar.cc/150?img=2",
-                        teamAPlayers.isNotEmpty ? (teamAPlayers[0].playerName ?? "Player 1") : "Player 1",
-                        teamAPlayers.length > 1 ? (teamAPlayers[1].playerName ?? "Player 2") : "Player 2",
+                        teamAPlayers.isNotEmpty
+                            ? (teamAPlayers[0].playerName ?? "Player 1")
+                            : "Player 1",
+                        teamAPlayers.length > 1
+                            ? (teamAPlayers[1].playerName ?? "Player 2")
+                            : "Player 2",
                         AppColors.primaryColor,
                       ),
                       Transform.translate(
-                          offset: Offset(0, -8),
-                          child: Column(
-                            children: [
-                              Text(matchData.categoryType ?? "", style: Get.textTheme.labelMedium),
-                              SizedBox(height: 8),
-                              SvgPicture.asset(Assets.imagesImgVsUpcoming),
-                            ],
-                          )),
+                        offset: Offset(0, -8),
+                        child: Column(
+                          children: [
+                            Text(
+                              matchData.categoryType ?? "",
+                              style: Get.textTheme.labelMedium,
+                            ),
+                            SizedBox(height: 8),
+                            SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                          ],
+                        ),
+                      ),
                       _teamColumn(
                         firstMatch.teamB?.clubType ?? "Team B",
                         "https://i.pravatar.cc/150?img=3",
                         "https://i.pravatar.cc/150?img=4",
-                        teamBPlayers.isNotEmpty ? (teamBPlayers[0].playerName ?? "Player 1") : "Player 1",
-                        teamBPlayers.length > 1 ? (teamBPlayers[1].playerName ?? "Player 2") : "Player 2",
+                        teamBPlayers.isNotEmpty
+                            ? (teamBPlayers[0].playerName ?? "Player 1")
+                            : "Player 1",
+                        teamBPlayers.length > 1
+                            ? (teamBPlayers[1].playerName ?? "Player 2")
+                            : "Player 2",
                         AppColors.primaryColor,
                       ),
                     ],
@@ -925,13 +1067,21 @@ class MainHomeScreen extends StatelessWidget {
                       // });
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
-                          borderRadius: BorderRadius.circular(30)),
-                      child: Text(formatDate(matchData.date),
-                          style: Get.textTheme.labelMedium!
-                              .copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
+                        color: AppColors.primaryColor,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Text(
+                        formatDate(matchData.date),
+                        style: Get.textTheme.labelMedium!.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -943,29 +1093,27 @@ class MainHomeScreen extends StatelessWidget {
     });
   }
 
-
-
   Widget _teamColumn(
-      String team,
-      String img1,
-      String img2,
-      String name1,
-      String name2,
-      Color color,
-      ) {
+    String team,
+    String img1,
+    String img2,
+    String name1,
+    String name2,
+    Color color,
+  ) {
     return SizedBox(
       width: 130,
       child: Column(
         children: [
           /// TEAM LABEL
           Container(
-            width: Get.width*0.2,
+            width: Get.width * 0.2,
             color: Colors.transparent,
             alignment: Alignment.center,
             child: Text(
               overflow: TextOverflow.ellipsis,
               team,
-              style:Get.textTheme.headlineMedium!.copyWith(color: color)
+              style: Get.textTheme.headlineMedium!.copyWith(color: color),
             ),
           ),
 
@@ -978,25 +1126,27 @@ class MainHomeScreen extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _avatarWithInitials(name1, 0,color),
-                _avatarWithInitials(name2, 24,color),
+                _avatarWithInitials(name1, 0, color),
+                _avatarWithInitials(name2, 24, color),
               ],
             ),
           ),
 
-
           /// NAMES
           Text(
-              "$name1 &\n$name2",
-              textAlign: TextAlign.center,
-              style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,fontSize: 11)
+            "$name1 &\n$name2",
+            textAlign: TextAlign.center,
+            style: Get.textTheme.labelMedium!.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
     );
   }
-  
-  Widget _avatarWithInitials(String name, double left,Color? color) {
+
+  Widget _avatarWithInitials(String name, double left, Color? color) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
       final words = fullName.trim().split(' ');
@@ -1011,10 +1161,7 @@ class MainHomeScreen extends StatelessWidget {
         width: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white, width: 2),
           color: color,
         ),
         child: Center(
@@ -1031,22 +1178,23 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-
   /// BOOKING SECTION
   Widget _bookingSection() {
     return Obx(() {
       final homeController = controller.homeController;
-      
+
       // Show shimmer while loading
       if (homeController.isLoadingBookings.value) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: bookingShimmer(),
         );
       }
 
       final bookings = homeController.bookings.value?.data ?? [];
-      final filteredBookings = bookings.where((b) => b.openMatchId?.openMatchStatus != "pending").toList();
+      final filteredBookings = bookings
+          .where((b) => b.openMatchId?.openMatchStatus != "pending")
+          .toList();
 
       if (filteredBookings.isEmpty) {
         return SizedBox.shrink();
@@ -1066,15 +1214,16 @@ class MainHomeScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       final bottomNavController =
-                      Get.find<BottomNavigationController>();
+                          Get.find<BottomNavigationController>();
                       bottomNavController.updateIndex(1);
                     },
                     child: Container(
                       color: Colors.transparent,
                       child: Text(
                         "See all",
-                        style: Get.textTheme.labelLarge!
-                            .copyWith(color: AppColors.primaryColor),
+                        style: Get.textTheme.labelLarge!.copyWith(
+                          color: AppColors.primaryColor,
+                        ),
                       ),
                     ),
                   ),
@@ -1092,12 +1241,14 @@ class MainHomeScreen extends StatelessWidget {
   Widget _clubTicketList() {
     return Obx(() {
       final allBookings = controller.homeController.bookings.value?.data ?? [];
-      final filteredBookings = allBookings.where((b) => b.openMatchId?.openMatchStatus != "pending").toList();
-      
+      final filteredBookings = allBookings
+          .where((b) => b.openMatchId?.openMatchStatus != "pending")
+          .toList();
+
       if (filteredBookings.isEmpty) {
         return SizedBox.shrink();
       }
-      
+
       return SizedBox(
         height: 80,
         child: ListView.builder(
@@ -1116,14 +1267,18 @@ class MainHomeScreen extends StatelessWidget {
     final isOngoing = controller.homeController.isBookingOngoing(b);
 
     return GestureDetector(
-      onTap: controller.selectedSportTab.value == 1 ? null : () {
-        if (!controller.homeController.isCheckingScoreboard.value) {
-          final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
-          if (id != null && id.isNotEmpty) {
-            controller.homeController.createScoreBoard(bookingId: id);
-          }
-        }
-      },
+      onTap: controller.selectedSportTab.value == 1
+          ? null
+          : () {
+              if (!controller.homeController.isCheckingScoreboard.value) {
+                final id = b.bookingType == "openMatch"
+                    ? b.openMatchId?.sId
+                    : b.sId;
+                if (id != null && id.isNotEmpty) {
+                  controller.homeController.createScoreBoard(bookingId: id);
+                }
+              }
+            },
       child: Obx(() {
         final id = b.bookingType == "openMatch" ? b.openMatchId?.sId : b.sId;
         final isLoading =
@@ -1145,18 +1300,18 @@ class MainHomeScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: isOngoing
                       ? [
-                    Color(0xffFFEBEE),
-                    Color(0xffFFCDD2).withValues(alpha: 0.3)
-                  ]
+                          Color(0xffFFEBEE),
+                          Color(0xffFFCDD2).withValues(alpha: 0.3),
+                        ]
                       : b.bookingType == "regular"
                       ? [
-                    Color(0xffF0FFF4),
-                    Color(0xffC6F6D5).withValues(alpha: 0.3)
-                  ]
+                          Color(0xffF0FFF4),
+                          Color(0xffC6F6D5).withValues(alpha: 0.3),
+                        ]
                       : [
-                    Color(0xffF3F7FF),
-                    Color(0xff9EBAFF).withValues(alpha: 0.3)
-                  ],
+                          Color(0xffF3F7FF),
+                          Color(0xff9EBAFF).withValues(alpha: 0.3),
+                        ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -1254,17 +1409,14 @@ class MainHomeScreen extends StatelessWidget {
       child: ClipOval(
         child: (club?.logo != null && club!.logo!.isNotEmpty)
             ? CachedNetworkImage(
-          imageUrl: club.logo!,
-          fit: BoxFit.cover,
-          placeholder: (_, __) =>
-              LoadingWidget(color: AppColors.primaryColor),
-          errorWidget: (_, __, ___) =>
-              Image.asset(Assets.imagesImgHomeLogo),
-        )
-            : Image.asset(
-          Assets.imagesImgHomeLogo,
-          fit: BoxFit.cover,
-        ),
+                imageUrl: club.logo!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    LoadingWidget(color: AppColors.primaryColor),
+                errorWidget: (_, __, ___) =>
+                    Image.asset(Assets.imagesImgHomeLogo),
+              )
+            : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.cover),
       ),
     );
   }
@@ -1275,7 +1427,7 @@ class MainHomeScreen extends StatelessWidget {
     if (club?.locations != null && club!.locations!.isNotEmpty) {
       cityName = club.locations![0].city?.capitalizeFirst ?? "N/A";
     }
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1285,21 +1437,28 @@ class MainHomeScreen extends StatelessWidget {
           child: Text(
             club?.clubName ?? "N/A",
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.blackColor, fontSize: 12),
+              color: AppColors.blackColor,
+              fontSize: 12,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         Row(
           children: [
-            Image.asset(Assets.imagesIcLocation,
-                scale: 3, color: AppColors.blackColor),
+            Image.asset(
+              Assets.imagesIcLocation,
+              scale: 3,
+              color: AppColors.blackColor,
+            ),
             const SizedBox(width: 2),
             SizedBox(
               width: Get.width * 0.3,
               child: Text(
                 cityName,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.blackColor, fontSize: 10),
+                  color: AppColors.blackColor,
+                  fontSize: 10,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1323,16 +1482,22 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bookingTimeInfo(BuildContext context, BookingHistoryData b, bool isOngoing) {
+  Widget _bookingTimeInfo(
+    BuildContext context,
+    BookingHistoryData b,
+    bool isOngoing,
+  ) {
     String formattedDateTime = '';
     if (b.bookingDate != null) {
       try {
         final date = DateTime.parse(b.bookingDate!);
         final dateStr = DateFormat('dd MMM').format(date);
-        final timeRange = (b.startTime != null && b.endTime != null) 
+        final timeRange = (b.startTime != null && b.endTime != null)
             ? '${b.startTime?.split(' ').first}–${b.endTime}'
             : '';
-        formattedDateTime = timeRange.isNotEmpty ? '$dateStr, $timeRange' : dateStr;
+        formattedDateTime = timeRange.isNotEmpty
+            ? '$dateStr, $timeRange'
+            : dateStr;
       } catch (e) {
         formattedDateTime = '';
       }
@@ -1367,106 +1532,248 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _banner() {
-    return Obx(() => CarouselSlider.builder(
-      itemCount: controller.bannerImages.length,
-      itemBuilder: (context, index, realIndex) {
-        return Container(
-          width: Get.width,
-          margin: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryColor.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    controller.bannerImages[index],
-                    fit: BoxFit.cover,
-                    alignment: Alignment(0, -0.3),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.black.withValues(alpha: 0.65),
-                        ],
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Transform.translate(
-                            offset: Offset(0, -5),
-                            child: Text("Discover, Book",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-                        Transform.translate(
-                            offset: Offset(0, -10),
-                            child: Text("and Play",style: Get.textTheme.titleMedium!.copyWith(color: Colors.white,))),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => controller.onBannerTap(index),
-                          child: Container(
-                            width: Get.width * 0.35,
-                            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(40),
-                              color: Colors.white,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "BOOK NOW!",
-                                  style: Get.textTheme.titleSmall!.copyWith(fontSize: 12,fontWeight: FontWeight.w600),
-                                ).paddingOnly(left: 10),
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: AppColors.primaryColor,
-                                  child: const Icon(Icons.arrow_forward, color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return Obx(() {
+      final images = controller.bannerImages;
+      if (images.isEmpty) return const SizedBox.shrink();
+
+      return SeamlessBannerSwiper(
+        key: ValueKey(images.join('|')),
+        images: images,
+        height: 170,
+        autoPlayInterval: const Duration(seconds: 4),
+        autoPlayAnimationDuration: const Duration(milliseconds: 700),
+        onTap: controller.onBannerTap,
+        onIndexChanged: (index) => controller.currentBannerIndex.value = index,
+      );
+    });
+  }
+
+  /*
+  /// Simple swiper (PageView) with seamless wrap (last -> first).
+  /// Duplicate first/last pages are used; wrap jump is done instantly after animation ends.
+class _SeamlessBannerSwiper extends StatefulWidget {
+  final List<String> images;
+  final double height;
+  final Duration autoPlayInterval;
+  final Duration autoPlayAnimationDuration;
+  final void Function(int index) onTap;
+  final ValueChanged<int> onIndexChanged;
+
+  const _SeamlessBannerSwiper({
+    required this.images,
+    required this.height,
+    required this.autoPlayInterval,
+    required this.autoPlayAnimationDuration,
+    required this.onTap,
+    required this.onIndexChanged,
+  });
+
+  @override
+  State<_SeamlessBannerSwiper> createState() => _SeamlessBannerSwiperState();
+}
+
+class _SeamlessBannerSwiperState extends State<_SeamlessBannerSwiper> {
+  late final PageController _pageController;
+  Timer? _timer;
+  bool _isAnimating = false;
+  int _currentPage = 1; // extended page index
+
+  int get _len => widget.images.length;
+
+  int _effectiveIndexFromPage(int pageIndex) {
+    if (_len <= 0) return 0;
+    if (pageIndex == 0) return _len - 1;
+    if (pageIndex == _len + 1) return 0;
+    return pageIndex - 1;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final initialPage = 1;
+    _currentPage = initialPage;
+    _pageController = PageController(initialPage: initialPage);
+
+    if (_len > 1) {
+      _timer = Timer.periodic(widget.autoPlayInterval, (_) => _goNext());
+    }
+
+    // Assets cache warm up: next image decode lag ko reduce karega.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final path in widget.images) {
+        precacheImage(AssetImage(path), context);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _goNext() {
+    if (!mounted || _isAnimating || _len <= 1) return;
+
+    final nextPage = _currentPage + 1;
+    _isAnimating = true;
+    _pageController
+        .animateToPage(
+          nextPage,
+          duration: widget.autoPlayAnimationDuration,
+          curve: Curves.easeInOutCubic,
+        )
+        .whenComplete(() {
+          if (!mounted) return;
+          _isAnimating = false;
+        });
+  }
+
+  void _handlePageChanged(int pageIndex) {
+    final effectiveIndex = _effectiveIndexFromPage(pageIndex);
+    widget.onIndexChanged(effectiveIndex);
+
+    if (pageIndex == 0) {
+      // Jump to the real "last" page (which is extended page == len).
+      _currentPage = _len;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _pageController.jumpToPage(_len);
+      });
+    } else if (pageIndex == _len + 1) {
+      // Jump to the real "first" page (extended page == 1).
+      _currentPage = 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _pageController.jumpToPage(1);
+      });
+    } else {
+      _currentPage = pageIndex;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_len == 0) return const SizedBox.shrink();
+    final itemCount = _len + 2; // [last] + [real items] + [first]
+
+    return SizedBox(
+      height: widget.height,
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: itemCount,
+        onPageChanged: _handlePageChanged,
+        itemBuilder: (context, pageIndex) {
+          final effectiveIndex = _effectiveIndexFromPage(pageIndex);
+          final imagePath = widget.images[effectiveIndex];
+
+          return Container(
+            width: Get.width,
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
-          ),
-        );
-      },
-      options: CarouselOptions(
-        height: 140,
-        viewportFraction: 1.0,
-        enlargeCenterPage: false,
-        autoPlay: true,
-        autoPlayInterval: const Duration(seconds: 4),
-        autoPlayAnimationDuration: const Duration(milliseconds: 800),
-        autoPlayCurve: Curves.easeInOutCubic,
-        pageSnapping: true,
-        onPageChanged: (index, reason) {
-          controller.currentBannerIndex.value = index;
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0, -0.3),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.1),
+                            Colors.black.withValues(alpha: 0.4),
+                            Colors.black.withValues(alpha: 0.65),
+                          ],
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Transform.translate(
+                            offset: const Offset(0, -5),
+                            child: Text(
+                              "Discover, Book",
+                              style: Get.textTheme.titleMedium!
+                                  .copyWith(color: Colors.white),
+                            ),
+                          ),
+                          Transform.translate(
+                            offset: const Offset(0, -10),
+                            child: Text(
+                              "and Play",
+                              style: Get.textTheme.titleMedium!
+                                  .copyWith(color: Colors.white),
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => widget.onTap(effectiveIndex),
+                            child: Container(
+                              width: Get.width * 0.35,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 3, horizontal: 3),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(40),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "BOOK NOW!",
+                                    style: Get.textTheme.titleSmall!.copyWith(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ).paddingOnly(left: 10),
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: AppColors.primaryColor,
+                                    child: const Icon(
+                                      Icons.arrow_forward,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
-    ));
+    );
   }
+}
+
+*/
 
   /// QUICK ACTIONS
   Widget _quickActions() {
@@ -1477,7 +1784,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "book",
         "boxSize": 70.0,
         "iconSize": 34.0,
-        "offset": Offset(0, 3)
+        "offset": Offset(0, 3),
       },
       {
         "icon": Assets.imagesIcOpenMatchNew,
@@ -1485,7 +1792,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "match",
         "boxSize": 70.0,
         "iconSize": 34.0,
-        "offset": Offset(0, 4)
+        "offset": Offset(0, 4),
       },
       {
         "icon": Assets.imagesIcFindAPlayer,
@@ -1493,7 +1800,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "player",
         "boxSize": 70.0,
         "iconSize": 40.0,
-        "offset": Offset(0, 4)
+        "offset": Offset(0, 4),
       },
       {
         "icon": Assets.imagesIcSpl,
@@ -1501,7 +1808,7 @@ class MainHomeScreen extends StatelessWidget {
         "action": "league",
         "boxSize": 70.0,
         "iconSize": 37.0,
-        "offset": Offset(0, 6)
+        "offset": Offset(0, 6),
       },
     ];
 
@@ -1518,7 +1825,9 @@ class MainHomeScreen extends StatelessWidget {
           final showComingSoon = isLeague && leagueEmpty;
 
           return GestureDetector(
-            onTap: showComingSoon ? null : () => _handleQuickAction(e["action"] as String),
+            onTap: showComingSoon
+                ? null
+                : () => _handleQuickAction(e["action"] as String),
             child: Column(
               children: [
                 Container(
@@ -1529,10 +1838,7 @@ class MainHomeScreen extends StatelessWidget {
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF3F56D6),
-                        Color(0xFF2B44C4),
-                      ],
+                      colors: [Color(0xFF3F56D6), Color(0xFF2B44C4)],
                     ),
                   ),
                   child: Stack(
@@ -1611,26 +1917,37 @@ class MainHomeScreen extends StatelessWidget {
   void _handleQuickAction(String action) {
     switch (action) {
       case 'book':
-        Get.toNamed(RoutesName.bookACourt,arguments: {});
+        Get.toNamed(RoutesName.bookACourt, arguments: {});
         break;
       case 'match':
         final categoryId = controller.selectedCategoryId.value;
-        final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-        Get.toNamed(RoutesName.openMatchForAllCourts, arguments: {
-          'categoryId': categoryId,
-          'location': locationId,
-        });
+        final locationId =
+            controller
+                .profileController
+                .profileModel
+                .value
+                ?.response
+                ?.city
+                ?.sId ??
+            "68c94a94d72a6f9769712ff0";
+        Get.toNamed(
+          RoutesName.openMatchForAllCourts,
+          arguments: {'categoryId': categoryId, 'location': locationId},
+        );
         break;
       case 'league':
         final leagues = controller.activeLeagues.value?.data ?? [];
         if (leagues.isNotEmpty) {
           final leagueId = leagues.first.id;
           final leagueTitle = leagues.first.leagueName;
-          Get.toNamed(RoutesName.league, arguments: {
-            'leagueId': leagueId,
-            'leagueTitle': leagueTitle,
-            'initialTab': 1,
-          })?.then((_) {
+          Get.toNamed(
+            RoutesName.league,
+            arguments: {
+              'leagueId': leagueId,
+              'leagueTitle': leagueTitle,
+              'initialTab': 1,
+            },
+          )?.then((_) {
             controller.fetchPollResults();
             controller.fetchScheduleMatches();
             controller.fetchActiveLeagues();
@@ -1641,10 +1958,7 @@ class MainHomeScreen extends StatelessWidget {
       case 'player':
         Get.bottomSheet(
           backgroundColor: Colors.transparent,
-          SizedBox(
-            height: Get.height,
-            child: FindPlayerScreen(),
-          ),
+          SizedBox(height: Get.height, child: FindPlayerScreen()),
           isScrollControlled: true,
         );
         break;
@@ -1663,9 +1977,12 @@ class MainHomeScreen extends StatelessWidget {
             onTap: onTap,
             child: Container(
               color: Colors.transparent,
-              child: Text("View all",
-                  style: Get.textTheme.labelLarge!
-                      .copyWith(color: AppColors.primaryColor)),
+              child: Text(
+                "View all",
+                style: Get.textTheme.labelLarge!.copyWith(
+                  color: AppColors.primaryColor,
+                ),
+              ),
             ),
           ),
         ],
@@ -1737,28 +2054,43 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildCourtCarouselCard(BuildContext context, Courts court) {
-    final courtDetails = court.courts?.isNotEmpty == true ? court.courts![0] : null;
+    final courtDetails = court.courts?.isNotEmpty == true
+        ? court.courts![0]
+        : null;
     final courtCount = courtDetails?.courtCount ?? 0;
     final features = courtDetails?.features ?? [];
-    final locationDetails = court.locations?.isNotEmpty == true ? court.locations![0] : null;
+    final locationDetails = court.locations?.isNotEmpty == true
+        ? court.locations![0]
+        : null;
     final city = locationDetails?.city ?? court.city ?? "";
     // final zipCode = locationDetails?.zipCode ?? court.zipCode ?? "";
-    
+
     return GestureDetector(
       onTap: () {
         log("CLUB ID -> ${court.id}");
-        log(" ID -> ${court.courts?[0].id??""}");
+        log(" ID -> ${court.courts?[0].id ?? ""}");
         log("locationsId => ${court.locations?[0].id}");
         if (court.id != null) {
           Get.delete<BookingController>();
-          Get.toNamed(RoutesName.booking,
-              arguments: {
-            "data": court,
-            "clubId": court.id,
-            "sID":court.courts?[0].id??"",
-            "categoryId":controller.selectedCategoryId.value,
-            "locationsId": court.locations?[0].id,
-            "location":controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0"});
+          Get.toNamed(
+            RoutesName.booking,
+            arguments: {
+              "data": court,
+              "clubId": court.id,
+              "sID": court.courts?[0].id ?? "",
+              "categoryId": controller.selectedCategoryId.value,
+              "locationsId": court.locations?[0].id,
+              "location":
+                  controller
+                      .profileController
+                      .profileModel
+                      .value
+                      ?.response
+                      ?.city
+                      ?.sId ??
+                  "68c94a94d72a6f9769712ff0",
+            },
+          );
         }
       },
       child: Padding(
@@ -1784,10 +2116,7 @@ class MainHomeScreen extends StatelessWidget {
                           fit: BoxFit.cover,
                         ),
                       )
-                    : Image.asset(
-                        Assets.imagesImgHomeLogo,
-                        fit: BoxFit.cover,
-                      ),
+                    : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.cover),
               ),
 
               /// BLACK GRADIENT
@@ -1834,8 +2163,9 @@ class MainHomeScreen extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
                   decoration: BoxDecoration(
-                      color: Colors.black26,
-                      borderRadius: BorderRadius.circular(10)),
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1847,22 +2177,28 @@ class MainHomeScreen extends StatelessWidget {
                             width: Get.width * 0.5,
                             child: Text(
                               court.clubName ?? "N/A",
-                              style: Get.textTheme.titleMedium!
-                                  .copyWith(color: Colors.white, fontSize: 16),
+                              style: Get.textTheme.titleMedium!.copyWith(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.star,
-                                  color: Colors.green, size: 16),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.green,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               const Text(
                                 "0",
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600),
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
@@ -1871,14 +2207,19 @@ class MainHomeScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.green, size: 14),
+                          const Icon(
+                            Icons.location_on,
+                            color: Colors.green,
+                            size: 14,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               city,
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(color: Colors.white70, fontSize: 9),
+                              style: Get.textTheme.bodySmall!.copyWith(
+                                color: Colors.white70,
+                                fontSize: 9,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1888,8 +2229,10 @@ class MainHomeScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         "$courtCount Courts | ${features.isNotEmpty ? features.join(' | ') : 'Available'}",
-                        style: Get.textTheme.bodySmall!
-                            .copyWith(color: Colors.white70, fontSize: 9),
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: Colors.white70,
+                          fontSize: 9,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1899,13 +2242,17 @@ class MainHomeScreen extends StatelessWidget {
                           Text(
                             "Booking Price",
                             style: Get.textTheme.headlineLarge!.copyWith(
-                                color: AppColors.secondaryColor, fontSize: 12),
+                              color: AppColors.secondaryColor,
+                              fontSize: 12,
+                            ),
                           ),
                           const Spacer(),
                           Text(
                             "₹ ${formatAmount(court.totalAmount ?? 0)}",
-                            style: Get.textTheme.titleMedium!
-                                .copyWith(color: Colors.white, fontSize: 14),
+                            style: Get.textTheme.titleMedium!.copyWith(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
@@ -1972,14 +2319,16 @@ class MainHomeScreen extends StatelessWidget {
               width: 120,
               padding: EdgeInsets.symmetric(horizontal: 5),
               decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.4),
-                        spreadRadius: 1.5,
-                        blurRadius: 5.0)
-                  ]),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    spreadRadius: 1.5,
+                    blurRadius: 5.0,
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1987,65 +2336,72 @@ class MainHomeScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 26,
                     backgroundColor: AppColors.secondaryColor,
-                    child: player.profilePic != null && player.profilePic!.isNotEmpty
+                    child:
+                        player.profilePic != null &&
+                            player.profilePic!.isNotEmpty
                         ? CachedNetworkImage(
-                      imageUrl: player.profilePic!,
-                      imageBuilder: (context, imageProvider) => CircleAvatar(
-                        radius: 24,
-                        backgroundImage: imageProvider,
-                      ),
-                      placeholder: (context, url) => CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.secondaryColor,
-                        child: Text(
-                          _getInitials(player.name ?? ""),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.secondaryColor,
-                        child: Text(
-                          _getInitials(player.name ?? ""),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    )
+                            imageUrl: player.profilePic!,
+                            imageBuilder: (context, imageProvider) =>
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: imageProvider,
+                                ),
+                            placeholder: (context, url) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.secondaryColor,
+                              child: Text(
+                                _getInitials(player.name ?? ""),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: AppColors.secondaryColor,
+                              child: Text(
+                                _getInitials(player.name ?? ""),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          )
                         : CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppColors.primaryColor,
-                      child: Text(
-                        _getInitials(player.name ?? ""),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                            radius: 24,
+                            backgroundColor: AppColors.primaryColor,
+                            child: Text(
+                              _getInitials(player.name ?? ""),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                   ),
                   Transform.translate(
                     offset: Offset(0, -5),
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: AppColors.secondaryColor),
-                      child: Text("${formatAmount(player.xpPoints ?? 0)} XP",
-                          style: Get.textTheme.labelMedium!
-                              .copyWith(color: Colors.white)),
+                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.secondaryColor,
+                      ),
+                      child: Text(
+                        "${formatAmount(player.xpPoints ?? 0)} XP",
+                        style: Get.textTheme.labelMedium!.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                   Text(
-                    player.name?.capitalizeFirstChar() ??"Unknown Player",
+                    player.name?.capitalizeFirstChar() ?? "Unknown Player",
                     style: Get.textTheme.labelLarge!.copyWith(fontSize: 12),
                     maxLines: 2,
                     textAlign: TextAlign.center,
@@ -2053,7 +2409,7 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ).paddingOnly(top: 10,bottom: 10);
+            ).paddingOnly(top: 10, bottom: 10);
           },
         ),
       );
@@ -2080,13 +2436,7 @@ class MainHomeScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              children: [
-                _leaderboardCard(),
-                SizedBox(
-                  height: 10,
-                ),
-                _xpCard(),
-              ],
+              children: [_leaderboardCard(), SizedBox(height: 10), _xpCard()],
             ),
           ),
         ],
@@ -2103,16 +2453,15 @@ class MainHomeScreen extends StatelessWidget {
       final winPercentage = (winRatio * 100).round();
 
       return GestureDetector(
-        onTap: () => Get.to(EditProfileUi(
-          buttonType: "drawer",
-        )),
+        onTap: () => Get.to(EditProfileUi(buttonType: "drawer")),
         child: Container(
           height: 180,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color: AppColors.primaryColor.withValues(alpha: 0.1)),
+              color: AppColors.primaryColor.withValues(alpha: 0.1),
+            ),
             gradient: LinearGradient(
               colors: [Color(0xffE9EFFF), Color(0xffE6EBFF)],
               begin: Alignment.centerLeft,
@@ -2122,9 +2471,9 @@ class MainHomeScreen extends StatelessWidget {
           child: Stack(
             children: [
               Transform.translate(
-                  offset: Offset(-15, -16),
-                  child: SvgPicture.asset(
-                      Assets.imagesImgBackgroundPlayedMatch)),
+                offset: Offset(-15, -16),
+                child: SvgPicture.asset(Assets.imagesImgBackgroundPlayedMatch),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2133,15 +2482,18 @@ class MainHomeScreen extends StatelessWidget {
                       Text(
                         'Match\nPlayed',
                         style: Get.textTheme.titleSmall!.copyWith(
-                            color: AppColors.primaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 17),
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                        ),
                       ),
                       Spacer(),
                       Text(
                         '$totalMatches',
-                        style: Get.textTheme.titleLarge!
-                            .copyWith(color: Color(0xff0E1E55), fontSize: 30),
+                        style: Get.textTheme.titleLarge!.copyWith(
+                          color: Color(0xff0E1E55),
+                          fontSize: 30,
+                        ),
                       ),
                     ],
                   ),
@@ -2154,9 +2506,7 @@ class MainHomeScreen extends StatelessWidget {
                           width: 170,
                           height: 100,
                           child: CustomPaint(
-                            painter: BlockSemiCirclePainter(
-                              progress: winRatio,
-                            ),
+                            painter: BlockSemiCirclePainter(progress: winRatio),
                           ),
                         ),
                         Positioned(
@@ -2165,13 +2515,17 @@ class MainHomeScreen extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Transform.translate(
-                                  offset: Offset(0, 4),
-                                  child: Text('$winPercentage%',
-                                      style: Get.textTheme.titleLarge)),
+                                offset: Offset(0, 4),
+                                child: Text(
+                                  '$winPercentage%',
+                                  style: Get.textTheme.titleLarge,
+                                ),
+                              ),
                               Text(
                                 'Win Ratio',
-                                style: Get.textTheme.headlineSmall!
-                                    .copyWith(color: Colors.grey),
+                                style: Get.textTheme.headlineSmall!.copyWith(
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
@@ -2191,14 +2545,13 @@ class MainHomeScreen extends StatelessWidget {
   Widget _leaderboardCard() {
     return Obx(() {
       return GestureDetector(
-        onTap: () => Get.to(LeaderboardScreen(
-          buttonType: "drawer",
-        )),
+        onTap: () => Get.to(LeaderboardScreen(buttonType: "drawer")),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             border: Border.all(
-                color: AppColors.secondaryColor.withValues(alpha: 0.1)),
+              color: AppColors.secondaryColor.withValues(alpha: 0.1),
+            ),
             borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
               colors: [Color(0xffE7F8EA), Color(0xffF1FFF4)],
@@ -2210,23 +2563,25 @@ class MainHomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.bar_chart,
-                    color: Color(0xff2947C7),
-                    size: 30,
-                  ),
+                  Icon(Icons.bar_chart, color: Color(0xff2947C7), size: 30),
                   Align(
                     alignment: Alignment.bottomRight,
-                    child: Text(controller.customerRank.value.toString(),
-                        style: Get.textTheme.titleLarge!
-                            .copyWith(color: Color(0xff0E1E55))),
+                    child: Text(
+                      controller.customerRank.value.toString(),
+                      style: Get.textTheme.titleLarge!.copyWith(
+                        color: Color(0xff0E1E55),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              Text('Leaderboard\nPosition',
-                  style: Get.textTheme.titleSmall!.copyWith(
-                      color: AppColors.primaryColor,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                'Leaderboard\nPosition',
+                style: Get.textTheme.titleSmall!.copyWith(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -2266,18 +2621,22 @@ class MainHomeScreen extends StatelessWidget {
                   Row(
                     children: [
                       Transform.translate(
-                          offset: Offset(0, 2),
-                          child:
-                          Icon(Icons.star, color: Colors.green, size: 22)),
-                      Text('$xpPoints',
-                          style: Get.textTheme.titleLarge!
-                              .copyWith(color: Color(0xff0E1E55))),
+                        offset: Offset(0, 2),
+                        child: Icon(Icons.star, color: Colors.green, size: 22),
+                      ),
+                      Text(
+                        '$xpPoints',
+                        style: Get.textTheme.titleLarge!.copyWith(
+                          color: Color(0xff0E1E55),
+                        ),
+                      ),
                     ],
                   ),
                   Text(
                     'XP Points',
-                    style: Get.textTheme.headlineLarge!
-                        .copyWith(color: Colors.grey),
+                    style: Get.textTheme.headlineLarge!.copyWith(
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -2293,7 +2652,9 @@ class MainHomeScreen extends StatelessWidget {
       final profile = controller.profileController.profileModel.value;
       final recentMatches = profile?.response?.recentMatches ?? [];
 
-      List<String> results = recentMatches.isNotEmpty ? recentMatches.cast<String>() : [];
+      List<String> results = recentMatches.isNotEmpty
+          ? recentMatches.cast<String>()
+          : [];
 
       final displayResults = results.length > 5
           ? results.sublist(results.length - 5)
@@ -2304,32 +2665,32 @@ class MainHomeScreen extends StatelessWidget {
         width: Get.width,
         child: Row(
           children: [
-            SvgPicture.asset(
-              Assets.imagesIcPadelBall,
-            ).paddingOnly(right: 10),
+            SvgPicture.asset(Assets.imagesIcPadelBall).paddingOnly(right: 10),
             Flexible(
               child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(40),
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF003AFF),
-                      Color(0xFF07289A),
-                    ],
+                    colors: [Color(0xFF003AFF), Color(0xFF07289A)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Text('Recent Matches',
-                        style: Get.textTheme.headlineSmall!
-                            .copyWith(color: Colors.white)),
+                    Text(
+                      'Recent Matches',
+                      style: Get.textTheme.headlineSmall!.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     ...displayResults.map(
-                          (e) => Container(
+                      (e) => Container(
                         margin: const EdgeInsets.only(right: 8),
                         width: 24,
                         height: 24,
@@ -2356,9 +2717,7 @@ class MainHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SvgPicture.asset(
-              Assets.imagesIcPadelBall,
-            ).paddingOnly(left: 10),
+            SvgPicture.asset(Assets.imagesIcPadelBall).paddingOnly(left: 10),
           ],
         ),
       );
@@ -2411,13 +2770,18 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildOpenMatchCard(OpenMatchBookingData data, int index) {
-    final dayStr = DateFormat('EEEE').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
-    final dateOnlyStr = DateFormat('dd MMM').format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
-    final timeStr = data.openMatchStatus == "pending"||data.openMatchStatus =="cancelled"
+    final dayStr = DateFormat(
+      'EEEE',
+    ).format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
+    final dateOnlyStr = DateFormat(
+      'dd MMM',
+    ).format(DateFormat('yyyy-MM-dd').parse(data.matchDate ?? ''));
+    final timeStr =
+        data.openMatchStatus == "pending" || data.openMatchStatus == "cancelled"
         ? "${data.startTime?.split(' ').first ?? ""}-${data.endTime ?? ""}"
         : "${data.bookingId?.startTime?.split(' ').first ?? ""}-${data.bookingId?.endTime ?? ""}";
     final clubName = data.clubId?.clubName ?? '-';
-    
+
     // Extract location name from locations array matching locationId
     String locationName = "N/A";
     if (data.clubId?.locations != null && data.clubId!.locations!.isNotEmpty) {
@@ -2434,11 +2798,19 @@ class MainHomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         final categoryId = controller.selectedCategoryId.value;
-        final locationId = controller.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
-        Get.toNamed(RoutesName.openMatchForAllCourts, arguments: {
-          'categoryId': categoryId,
-          'locationId': locationId,
-        });
+        final locationId =
+            controller
+                .profileController
+                .profileModel
+                .value
+                ?.response
+                ?.city
+                ?.sId ??
+            "68c94a94d72a6f9769712ff0";
+        Get.toNamed(
+          RoutesName.openMatchForAllCourts,
+          arguments: {'categoryId': categoryId, 'locationId': locationId},
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 0),
@@ -2447,7 +2819,10 @@ class MainHomeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Color(0xffC8D6FB)),
           gradient: LinearGradient(
-            colors: [Color(0xffF3F7FF), Color(0xff9EBAFF).withValues(alpha: 0.3)],
+            colors: [
+              Color(0xffF3F7FF),
+              Color(0xff9EBAFF).withValues(alpha: 0.3),
+            ],
           ),
         ),
         child: Stack(
@@ -2455,7 +2830,9 @@ class MainHomeScreen extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: SvgPicture.asset(
-                index % 2 == 0 ? Assets.imagesImgOpenMatchBg : Assets.imagesImgOpenMatchGreenBg,
+                index % 2 == 0
+                    ? Assets.imagesImgOpenMatchBg
+                    : Assets.imagesImgOpenMatchGreenBg,
                 height: 150,
                 width: 150,
               ).paddingOnly(right: 20),
@@ -2493,10 +2870,17 @@ class MainHomeScreen extends StatelessWidget {
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
                             Text(
                               " ${data.skillLevel?.capitalizeFirst ?? 'Professional'} | ",
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(width: 2),
                             genderIcon(data.gender),
@@ -2524,7 +2908,10 @@ class MainHomeScreen extends StatelessWidget {
                       child: CircleAvatar(
                         radius: 18,
                         backgroundColor: Colors.white,
-                        child: Icon(Icons.keyboard_arrow_down, color: Colors.black),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ],
@@ -2544,20 +2931,30 @@ class MainHomeScreen extends StatelessWidget {
                         children: [
                           Text(
                             clubName,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           Row(
                             children: [
                               Transform.translate(
                                 offset: Offset(0, -1),
-                                child: Image.asset(Assets.imagesIcLocation, scale: 2, color: AppColors.primaryColor),
+                                child: Image.asset(
+                                  Assets.imagesIcLocation,
+                                  scale: 2,
+                                  color: AppColors.primaryColor,
+                                ),
                               ),
                               const SizedBox(width: 2),
                               Expanded(
                                 child: Text(
                                   locationName,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                               ),
                             ],
@@ -2586,12 +2983,15 @@ class MainHomeScreen extends StatelessWidget {
     );
   }
 
-// NEW METHOD: Creates overlapping player circles exactly like the image
-// Replace the _buildOverlappingPlayerRow method with this:
+  // NEW METHOD: Creates overlapping player circles exactly like the image
+  // Replace the _buildOverlappingPlayerRow method with this:
 
-  Widget _buildOverlappingPlayerRow(List<dynamic> teamAPlayers, List<dynamic> teamBPlayers) {
+  Widget _buildOverlappingPlayerRow(
+    List<dynamic> teamAPlayers,
+    List<dynamic> teamBPlayers,
+  ) {
     return Container(
-      width: Get.width*.37,
+      width: Get.width * .37,
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -2601,7 +3001,8 @@ class MainHomeScreen extends StatelessWidget {
       child: SizedBox(
         height: 44,
         child: SizedBox(
-          width: Get.width, // Width for 4 overlapping circles (44 + 22 + 22 + 22)
+          width: Get.width,
+          // Width for 4 overlapping circles (44 + 22 + 22 + 22)
           child: Stack(
             children: [
               // First player (Team A - Player 1)
@@ -2609,10 +3010,10 @@ class MainHomeScreen extends StatelessWidget {
                 left: 0,
                 child: teamAPlayers.isNotEmpty
                     ? _buildFilledPlayerCircle(
-                  teamAPlayers[0].userId?.profilePic ?? "",
-                  teamAPlayers[0].userId?.name ?? "",
-                  teamAPlayers[0].userId?.lastName ?? "",
-                )
+                        teamAPlayers[0].userId?.profilePic ?? "",
+                        teamAPlayers[0].userId?.name ?? "",
+                        teamAPlayers[0].userId?.lastName ?? "",
+                      )
                     : _buildEmptyPlayerCircle(),
               ),
               // Second player (Team A - Player 2)
@@ -2620,10 +3021,10 @@ class MainHomeScreen extends StatelessWidget {
                 left: 32, // Overlap by half
                 child: teamAPlayers.length > 1
                     ? _buildFilledPlayerCircle(
-                  teamAPlayers[1].userId?.profilePic ?? "",
-                  teamAPlayers[1].userId?.name ?? "",
-                  teamAPlayers[1].userId?.lastName ?? "",
-                )
+                        teamAPlayers[1].userId?.profilePic ?? "",
+                        teamAPlayers[1].userId?.name ?? "",
+                        teamAPlayers[1].userId?.lastName ?? "",
+                      )
                     : _buildEmptyPlayerCircle(),
               ),
               // Third player (Team B - Player 1)
@@ -2631,10 +3032,10 @@ class MainHomeScreen extends StatelessWidget {
                 left: 64, // Continue overlapping
                 child: teamBPlayers.isNotEmpty
                     ? _buildFilledPlayerCircle(
-                  teamBPlayers[0].userId?.profilePic ?? "",
-                  teamBPlayers[0].userId?.name ?? "",
-                  teamBPlayers[0].userId?.lastName ?? "",
-                )
+                        teamBPlayers[0].userId?.profilePic ?? "",
+                        teamBPlayers[0].userId?.name ?? "",
+                        teamBPlayers[0].userId?.lastName ?? "",
+                      )
                     : _buildEmptyPlayerCircle(),
               ),
               // Fourth player (Team B - Player 2)
@@ -2642,10 +3043,10 @@ class MainHomeScreen extends StatelessWidget {
                 left: 96, // Continue overlapping
                 child: teamBPlayers.length > 1
                     ? _buildFilledPlayerCircle(
-                  teamBPlayers[1].userId?.profilePic ?? "",
-                  teamBPlayers[1].userId?.name ?? "",
-                  teamBPlayers[1].userId?.lastName ?? "",
-                )
+                        teamBPlayers[1].userId?.profilePic ?? "",
+                        teamBPlayers[1].userId?.name ?? "",
+                        teamBPlayers[1].userId?.lastName ?? "",
+                      )
                     : _buildEmptyPlayerCircle(),
               ),
             ],
@@ -2654,7 +3055,12 @@ class MainHomeScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _buildFilledPlayerCircle(String? imageUrl, String name, String lastName) {
+
+  Widget _buildFilledPlayerCircle(
+    String? imageUrl,
+    String name,
+    String lastName,
+  ) {
     final firstLetter = name.trim().isNotEmpty
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '?';
@@ -2672,41 +3078,41 @@ class MainHomeScreen extends StatelessWidget {
         child: ClipOval(
           child: (imageUrl != null && imageUrl.isNotEmpty)
               ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            placeholder: (context, url) => Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.primaryColor.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          )
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  placeholder: (context, url) => Center(
+                    child: Text(
+                      firstLetter,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.primaryColor.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Center(
+                    child: Text(
+                      firstLetter,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
               : Center(
-            child: Text(
-              firstLetter,
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+                  child: Text(
+                    firstLetter,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
         ),
       ),
     );
@@ -2742,6 +3148,7 @@ class _LeagueComingSoonWidget extends StatefulWidget {
   final MainHomeController controller;
   final Widget Function() buildLiveSlider;
   final Widget Function() buildUpcoming;
+
   const _LeagueComingSoonWidget({
     required this.controller,
     required this.buildLiveSlider,
@@ -2749,7 +3156,8 @@ class _LeagueComingSoonWidget extends StatefulWidget {
   });
 
   @override
-  State<_LeagueComingSoonWidget> createState() => _LeagueComingSoonWidgetState();
+  State<_LeagueComingSoonWidget> createState() =>
+      _LeagueComingSoonWidgetState();
 }
 
 class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
@@ -2787,7 +3195,9 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
 
     if (_leagues.isEmpty) return const SizedBox.shrink();
 
-    final currentLeague = _leagues.length > _carouselIndex ? _leagues[_carouselIndex] : _leagues.first;
+    final currentLeague = _leagues.length > _carouselIndex
+        ? _leagues[_carouselIndex]
+        : _leagues.first;
 
     final ctrl = widget.controller;
     final liveMatches = (ctrl.scheduleMatches.value?.data ?? [])
@@ -2823,22 +3233,26 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         BuildLeagueMoreSponsor(league: currentLeague),
         _buildLeaguePointsTable(),
         GestureDetector(
-          onTap: (){
+          onTap: () {
             widget.controller.fetchPollResults();
             showVoteDialog(context);
           },
           child: Image.asset(Assets.imagesImgPoll),
-        ).paddingOnly(top: 5)
+        ).paddingOnly(top: 5),
       ],
     ).paddingOnly(top: 10);
   }
 
   Widget _buildSwootTitle(String? leagueName) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          SvgPicture.asset(Assets.imagesImgSwootPadelLeague,height: 12,width: 15,)
+          SvgPicture.asset(
+            Assets.imagesImgSwootPadelLeague,
+            height: 22,
+            width: 25,
+          ),
           // SvgPicture.asset(
           //   Assets.imagesIcPadelBall,
           //   height: 18,width: 18,
@@ -2848,7 +3262,8 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       ),
     );
   }
-  Widget _buildLeaguePointsTable(){
+
+  Widget _buildLeaguePointsTable() {
     return Obx(() {
       if (widget.controller.isLoadingLeaderBoard.value) {
         return Container(
@@ -2858,38 +3273,39 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         );
       }
 
-      final standings = widget.controller.leaderBoard.value?.data?.standings ?? [];
+      final standings =
+          widget.controller.leaderBoard.value?.data?.standings ?? [];
       if (standings.isEmpty) return const SizedBox.shrink();
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.grey.shade100,
-                  spreadRadius: 1.5,
-                  blurRadius: 5.0,
-                  offset: Offset(0, 3)
-              )
-            ]
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade100,
+              spreadRadius: 1.5,
+              blurRadius: 5.0,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           children: [
             /// Header Row
             _headerRow(),
 
-            Divider(color: Colors.grey.shade300,),
+            Divider(color: Colors.grey.shade300),
 
             /// List
             ...standings.take(6).map((standing) {
               return Column(
                 children: [
                   _teamRow(standing),
-                  Divider(color: Colors.grey.shade300,),
+                  Divider(color: Colors.grey.shade300),
                 ],
               );
             }),
@@ -2898,29 +3314,61 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       ).paddingOnly(top: 10);
     });
   }
+
   Widget _headerRow() {
-    final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    return  Row(
+    final style = Get.textTheme.labelMedium!.copyWith(
+      fontWeight: FontWeight.w500,
+    );
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(width: 20, child: Text("#",style: style,)),
+        SizedBox(width: 20, child: Text("#", style: style)),
         Expanded(
-            flex: 3,
-            child: SizedBox(width: 35,child: Text(" Teams",style: style))),
+          flex: 3,
+          child: SizedBox(width: 35, child: Text(" Teams", style: style)),
+        ),
         // SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(width: 30, child: Center(child: Text(" W",style: style))),
-        SizedBox(width: 30, child: Center(child: Text(" L",style: style))),
-        SizedBox(width: 30, child: Center(child: Text(" Pts",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
+        SizedBox(
+          width: 30,
+          child: Center(child: Text(" W", style: style)),
+        ),
+        SizedBox(
+          width: 30,
+          child: Center(child: Text(" L", style: style)),
+        ),
+        SizedBox(
+          width: 30,
+          child: Center(
+            child: Text(
+              " Pts",
+              style: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
+        ),
         Expanded(
-            flex: 4,
-            child: Center(child: Text("Last 5 ",style: style))),
+          flex: 4,
+          child: Center(child: Text("Last 5 ", style: style)),
+        ),
       ],
     );
   }
+
   Widget _teamRow(dynamic standing) {
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("${standing.position ?? 0}",style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,fontSize: 10),)),
+        SizedBox(
+          width: 25,
+          child: Text(
+            "${standing.position ?? 0}",
+            style: Get.textTheme.bodySmall!.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
+          ),
+        ),
         Expanded(
           flex: 3,
           child: Row(
@@ -2937,7 +3385,11 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                         backgroundColor: AppColors.primaryColor,
                         child: Text(
                           (standing.clubName ?? "?")[0].toUpperCase(),
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       errorWidget: (context, url, error) => CircleAvatar(
@@ -2945,7 +3397,11 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                         backgroundColor: AppColors.primaryColor,
                         child: Text(
                           (standing.clubName ?? "?")[0].toUpperCase(),
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     )
@@ -2954,14 +3410,20 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                       backgroundColor: AppColors.primaryColor,
                       child: Text(
                         (standing.clubName ?? "?")[0].toUpperCase(),
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   standing.clubName ?? "Unknown",
-                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+                  style: Get.textTheme.labelMedium!.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -2969,9 +3431,40 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
 
-        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor),))),
+        SizedBox(
+          width: 30,
+          child: Center(
+            child: Text(
+              "${standing.wins ?? 0}",
+              style: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 30,
+          child: Center(
+            child: Text(
+              "${standing.losses ?? 0}",
+              style: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 30,
+          child: Center(
+            child: Text(
+              "${standing.points ?? 0}",
+              style: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ),
+        ),
         Expanded(
           flex: 4,
           child: Row(
@@ -2980,33 +3473,33 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: _buildRecentFormIcons(standing.recentForm ?? []),
               ),
-              Icon(Icons.arrow_back,size: 9,color: Colors.black,)
+              Icon(Icons.arrow_back, size: 9, color: Colors.black),
             ],
           ),
-        )
-
+        ),
       ],
     );
   }
+
   List<Widget> _buildRecentFormIcons(List<dynamic> recentForm) {
     final formList = recentForm.take(5).toList();
     final widgets = <Widget>[];
-    
+
     // Add placeholders first (left side) if less than 5 matches
     final emptyCount = 5 - formList.length;
     for (int i = 0; i < emptyCount; i++) {
       widgets.add(_buildResultIcon(null));
     }
-    
+
     // Then add actual match results
     for (var result in formList) {
       final isWin = result.toString().toUpperCase() == 'W';
       widgets.add(_buildResultIcon(isWin));
     }
-    
+
     return widgets;
   }
-  
+
   Widget _buildResultIcon(bool? win) {
     if (win == null) {
       // Placeholder for no match data
@@ -3020,7 +3513,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         ),
       );
     }
-    
+
     return Container(
       margin: const EdgeInsets.only(right: 4),
       height: 16,
@@ -3036,13 +3529,17 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       ),
     );
   }
+
   Widget _buildSingleLeagueCard(LeagueModel.Data leagueData) {
     return GestureDetector(
-      onTap: (){
-        Get.toNamed(RoutesName.league, arguments: {
-          'leagueId': leagueData.id,
-          'leagueTitle': leagueData.leagueName,
-        })?.then((_) {
+      onTap: () {
+        Get.toNamed(
+          RoutesName.league,
+          arguments: {
+            'leagueId': leagueData.id,
+            'leagueTitle': leagueData.leagueName,
+          },
+        )?.then((_) {
           widget.controller.fetchPollResults();
           widget.controller.fetchScheduleMatches();
           widget.controller.fetchActiveLeagues();
@@ -3056,18 +3553,29 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: Colors.grey.shade300, blurRadius: 8, spreadRadius: 2.3, offset: const Offset(0, 3)),
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 8,
+              spreadRadius: 2.3,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-              ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+          child:
+              leagueData.mobileBanner != null &&
+                  leagueData.mobileBanner!.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: leagueData.mobileBanner!,
+                  fit: BoxFit.cover,
+                )
               : Image.asset(Assets.imagesImgLeagueComingSoon),
         ),
       ),
     );
   }
+
   void showVoteDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -3076,16 +3584,22 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         return Obx(() {
           final pollData = widget.controller.pollResults.value?.data;
           final clubs = pollData?.clubs ?? [];
-          final maxVotes = clubs.isEmpty ? 1 : clubs.map((c) => c.votes ?? 0).reduce((a, b) => a > b ? a : b);
+          final maxVotes = clubs.isEmpty
+              ? 1
+              : clubs.map((c) => c.votes ?? 0).reduce((a, b) => a > b ? a : b);
           final safeMax = maxVotes == 0 ? 1 : maxVotes;
 
           return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
             child: Container(
               padding: EdgeInsets.only(top: 20, bottom: 20, right: 20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(colors: [Colors.white, Color(0XFFCBD6FF)]),
+                gradient: LinearGradient(
+                  colors: [Colors.white, Color(0XFFCBD6FF)],
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -3094,12 +3608,18 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        pollData?.poll?.question ?? "Vote Your Club. Make It Count.",
-                        style: Get.textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w600),
+                        pollData?.poll?.question ??
+                            "Vote Your Club. Make It Count.",
+                        style: Get.textTheme.headlineSmall!.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: Container(color: Colors.transparent, child: Icon(Icons.close)),
+                        child: Container(
+                          color: Colors.transparent,
+                          child: Icon(Icons.close),
+                        ),
                       ),
                     ],
                   ).paddingOnly(left: 20),
@@ -3108,19 +3628,25 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                   if (clubs.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text("No poll data available", style: Get.textTheme.bodyMedium),
+                      child: Text(
+                        "No poll data available",
+                        style: Get.textTheme.bodyMedium,
+                      ),
                     )
                   else
-                    ...clubs.map((club) => Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
-                      child: clubItem(
-                        clubName: club.clubName ?? "",
-                        votes: club.votes ?? 0,
-                        logoUrl: club.logo ?? "",
-                        clubId: club.clubId ?? "",
-                        widthFactor: (club.votes ?? 0) / safeMax,
+                    ...clubs.map(
+                      (club) => Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: clubItem(
+                          clubName: club.clubName ?? "",
+                          votes: club.votes ?? 0,
+                          logoUrl: club.logo ?? "",
+                          clubId: club.clubId ?? "",
+                          widthFactor: (club.votes ?? 0) / safeMax,
+                          rgbColor: club.rgbColor,
+                        ),
                       ),
-                    )),
+                    ),
                 ],
               ),
             ),
@@ -3136,18 +3662,63 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
     required String logoUrl,
     required String clubId,
     double widthFactor = 1.0,
+    String? rgbColor,
   }) {
-    final colors = [
-      [Color(0xff4A27FF), Color(0xff001E8C)],
-      [Color(0xffC6C000), Color(0xffF4E66A)],
-      [Color(0xff4C8E00), Color(0xff9FD94F)],
-      [Color(0xff8F2D00), Color(0xffE65E2C)],
-      [Color(0xff002E13), Color(0xff006633)],
-    ];
-    final idx = clubName.hashCode.abs() % colors.length;
-    final color1 = colors[idx][0];
-    final color2 = colors[idx][1];
-    final textColor = idx == 1 || idx == 2 ? Colors.black : Colors.white;
+    Color color1;
+    Color color2;
+    Color textColor;
+
+    if (rgbColor != null && rgbColor.isNotEmpty) {
+      try {
+        // Handle hex color format (e.g., #2cba8f or 2cba8f)
+        String hexColor = rgbColor.replaceAll('#', '');
+        if (hexColor.length == 6) {
+          final r = int.parse(hexColor.substring(0, 2), radix: 16);
+          final g = int.parse(hexColor.substring(2, 4), radix: 16);
+          final b = int.parse(hexColor.substring(4, 6), radix: 16);
+
+          color1 = Color.fromRGBO(r, g, b, 1.0);
+          // Create a lighter shade for gradient
+          color2 = Color.fromRGBO(
+            (r + (255 - r) * 0.3).clamp(0, 255).toInt(),
+            (g + (255 - g) * 0.3).clamp(0, 255).toInt(),
+            (b + (255 - b) * 0.3).clamp(0, 255).toInt(),
+            1.0,
+          );
+          // Calculate brightness to determine text color
+          final brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+          textColor = brightness > 150 ? Colors.black : Colors.white;
+        } else {
+          throw Exception('Invalid hex color format');
+        }
+      } catch (e) {
+        // Fallback to default colors if parsing fails
+        final colors = [
+          [Color(0xff4A27FF), Color(0xff001E8C)],
+          [Color(0xffC6C000), Color(0xffF4E66A)],
+          [Color(0xff4C8E00), Color(0xff9FD94F)],
+          [Color(0xff8F2D00), Color(0xffE65E2C)],
+          [Color(0xff002E13), Color(0xff006633)],
+        ];
+        final idx = clubName.hashCode.abs() % colors.length;
+        color1 = colors[idx][0];
+        color2 = colors[idx][1];
+        textColor = idx == 1 || idx == 2 ? Colors.black : Colors.white;
+      }
+    } else {
+      // Use default colors if rgbColor is null
+      final colors = [
+        [Color(0xff4A27FF), Color(0xff001E8C)],
+        [Color(0xffC6C000), Color(0xffF4E66A)],
+        [Color(0xff4C8E00), Color(0xff9FD94F)],
+        [Color(0xff8F2D00), Color(0xffE65E2C)],
+        [Color(0xff002E13), Color(0xff006633)],
+      ];
+      final idx = clubName.hashCode.abs() % colors.length;
+      color1 = colors[idx][0];
+      color2 = colors[idx][1];
+      textColor = idx == 1 || idx == 2 ? Colors.black : Colors.white;
+    }
 
     return _ClubVoteItem(
       clubName: clubName,
@@ -3158,7 +3729,8 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       color2: color2,
       textColor: textColor,
       widthFactor: widthFactor,
-      onVote: () => widget.controller.castVote(clubId: clubId, clubName: clubName),
+      onVote: () =>
+          widget.controller.castVote(clubId: clubId, clubName: clubName),
     );
   }
 }
@@ -3190,7 +3762,8 @@ class _ClubVoteItem extends StatefulWidget {
   State<_ClubVoteItem> createState() => _ClubVoteItemState();
 }
 
-class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderStateMixin {
+class _ClubVoteItemState extends State<_ClubVoteItem>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnim;
   bool _voting = false;
@@ -3198,11 +3771,17 @@ class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderS
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-    _scaleAnim = TweenSequence([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
-    ]).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _scaleAnim =
+        TweenSequence([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+        );
   }
 
   @override
@@ -3223,7 +3802,10 @@ class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderS
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final barWidth = (constraints.maxWidth * widget.widthFactor).clamp(110.0, constraints.maxWidth - 40);
+        final barWidth = (constraints.maxWidth * widget.widthFactor).clamp(
+          110.0,
+          constraints.maxWidth - 40,
+        );
         return SizedBox(
           width: constraints.maxWidth,
           child: Stack(
@@ -3239,7 +3821,9 @@ class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderS
                     topRight: Radius.circular(30),
                     bottomRight: Radius.circular(30),
                   ),
-                  gradient: LinearGradient(colors: [widget.color1, widget.color2]),
+                  gradient: LinearGradient(
+                    colors: [widget.color1, widget.color2],
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -3248,10 +3832,21 @@ class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderS
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(widget.clubName, overflow: TextOverflow.ellipsis,
-                              style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500, color: widget.textColor)),
-                          Text("${widget.votes} votes",
-                              style: Get.textTheme.displayLarge!.copyWith(color: widget.textColor, fontSize: 8)),
+                          Text(
+                            widget.clubName,
+                            overflow: TextOverflow.ellipsis,
+                            style: Get.textTheme.bodySmall!.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: widget.textColor,
+                            ),
+                          ),
+                          Text(
+                            "${widget.votes} votes",
+                            style: Get.textTheme.displayLarge!.copyWith(
+                              color: widget.textColor,
+                              fontSize: 8,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -3260,8 +3855,14 @@ class _ClubVoteItemState extends State<_ClubVoteItem> with SingleTickerProviderS
                       backgroundColor: Colors.white,
                       child: ClipOval(
                         child: widget.logoUrl.isNotEmpty
-                            ? CachedNetworkImage(imageUrl: widget.logoUrl, fit: BoxFit.cover, width: 28, height: 28,
-                                errorWidget: (_, __, ___) => Icon(Icons.sports_tennis, size: 16))
+                            ? CachedNetworkImage(
+                                imageUrl: widget.logoUrl,
+                                fit: BoxFit.cover,
+                                width: 28,
+                                height: 28,
+                                errorWidget: (_, __, ___) =>
+                                    Icon(Icons.sports_tennis, size: 16),
+                              )
                             : Icon(Icons.sports_tennis, size: 16),
                       ),
                     ).paddingOnly(left: 5),
@@ -3305,22 +3906,35 @@ class _LeagueCarouselWidget extends StatefulWidget {
 
 class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
   late final PageController _pageController;
-  int _currentIndex = 0;
+  int _currentIndex = 0; // logical index (0..length-1) for dots
+  int _currentPage = 1; // extended index (0..length+1)
   Timer? _autoPlayTimer;
+  bool _isAnimating = false;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    // Use 2 extra pages to make last->first seamless without visible jump.
+    // Page 0: last league, Page 1..length: leagues[0..length-1], Page length+1: first league
+    _pageController = PageController(initialPage: 1);
+    _currentPage = 1;
     if (widget.leagues.length > 1) {
       _autoPlayTimer = Timer.periodic(const Duration(seconds: 3), (_) {
         if (!mounted || !_pageController.hasClients) return;
-        final next = (_currentIndex + 1) % widget.leagues.length;
-        _pageController.animateToPage(
-          next,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
+        if (_isAnimating) return;
+
+        final nextPage = _currentPage + 1;
+        _isAnimating = true;
+        _pageController
+            .animateToPage(
+              nextPage,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+            )
+            .whenComplete(() {
+              if (!mounted) return;
+              _isAnimating = false;
+            });
       });
     }
   }
@@ -3340,19 +3954,53 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
           height: 170,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: widget.leagues.length,
+            itemCount: widget.leagues.length + 2,
             onPageChanged: (index) {
-              setState(() => _currentIndex = index);
-              // widget.onPageChanged(index);
+              setState(() {
+                _currentPage = index;
+                if (widget.leagues.length == 0) {
+                  _currentIndex = 0;
+                } else if (index == 0) {
+                  _currentIndex = widget.leagues.length - 1;
+                } else if (index == widget.leagues.length + 1) {
+                  _currentIndex = 0;
+                } else {
+                  _currentIndex = index - 1;
+                }
+              });
+
+              // Seamless reset: if we land on duplicate page, jump to the real one.
+              if (index == widget.leagues.length + 1) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _pageController.jumpToPage(1);
+                });
+              } else if (index == 0) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  _pageController.jumpToPage(widget.leagues.length);
+                });
+              }
             },
             itemBuilder: (context, index) {
-              final leagueData = widget.leagues[index];
+              final int effectiveIndex;
+              if (index == 0) {
+                effectiveIndex = widget.leagues.length - 1;
+              } else if (index == widget.leagues.length + 1) {
+                effectiveIndex = 0;
+              } else {
+                effectiveIndex = index - 1;
+              }
+              final leagueData = widget.leagues[effectiveIndex];
               return GestureDetector(
                 onTap: () {
-                  Get.toNamed(RoutesName.league, arguments: {
-                    'leagueId': leagueData.id,
-                    'leagueTitle': leagueData.leagueName,
-                  })?.then((_) {
+                  Get.toNamed(
+                    RoutesName.league,
+                    arguments: {
+                      'leagueId': leagueData.id,
+                      'leagueTitle': leagueData.leagueName,
+                    },
+                  )?.then((_) {
                     // Refresh APIs when coming back from league screen
                     final controller = Get.find<MainHomeController>();
                     controller.fetchPollResults();
@@ -3376,8 +4024,13 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
-                        ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
+                    child:
+                        leagueData.mobileBanner != null &&
+                            leagueData.mobileBanner!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: leagueData.mobileBanner!,
+                            fit: BoxFit.cover,
+                          )
                         : Image.asset(Assets.imagesImgLeagueComingSoon),
                   ),
                 ),
@@ -3423,33 +4076,25 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _pulseAnimation = Tween<double>(
-      begin: 0.3,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
-    
+
+    _pulseAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+
     _pulseController.repeat(reverse: true);
     _scaleController.repeat(reverse: true);
   }
@@ -3477,7 +4122,9 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFCD3529).withValues(alpha:  _pulseAnimation.value * 0.5),
+                    color: Color(
+                      0xFFCD3529,
+                    ).withValues(alpha: _pulseAnimation.value * 0.5),
                     blurRadius: 6 + (_pulseAnimation.value * 3),
                     spreadRadius: _pulseAnimation.value * 1.5,
                   ),
@@ -3492,11 +4139,15 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.7 + (_pulseAnimation.value * 0.3)),
+                        color: Colors.white.withValues(
+                          alpha: 0.7 + (_pulseAnimation.value * 0.3),
+                        ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withValues(alpha:_pulseAnimation.value * 0.4),
+                            color: Colors.white.withValues(
+                              alpha: _pulseAnimation.value * 0.4,
+                            ),
                             blurRadius: 3,
                             spreadRadius: 0.5,
                           ),
@@ -3519,17 +4170,19 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
             ),
           );
         },
-      ).paddingOnly(top: 10,right: 10),
+      ).paddingOnly(top: 10, right: 10),
     );
   }
 }
+
 class _AnimatedWatchLiveButton extends StatefulWidget {
   final VoidCallback onTap;
-  
+
   const _AnimatedWatchLiveButton({required this.onTap});
 
   @override
-  _AnimatedWatchLiveButtonState createState() => _AnimatedWatchLiveButtonState();
+  _AnimatedWatchLiveButtonState createState() =>
+      _AnimatedWatchLiveButtonState();
 }
 
 class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
@@ -3544,46 +4197,34 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _iconController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
-    _pulseAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _shimmerAnimation = Tween<double>(
-      begin: -1.0,
-      end: 2.0,
-    ).animate(CurvedAnimation(
-      parent: _shimmerController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _iconAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _iconController,
-      curve: Curves.elasticInOut,
-    ));
-    
+
+    _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _shimmerAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
+    );
+
+    _iconAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.elasticInOut),
+    );
+
     _pulseController.repeat(reverse: true);
     _shimmerController.repeat();
     _iconController.repeat(reverse: true);
@@ -3602,7 +4243,11 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
     return GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_pulseController, _shimmerController, _iconController]),
+        animation: Listenable.merge([
+          _pulseController,
+          _shimmerController,
+          _iconController,
+        ]),
         builder: (context, child) {
           return Transform.scale(
             scale: 1.0 + (_pulseAnimation.value * 0.05),
@@ -3610,17 +4255,16 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.secondaryColor,
-                  ],
+                  colors: [AppColors.primaryColor, AppColors.secondaryColor],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryColor.withValues(alpha: 0.4 + (_pulseAnimation.value * 0.3)),
+                    color: AppColors.primaryColor.withValues(
+                      alpha: 0.4 + (_pulseAnimation.value * 0.3),
+                    ),
                     blurRadius: 6 + (_pulseAnimation.value * 3),
                     spreadRadius: 0.5 + (_pulseAnimation.value * 1),
                     offset: Offset(0, 1),
