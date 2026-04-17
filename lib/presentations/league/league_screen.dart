@@ -31,13 +31,17 @@ class LeagueScreen extends StatelessWidget {
     }
     
     return Scaffold(
-        appBar: primaryAppBar(
-          title: leagueTitle == 'Swoot Padel League'
-              ? SvgPicture.asset(Assets.imagesImgSwootPadelLeague, height: 22, width: 25)
-              : Text(leagueTitle),
-          centerTitle: true,
-          context: context,
-        ),
+      appBar: primaryAppBar(
+        title: leagueTitle.toLowerCase() == 'swoot padel league'
+            ? SvgPicture.asset(
+          Assets.imagesImgSwootPadelLeague,
+          height: 22,
+          width: 25,
+        )
+            : Text(leagueTitle),
+        centerTitle: true,
+        context: context,
+      ),
         body: Obx(() {
           if (controller.isInitialLoading.value || controller.isRefreshingTab.value) {
             return Center(
@@ -1577,41 +1581,80 @@ class LeaderBoardWidget extends StatelessWidget {
 
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    return Row(
-      children: [
-        SizedBox(width: 25, child: Text("#", style: style)),
-        Expanded(
-          flex: 3,
-          child: Text("Teams", style: style),
-        ),
-        SizedBox(width: 30, child: Center(child: Text("M", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("W", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("L", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
-        SizedBox(width: 30, child: Center(child: Text("Adv", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Int", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Mx", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Wm", style: style))),
-      ],
+    final controller = Get.find<LeagueController>();
+    final categories = controller.allCategories;
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          SizedBox(width: 25, child: Text("#", style: style)),
+          SizedBox(
+            width: 120,
+            child: Text("Teams", style: style),
+          ),
+          SizedBox(width: 30, child: Center(child: Text("M", style: style))),
+          SizedBox(width: 30, child: Center(child: Text("W", style: style))),
+          SizedBox(width: 30, child: Center(child: Text("L", style: style))),
+          SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
+          ...categories.map((cat) => SizedBox(
+            width: 30,
+            child: Center(child: Text(_getCategoryShortName(cat), style: style)),
+          )),
+        ],
+      ),
     );
+  }
+  
+  String _getCategoryShortName(String category) {
+    final Map<String, String> shortNames = {
+      'Advanced': 'Adv',
+      'Intermediate': 'Int',
+      'Mixed Doubles': 'Mx',
+      "Women's": 'Wm',
+      'Hybrid': 'Hyb',
+    };
+    return shortNames[category] ?? category.substring(0, category.length > 3 ? 3 : category.length);
   }
 
   Widget _teamRow(standing) {
-    return Row(
-      children: [
-        SizedBox(width: 25, child: Text("${standing.position ?? 0}", style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600, fontSize: 10))),
-        Expanded(
-          flex: 3,
-          child: Row(
-            children: [
-              standing.clubLogo != null && standing.clubLogo!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: standing.clubLogo!,
-                      imageBuilder: (context, imageProvider) => CircleAvatar(
-                        radius: 11,
-                        backgroundImage: imageProvider,
-                      ),
-                      placeholder: (context, url) => CircleAvatar(
+    final controller = Get.find<LeagueController>();
+    final categories = controller.allCategories;
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          SizedBox(width: 25, child: Text("${standing.position ?? 0}", style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600, fontSize: 10))),
+          SizedBox(
+            width: 120,
+            child: Row(
+              children: [
+                standing.clubLogo != null && standing.clubLogo!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: standing.clubLogo!,
+                        imageBuilder: (context, imageProvider) => CircleAvatar(
+                          radius: 11,
+                          backgroundImage: imageProvider,
+                        ),
+                        placeholder: (context, url) => CircleAvatar(
+                          radius: 11,
+                          backgroundColor: AppColors.primaryColor,
+                          child: Text(
+                            (standing.clubName ?? "?")[0].toUpperCase(),
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => CircleAvatar(
+                          radius: 11,
+                          backgroundColor: AppColors.primaryColor,
+                          child: Text(
+                            (standing.clubName ?? "?")[0].toUpperCase(),
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                    : CircleAvatar(
                         radius: 11,
                         backgroundColor: AppColors.primaryColor,
                         child: Text(
@@ -1619,43 +1662,27 @@ class LeaderBoardWidget extends StatelessWidget {
                           style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      errorWidget: (context, url, error) => CircleAvatar(
-                        radius: 11,
-                        backgroundColor: AppColors.primaryColor,
-                        child: Text(
-                          (standing.clubName ?? "?")[0].toUpperCase(),
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    )
-                  : CircleAvatar(
-                      radius: 11,
-                      backgroundColor: AppColors.primaryColor,
-                      child: Text(
-                        (standing.clubName ?? "?")[0].toUpperCase(),
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  standing.clubName ?? "Unknown",
-                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    standing.clubName ?? "Unknown",
+                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.abWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.cdWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.mixedWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.womensWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-      ],
+          SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+          SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+          SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+          SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
+          ...categories.map((cat) => SizedBox(
+            width: 30,
+            child: Center(child: Text("${standing.categoryWins?[cat] ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400))),
+          )),
+        ],
+      ),
     );
   }
 

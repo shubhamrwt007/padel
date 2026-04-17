@@ -53,6 +53,7 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
   final RxBool isLoadingSponsors = false.obs;
   final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
+  final RxList<String> allCategories = <String>[].obs;
   
   // Live match scoreboard data
   final Rx<Map<String, dynamic>?> liveMatchScoreboard = Rx<Map<String, dynamic>?>(null);
@@ -182,11 +183,23 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         leagueId: leagueId ?? '',
       );
       leaderBoard.value = response;
+      _extractAllCategories();
     } catch (e) {
       print('Error fetching leaderboard: $e');
     } finally {
       isLoadingLeaderBoard.value = false;
     }
+  }
+  
+  void _extractAllCategories() {
+    final Set<String> categories = {};
+    final standings = leaderBoard.value?.data?.standings ?? [];
+    for (var standing in standings) {
+      if (standing.categoryWins != null) {
+        categories.addAll(standing.categoryWins!.keys);
+      }
+    }
+    allCategories.value = categories.toList();
   }
   
   Future<void> fetchLiveMatchScoreboard() async {
