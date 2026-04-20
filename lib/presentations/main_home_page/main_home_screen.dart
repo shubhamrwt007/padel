@@ -779,6 +779,7 @@ class MainHomeScreen extends StatelessWidget {
                 'leagueId': leagueId,
                 'leagueTitle': leagueTitle,
                 'initialTab': 0,
+                'matchId': matchId,
               },
             )?.then((_) {
               controller.fetchPollResults();
@@ -890,6 +891,7 @@ class MainHomeScreen extends StatelessWidget {
                                 'leagueId': leagueId,
                                 'leagueTitle': leagueTitle,
                                 'initialTab': 0,
+                                'matchId': matchId,
                               },
                             )?.then((_) {
                               controller.fetchPollResults();
@@ -3094,7 +3096,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(width: 20, child: Text("#", style: style)),
+        SizedBox(width: 40, child: Text("#", style: style)),
         Expanded(
           flex: 3,
           child: SizedBox(width: 35, child: Text(" Teams", style: style)),
@@ -3132,13 +3134,20 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
     return Row(
       children: [
         SizedBox(
-          width: 25,
-          child: Text(
-            "${standing.position ?? 0}",
-            style: Get.textTheme.bodySmall!.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
+          width: 40,
+          child: Row(
+            children: [
+              Text(
+                "${standing.position ?? 0}",
+                style: Get.textTheme.bodySmall!.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: _getPositionColor(standing.position, standing.positionChange),
+                ),
+              ),
+              SizedBox(width: 4),
+              _buildPositionChangeIndicator(standing.positionChange),
+            ],
           ),
         ),
         Expanded(
@@ -3250,6 +3259,42 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
       ],
+    );
+  }
+
+  Color _getPositionColor(int? position, int? positionChange) {
+    // Color based on position change only
+    if (positionChange == null || positionChange == 0) return Colors.grey;
+    return positionChange > 0 ? Colors.green : Colors.red;
+  }
+
+  Widget _buildPositionChangeIndicator(int? positionChange) {
+    if (positionChange == null || positionChange == 0) {
+      return SizedBox(
+        width: 12,
+        child: Center(
+          child: Text(
+            "-",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    final isUp = positionChange > 0;
+    final color = isUp ? Colors.green : Colors.red;
+    
+    return SizedBox(
+      width: 12,
+      child: Icon(
+        isUp ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+        color: color,
+        size: 16,
+      ),
     );
   }
 
