@@ -168,21 +168,30 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
     try {
       if (Get.isRegistered<LeagueController>()) {
         final leagueController = Get.find<LeagueController>();
-        return BuildSponsorBanner(controller: leagueController);
+        return Column(
+          children: [
+            BuildTitleSponsor(controller: leagueController),
+            Obx(() {
+              final sponsors = leagueController.sponsors.value?.data?.sponsors ?? [];
+              if (sponsors.isEmpty) return const SizedBox.shrink();
+              return BuildMoreSponsor(sponsors: sponsors);
+            }),
+          ],
+        );
       }
     } catch (e) {
       print('LeagueController not found: $e');
     }
-    return const SizedBox(height: 200);
+    return const SizedBox.shrink();
   }
   Widget _buildScoreSection() {
     return Stack(
       children: [
         SizedBox(
           width: double.infinity,
-          height: 140, // 👈 decrease height here safely
+          // height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
-            alignment: AlignmentGeometry.bottomCenter,
+            alignment: AlignmentGeometry.center,
             Assets.imagesFipPromesisBg,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
