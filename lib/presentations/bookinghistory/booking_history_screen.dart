@@ -1220,8 +1220,8 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                       ),
                       const SizedBox(width: 10),
                     ],
-                    if (isUpcoming)
-                      const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
+                    // if (isUpcoming)
+                    //   const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
                   ],
                 ),
               ],
