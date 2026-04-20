@@ -570,7 +570,7 @@ class UpcomingMatchCard extends StatelessWidget {
                                 ),
                               ).paddingOnly(right: 5),
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: (match?.teamA?.players?.isNotEmpty ?? false)
@@ -607,7 +607,7 @@ class UpcomingMatchCard extends StatelessWidget {
                           Row(
                             children: [
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: (match?.teamB?.players?.isNotEmpty ?? false)
@@ -704,11 +704,7 @@ class UpcomingMatchCard extends StatelessWidget {
   }
   
   String formatName(String name) {
-    final parts = name.trim().split(" ");
-    if (parts.length > 1) {
-      return "${parts.first} ${parts.last[0]}";
-    }
-    return name;
+    return name.trim().split(" ").first;
   }
 }
 class LiveMatchCard extends StatelessWidget {
@@ -827,7 +823,7 @@ class LiveMatchCard extends StatelessWidget {
                                 ),
                               ).paddingOnly(right: 5),
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: (match?.teamA?.players?.isNotEmpty ?? false)
@@ -870,7 +866,7 @@ class LiveMatchCard extends StatelessWidget {
                           Row(
                             children: [
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: (match?.teamB?.players?.isNotEmpty ?? false)
@@ -957,11 +953,7 @@ class LiveMatchCard extends StatelessWidget {
   }
   
   String formatName(String name) {
-    final parts = name.trim().split(" ");
-    if (parts.length > 1) {
-      return "${parts.first} ${parts.last[0]}";
-    }
-    return name;
+    return name.trim().split(" ").first;
   }
 }
 class ResultMatchCard extends StatelessWidget {
@@ -1087,7 +1079,7 @@ class ResultMatchCard extends StatelessWidget {
                                 ),
                               ).paddingOnly(right: 5),
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: (match?.teamA?.players?.isNotEmpty ?? false)
@@ -1132,7 +1124,7 @@ class ResultMatchCard extends StatelessWidget {
                           Row(
                             children: [
                               SizedBox(
-                                width: 50,
+                                width: 70,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: (match?.teamB?.players?.isNotEmpty ?? false)
@@ -1230,11 +1222,7 @@ class ResultMatchCard extends StatelessWidget {
   }
   
   String formatName(String name) {
-    final parts = name.trim().split(" ");
-    if (parts.length > 1) {
-      return "${parts.first} ${parts.last[0]}";
-    }
-    return name;
+    return name.trim().split(" ").first;
   }
 }
 
