@@ -473,3 +473,224 @@ Widget _xpText(int xp) {
     ),
   );
 }
+
+/// SWAP HISTORY DIALOG
+Future<void> _showSwapHistoryDialog(ScoreBoardController controller) async {
+  return Get.dialog(
+    Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: Get.height * 0.7),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// HEADER
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFF2E5BFF),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(22),
+                  topRight: Radius.circular(22),
+                ),
+              ),
+              child: const Text(
+                "Match History",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            
+            /// BODY
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: controller.swapHistory.map((swap) => _buildSwapHistoryItem(swap, const Color(0xFF2E5BFF))).toList(),
+                ),
+              ),
+            ),
+            
+            /// CLOSE BUTTON
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E5BFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    "Close",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    barrierDismissible: true,
+  );
+}
+
+/// SWAP HISTORY ITEM
+Widget _buildSwapHistoryItem(Map<String, dynamic> swap, Color primaryColor) {
+  final teams = swap['teams'] as List? ?? [];
+  final sets = swap['sets'] as List? ?? [];
+  final totalScore = swap['totalScore'] as Map? ?? {};
+  final winner = swap['winner']?.toString() ?? '';
+  
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey[100],
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey[300]!),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Teams and Score
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Team A
+            if (teams.isNotEmpty) ...[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      teams[0]['name'] ?? 'Team A',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ...(teams[0]['players'] as List? ?? []).map((player) => Text(
+                      player['name'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.black54,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )),
+                  ],
+                ),
+              ),
+            ],
+            
+            // Score
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${totalScore['teamA'] ?? 0} - ${totalScore['teamB'] ?? 0}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+            
+            // Team B
+            if (teams.length > 1) ...[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      teams[1]['name'] ?? 'Team B',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ...(teams[1]['players'] as List? ?? []).map((player) => Text(
+                      player['name'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.black54,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                    )),
+                  ],
+                ),
+              )
+            ],
+          ],
+        ),
+        
+        // Sets
+        if (sets.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: sets.map((set) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Text(
+                'Set ${set['setNumber']}: ${set['teamAScore']}-${set['teamBScore']}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.black87,
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+        
+        // Winner
+        if (winner.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Winner: $winner',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}

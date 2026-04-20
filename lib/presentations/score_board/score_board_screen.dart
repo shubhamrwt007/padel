@@ -3177,6 +3177,29 @@ class ScoreBoardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Show swap history when match is completed (in chronological order)
+                if (controller.isCompleted.value && controller.swapHistory.isNotEmpty) ...[
+                  ...controller.swapHistory.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final swap = entry.value;
+                    return Column(
+                      children: [
+                        _buildMatchHistorySection(swap),
+                        if (index < controller.swapHistory.length - 1)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Divider(color: Colors.grey[300], thickness: 1),
+                          ),
+                      ],
+                    );
+                  }),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Divider(color: Colors.grey[300], thickness: 1),
+                  ),
+                ],
+                
+                // Final Match Summary (current state)
                 const Text("Match Summary",
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 8),
@@ -3197,13 +3220,16 @@ class ScoreBoardScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Winner:"),
+                    Text("Winner:", style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.w600)),
                     Obx(() {
                       final winnerText = controller.winner.value;
                       final hasWinner = winnerText.isNotEmpty &&
                           winnerText.toLowerCase() != 'none' &&
                           winnerText != '-';
-                      return Text(hasWinner ? winnerText : "-");
+                      return Text(
+                        hasWinner ? winnerText : "-",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      );
                     }),
                   ],
                 ),
@@ -3294,6 +3320,194 @@ class ScoreBoardScreen extends StatelessWidget {
         ],
       );
     });
+  }
+  
+  Widget _buildMatchHistorySection(Map<String, dynamic> swap) {
+    final sets = swap['sets'] as List? ?? [];
+    final totalScore = swap['totalScore'] as Map? ?? {};
+    final winner = swap['winner']?.toString() ?? '';
+    final teamAWins = totalScore['teamA'] ?? 0;
+    final teamBWins = totalScore['teamB'] ?? 0;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Match Completed Header
+        const Text(
+          "Match Completed",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.green,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Sets List
+        ...sets.asMap().entries.map((entry) {
+          final set = entry.value;
+          final setNumber = set['setNumber'] ?? 0;
+          final teamAScore = set['teamAScore'] ?? 0;
+          final teamBScore = set['teamBScore'] ?? 0;
+          final setWinner = set['winner']?.toString().toLowerCase() ?? '';
+          final isTeamAWinner = setWinner.contains('team a') || setWinner == 'teama';
+          final isTeamBWinner = setWinner.contains('team b') || setWinner == 'teamb';
+          
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Team A Score
+                SizedBox(
+                  width: 80,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$teamAScore',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isTeamAWinner ? Colors.green : Colors.black87,
+                        ),
+                      ),
+                      if (isTeamAWinner) ...[
+                        const SizedBox(width: 6),
+                        const Text(
+                          'W',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                
+                // Set Number
+                Text(
+                  'Set $setNumber',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                ),
+                
+                // Team B Score
+                SizedBox(
+                  width: 80,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (isTeamBWinner) ...[
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'W',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        '$teamBScore',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isTeamBWinner ? Colors.green : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        
+        const SizedBox(height: 16),
+        
+        // Match Summary for this swap phase
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Match Summary",
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Team A Wins:"),
+                  Text('$teamAWins'),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Team B Wins:"),
+                  Text('$teamBWins'),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Winner:",
+                    style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    winner.isNotEmpty ? winner : "-",
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 ////

@@ -257,6 +257,7 @@ class ScoreBoardController extends GetxController {
   final xpEarned = 0.obs;
   final xpLost = 0.obs;
   final currentXP = 0.obs;
+  RxList<Map<String, dynamic>> swapHistory = <Map<String, dynamic>>[].obs;
 
   Future<void> fetchScoreBoard({bool showLoader = true}) async {
     if (showLoader) {
@@ -348,6 +349,59 @@ class ScoreBoardController extends GetxController {
         teamBWins.value = item.totalScore?.teamB ?? 0;
         winner.value = item.winner?.toString() ?? "";
         isCompleted.value = item.isCompleted ?? false;
+        
+        // Parse swap history
+        swapHistory.clear();
+        if (item.swapHistory != null && item.swapHistory!.isNotEmpty) {
+          for (var swap in item.swapHistory!) {
+            final swapData = <String, dynamic>{
+              'swappedAt': swap.swappedAt ?? '',
+              'winner': swap.winner ?? '',
+              'totalScore': {
+                'teamA': swap.totalScore?.teamA ?? 0,
+                'teamB': swap.totalScore?.teamB ?? 0,
+              },
+              'teams': [],
+              'sets': [],
+            };
+            
+            // Parse teams
+            if (swap.teams != null) {
+              for (var team in swap.teams!) {
+                final teamData = <String, dynamic>{
+                  'name': team.name ?? '',
+                  'players': [],
+                };
+                
+                if (team.players != null) {
+                  for (var player in team.players!) {
+                    teamData['players'].add({
+                      'playerId': player.playerId?.sId ?? '',
+                      'name': player.playerId?.name ?? 'Unknown',
+                      'pic': player.playerId?.profilePic ?? '',
+                    });
+                  }
+                }
+                
+                swapData['teams'].add(teamData);
+              }
+            }
+            
+            // Parse sets
+            if (swap.sets != null) {
+              for (var set in swap.sets!) {
+                swapData['sets'].add({
+                  'setNumber': set.setNumber ?? 0,
+                  'teamAScore': set.teamAScore ?? 0,
+                  'teamBScore': set.teamBScore ?? 0,
+                  'winner': set.winner ?? '',
+                });
+              }
+            }
+            
+            swapHistory.add(swapData);
+          }
+        }
         
         // Set game started status based on existing sets
         isGameStarted.value = sets.isNotEmpty;

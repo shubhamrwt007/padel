@@ -31,13 +31,17 @@ class LeagueScreen extends StatelessWidget {
     }
     
     return Scaffold(
-        appBar: primaryAppBar(
-          title: leagueTitle == 'Swoot Padel League'
-              ? SvgPicture.asset(Assets.imagesImgSwootPadelLeague, height: 22, width: 25)
-              : Text(leagueTitle),
-          centerTitle: true,
-          context: context,
-        ),
+      appBar: primaryAppBar(
+        title: leagueTitle.toLowerCase() == 'swoot padel league'
+            ? SvgPicture.asset(
+          Assets.imagesImgSwootPadelLeague,
+          height: 22,
+          width: 25,
+        )
+            : Text(leagueTitle),
+        centerTitle: true,
+        context: context,
+      ),
         body: Obx(() {
           if (controller.isInitialLoading.value || controller.isRefreshingTab.value) {
             return Center(
