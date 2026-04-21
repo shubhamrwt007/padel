@@ -1,11 +1,11 @@
 import 'dart:developer';
 
 import 'package:get/get.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
-import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:padel_mobile/configs/components/app_toast.dart';
 
@@ -41,6 +41,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
   final RxBool showVideoPlayer = false.obs;
   final RxBool isStreamLoading = false.obs;
   final Rx<YoutubePlayerController?> youtubeController = Rx<YoutubePlayerController?>(null);
+  final RxBool showGoToLiveButton = false.obs;
 
   @override
   void onInit() {
@@ -57,6 +58,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
     if (matchType.value == "live") {
       log('▶️ Fetching stream url...');
       fetchStreamUrl();
+      _startLiveCheckTimer();
     }
     if (matchId.value.isNotEmpty) {
       if (matchType.value == "live") {
@@ -79,18 +81,58 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
     super.onClose();
   }
 
+  void _startLiveCheckTimer() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (youtubeController.value != null && matchType.value == "live") {
+        _checkIfBehindLive();
+        _startLiveCheckTimer();
+      }
+    });
+  }
+
+  void _checkIfBehindLive() {
+    final controller = youtubeController.value;
+    if (controller == null) return;
+    
+    final currentPosition = controller.value.position.inSeconds;
+    final duration = controller.metadata.duration.inSeconds;
+    
+    if (duration > 0 && (duration - currentPosition) > 10) {
+      showGoToLiveButton.value = true;
+    } else {
+      showGoToLiveButton.value = false;
+    }
+  }
+
+  void goToLive() {
+    final controller = youtubeController.value;
+    if (controller != null) {
+      showGoToLiveButton.value = false;
+      final duration = controller.metadata.duration.inSeconds;
+      controller.seekTo(Duration(seconds: duration));
+    }
+  }
+
   Future<void> fetchStreamUrl() async {
     try {
       isStreamLoading.value = true;
-      final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
-      final streamKey = response.data?.streamKey;
-      if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
-        showVideoPlayer.value = true;
-        setYoutubeUrl(streamKey);
-      } else {
-        log('⚠️ Stream not available (success=false or no streamKey)');
-        showVideoPlayer.value = false;
-      }
+
+    // final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
+    // final streamKey = response.data?.streamKey;
+    // if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
+    //   showVideoPlayer.value = true;
+    //   setYoutubeUrl(streamKey);
+    // } else {
+    //   log('⚠️ Stream not available (success=false or no streamKey)');
+    //   showVideoPlayer.value = false;
+    // }
+
+      // 🔴 Dummy Live Stream (temporary)
+      const dummyLiveUrl = "jfKfPfyJRdk";
+
+      showVideoPlayer.value = true;
+      setYoutubeUrl(dummyLiveUrl);
+
     } catch (e) {
       log('❌ fetchStreamUrl error: $e');
       showVideoPlayer.value = false;
@@ -104,7 +146,12 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
     youtubeVideoId.value = videoId;
     youtubeController.value = YoutubePlayerController(
       initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        enableCaption: false,
+        disableDragSeek: true,
+      ),
     );
     log('✅ YoutubePlayerController created with id: $videoId');
   }
@@ -314,10 +361,10 @@ $data
           barrierDismissible: false,
         );
         
-        if (Get.isRegistered<LeagueController>()) {
-          final leagueController = Get.find<LeagueController>();
-          leagueController.fetchResultMatches();
-          leagueController.fetchUpcomingMatches();
+        if (Get.isRegistered<IptTournamentController>()) {
+          final iptTournamentController = Get.find<IptTournamentController>();
+          iptTournamentController.fetchResultMatches();
+          iptTournamentController.fetchUpcomingMatches();
         }
       });
       

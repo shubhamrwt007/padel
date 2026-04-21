@@ -12,7 +12,6 @@ import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/widgets/ipt_build_sponsor_banner.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/widgets/ipt_scoreboard_row.dart';
-import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 
 class IptTournamentScreen extends StatelessWidget {
@@ -303,7 +302,7 @@ class IptTournamentScreen extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          height: Get.height * 0.3,
+          height: Get.height * 0.34,
           child: PageView.builder(
             controller: controller.liveMatchCarouselController,
             onPageChanged: controller.onLiveMatchCarouselChanged,
@@ -1542,7 +1541,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<LeagueController>();
+    final controller = Get.find<IptTournamentController>();
     _scrollControllers.clear();
     
     return RefreshIndicator(
@@ -1642,7 +1641,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
 
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    final controller = Get.find<LeagueController>();
+    final controller = Get.find<IptTournamentController>();
     final categories = controller.allCategories;
     
     return Row(
@@ -1705,7 +1704,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
   }
 
   Widget _teamRow(standing) {
-    final controller = Get.find<LeagueController>();
+    final controller = Get.find<IptTournamentController>();
     final categories = controller.allCategories;
     
     return Row(
@@ -1840,7 +1839,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
 
   Widget _upcomingListForLeaderboard() {
     return Obx(() {
-      final controller = Get.find<LeagueController>();
+      final controller = Get.find<IptTournamentController>();
       
       if (controller.isLoadingLeaderboardUpcoming.value) {
         return SizedBox(

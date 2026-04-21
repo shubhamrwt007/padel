@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/widgets/ipt_build_sponsor_banner.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
@@ -26,6 +28,18 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
   final LiveAndCompleteIptTournamentMatchController controller = Get.put(LiveAndCompleteIptTournamentMatchController());
 
   @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Obx(() {
       final ytController = controller.youtubeController.value;
@@ -33,8 +47,49 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
         return YoutubePlayerBuilder(
           player: YoutubePlayer(
             controller: ytController,
-            showVideoProgressIndicator: true,
-
+            showVideoProgressIndicator: false,
+            progressIndicatorColor: Colors.transparent,
+            progressColors: const ProgressBarColors(
+              playedColor: Colors.transparent,
+              handleColor: Colors.transparent,
+              bufferedColor: Colors.transparent,
+              backgroundColor: Colors.transparent,
+            ),
+            bottomActions: [
+              const Spacer(),
+              Obx(() => controller.showGoToLiveButton.value
+                  ? GestureDetector(
+                      onTap: controller.goToLive,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCD3529),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              "Go Live",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              const SizedBox(width: 8),
+              FullScreenButton(),
+            ],
+            onReady: () {
+              ytController.addListener(() {});
+            },
           ),
           builder: (context, player) => _buildScaffold(context, videoPlayer: player),
         );
@@ -106,12 +161,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
 
   Widget _buildVideoSection(Widget? player) {
     if (player != null) {
-      return Stack(
-        children: [
-          player,
-          // Positioned(left: 16, top: 16, child: _liveBadge()),
-        ],
-      );
+      return player;
     }
     return Stack(
       alignment: Alignment.center,
@@ -169,13 +219,13 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
 
   Widget _buildSponsorBannerSafe() {
     try {
-      if (Get.isRegistered<LeagueController>()) {
-        final leagueController = Get.find<LeagueController>();
+      if (Get.isRegistered<IptTournamentController>()) {
+        final iptTournamentController = Get.find<IptTournamentController>();
         return Column(
           children: [
-            BuildIptTournamentTitleSponsor(controller: leagueController),
+            BuildIptTournamentTitleSponsor(controller: iptTournamentController),
             Obx(() {
-              final sponsors = leagueController.sponsors.value?.data?.sponsors ?? [];
+              final sponsors = iptTournamentController.sponsors.value?.data?.sponsors ?? [];
               if (sponsors.isEmpty) return const SizedBox.shrink();
               return BuildIptTournamentMoreSponsor(sponsors: sponsors);
             }),
@@ -183,7 +233,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
         );
       }
     } catch (e) {
-      print('LeagueController not found: $e');
+      print('IptTournamentController not found: $e');
     }
     return const SizedBox.shrink();
   }

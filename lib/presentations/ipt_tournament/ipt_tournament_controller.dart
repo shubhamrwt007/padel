@@ -81,7 +81,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     // Get leagueId from arguments
     leagueId = Get.arguments?['leagueId'];
     final matchId = Get.arguments?['matchId'];
-    print('🎯 League Controller - Received leagueId: $leagueId, matchId: $matchId');
+    print('🎯 League Controller - Rece  ived leagueId: $leagueId, matchId: $matchId');
     
     pageController = PageController(initialPage: 0);
     tabController = TabController(length: 2, vsync: this, initialIndex: 0);
