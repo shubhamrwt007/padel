@@ -229,7 +229,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
                   /// SCORE
                   Transform.translate(
-                    offset: Offset(0, 8),
+                    offset: Offset(-3, 8),
                     child: Column(
                       children: [
                         Text(

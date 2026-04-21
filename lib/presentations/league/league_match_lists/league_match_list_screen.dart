@@ -329,44 +329,46 @@ class LeagueMatchListScreen extends StatelessWidget {
             }
             return false;
           },
-          child: ListView.builder(
-            itemCount: allMatches.length + (controller.hasMoreUpcoming.value ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == allMatches.length) {
-                return Obx(() => controller.isLoadingMoreUpcoming.value
-                    ? Center(child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: LoadingWidget(color: AppColors.primaryColor),
-                      ))
-                    : SizedBox.shrink());
-              }
-              final matchData = scheduleData.firstWhere(
-                (data) => data.matches?.contains(allMatches[index]) ?? false,
-                orElse: () => scheduleData.first,
-              );
-              final isLive = matchData.matchStatus?.toLowerCase() == 'live';
-              return GestureDetector(
-                onTap: () {
-                  if (isLive) {
-                    Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                      "matchType": "live",
-                      "matchId": matchData.matchId?.id ?? ""
-                    });
-                  }
-                },
-                child: isLive
-                    ? LiveMatchCard(
-                        match: allMatches[index],
-                        categoryType: matchData.categoryType,
-                        setsWon: matchData.matchId?.setsWon,
-                      )
-                    : UpcomingMatchCard(
-                        match: allMatches[index],
-                        categoryType: matchData.categoryType,
-                        date: matchData.date,
-                      ),
-              );
-            },
+          child: Scrollbar(
+            child: ListView.builder(
+              itemCount: allMatches.length + (controller.hasMoreUpcoming.value ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == allMatches.length) {
+                  return Obx(() => controller.isLoadingMoreUpcoming.value
+                      ? Center(child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: LoadingWidget(color: AppColors.primaryColor),
+                        ))
+                      : SizedBox.shrink());
+                }
+                final matchData = scheduleData.firstWhere(
+                  (data) => data.matches?.contains(allMatches[index]) ?? false,
+                  orElse: () => scheduleData.first,
+                );
+                final isLive = matchData.matchStatus?.toLowerCase() == 'live';
+                return GestureDetector(
+                  onTap: () {
+                    if (isLive) {
+                      Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                        "matchType": "live",
+                        "matchId": matchData.matchId?.id ?? ""
+                      });
+                    }
+                  },
+                  child: isLive
+                      ? LiveMatchCard(
+                          match: allMatches[index],
+                          categoryType: matchData.categoryType,
+                          setsWon: matchData.matchId?.setsWon,
+                        )
+                      : UpcomingMatchCard(
+                          match: allMatches[index],
+                          categoryType: matchData.categoryType,
+                          date: matchData.date,
+                        ),
+                );
+              },
+            ),
           ),
         ),
       );
@@ -424,40 +426,42 @@ class LeagueMatchListScreen extends StatelessWidget {
             }
             return false;
           },
-          child: ListView.builder(
-            itemCount: allMatches.length + (controller.hasMoreResult.value ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == allMatches.length) {
-                return Obx(() => controller.isLoadingMoreResult.value
-                    ? Center(child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: LoadingWidget(color: AppColors.primaryColor),
-                      ))
-                    : SizedBox.shrink());
-              }
-              final matchData = scheduleData.firstWhere(
-                (data) => data.matches?.contains(allMatches[index]) ?? false,
-                orElse: () => scheduleData.first,
-              );
-              return GestureDetector(
-                onTap: () {
-                  final matchData = scheduleData.firstWhere(
-                    (data) => data.matches?.contains(allMatches[index]) ?? false,
-                    orElse: () => scheduleData.first,
-                  );
-                  Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                    "matchType": "result",
-                    "matchId": matchData.matchId?.id ?? ""
-                  });
-                },
-                child: ResultMatchCard(
-                  match: allMatches[index],
-                  categoryType: matchData.categoryType,
-                  date: matchData.date,
-                  setsWon: matchData.matchId?.setsWon,
-                ),
-              );
-            },
+          child: Scrollbar(
+            child: ListView.builder(
+              itemCount: allMatches.length + (controller.hasMoreResult.value ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == allMatches.length) {
+                  return Obx(() => controller.isLoadingMoreResult.value
+                      ? Center(child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: LoadingWidget(color: AppColors.primaryColor),
+                        ))
+                      : SizedBox.shrink());
+                }
+                final matchData = scheduleData.firstWhere(
+                  (data) => data.matches?.contains(allMatches[index]) ?? false,
+                  orElse: () => scheduleData.first,
+                );
+                return GestureDetector(
+                  onTap: () {
+                    final matchData = scheduleData.firstWhere(
+                      (data) => data.matches?.contains(allMatches[index]) ?? false,
+                      orElse: () => scheduleData.first,
+                    );
+                    Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                      "matchType": "result",
+                      "matchId": matchData.matchId?.id ?? ""
+                    });
+                  },
+                  child: ResultMatchCard(
+                    match: allMatches[index],
+                    categoryType: matchData.categoryType,
+                    date: matchData.date,
+                    setsWon: matchData.matchId?.setsWon,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       );

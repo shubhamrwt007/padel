@@ -496,35 +496,41 @@ class LeagueController extends GetxController with GetSingleTickerProviderStateM
         
         print('📊 League - Extracted data: points=$points, setsWon=$setsWon, sets=${sets.length} sets');
         
-        // Update the upcoming matches data with new scores for live matches
+        // Update the upcoming matches data with new scores for ONLY current live match
         final currentMatches = upcomingMatches.value;
         if (currentMatches?.data?.isNotEmpty == true) {
-          final updatedData = currentMatches!.data!.map((matchData) {
-            if (matchData.matchId?.setsWon != null) {
-              final newTeamAScore = setsWon['teamA'] ?? matchData.matchId!.setsWon!.teamA;
-              final newTeamBScore = setsWon['teamB'] ?? matchData.matchId!.setsWon!.teamB;
-              
-              print('📊 League - Updating scores: TeamA: ${matchData.matchId!.setsWon!.teamA} -> $newTeamAScore, TeamB: ${matchData.matchId!.setsWon!.teamB} -> $newTeamBScore');
-              
-              matchData.matchId!.setsWon!.teamA = newTeamAScore;
-              matchData.matchId!.setsWon!.teamB = newTeamBScore;
-            }
-            return matchData;
-          }).toList();
-          
-          // Force update the observable with a new instance to trigger UI rebuild
-          final newMatches = GetAllScheduleLiveMatchesModel(
-            success: currentMatches.success,
-            data: updatedData,
-            pagination: currentMatches.pagination,
-          );
-          
-          upcomingMatches.value = newMatches;
-          
-          // Force refresh the observable to ensure UI updates
-          upcomingMatches.refresh();
-          
-          print('✅ League - Live matches updated successfully. New scores: TeamA: ${updatedData.first.matchId?.setsWon?.teamA}, TeamB: ${updatedData.first.matchId?.setsWon?.teamB}');
+          final liveMatches = currentMatches!.data!.where((data) => data.matchStatus == 'live').toList();
+          if (liveMatches.isNotEmpty) {
+            final currentIndex = currentLiveMatchIndex.value < liveMatches.length ? currentLiveMatchIndex.value : 0;
+            final currentLiveMatch = liveMatches[currentIndex];
+            final currentMatchId = currentLiveMatch.matchId?.id;
+            
+            final updatedData = currentMatches.data!.map((matchData) {
+              // Sirf current carousel wale match ko update karo
+              if (matchData.matchId?.id == currentMatchId && matchData.matchId?.setsWon != null) {
+                final newTeamAScore = setsWon['teamA'] ?? matchData.matchId!.setsWon!.teamA;
+                final newTeamBScore = setsWon['teamB'] ?? matchData.matchId!.setsWon!.teamB;
+                
+                print('📊 League - Updating scores for matchId $currentMatchId: TeamA: ${matchData.matchId!.setsWon!.teamA} -> $newTeamAScore, TeamB: ${matchData.matchId!.setsWon!.teamB} -> $newTeamBScore');
+                
+                matchData.matchId!.setsWon!.teamA = newTeamAScore;
+                matchData.matchId!.setsWon!.teamB = newTeamBScore;
+              }
+              return matchData;
+            }).toList();
+            
+            // Force update the observable with a new instance to trigger UI rebuild
+            final newMatches = GetAllScheduleLiveMatchesModel(
+              success: currentMatches.success,
+              data: updatedData,
+              pagination: currentMatches.pagination,
+            );
+            
+            upcomingMatches.value = newMatches;
+            upcomingMatches.refresh();
+            
+            print('✅ League - Live match updated successfully for matchId: $currentMatchId');
+          }
         }
         
         // Update the detailed scoreboard data for the scoreboard widget

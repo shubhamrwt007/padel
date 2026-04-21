@@ -133,16 +133,27 @@ class CustomDrawerUi extends GetView<ProfileController> {
                     ),
                   );
                 }),
-                const SizedBox(height: 0),
+
                 Obx(() {
                   final profile = controller.profileModel.value?.response;
-                  return Text(
-                    profile?.email ?? 'unknown@gmail.com',
-                    style: Get.textTheme.headlineSmall!.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.labelBlackColor,
-                      fontSize: 12,
-                    ),
+                  final email = profile?.email;
+
+                  if (email == null || email.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 2),
+                      Text(
+                        email,
+                        style: Get.textTheme.headlineSmall!.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.labelBlackColor,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   );
                 }),
               ],

@@ -3056,6 +3056,11 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
+          image: DecorationImage(
+            image: AssetImage(Assets.imagesImgIconSwoot),
+            fit: BoxFit.contain,
+            opacity: 0.9, // 👈 direct opacity
+          ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
@@ -3094,27 +3099,25 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       fontWeight: FontWeight.w500,
     );
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         SizedBox(width: 40, child: Text("#", style: style)),
         Expanded(
           flex: 3,
-          child: SizedBox(width: 35, child: Text(" Teams", style: style)),
-        ),
-        // SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(
-          width: 30,
-          child: Center(child: Text(" W", style: style)),
+          child: Text("Teams", style: style),
         ),
         SizedBox(
           width: 30,
-          child: Center(child: Text(" L", style: style)),
+          child: Center(child: Text("W", style: style)),
         ),
         SizedBox(
           width: 30,
+          child: Center(child: Text("L", style: style)),
+        ),
+        SizedBox(
+          width: 35,
           child: Center(
             child: Text(
-              " Pts",
+              "Pts",
               style: Get.textTheme.labelMedium!.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryColor,
@@ -3123,8 +3126,8 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         Expanded(
-          flex: 4,
-          child: Center(child: Text("Last 5 ", style: style)),
+          flex: 3,
+          child: Center(child: Text("Last 5", style: style)),
         ),
       ],
     );
@@ -3211,7 +3214,6 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
             ],
           ),
         ),
-
         SizedBox(
           width: 30,
           child: Center(
@@ -3235,7 +3237,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         SizedBox(
-          width: 30,
+          width: 35,
           child: Center(
             child: Text(
               "${standing.points ?? 0}",
@@ -3247,13 +3249,12 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: _buildRecentFormIcons(standing.recentForm ?? []),
-              ),
+              ..._buildRecentFormIcons(standing.recentForm ?? []),
+              SizedBox(width: 4),
               Icon(Icons.arrow_back, size: 9, color: Colors.black),
             ],
           ),
