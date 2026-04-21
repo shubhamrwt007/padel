@@ -255,6 +255,28 @@ class CustomDrawerUi extends GetView<ProfileController> {
                   },
                 ),
               ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(
+                    Icons.emoji_events_outlined, // 👈 tournament icon
+                    size: 20,
+                    color: controller.selectedIndex.value == 8
+                        ? AppColors.primaryColor
+                        : AppColors.labelBlackColor,
+                  ),
+                  title: "IPT",
+                  isSelected: controller.selectedIndex.value == 8,
+                  onTap: () {
+                    controller.selectedIndex.value = 8;
+
+                    // 👇 navigation (change route if needed)
+                    Get.toNamed(RoutesName.iptTournament);
+
+                    // OR agar screen direct open karni ho:
+                    // Get.to(()=>TournamentScreen());
+                  },
+                ),
+              ),
               // Obx(
               //       () => ProfileRow(
               //     icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 8 ? AppColors.primaryColor : AppColors.labelBlackColor),

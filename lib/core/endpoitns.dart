@@ -110,7 +110,19 @@ class AppEndpoints {
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
   static const String getLeaguePollResult = "${base}poll/results";
   static const String castLeaguePollVote = "${base}poll/vote";
+
+
+  ///IptTournament--------------------------------------------------------------
+  static const String getAllScheduleLiveMatchesIptTournament = "";
+  static const String getScheduleDatesIptTournament = "";
+  static const String getIptTournamentMatchDetails = "";
+  static const String getIptTournamentLeaderBoard = "";
+  static const String getIptTournamentSponsors = "";
+  static const String getIptTournamentList = "";
+  static const String getIptTournamentPollResult = "";
+  static const String castIptTournamentPollVote = "";
 }
+
 class PaymentConfig {
   // Toggle this when switching environment
   static const bool isLive = true
