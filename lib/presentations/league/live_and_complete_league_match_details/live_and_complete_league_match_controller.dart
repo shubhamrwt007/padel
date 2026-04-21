@@ -41,6 +41,7 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
   final RxBool showVideoPlayer = false.obs;
   final RxBool isStreamLoading = false.obs;
   final Rx<YoutubePlayerController?> youtubeController = Rx<YoutubePlayerController?>(null);
+  final RxBool showGoToLiveButton = false.obs;
 
   @override
   void onInit() {
@@ -57,6 +58,7 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     if (matchType.value == "live") {
       log('▶️ Fetching stream url...');
       fetchStreamUrl();
+      _startLiveCheckTimer();
     }
     if (matchId.value.isNotEmpty) {
       if (matchType.value == "live") {
@@ -79,18 +81,77 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     super.onClose();
   }
 
+  void _startLiveCheckTimer() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (youtubeController.value != null && matchType.value == "live") {
+        _checkIfBehindLive();
+        _startLiveCheckTimer();
+      }
+    });
+  }
+
+  void _checkIfBehindLive() {
+    final controller = youtubeController.value;
+    if (controller == null) return;
+    
+    final currentPosition = controller.value.position.inSeconds;
+    final duration = controller.metadata.duration.inSeconds;
+    
+    if (duration > 0 && (duration - currentPosition) > 10) {
+      showGoToLiveButton.value = true;
+    } else {
+      showGoToLiveButton.value = false;
+    }
+  }
+
+  void goToLive() {
+    final controller = youtubeController.value;
+    if (controller != null) {
+      showGoToLiveButton.value = false;
+      final duration = controller.metadata.duration.inSeconds;
+      controller.seekTo(Duration(seconds: duration));
+    }
+  }
+
+  // Future<void> fetchStreamUrl() async {
+  //   try {
+  //     isStreamLoading.value = true;
+  //     final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
+  //     final streamKey = response.data?.streamKey;
+  //     if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
+  //       showVideoPlayer.value = true;
+  //       setYoutubeUrl(streamKey);
+  //     } else {
+  //       log('⚠️ Stream not available (success=false or no streamKey)');
+  //       showVideoPlayer.value = false;
+  //     }
+  //   } catch (e) {
+  //     log('❌ fetchStreamUrl error: $e');
+  //     showVideoPlayer.value = false;
+  //   } finally {
+  //     isStreamLoading.value = false;
+  //   }
+  // }
   Future<void> fetchStreamUrl() async {
     try {
       isStreamLoading.value = true;
-      final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
-      final streamKey = response.data?.streamKey;
-      if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
-        showVideoPlayer.value = true;
-        setYoutubeUrl(streamKey);
-      } else {
-        log('⚠️ Stream not available (success=false or no streamKey)');
-        showVideoPlayer.value = false;
-      }
+
+    final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
+    final streamKey = response.data?.streamKey;
+    if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
+      showVideoPlayer.value = true;
+      setYoutubeUrl(streamKey);
+    } else {
+      log('⚠️ Stream not available (success=false or no streamKey)');
+      showVideoPlayer.value = false;
+    }
+
+      // 🔴 Dummy Live Stream (temporary)
+      // const dummyLiveUrl = "jfKfPfyJRdk";
+      //
+      // showVideoPlayer.value = true;
+      // setYoutubeUrl(dummyLiveUrl);
+
     } catch (e) {
       log('❌ fetchStreamUrl error: $e');
       showVideoPlayer.value = false;
@@ -104,7 +165,12 @@ class LiveAndCompleteLeagueMatchController extends GetxController{
     youtubeVideoId.value = videoId;
     youtubeController.value = YoutubePlayerController(
       initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        enableCaption: false,
+        disableDragSeek: true,
+      ),
     );
     log('✅ YoutubePlayerController created with id: $videoId');
   }

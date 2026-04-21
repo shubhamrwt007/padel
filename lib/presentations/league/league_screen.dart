@@ -302,7 +302,7 @@ class LeagueScreen extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          height: Get.height * 0.3,
+          height: Get.height * 0.34,
           child: PageView.builder(
             controller: controller.liveMatchCarouselController,
             onPageChanged: controller.onLiveMatchCarouselChanged,
