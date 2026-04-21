@@ -30,7 +30,7 @@ class LeagueMatchListController extends GetxController{
   void onInit() {
     leagueId.value = Get.arguments['leagueId'] ?? '';
     final initialTab = Get.arguments['initialTab'] ?? 0;
-    if (initialTab == 2) {
+    if (initialTab == 1) {
       isHistoryEnabled.value = true;
       matchStatus.value = 'finished';
     }

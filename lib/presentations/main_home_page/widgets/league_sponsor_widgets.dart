@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
-import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart' as LeagueModel;
@@ -14,48 +14,51 @@ class SponsorImagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 32,
-                      child: Image.asset(Assets.imagesJubilee1, fit: BoxFit.fitWidth),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 32,
-                      child: Image.asset(Assets.imagesJubliee2, fit: BoxFit.fitWidth),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 50,
-              left: 20,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  height: 30,
-                  width: 30,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width - 32,
+                        child: Image.asset(Assets.imagesJubilee1, fit: BoxFit.fitWidth),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width - 32,
+                        child: Image.asset(Assets.imagesJubliee2, fit: BoxFit.fitWidth),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.arrow_back, color: Colors.black),
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                top: 50,
+                left: 20,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    height: 30,
+                    width: 30,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(Icons.arrow_back, color: Colors.black),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -278,7 +281,10 @@ class _BuildLeagueMoreSponsorState extends State<BuildLeagueMoreSponsor>
                 child: child,
               );
             },
-            child: row,
+            child: OverflowBox(
+                maxWidth: double.infinity, // 👈 allow infinite width
+                alignment: Alignment.centerLeft,
+                child: row),
           );
         },
       ),

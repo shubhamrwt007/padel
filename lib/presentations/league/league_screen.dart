@@ -1565,6 +1565,11 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
+              image: DecorationImage(
+                image: AssetImage(Assets.imagesImgIconSwoot),
+                fit: BoxFit.contain,
+                opacity: 0.9, // 👈 direct opacity
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.shade100,
@@ -1574,34 +1579,21 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
                 )
               ],
             ),
-            child: Stack(
+            child: Column(
               children: [
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0,
-                    child: Image.asset(
-                      Assets.imagesImgIconSwoot,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Column(
-                  children: [
-                    _headerRow(),
-                    Divider(color: Colors.grey.shade300),
-                    ...standings.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final standing = entry.value;
-                      return Column(
-                        children: [
-                          _teamRow(standing),
-                          if (index < standings.length - 1)
-                            Divider(color: Colors.grey.shade300),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
+                _headerRow(),
+                Divider(color: Colors.grey.shade300),
+                ...standings.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final standing = entry.value;
+                  return Column(
+                    children: [
+                      _teamRow(standing),
+                      if (index < standings.length - 1)
+                        Divider(color: Colors.grey.shade300),
+                    ],
+                  );
+                }),
               ],
             ),
           ).paddingOnly(bottom: 20);
@@ -1684,14 +1676,31 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
   }
   
   String _getCategoryShortName(String category) {
-    final Map<String, String> shortNames = {
-      'Advanced': 'Adv',
-      'Intermediate': 'Int',
-      'Mixed Doubles': 'Mx',
-      "Women's": 'Wm',
-      'Hybrid': 'Hyb',
-    };
-    return shortNames[category] ?? category.substring(0, category.length > 3 ? 3 : category.length);
+    if (category.isEmpty) return '';
+    
+    // Remove special characters and split by spaces or capital letters
+    final words = category
+        .replaceAll(RegExp(r"[^a-zA-Z\s]"), '') // Remove special chars
+        .split(RegExp(r'\s+')) // Split by spaces
+        .where((word) => word.isNotEmpty)
+        .toList();
+    
+    if (words.isEmpty) {
+      // Fallback: take first 3 chars
+      return category.substring(0, category.length > 3 ? 3 : category.length);
+    }
+    
+    // If single word, take first 3 characters
+    if (words.length == 1) {
+      final word = words[0];
+      return word.substring(0, word.length > 3 ? 3 : word.length).capitalize ?? word;
+    }
+    
+    // If multiple words, take first letter of each word (max 3)
+    return words
+        .take(3)
+        .map((word) => word[0].toUpperCase())
+        .join();
   }
 
   Widget _teamRow(standing) {
@@ -1770,17 +1779,21 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
           child: SingleChildScrollView(
             controller: _createSyncedController(),
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
-                ...categories.map((cat) => SizedBox(
-                  width: 30,
-                  child: Center(child: Text("${standing.categoryWins?[cat] ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400))),
-                )),
-              ],
+            child: Container(
+              height: 25,
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
+                  ...categories.map((cat) => SizedBox(
+                    width: 30,
+                    child: Center(child: Text("${standing.categoryWins?[cat] ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400))),
+                  )),
+                ],
+              ),
             ),
           ),
         ),
