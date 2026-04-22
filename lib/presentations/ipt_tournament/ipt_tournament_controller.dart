@@ -1,13 +1,13 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_sponsors_model.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_ipt_tournament_leader_board_model.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_ipt_tournament_sponsors_model.dart';
+import 'package:padel_mobile/repositories/ipt_tournament_repository/ipt_tournament_repository.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../core/network/dio_client.dart';
+import '../../data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
 
 class IptTournamentController extends GetxController with GetSingleTickerProviderStateMixin {
   final RxInt selectedTab = 0.obs;
@@ -45,19 +45,19 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   late PageController pageController;
   late TabController tabController;
   
-  final LeagueRepository _leagueRepository = LeagueRepository();
-  final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final IptTournamentRepository _tournamentRepository = IptTournamentRepository();
+  final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
-  final Rx<GetAllScheduleLiveMatchesModel?> resultMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> resultMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
   final RxBool isLoadingResultMatches = false.obs;
-  final Rx<GetLeagueSponsorsModel?> sponsors = Rx<GetLeagueSponsorsModel?>(null);
+  final Rx<GetIptTournamentSponsorsModel?> sponsors = Rx<GetIptTournamentSponsorsModel?>(null);
   final RxBool isLoadingSponsors = false.obs;
-  final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
+  final Rx<GetIptTournamentLeaderBoardModel?> leaderBoard = Rx<GetIptTournamentLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
   final RxList<String> allCategories = <String>[].obs;
   
   // Upcoming matches for LeaderBoard (Fixture's tab)
-  final Rx<GetAllScheduleLiveMatchesModel?> leaderboardUpcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> leaderboardUpcomingMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
   final RxBool isLoadingLeaderboardUpcoming = false.obs;
   
   // Live match scoreboard data
@@ -73,15 +73,15 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   final RxInt currentLiveMatchIndex = 0.obs;
   late PageController liveMatchCarouselController;
   
-  String? leagueId;
+  String? tournamentId;
 
   @override
   void onInit() {
     super.onInit();
-    // Get leagueId from arguments
-    leagueId = Get.arguments?['leagueId'];
+    // Get tournamentId from arguments
+    tournamentId = Get.arguments?['tournamentId'];
     final matchId = Get.arguments?['matchId'];
-    print('🎯 League Controller - Rece  ived leagueId: $leagueId, matchId: $matchId');
+    print('🎯 League Controller - Received tournamentId: $tournamentId, matchId: $matchId');
     
     pageController = PageController(initialPage: 0);
     tabController = TabController(length: 2, vsync: this, initialIndex: 0);
@@ -92,7 +92,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     // Fetch scoreboard data after upcoming matches are loaded (only once)
     ever(upcomingMatches, (matches) {
       if (matches?.data?.isNotEmpty == true && !_socketInitialized.value) {
-        final hasLiveMatch = matches!.data!.any((data) => data.matchStatus == 'live');
+        final hasLiveMatch = matches!.data!.any((data) => data.matchStatus == 'LIVE');
         if (hasLiveMatch) {
           _initializeLiveMatch(matchId);
         }
@@ -106,7 +106,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     final matches = upcomingMatches.value;
     if (matches?.data?.isEmpty ?? true) return;
     
-    final liveMatches = matches!.data!.where((data) => data.matchStatus == 'live').toList();
+    final liveMatches = matches!.data!.where((data) => data.matchStatus == 'LIVE').toList();
     if (liveMatches.isEmpty) return;
     
     // Set carousel to specific match if matchId provided
@@ -206,8 +206,8 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   Future<void> fetchUpcomingMatches() async {
     try {
       isLoadingUpcomingMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        leagueId: leagueId ?? '',
+      final response = await _tournamentRepository.getAllScheduleLiveMatchesIptTournament(
+        tournamentId: tournamentId??"",
       );
       upcomingMatches.value = response;
     } catch (e) {
@@ -220,9 +220,9 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   Future<void> fetchResultMatches() async {
     try {
       isLoadingResultMatches.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'finished',
-        leagueId: leagueId ?? '',
+      final response = await _tournamentRepository.getAllScheduleLiveMatchesIptTournament(
+        matchStatus: 'FINISHED',
+        tournamentId: tournamentId??"",
       );
       resultMatches.value = response;
     } catch (e) {
@@ -235,8 +235,8 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   Future<void> fetchSponsors() async {
     try {
       isLoadingSponsors.value = true;
-      final response = await _leagueRepository.getLeagueSponsors(leagueId: leagueId);
-      print('🎯 Sponsors - leagueId: $leagueId, data: ${response.data?.titleSponsor?.titleSponsorBanner}, sponsors count: ${response.data?.sponsors?.length}');
+      final response = await _tournamentRepository.getIptTournamentSponsors(leagueId: tournamentId);
+      print('🎯 Sponsors - tournamentId: $tournamentId, data: ${response.data?.titleSponsor?.titleSponsorBanner}, sponsors count: ${response.data?.sponsors?.length}');
       sponsors.value = response;
     } catch (e) {
       print('Error fetching sponsors: $e');
@@ -248,8 +248,8 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   Future<void> fetchLeaderBoard() async {
     try {
       isLoadingLeaderBoard.value = true;
-      final response = await _leagueRepository.getLeagueLeaderBoard(
-        leagueId: leagueId ?? '',
+      final response = await _tournamentRepository.getIptTournamentLeaderBoard(
+        tournamentId: tournamentId??"",
       );
       leaderBoard.value = response;
       _extractAllCategories();
@@ -263,9 +263,9 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   Future<void> fetchLeaderboardUpcomingMatches() async {
     try {
       isLoadingLeaderboardUpcoming.value = true;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'upcoming',
-        leagueId: leagueId ?? '',
+      final response = await _tournamentRepository.getAllScheduleLiveMatchesIptTournament(
+        matchStatus: 'UPCOMING',
+        tournamentId:tournamentId??"",
       );
       leaderboardUpcomingMatches.value = response;
     } catch (e) {
@@ -295,7 +295,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
       
       // Get the current live match from carousel index
       final allMatches = upcomingMatches.value?.data;
-      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'live').toList();
+      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'LIVE').toList();
       if (liveMatchData != null && liveMatchData.isNotEmpty) {
         final currentIndex = currentLiveMatchIndex.value < liveMatchData.length ? currentLiveMatchIndex.value : 0;
         final currentLiveMatch = liveMatchData[currentIndex];
@@ -304,7 +304,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
         if (matchId != null && matchId.isNotEmpty) {
           print('📊 Fetching scoreboard for matchId: $matchId');
           // Fetch detailed match history for scoreboard data
-          final response = await _leagueRepository.getLeagueMatchDetails(
+          final response = await _tournamentRepository.getIptTournamentMatchDetails(
             matchId: matchId,
             type: 'history',
           );
@@ -412,7 +412,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
       }
       
       final allMatches = upcomingMatches.value?.data;
-      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'live').toList();
+      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'LIVE').toList();
       if (liveMatchData == null || liveMatchData.isEmpty) return;
       
       final currentIndex = currentLiveMatchIndex.value < liveMatchData.length ? currentLiveMatchIndex.value : 0;
@@ -425,7 +425,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
       
       final userId = storage.read('userId')?.toString() ?? '';
       _socket = IO.io(
-        "${AppEndpoints.socketUrl}/score",
+        "${AppEndpoints.socketUrl}/tournament-score",
         IO.OptionBuilder()
             .setTransports(['websocket'])
             .setAuth({'userId': userId})
@@ -499,7 +499,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
         // Update the upcoming matches data with new scores for ONLY current live match
         final currentMatches = upcomingMatches.value;
         if (currentMatches?.data?.isNotEmpty == true) {
-          final liveMatches = currentMatches!.data!.where((data) => data.matchStatus == 'live').toList();
+          final liveMatches = currentMatches!.data!.where((data) => data.matchStatus == 'LIVE').toList();
           if (liveMatches.isNotEmpty) {
             final currentIndex = currentLiveMatchIndex.value < liveMatches.length ? currentLiveMatchIndex.value : 0;
             final currentLiveMatch = liveMatches[currentIndex];
@@ -520,7 +520,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
             }).toList();
             
             // Force update the observable with a new instance to trigger UI rebuild
-            final newMatches = GetAllScheduleLiveMatchesModel(
+            final newMatches = GetAllScheduleLiveMatchesIptTournamentModel(
               success: currentMatches.success,
               data: updatedData,
               pagination: currentMatches.pagination,

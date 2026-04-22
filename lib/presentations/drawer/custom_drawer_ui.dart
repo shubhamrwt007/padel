@@ -256,26 +256,35 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 ),
               ),
               Obx(
-                    () => ProfileRow(
-                  icon: Icon(
-                    Icons.emoji_events_outlined, // 👈 tournament icon
-                    size: 20,
-                    color: controller.selectedIndex.value == 8
-                        ? AppColors.primaryColor
-                        : AppColors.labelBlackColor,
-                  ),
-                  title: "IPT",
-                  isSelected: controller.selectedIndex.value == 8,
-                  onTap: () {
-                    controller.selectedIndex.value = 8;
-
-                    // 👇 navigation (change route if needed)
-                    Get.toNamed(RoutesName.iptTournament);
-
-                    // OR agar screen direct open karni ho:
-                    // Get.to(()=>TournamentScreen());
-                  },
-                ),
+                    () {
+                  final mainHomeController = Get.isRegistered<MainHomeController>() 
+                      ? Get.find<MainHomeController>() 
+                      : null;
+                  final hasTournaments = mainHomeController?.activeTournaments.value?.data?.isNotEmpty ?? false;
+                  
+                  if (!hasTournaments) return const SizedBox.shrink();
+                  
+                  final tournamentId = mainHomeController!.activeTournaments.value!.data!.first.id ?? '';
+                  
+                  return ProfileRow(
+                    icon: Icon(
+                      Icons.emoji_events_outlined,
+                      size: 20,
+                      color: controller.selectedIndex.value == 8
+                          ? AppColors.primaryColor
+                          : AppColors.labelBlackColor,
+                    ),
+                    title: "IPT",
+                    isSelected: controller.selectedIndex.value == 8,
+                    onTap: () {
+                      controller.selectedIndex.value = 8;
+                      Get.toNamed(RoutesName.iptTournament, arguments: {
+                        'tournamentId': tournamentId,
+                        // 'tournamentId': "69e8657148d172275b93ee70",
+                      });
+                    },
+                  );
+                },
               ),
               // Obx(
               //       () => ProfileRow(

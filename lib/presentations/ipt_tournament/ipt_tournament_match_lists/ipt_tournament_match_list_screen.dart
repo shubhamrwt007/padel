@@ -9,8 +9,8 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
 
+import '../../../data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
 import 'ipt_tournament_match_list_controller.dart';
 class IptTournamentListScreen extends StatelessWidget {
   final IptTournamentListController controller = Get.put(IptTournamentListController());

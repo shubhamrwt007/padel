@@ -1,16 +1,16 @@
 import 'package:padel_mobile/core/network/dio_client.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/forgot_password_exports.dart';
-import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
+import 'package:padel_mobile/repositories/ipt_tournament_repository/ipt_tournament_repository.dart';
 
 class IptTournamentListController extends GetxController{
   final RxString matchStatus = ''.obs;
   final RxBool isHistoryEnabled = false.obs;
-  final RxString leagueId = ''.obs;
-  final LeagueRepository _leagueRepository = LeagueRepository();
-  final Rx<GetAllScheduleLiveMatchesModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final RxString tournamentId = ''.obs;
+  final IptTournamentRepository _iptTournamentRepository = IptTournamentRepository();
+  final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> upcomingMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
   final RxBool isLoadingUpcomingMatches = false.obs;
-  final Rx<GetAllScheduleLiveMatchesModel?> resultMatches = Rx<GetAllScheduleLiveMatchesModel?>(null);
+  final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> resultMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
   final RxBool isLoadingResultMatches = false.obs;
   
   final RxInt upcomingPage = 1.obs;
@@ -28,14 +28,14 @@ class IptTournamentListController extends GetxController{
   
 @override
   void onInit() {
-    leagueId.value = Get.arguments['leagueId'] ?? '';
+  tournamentId.value = Get.arguments['tournamentId'] ?? '';
     final initialTab = Get.arguments['initialTab'] ?? 0;
     if (initialTab == 1) {
       isHistoryEnabled.value = true;
-      matchStatus.value = 'finished';
+      matchStatus.value = 'FINISHED';
     }
     fetchScheduleDates();
-    if (matchStatus.value == 'finished') {
+    if (matchStatus.value == 'FINISHED') {
       fetchResultMatches();
     } else {
       fetchUpcomingMatches();
@@ -46,7 +46,7 @@ class IptTournamentListController extends GetxController{
   void switchToHistory() {
     isHistoryEnabled.value = !isHistoryEnabled.value;
     if (isHistoryEnabled.value) {
-      matchStatus.value = 'finished';
+      matchStatus.value = 'FINISHED';
       fetchScheduleDates();
       fetchResultMatches();
     } else {
@@ -98,8 +98,8 @@ class IptTournamentListController extends GetxController{
   
   Future<void> fetchScheduleDates() async {
     try {
-      final response = await _leagueRepository.getScheduleDates(
-        leagueId: leagueId.value,
+      final response = await _iptTournamentRepository.getScheduleDatesIptTournament(
+        tournamentId: tournamentId.value,
         matchStatus: matchStatus.value,
       );
       availableDates.value = response.data ?? [];
@@ -116,9 +116,9 @@ class IptTournamentListController extends GetxController{
       isLoadingUpcomingMatches.value = true;
       upcomingPage.value = 1;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"": null;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
+      final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
         matchStatus: '',
-        leagueId: leagueId.value,
+        tournamentId: tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,
         categoryType: selectedCategory.value,
@@ -140,9 +140,9 @@ class IptTournamentListController extends GetxController{
       isLoadingMoreUpcoming.value = true;
       upcomingPage.value++;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"": null;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
+      final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
         matchStatus: '',
-        leagueId: leagueId.value,
+          tournamentId:tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,
         categoryType: selectedCategory.value,
@@ -168,9 +168,9 @@ class IptTournamentListController extends GetxController{
       isLoadingResultMatches.value = true;
       resultPage.value = 1;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"" : null;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'finished',
-        leagueId: leagueId.value,
+      final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
+        matchStatus: 'FINISHED',
+          tournamentId: tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,
         categoryType: selectedCategory.value,
@@ -192,9 +192,9 @@ class IptTournamentListController extends GetxController{
       isLoadingMoreResult.value = true;
       resultPage.value++;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"" : null;
-      final response = await _leagueRepository.getAllScheduleLiveMatches(
-        matchStatus: 'finished',
-        leagueId: leagueId.value,
+      final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
+        matchStatus: 'FINISHED',
+          tournamentId: tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,
         categoryType: selectedCategory.value,

@@ -13,8 +13,8 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_controller.dart';
 import 'package:padel_mobile/presentations/league/league_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/build_sponsor_banner.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 
+import '../../../data/response_models/ipt_tournament/get_ipt_tournament_match_details_model.dart';
 import 'live_and_complete_ipt_tournament_match_controller.dart';
 
 class LiveAndCompleteIptTournamentMatchScreen extends StatefulWidget {
@@ -268,7 +268,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                           Obx(() => controller.winnerTeam == 'teamA'
                               ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
                               : const SizedBox(height: 24)),
-                        Text(controller.historyData.value?.teamA?.clubName ?? "",
+                        Text(controller.historyData.value?.teamA?.teamName ?? "",
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                             style: Get.textTheme.titleLarge!.copyWith(fontSize: 20)),
@@ -310,7 +310,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                           Obx(() => controller.winnerTeam == 'teamB'
                               ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
                               : const SizedBox(height: 24)),
-                        Text(controller.historyData.value?.teamB?.clubName ?? "",
+                        Text(controller.historyData.value?.teamB?.teamName ?? "",
                             overflow: TextOverflow.ellipsis,
                             style: Get.textTheme.titleLarge!.copyWith(fontSize: 20,color: AppColors.secondaryColor)),
                         const SizedBox(height: 6),

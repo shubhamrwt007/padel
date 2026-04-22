@@ -6,7 +6,7 @@ import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
-import 'package:padel_mobile/data/response_models/league/get_all_schedule_live_matches_model.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
@@ -109,7 +109,7 @@ class IptTournamentScreen extends StatelessWidget {
                   return GestureDetector(
                     onTap: () {
                       Get.toNamed(RoutesName.iptTournamentMatchLists, arguments: {
-                        'leagueId': controller.leagueId ?? '',
+                        'tournamentId': controller.tournamentId ?? '',
                         'initialTab': controller.matchTab.value
                       });
                     },
@@ -292,7 +292,7 @@ class IptTournamentScreen extends StatelessWidget {
   }
   Widget _liveMatchCard() {
     final scheduleData = controller.upcomingMatches.value?.data ?? [];
-    final liveData = scheduleData.where((data) => data.matchStatus == 'live').toList();
+    final liveData = scheduleData.where((data) => data.matchStatus == 'LIVE').toList();
     
     if (liveData.isEmpty) return const SizedBox.shrink();
 
@@ -337,7 +337,7 @@ class IptTournamentScreen extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _teamColumn(
-                                    match.teamA?.clubType ?? "",
+                                    match.teamA?.teamName ?? "",
                                     "",
                                     "",
                                     (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
@@ -352,7 +352,7 @@ class IptTournamentScreen extends StatelessWidget {
                                         SizedBox(height: 8),
                                         Obx(() {
                                           final liveMatches = controller.upcomingMatches.value?.data
-                                              ?.where((data) => data.matchStatus == 'live')
+                                              ?.where((data) => data.matchStatus == 'LIVE')
                                               .toList() ?? [];
                                           final currentIndex = controller.currentLiveMatchIndex.value < liveMatches.length ? controller.currentLiveMatchIndex.value : 0;
                                           final currentSetsWon = liveMatches.isNotEmpty ? liveMatches[currentIndex].matchId?.setsWon : null;
@@ -364,7 +364,7 @@ class IptTournamentScreen extends StatelessWidget {
                                     ),
                                   ),
                                   _teamColumn(
-                                    match.teamB?.clubType ?? "",
+                                    match.teamB?.teamName ?? "",
                                     "",
                                     "",
                                     (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 3",
@@ -471,11 +471,11 @@ class IptTournamentScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildScoreBoard(ScheduleMatchData? matchData) {
+  Widget _buildScoreBoard(IptTournamentScheduleMatchData? matchData) {
     return Obx(() {
       final scoreboardData = controller.liveMatchScoreboard.value;
       final liveMatchData = controller.upcomingMatches.value?.data
-        ?.where((data) => data.matchStatus == 'live')
+        ?.where((data) => data.matchStatus == 'LIVE')
         .firstOrNull;
       
       if (controller.isLoadingScoreboard.value) {
@@ -658,7 +658,7 @@ class IptTournamentScreen extends StatelessWidget {
           
           final match = matches.first;
           
-          if (scheduleItem.matchStatus == 'live') {
+          if (scheduleItem.matchStatus == 'LIVE') {
             return GestureDetector(
               onTap: () {
                 Get.toNamed(RoutesName.liveAndCompleteIptTournamentMatch, arguments: {
@@ -809,20 +809,22 @@ class UpcomingMatchCard extends StatelessWidget {
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: Alignment.centerLeft,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                                match?.teamA?.clubType ?? "Team A",
-                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                                match?.teamA?.teamName ?? "Team A",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.blackColor)
                             ),
                           ),
                           const Spacer(),
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: AlignmentGeometry.centerRight,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                                match?.teamB?.clubType ?? "Team B",
-                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                                match?.teamB?.teamName ?? "Team B",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.blackColor)
                             ),
                           ),
                         ],
@@ -1064,12 +1066,12 @@ class LiveMatchCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                              match?.teamA?.clubType ?? "Team A",
+                              match?.teamA?.teamName ?? "Team A",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                           const Spacer(),
                           Text(
-                              match?.teamB?.clubType ?? "Team B",
+                              match?.teamB?.teamName ?? "Team B",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                           ),
                         ],
@@ -1312,7 +1314,7 @@ class ResultMatchCard extends StatelessWidget {
                                   width: 12,
                                 ).paddingOnly(right: 4),
                               Text(
-                                  match?.teamA?.clubType ?? "",
+                                  match?.teamA?.teamName ?? "",
                                   style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                               ),
                             ],
@@ -1321,7 +1323,7 @@ class ResultMatchCard extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                  match?.teamB?.clubType ?? "",
+                                  match?.teamB?.teamName ?? "",
                                   style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                               ),
                               if (teamBWon)
@@ -1616,8 +1618,9 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
                   onTap: () {
                     Get.toNamed(RoutesName.iptTournamentMatchLists, arguments: {
                       // 'matchTab': 0,
-                      'leagueId': controller.leagueId ?? ''
+                      'tournamentId': controller.tournamentId ?? ''
                     });
+                    print("objectobjectobjectobjectobject-> ${controller.tournamentId ?? ''}");
                   },
                   child: Container(
                     color: Colors.transparent,

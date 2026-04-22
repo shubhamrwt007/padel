@@ -2,14 +2,14 @@ import 'dart:developer';
 
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
+import 'package:padel_mobile/repositories/ipt_tournament_repository/ipt_tournament_repository.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
-import 'package:padel_mobile/repositories/league_repository/league_repository.dart';
-import 'package:padel_mobile/data/response_models/league/get_league_match_details_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:padel_mobile/configs/components/app_toast.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../../data/response_models/ipt_tournament/get_ipt_tournament_match_details_model.dart';
 import 'widgets/ipt_tournament_match_finished_dialog.dart';
 
 class LiveAndCompleteIptTournamentMatchController extends GetxController{
@@ -26,7 +26,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
   var matchId = "".obs;
   RxList<bool> isSet2Expanded = <bool>[false, false, false, false].obs;
   
-  final LeagueRepository _leagueRepository = LeagueRepository();
+  final IptTournamentRepository _iptTournamentRepository = IptTournamentRepository();
   final Rx<HistoryData?> historyData = Rx<HistoryData?>(null);
   final Rx<StatisticsData?> statisticsData = Rx<StatisticsData?>(null);
   final RxBool isLoadingMatchDetails = false.obs;
@@ -55,14 +55,10 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
     log('👀 Current historyData teamA: ${historyData.value?.teamA?.teamName}');
     log('👀 Current historyData teamB: ${historyData.value?.teamB?.teamName}');
     
-    if (matchType.value == "live") {
-      log('▶️ Fetching stream url...');
-      fetchStreamUrl();
-      _startLiveCheckTimer();
-    }
     if (matchId.value.isNotEmpty) {
       if (matchType.value == "live") {
         print('🔴 LIVE match detected - connecting WebSocket');
+        fetchStreamUrl();
         _connectWebSocket();
       } else {
         print('📡 Finished match - fetching via API');
@@ -83,7 +79,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
 
   void _startLiveCheckTimer() {
     Future.delayed(const Duration(seconds: 1), () {
-      if (youtubeController.value != null && matchType.value == "live") {
+      if (youtubeController.value != null && matchType.value == "live" && showVideoPlayer.value) {
         _checkIfBehindLive();
         _startLiveCheckTimer();
       }
@@ -116,25 +112,17 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
   Future<void> fetchStreamUrl() async {
     try {
       isStreamLoading.value = true;
-
-    // final response = await _leagueRepository.getStreamUrl(matchId: matchId.value);
-    // final streamKey = response.data?.streamKey;
-    // if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
-    //   showVideoPlayer.value = true;
-    //   setYoutubeUrl(streamKey);
-    // } else {
-    //   log('⚠️ Stream not available (success=false or no streamKey)');
-    //   showVideoPlayer.value = false;
-    // }
-
-      // 🔴 Dummy Live Stream (temporary)
-      const dummyLiveUrl = "jfKfPfyJRdk";
-
-      showVideoPlayer.value = true;
-      setYoutubeUrl(dummyLiveUrl);
-
+      final response = await _iptTournamentRepository.getIptTournamentStreamUrl(matchId: matchId.value);
+      final streamKey = response.data?.streamKey;
+      if (response.success == true && streamKey != null && streamKey.isNotEmpty) {
+        showVideoPlayer.value = true;
+        setYoutubeUrl(streamKey);
+      } else {
+        log('⚠️ Stream not available (success=false or no streamKey)');
+        showVideoPlayer.value = false;
+      }
     } catch (e) {
-      log('❌ fetchStreamUrl error: $e');
+      log('⚠️ Stream not available: $e');
       showVideoPlayer.value = false;
     } finally {
       isStreamLoading.value = false;
@@ -154,6 +142,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
       ),
     );
     log('✅ YoutubePlayerController created with id: $videoId');
+    _startLiveCheckTimer();
   }
   
   Future<void> fetchMatchDetails() async {
@@ -161,7 +150,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
       isLoadingMatchDetails.value = true;
       matchDetailsError.value = "";
       final type = selectedTab.value == 0 ? "history" : "statistics";
-      final response = await _leagueRepository.getLeagueMatchDetails(
+      final response = await _iptTournamentRepository.getIptTournamentMatchDetails(
         matchId: matchId.value,
         type: type,
       );
@@ -227,12 +216,8 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
       print('🔌 Attempting to connect WebSocket...');
 
       final userId = storage.read('userId')?.toString() ?? '';
-      // _socket = IO.io(AppEndpoints.socketUrl, <String, dynamic>{
-      //   'transports': ['websocket', 'polling'],
-      //   'autoConnect': true,
-      // });
       _socket = IO.io(
-        "${AppEndpoints.socketUrl}/score",
+        "${AppEndpoints.socketUrl}/tournament-score",
         IO.OptionBuilder()
             .setTransports(['websocket'])
             .setAuth({'userId': userId})
@@ -241,8 +226,9 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
       _socket?.on('connect', (_) {
         print('✅ Connected. Socket ID: ${_socket?.id}');
         isSocketConnected.value = true;
+        isLoadingHistory.value = false;
         print('📤 Emitting joinMatch with matchId: ${matchId.value}');
-        _socket?.emit('joinScoreMatch', matchId.value);
+        _socket?.emit('joinTournamentMatch', matchId.value);
 
         // Request initial data immediately
         print('📤 Requesting initial match data');

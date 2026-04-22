@@ -34,7 +34,7 @@ class IptTournamentRepository {
   ///Get All Schedule Live Matches IptTournament--------------------------------
   Future<GetAllScheduleLiveMatchesIptTournamentModel> getAllScheduleLiveMatchesIptTournament({
     String? matchStatus,
-    required String leagueId,
+    required String tournamentId,
     String? userId,
     String? date,
     String? categoryType,
@@ -43,7 +43,7 @@ class IptTournamentRepository {
   }) async {
     try {
       final queryParams = {
-        "leagueId": leagueId,
+        "tournamentId": tournamentId,
         if (matchStatus != null && matchStatus.isNotEmpty) "matchStatus": matchStatus,
         if (userId != null && userId.isNotEmpty) "userId": userId,
         if (date != null && date.isNotEmpty) "date": date,
@@ -79,12 +79,12 @@ class IptTournamentRepository {
 
   ///Get Schedule Dates IptTournament-------------------------------------------
   Future<GetScheduleDatesIptTournamentModel> getScheduleDatesIptTournament({
-    required String leagueId,
+    required String tournamentId,
     String? matchStatus,
   }) async {
     try {
       final queryParams = {
-        "leagueId": leagueId,
+        "tournamentId": tournamentId,
         if (matchStatus != null && matchStatus.isNotEmpty)
           "matchStatus": matchStatus,
       };
@@ -173,10 +173,10 @@ class IptTournamentRepository {
   }
 
   ///Get IptTournament Leader Board---------------------------------------------
-  Future<GetIptTournamentLeaderBoardModel> getIptTournamentLeaderBoard({required String leagueId}) async {
+  Future<GetIptTournamentLeaderBoardModel> getIptTournamentLeaderBoard({required String tournamentId}) async {
     try {
       final response = await dioClient.get(
-        "${AppEndpoints.getIptTournamentLeaderBoard}$leagueId/leaderboard",
+        "${AppEndpoints.getIptTournamentLeaderBoard}$tournamentId/leaderboard",
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -240,8 +240,7 @@ class IptTournamentRepository {
         );
         return GetIptTournamentStreamUrlModel.fromJson(response.data);
       } else {
-        throw Exception(
-            "Get IptTournament Stream Url failed: ${response.statusCode}");
+        return GetIptTournamentStreamUrlModel(success: false);
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -249,33 +248,8 @@ class IptTournamentRepository {
         level: LogLevel.error,
         st: st,
       );
-      rethrow;
+      return GetIptTournamentStreamUrlModel(success: false);
     }
   }
-  ///Get IptTournament Poll Result----------------------------------------------
-  Future<GetIptTournamentPollResultsModel> getIptTournamentPollResult() async {
-    try {
-      final response = await dioClient.get(
-        AppEndpoints.getIptTournamentPollResult,
-      );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        CustomLogger.logMessage(
-          msg: "Get IptTournament Poll Result Data: ${response.data}",
-          level: LogLevel.info,
-        );
-        return GetIptTournamentPollResultsModel.fromJson(response.data);
-      } else {
-        throw Exception(
-            "Get IptTournament Poll Result failed: ${response.statusCode}");
-      }
-    } catch (e, st) {
-      CustomLogger.logMessage(
-        msg: "Get IptTournament Poll Result failed with error: ${e.toString()}",
-        level: LogLevel.error,
-        st: st,
-      );
-      rethrow;
-    }
-  }
 }

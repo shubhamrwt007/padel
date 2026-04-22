@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_ipt_tournament_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
+import 'package:padel_mobile/repositories/ipt_tournament_repository/ipt_tournament_repository.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/data/response_models/home_models/get_near_city_players_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
@@ -35,6 +37,7 @@ class MainHomeController extends GetxController {
   final RxBool isLoadingUpcomingMatches = false.obs;
   final RxBool isLoadingLeagueSection = false.obs;
   final Rx<GetLeagueListModel?> activeLeagues = Rx<GetLeagueListModel?>(null);
+  final Rx<GetIptTournamentListModel?> activeTournaments = Rx<GetIptTournamentListModel?>(null);
   final RxBool isLoadingActiveLeagues = false.obs;
   final RxInt leagueCarouselIndex = 0.obs;
   final RxInt selectedSportTab = 0.obs;
@@ -85,6 +88,7 @@ class MainHomeController extends GetxController {
     await fetchCategories();
     isLoadingLeagueSection.value = true;
     await fetchActiveLeagues();
+    await fetchActiveTournaments();
 
     final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
 
@@ -269,6 +273,18 @@ class MainHomeController extends GetxController {
       isLoadingActiveLeagues.value = true;
       final response = await _leagueRepository.getLeagueList(status: 'active');
       activeLeagues.value = response;
+    } catch (e) {
+      // ignore
+    } finally {
+      isLoadingActiveLeagues.value = false;
+    }
+  }
+  final IptTournamentRepository _iptTournamentRepository = Get.put(IptTournamentRepository());
+  Future<void> fetchActiveTournaments() async {
+    try {
+      isLoadingActiveLeagues.value = true;
+      final response = await _iptTournamentRepository.getIptTournamentList(status: 'active');
+      activeTournaments.value = response;
     } catch (e) {
       // ignore
     } finally {
