@@ -116,7 +116,7 @@ class AppEndpoints {
   static const String getAllScheduleLiveMatchesIptTournament = "${baseUrl}court/tournament-schedule/getAllSchedulesByStatus";
   static const String getScheduleDatesIptTournament = "${baseUrl}court/tournament-schedule/getScheduleDates";
   static const String getIptTournamentMatchDetails = "${base}tournament-score";
-  static const String getIptTournamentLeaderBoard = "${base}score/tournament/";
+  static const String getIptTournamentLeaderBoard = "${base}tournament-score/tournament/";
   static const String getIptTournamentSponsors = "${baseUrl}court/tournament/getTournamentSponsors";
   static const String getIptTournamentList = "${baseUrl}court/tournament/getAllTournaments?";
   // static const String getIptTournamentPollResult = "";

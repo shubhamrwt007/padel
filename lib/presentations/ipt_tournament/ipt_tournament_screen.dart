@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
+import 'package:padel_mobile/data/response_models/ipt_tournament/get_ipt_tournament_leader_board_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
@@ -59,8 +60,8 @@ class IptTournamentScreen extends StatelessWidget {
               _buildTabSelector(),
               Expanded(
                 child: controller.selectedTab.value == 0
-                    ? _liveMatchContent(context).paddingOnly(top: 10)
-                    : const LeaderBoardWidget().paddingOnly(top: 20),
+                    ? _liveMatchContent(context).paddingOnly(top: 0)
+                    : const LeaderBoardWidget().paddingOnly(top: 0),
               ),
             ],
           );
@@ -89,7 +90,7 @@ class IptTournamentScreen extends StatelessWidget {
                 );
               }
               return _liveMatchCard();
-            }).paddingOnly(bottom: 20),
+            }),
             BuildIptTournamentTitleSponsor(controller: controller),
             Obx(() {
               final sponsors = controller.sponsors.value?.data?.sponsors ?? [];
@@ -131,7 +132,7 @@ class IptTournamentScreen extends StatelessWidget {
               ],
             ).paddingSymmetric(horizontal: 18,vertical: 8)),
             SizedBox(
-              height:controller.isLoadingUpcomingMatches.value? Get.height * 0.45:Get.height*0.6,
+              height:controller.isLoadingUpcomingMatches.value? Get.height * 0.45:Get.height*0.7,
               child: PageView(
                 controller: controller.pageController,
                 onPageChanged: controller.onPageChanged,
@@ -297,7 +298,7 @@ class IptTournamentScreen extends StatelessWidget {
   }
   Widget _liveMatchCard() {
     final scheduleData = controller.upcomingMatches.value?.data ?? [];
-    final liveData = scheduleData.where((data) => data.matchStatus == 'LIVE').toList();
+    final liveData = scheduleData.where((data) => data.matchStatus?.toLowerCase() == 'live').toList();
     
     if (liveData.isEmpty) return const SizedBox.shrink();
 
@@ -357,7 +358,7 @@ class IptTournamentScreen extends StatelessWidget {
                                         SizedBox(height: 8),
                                         Obx(() {
                                           final liveMatches = controller.upcomingMatches.value?.data
-                                              ?.where((data) => data.matchStatus == 'LIVE')
+                                              ?.where((data) => data.matchStatus?.toLowerCase() == 'live')
                                               .toList() ?? [];
                                           final currentIndex = controller.currentLiveMatchIndex.value < liveMatches.length ? controller.currentLiveMatchIndex.value : 0;
                                           final currentSetsWon = liveMatches.isNotEmpty ? liveMatches[currentIndex].matchId?.setsWon : null;
@@ -421,7 +422,7 @@ class IptTournamentScreen extends StatelessWidget {
             ),
           ).paddingOnly(top: 8)),
       ],
-    ).paddingOnly(bottom: 20);
+    ).paddingOnly(bottom: 0);
   }
 
   Widget _teamColumn(
@@ -480,7 +481,7 @@ class IptTournamentScreen extends StatelessWidget {
     return Obx(() {
       final scoreboardData = controller.liveMatchScoreboard.value;
       final liveMatchData = controller.upcomingMatches.value?.data
-        ?.where((data) => data.matchStatus == 'LIVE')
+        ?.where((data) => data.matchStatus?.toLowerCase() == 'live')
         .firstOrNull;
       
       if (controller.isLoadingScoreboard.value) {
@@ -663,7 +664,7 @@ class IptTournamentScreen extends StatelessWidget {
           
           final match = matches.first;
           
-          if (scheduleItem.matchStatus == 'LIVE') {
+          if (scheduleItem.matchStatus?.toLowerCase() == 'live') {
             return GestureDetector(
               onTap: () {
                 Get.toNamed(RoutesName.liveAndCompleteIptTournamentMatch, arguments: {
@@ -1576,10 +1577,48 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            Obx(() {
+              final categories = controller.allCategories;
+              if (categories.isEmpty) return const SizedBox.shrink();
+              
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerRight,
+                child: PopupMenuButton<String>(
+                  onSelected: controller.onCategoryChanged,
+                  offset: Offset(0, 27),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.primaryColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          controller.selectedCategory.value,
+                          style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_drop_down, size: 20, color: AppColors.primaryColor),
+                      ],
+                    ),
+                  ),
+                  itemBuilder: (context) => categories.map((category) {
+                    return PopupMenuItem<String>(
+                      value: category,
+                      child: Text(category, style: Get.textTheme.bodySmall),
+                    );
+                  }).toList(),
+                ),
+              ).paddingOnly(bottom: 12);
+            }),
         Obx(() {
-          final standings = controller.leaderBoard.value?.data?.standings ?? [];
+          final leaderboard = controller.leaderBoard.value?.data?.leaderboard ?? [];
 
-          if (standings.isEmpty) return const SizedBox.shrink();
+          if (leaderboard.isEmpty) return const SizedBox.shrink();
 
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1603,13 +1642,13 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
               children: [
                 _headerRow(),
                 Divider(color: Colors.grey.shade300),
-                ...standings.asMap().entries.map((entry) {
+                ...leaderboard.asMap().entries.map((entry) {
                   final index = entry.key;
                   final standing = entry.value;
                   return Column(
                     children: [
-                      _teamRow(standing),
-                      if (index < standings.length - 1)
+                      _teamRow(standing, index + 1),
+                      if (index < leaderboard.length - 1)
                         Divider(color: Colors.grey.shade300),
                     ],
                   );
@@ -1662,175 +1701,138 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
 
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
-    final controller = Get.find<IptTournamentController>();
-    final categories = controller.allCategories;
     
     return Row(
       children: [
-        // Fixed section
-        SizedBox(width: 40, child: Text("#", style: style)),
-        SizedBox(
-          width: 120,
-          child: Text("Teams", style: style),
-        ),
-        // Scrollable section
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _createSyncedController(),
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                SizedBox(width: 30, child: Center(child: Text("M", style: style))),
-                SizedBox(width: 30, child: Center(child: Text("W", style: style))),
-                SizedBox(width: 30, child: Center(child: Text("L", style: style))),
-                SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
-                ...categories.map((cat) => SizedBox(
-                  width: 30,
-                  child: Center(child: Text(_getCategoryShortName(cat), style: style)),
-                )),
-              ],
-            ),
-          ),
-        ),
+        SizedBox(width: 30, child: Text("#", style: style)),
+        Expanded(child: Text("Teams", style: style)),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("M", style: style))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("W", style: style))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("L", style: style))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700, color: AppColors.primaryColor)))),
       ],
     );
   }
-  
-  String _getCategoryShortName(String category) {
-    if (category.isEmpty) return '';
-    
-    // Remove special characters and split by spaces or capital letters
-    final words = category
-        .replaceAll(RegExp(r"[^a-zA-Z\s]"), '') // Remove special chars
-        .split(RegExp(r'\s+')) // Split by spaces
-        .where((word) => word.isNotEmpty)
-        .toList();
-    
-    if (words.isEmpty) {
-      // Fallback: take first 3 chars
-      return category.substring(0, category.length > 3 ? 3 : category.length);
-    }
-    
-    // If single word, take first 3 characters
-    if (words.length == 1) {
-      final word = words[0];
-      return word.substring(0, word.length > 3 ? 3 : word.length).capitalize ?? word;
-    }
-    
-    // If multiple words, take first letter of each word (max 3)
-    return words
-        .take(3)
-        .map((word) => word[0].toUpperCase())
-        .join();
-  }
 
-  Widget _teamRow(standing) {
-    final controller = Get.find<IptTournamentController>();
-    final categories = controller.allCategories;
-    
+
+  Widget _teamRow(Leaderboard standing, int position) {
     return Row(
       children: [
-        // Fixed section
         SizedBox(
-          width: 40,
+          width: 30,
           child: Row(
             children: [
               Text(
-                "${standing.position ?? 0}",
+                "$position",
                 style: Get.textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 10,
-                  color: _getPositionColor(standing.position, standing.positionChange),
                 ),
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               _buildPositionChangeIndicator(standing.positionChange),
             ],
           ),
         ),
-        SizedBox(
-          width: 120,
+        Expanded(
           child: Row(
             children: [
-              standing.clubLogo != null && standing.clubLogo!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: standing.clubLogo!,
-                      imageBuilder: (context, imageProvider) => CircleAvatar(
-                        radius: 11,
-                        backgroundImage: imageProvider,
-                      ),
-                      placeholder: (context, url) => CircleAvatar(
-                        radius: 11,
-                        backgroundColor: AppColors.primaryColor,
-                        child: Text(
-                          (standing.clubName ?? "?")[0].toUpperCase(),
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => CircleAvatar(
+              SizedBox(
+                height: 30,
+                width: 40,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (standing.players != null && standing.players!.isNotEmpty) ...[
+                      _buildPlayerAvatar(standing.players![0].playerName ?? "?", 0, 0),
+                      if (standing.players!.length > 1)
+                        _buildPlayerAvatar(standing.players![1].playerName ?? "?", 12, 8),
+                    ] else
+                      CircleAvatar(
                         radius: 11,
                         backgroundColor: AppColors.primaryColor,
                         child: Text(
-                          (standing.clubName ?? "?")[0].toUpperCase(),
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          (standing.teamName ?? "?")[0].toUpperCase(),
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    )
-                  : CircleAvatar(
-                      radius: 11,
-                      backgroundColor: AppColors.primaryColor,
-                      child: Text(
-                        (standing.clubName ?? "?")[0].toUpperCase(),
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  standing.clubName ?? "Unknown",
-                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (standing.players != null && standing.players!.isNotEmpty)
+                      ...standing.players!.map((player) => Text(
+                        player.playerName ?? "Unknown",
+                        style: Get.textTheme.labelSmall!.copyWith(fontWeight: FontWeight.w500,fontSize: 9),
+                        overflow: TextOverflow.ellipsis,
+                      ))
+                    else
+                      Text(
+                        standing.teamName ?? "Unknown",
+                        style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        // Scrollable section
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _createSyncedController(),
-            scrollDirection: Axis.horizontal,
-            child: Container(
-              height: 25,
-              color: Colors.transparent,
-              child: Row(
-                children: [
-                  SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                  SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                  SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-                  SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
-                  ...categories.map((cat) => SizedBox(
-                    width: 30,
-                    child: Center(child: Text("${standing.categoryWins?[cat] ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400))),
-                  )),
-                ],
-              ),
-            ),
-          ),
-        ),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        SizedBox(width: 50, child: Align(alignment: Alignment.center, child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600, color: AppColors.primaryColor)))),
       ],
     );
   }
 
-  Color _getPositionColor(int? position, int? positionChange) {
-    // Color based on position change only
-    if (positionChange == null || positionChange == 0) return Colors.grey;
-    return positionChange > 0 ? Colors.green : Colors.red;
+
+  
+  Widget _buildPlayerAvatar(String name, double left, double top) {
+    String getInitials(String fullName) {
+      if (fullName.trim().isEmpty) return "?";
+      final words = fullName.trim().split(' ');
+      if (words.length == 1) return words[0][0].toUpperCase();
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    }
+
+    return Positioned(
+      left: left,
+      top: top,
+      child: Container(
+        height: 22,
+        width: 22,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          color: AppColors.primaryColor,
+        ),
+        child: Center(
+          child: Text(
+            getInitials(name),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildPositionChangeIndicator(int? positionChange) {
     if (positionChange == null || positionChange == 0) {
       return SizedBox(
+
         width: 12,
         child: Center(
           child: Text(
