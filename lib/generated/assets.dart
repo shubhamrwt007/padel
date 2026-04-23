@@ -83,6 +83,7 @@ class Assets {
   static const String imagesImgGooglePay = 'assets/images/img_google_pay.png';
   static const String imagesImgHomeLogo = 'assets/images/img_home_logo.png';
   static const String imagesImgIconSwoot = 'assets/images/img_icon_swoot.png';
+  static const String imagesImgIptLogo = 'assets/images/img_ipt_logo.svg';
   static const String imagesImgLeaderBoardBg = 'assets/images/img_leaderBoard_bg.svg';
   static const String imagesImgLeagueComingSoon = 'assets/images/img_league_coming_soon.png';
   static const String imagesImgLeagueSponsor = 'assets/images/img_league_sponsor.jpg';

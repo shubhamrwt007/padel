@@ -58,7 +58,7 @@ class ProfileResponse {
   final int? openMatchCount;
   final int? americanMatchCount;
   final int? rank;
-  final int? winRatio;
+  final dynamic? winRatio;
   final int? currentWinStreak;
   final int? currentLoseStreak;
 

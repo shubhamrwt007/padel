@@ -8,8 +8,8 @@ class AppEndpoints {
   // static const String base = "https://apimobile.swootapp.com/api/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   // ///-----------------------Local URL-----------------------------------------------
-  // static const String base = "http://192.168.1.21:5070/api/";
-  // static const String socketUrl = "http://192.168.1.21:5070";
+  // static const String base = "http://192.168.1.41:5080/api/";
+  // static const String socketUrl = "http://192.168.1.41:5080";
 
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
@@ -110,7 +110,19 @@ class AppEndpoints {
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
   static const String getLeaguePollResult = "${base}poll/results";
   static const String castLeaguePollVote = "${base}poll/vote";
+
+
+  ///IptTournament--------------------------------------------------------------
+  static const String getAllScheduleLiveMatchesIptTournament = "${baseUrl}court/tournament-schedule/getAllSchedulesByStatus";
+  static const String getScheduleDatesIptTournament = "${baseUrl}court/tournament-schedule/getScheduleDates";
+  static const String getIptTournamentMatchDetails = "${base}tournament-score";
+  static const String getIptTournamentLeaderBoard = "${base}score/tournament/";
+  static const String getIptTournamentSponsors = "${baseUrl}court/tournament/getTournamentSponsors";
+  static const String getIptTournamentList = "${baseUrl}court/tournament/getAllTournaments?";
+  // static const String getIptTournamentPollResult = "";
+  // static const String castIptTournamentPollVote = "";
 }
+
 class PaymentConfig {
   // Toggle this when switching environment
   static const bool isLive = true

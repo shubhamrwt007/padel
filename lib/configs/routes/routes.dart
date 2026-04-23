@@ -24,6 +24,12 @@ import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
 import 'package:padel_mobile/presentations/chat/chat_screen.dart';
 import 'package:padel_mobile/presentations/home/home_binding.dart';
 import 'package:padel_mobile/presentations/home/home_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_match_lists/ipt_tournament_match_list_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_match_lists/ipt_tournament_match_list_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/live_and_complete_ipt_tournament_match_details/live_and_complete_ipt_tournament_match_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/live_and_complete_ipt_tournament_match_details/live_and_complete_ipt_tournament_match_screen.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_binding.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
 import 'package:padel_mobile/presentations/league/league_binding.dart';
@@ -437,6 +443,30 @@ class Routes {
       name: RoutesName.liveAndCompleteLeagueMatch,
       page: () => LiveAndCompleteLeagueMatchScreen(),
       binding: LiveAndCompleteLeagueMatchBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+
+    ///IPT TOURNAMENT-----------------------------------------------------------
+    GetPage(
+      name: RoutesName.iptTournament,
+      page: () => IptTournamentScreen(),
+      binding: IptTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.iptTournamentMatchLists,
+      page: () => IptTournamentListScreen(),
+      binding: IptTournamentListBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveAndCompleteIptTournamentMatch,
+      page: () => LiveAndCompleteIptTournamentMatchScreen(),
+      binding: LiveAndCompleteIptTournamentMatchBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

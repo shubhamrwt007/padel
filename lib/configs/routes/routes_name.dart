@@ -87,4 +87,9 @@ class RoutesName {
   static const String leagueMatchLists = '/leagueMatchLists';
   static const String liveAndCompleteLeagueMatch = '/liveAndCompleteLeagueMatch';
 
+  //IPT Tournament--------------------------------------------------------------
+  static const String iptTournament = '/iptTournament';
+  static const String iptTournamentMatchLists = '/iptTournamentMatchLists';
+  static const String liveAndCompleteIptTournamentMatch = '/liveAndCompleteIptTournamentMatch';
+
 }
