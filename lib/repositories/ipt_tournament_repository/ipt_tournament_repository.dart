@@ -173,10 +173,18 @@ class IptTournamentRepository {
   }
 
   ///Get IptTournament Leader Board---------------------------------------------
-  Future<GetIptTournamentLeaderBoardModel> getIptTournamentLeaderBoard({required String tournamentId}) async {
+  Future<GetIptTournamentLeaderBoardModel> getIptTournamentLeaderBoard({
+    required String tournamentId,
+    String? categoryType,
+  }) async {
     try {
+      final queryParams = {
+        if (categoryType != null && categoryType.isNotEmpty) "categoryType": categoryType,
+      };
+      
       final response = await dioClient.get(
         "${AppEndpoints.getIptTournamentLeaderBoard}$tournamentId/leaderboard",
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

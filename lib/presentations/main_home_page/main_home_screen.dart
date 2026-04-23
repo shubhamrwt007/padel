@@ -246,7 +246,7 @@ class MainHomeScreen extends StatelessWidget {
                         final recentMatches =
                             profile?.response?.recentMatches ?? [];
 
-                        if (recentMatches.length <= 5) {
+                        if (recentMatches.isNotEmpty && recentMatches.length <= 5) {
                           return Column(
                             children: [
                               const SizedBox(height: 15),

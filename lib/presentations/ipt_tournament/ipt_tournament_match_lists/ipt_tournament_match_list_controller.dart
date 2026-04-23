@@ -32,10 +32,10 @@ class IptTournamentListController extends GetxController{
     final initialTab = Get.arguments['initialTab'] ?? 0;
     if (initialTab == 1) {
       isHistoryEnabled.value = true;
-      matchStatus.value = 'FINISHED';
+      matchStatus.value = 'finished';
     }
     fetchScheduleDates();
-    if (matchStatus.value == 'FINISHED') {
+    if (matchStatus.value == 'finished') {
       fetchResultMatches();
     } else {
       fetchUpcomingMatches();
@@ -46,7 +46,7 @@ class IptTournamentListController extends GetxController{
   void switchToHistory() {
     isHistoryEnabled.value = !isHistoryEnabled.value;
     if (isHistoryEnabled.value) {
-      matchStatus.value = 'FINISHED';
+      matchStatus.value = 'finished';
       fetchScheduleDates();
       fetchResultMatches();
     } else {
@@ -169,7 +169,7 @@ class IptTournamentListController extends GetxController{
       resultPage.value = 1;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"" : null;
       final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
-        matchStatus: 'FINISHED',
+        matchStatus: 'finished',
           tournamentId: tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,
@@ -193,7 +193,7 @@ class IptTournamentListController extends GetxController{
       resultPage.value++;
       final userId = selectedFilter.value == 'my' ? storage.read("userId")??"" : null;
       final response = await _iptTournamentRepository.getAllScheduleLiveMatchesIptTournament(
-        matchStatus: 'FINISHED',
+        matchStatus: 'finished',
           tournamentId: tournamentId.value,
         userId: userId?.isNotEmpty == true ? userId : null,
         date: selectedDate.value.isNotEmpty ? selectedDate.value : null,

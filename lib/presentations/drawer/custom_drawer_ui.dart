@@ -280,7 +280,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
                       controller.selectedIndex.value = 8;
                       Get.toNamed(RoutesName.iptTournament, arguments: {
                         'tournamentId': tournamentId,
-                        // 'tournamentId': "69e8aa2c3143e57fff8afbe5",
+                        // 'tournamentId': "69e9e7b5576dedb53f22da1c",
                       });
                     },
                   );

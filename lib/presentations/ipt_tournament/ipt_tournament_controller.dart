@@ -55,6 +55,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   final Rx<GetIptTournamentLeaderBoardModel?> leaderBoard = Rx<GetIptTournamentLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
   final RxList<String> allCategories = <String>[].obs;
+  final RxString selectedCategory = ''.obs;
   
   // Upcoming matches for LeaderBoard (Fixture's tab)
   final Rx<GetAllScheduleLiveMatchesIptTournamentModel?> leaderboardUpcomingMatches = Rx<GetAllScheduleLiveMatchesIptTournamentModel?>(null);
@@ -92,7 +93,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     // Fetch scoreboard data after upcoming matches are loaded (only once)
     ever(upcomingMatches, (matches) {
       if (matches?.data?.isNotEmpty == true && !_socketInitialized.value) {
-        final hasLiveMatch = matches!.data!.any((data) => data.matchStatus == 'LIVE');
+        final hasLiveMatch = matches!.data!.any((data) => data.matchStatus?.toLowerCase() == 'live');
         if (hasLiveMatch) {
           _initializeLiveMatch(matchId);
         }
@@ -106,7 +107,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     final matches = upcomingMatches.value;
     if (matches?.data?.isEmpty ?? true) return;
     
-    final liveMatches = matches!.data!.where((data) => data.matchStatus == 'LIVE').toList();
+    final liveMatches = matches!.data!.where((data) => data.matchStatus?.toLowerCase() == 'live').toList();
     if (liveMatches.isEmpty) return;
     
     // Set carousel to specific match if matchId provided
@@ -221,7 +222,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     try {
       isLoadingResultMatches.value = true;
       final response = await _tournamentRepository.getAllScheduleLiveMatchesIptTournament(
-        matchStatus: 'FINISHED',
+        matchStatus: 'finished',
         tournamentId: tournamentId??"",
       );
       resultMatches.value = response;
@@ -245,14 +246,20 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     }
   }
 
-  Future<void> fetchLeaderBoard() async {
+  Future<void> fetchLeaderBoard({String? category}) async {
     try {
       isLoadingLeaderBoard.value = true;
       final response = await _tournamentRepository.getIptTournamentLeaderBoard(
         tournamentId: tournamentId??"",
+        categoryType: category,
       );
       leaderBoard.value = response;
       _extractAllCategories();
+      
+      // If no category specified and categories exist, fetch with first category
+      if (category == null && allCategories.isNotEmpty) {
+        await fetchLeaderBoard(category: allCategories.first);
+      }
     } catch (e) {
       print('Error fetching leaderboard: $e');
     } finally {
@@ -264,7 +271,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
     try {
       isLoadingLeaderboardUpcoming.value = true;
       final response = await _tournamentRepository.getAllScheduleLiveMatchesIptTournament(
-        matchStatus: 'UPCOMING',
+        matchStatus: 'upcoming',
         tournamentId:tournamentId??"",
       );
       leaderboardUpcomingMatches.value = response;
@@ -276,14 +283,18 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
   }
   
   void _extractAllCategories() {
-    final Set<String> categories = {};
-    final standings = leaderBoard.value?.data?.standings ?? [];
-    for (var standing in standings) {
-      if (standing.categoryWins != null) {
-        categories.addAll(standing.categoryWins!.keys);
-      }
+    final categories = leaderBoard.value?.data?.categories ?? [];
+    allCategories.value = categories;
+    if (categories.isNotEmpty && (selectedCategory.value.isEmpty || selectedCategory.value == 'All')) {
+      selectedCategory.value = categories.first;
     }
-    allCategories.value = categories.toList();
+  }
+  
+  void onCategoryChanged(String? category) {
+    if (category != null && category != selectedCategory.value) {
+      selectedCategory.value = category;
+      fetchLeaderBoard(category: category);
+    }
   }
   
   Future<void> fetchLiveMatchScoreboard() async {
@@ -295,7 +306,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
       
       // Get the current live match from carousel index
       final allMatches = upcomingMatches.value?.data;
-      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'LIVE').toList();
+      final liveMatchData = allMatches?.where((data) => data.matchStatus?.toLowerCase() == 'live').toList();
       if (liveMatchData != null && liveMatchData.isNotEmpty) {
         final currentIndex = currentLiveMatchIndex.value < liveMatchData.length ? currentLiveMatchIndex.value : 0;
         final currentLiveMatch = liveMatchData[currentIndex];
@@ -412,7 +423,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
       }
       
       final allMatches = upcomingMatches.value?.data;
-      final liveMatchData = allMatches?.where((data) => data.matchStatus == 'LIVE').toList();
+      final liveMatchData = allMatches?.where((data) => data.matchStatus?.toLowerCase() == 'live').toList();
       if (liveMatchData == null || liveMatchData.isEmpty) return;
       
       final currentIndex = currentLiveMatchIndex.value < liveMatchData.length ? currentLiveMatchIndex.value : 0;
@@ -499,7 +510,7 @@ class IptTournamentController extends GetxController with GetSingleTickerProvide
         // Update the upcoming matches data with new scores for ONLY current live match
         final currentMatches = upcomingMatches.value;
         if (currentMatches?.data?.isNotEmpty == true) {
-          final liveMatches = currentMatches!.data!.where((data) => data.matchStatus == 'LIVE').toList();
+          final liveMatches = currentMatches!.data!.where((data) => data.matchStatus?.toLowerCase() == 'live').toList();
           if (liveMatches.isNotEmpty) {
             final currentIndex = currentLiveMatchIndex.value < liveMatches.length ? currentLiveMatchIndex.value : 0;
             final currentLiveMatch = liveMatches[currentIndex];

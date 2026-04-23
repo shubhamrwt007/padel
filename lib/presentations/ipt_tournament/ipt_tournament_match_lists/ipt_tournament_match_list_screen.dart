@@ -1060,7 +1060,7 @@ class ResultMatchCard extends StatelessWidget {
                                   width: 12,
                                 ).paddingOnly(right: 4),
                               Text(
-                                  match?.teamA?.clubType ?? "",
+                                  match?.teamA?.teamName ?? "",
                                   style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                               ),
                             ],
@@ -1075,7 +1075,7 @@ class ResultMatchCard extends StatelessWidget {
                                   width: 12,
                                 ).paddingOnly(left: 4),
                               Text(
-                                  match?.teamB?.clubType ?? "",
+                                  match?.teamB?.teamName ?? "",
                                   style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                               ),
                             ],
