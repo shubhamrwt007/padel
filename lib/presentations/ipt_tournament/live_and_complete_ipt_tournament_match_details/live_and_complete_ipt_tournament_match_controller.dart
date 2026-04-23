@@ -226,7 +226,7 @@ class LiveAndCompleteIptTournamentMatchController extends GetxController{
       _socket?.on('connect', (_) {
         print('✅ Connected. Socket ID: ${_socket?.id}');
         isSocketConnected.value = true;
-        isLoadingHistory.value = false;
+        // isLoadingHistory.value = false;
         print('📤 Emitting joinMatch with matchId: ${matchId.value}');
         _socket?.emit('joinTournamentMatch', matchId.value);
 

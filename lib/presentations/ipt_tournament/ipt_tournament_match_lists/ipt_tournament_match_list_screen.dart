@@ -7,7 +7,6 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
-import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_controller.dart';
 import 'package:padel_mobile/presentations/league/widgets/match_card_clipper.dart';
 
 import '../../../data/response_models/ipt_tournament/get_all_schedule_live_matches_ipt_tournament_model.dart';
@@ -23,7 +22,7 @@ class IptTournamentListScreen extends StatelessWidget {
         centerTitle: true,
         title: Obx(() => Text(
           controller.matchStatus.value == ''
-              ? "Matche Schedule"
+              ? "Matches Schedule"
               : "Match Results"
         )),
         context: context,
@@ -347,6 +346,7 @@ class IptTournamentListScreen extends StatelessWidget {
                   (data) => data.matches?.contains(allMatches[index]) ?? false,
                   orElse: () => scheduleData.first,
                 );
+                final roundType = matchData.roundType??"";
                 final isLive = matchData.matchStatus?.toLowerCase() == 'live';
                 return GestureDetector(
                   onTap: () {
@@ -362,11 +362,13 @@ class IptTournamentListScreen extends StatelessWidget {
                           match: allMatches[index],
                           categoryType: matchData.categoryType,
                           setsWon: matchData.matchId?.setsWon,
+                          roundType:roundType
                         )
                       : UpcomingMatchCard(
                           match: allMatches[index],
                           categoryType: matchData.categoryType,
                           date: matchData.date,
+                          roundType:roundType
                         ),
                 );
               },
@@ -444,6 +446,7 @@ class IptTournamentListScreen extends StatelessWidget {
                   (data) => data.matches?.contains(allMatches[index]) ?? false,
                   orElse: () => scheduleData.first,
                 );
+                final roundType = matchData.roundType??"";
                 return GestureDetector(
                   onTap: () {
                     final matchData = scheduleData.firstWhere(
@@ -460,6 +463,7 @@ class IptTournamentListScreen extends StatelessWidget {
                     categoryType: matchData.categoryType,
                     date: matchData.date,
                     setsWon: matchData.matchId?.setsWon,
+                    roundType: roundType,
                   ),
                 );
               },
@@ -475,8 +479,9 @@ class UpcomingMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final String? date;
-  
-  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date});
+  final String? roundType;
+
+  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -540,20 +545,22 @@ class UpcomingMatchCard extends StatelessWidget {
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: AlignmentGeometry.centerLeft,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                                match?.teamA?.clubType ?? "",
-                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                                match?.teamA?.teamName ?? "",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.blackColor)
                             ),
                           ),
                           const Spacer(),
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: AlignmentGeometry.centerRight,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                                match?.teamB?.clubType ?? "",
-                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)
+                                match?.teamB?.teamName ?? "",
+                                style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: AppColors.blackColor)
                             ),
                           ),
                         ],
@@ -607,6 +614,8 @@ class UpcomingMatchCard extends StatelessWidget {
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
 
                             ],
                           ),
@@ -716,9 +725,10 @@ class UpcomingMatchCard extends StatelessWidget {
 class LiveMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
+  final String? roundType;
   final SetsWon? setsWon;
   
-  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon});
+  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -794,9 +804,10 @@ class LiveMatchCard extends StatelessWidget {
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: AlignmentGeometry.centerLeft,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                              match?.teamA?.clubType ?? "",
+                              match?.teamA?.teamName ?? "",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                             ),
                           ),
@@ -804,9 +815,10 @@ class LiveMatchCard extends StatelessWidget {
                           Container(
                             color: Colors.transparent,
                             width: Get.width*0.2,
+                            alignment: AlignmentGeometry.centerRight,
                             child: Text(
                               overflow: TextOverflow.ellipsis,
-                              match?.teamB?.clubType ?? "",
+                              match?.teamB?.teamName ?? "",
                               style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600,color: Colors.black)
                             ),
                           ),
@@ -867,6 +879,8 @@ class LiveMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -965,10 +979,11 @@ class LiveMatchCard extends StatelessWidget {
 class ResultMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
+  final String? roundType;
   final String? date;
   final SetsWon? setsWon;
   
-  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon});
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -1124,6 +1139,8 @@ class ResultMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
 

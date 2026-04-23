@@ -32,13 +32,18 @@ class IptTournamentScreen extends StatelessWidget {
     
     return Scaffold(
       appBar: primaryAppBar(
-        title: leagueTitle.toLowerCase() == 'swoot padel league'
-            ? SvgPicture.asset(
-          Assets.imagesImgSwootPadelLeague,
-          height: 27,
-          width: 30,
-        )
-            : Text(leagueTitle),
+        title: SvgPicture.asset(
+          Assets.imagesImgIptLogo,
+          height: 14,
+          width: 15,
+        ),
+        // title: leagueTitle.toLowerCase() == 'swoot padel league'
+        //     ? SvgPicture.asset(
+        //   Assets.imagesImgSwootPadelLeague,
+        //   height: 27,
+        //   width: 30,
+        // )
+        //     : Text(leagueTitle),
         centerTitle: true,
         context: context,
       ),
@@ -126,7 +131,7 @@ class IptTournamentScreen extends StatelessWidget {
               ],
             ).paddingSymmetric(horizontal: 18,vertical: 8)),
             SizedBox(
-              height: Get.height * 0.45,
+              height:controller.isLoadingUpcomingMatches.value? Get.height * 0.45:Get.height*0.6,
               child: PageView(
                 controller: controller.pageController,
                 onPageChanged: controller.onPageChanged,
@@ -653,7 +658,7 @@ class IptTournamentScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final scheduleItem = allSchedules[index];
           final matches = scheduleItem.matches ?? [];
-          
+          final roundType = scheduleItem.roundType??"";
           if (matches.isEmpty) return const SizedBox.shrink();
           
           final match = matches.first;
@@ -670,6 +675,7 @@ class IptTournamentScreen extends StatelessWidget {
                 match: match,
                 categoryType: scheduleItem.categoryType,
                 setsWon: scheduleItem.matchId?.setsWon,
+                roundType: roundType,
               ),
             );
           }
@@ -678,6 +684,7 @@ class IptTournamentScreen extends StatelessWidget {
             match: match,
             categoryType: scheduleItem.categoryType,
             date: scheduleItem.date,
+            roundType: roundType,
           );
         },
       );
@@ -716,6 +723,7 @@ class IptTournamentScreen extends StatelessWidget {
             (data) => data.matches?.contains(allMatches[index]) ?? false,
             orElse: () => scheduleData.first,
           );
+          final roundType = matchData.roundType??"";
           return GestureDetector(
             onTap: () {
               final matchData = scheduleData.firstWhere(
@@ -732,6 +740,7 @@ class IptTournamentScreen extends StatelessWidget {
               categoryType: matchData.categoryType,
               date: matchData.date,
               setsWon: matchData.matchId?.setsWon,
+              roundType: roundType,
             ),
           );
         },
@@ -744,8 +753,9 @@ class UpcomingMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final String? date;
-  
-  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date});
+  final String? roundType;
+
+  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -877,6 +887,8 @@ class UpcomingMatchCard extends StatelessWidget {
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -990,8 +1002,9 @@ class UpcomingMatchCard extends StatelessWidget {
 class LiveMatchCard extends StatelessWidget {
   final Matches? match;
   final String? categoryType;
+  final String? roundType;
   final SetsWon? setsWon;
-  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon});
+  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -1132,6 +1145,8 @@ class LiveMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -1232,10 +1247,11 @@ class LiveMatchCard extends StatelessWidget {
 class ResultMatchCard extends StatelessWidget {
   final Matches? match;
   final String? categoryType;
+  final String? roundType;
   final String? date;
   final SetsWon? setsWon;
   
-  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon});
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -1393,6 +1409,8 @@ class ResultMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
 
                             ],
                           ),
