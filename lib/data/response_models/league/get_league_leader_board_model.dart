@@ -51,11 +51,9 @@ class Standings {
   final int? setsWon;
   final int? setsLost;
   final int? setDifference;
-  final int? abWins;
-  final int? cdWins;
-  final int? womensWins;
-  final int? mixedWins;
-  final int? hybridWins;
+  final int? previousPosition;
+  final int? positionChange;
+  final Map<String, dynamic>? categoryWins;
   final List<String>? recentForm;
 
   Standings({
@@ -70,11 +68,9 @@ class Standings {
     this.setsWon,
     this.setsLost,
     this.setDifference,
-    this.abWins,
-    this.cdWins,
-    this.womensWins,
-    this.mixedWins,
-    this.hybridWins,
+    this.previousPosition,
+    this.positionChange,
+    this.categoryWins,
     this.recentForm,
   });
 
@@ -91,11 +87,9 @@ class Standings {
       setsWon: json['setsWon'],
       setsLost: json['setsLost'],
       setDifference: json['setDifference'],
-      abWins: json['abWins'],
-      cdWins: json['cdWins'],
-      womensWins: json['womensWins'],
-      mixedWins: json['mixedWins'],
-      hybridWins: json['hybridWins'],
+      previousPosition: json['previousPosition'],
+      positionChange: json['positionChange'],
+      categoryWins: json['categoryWins'] as Map<String, dynamic>?,
       recentForm: (json['recentForm'] as List?)
           ?.map((e) => e.toString())
           .toList(),
@@ -114,11 +108,9 @@ class Standings {
     'setsWon': setsWon,
     'setsLost': setsLost,
     'setDifference': setDifference,
-    'abWins': abWins,
-    'cdWins': cdWins,
-    'womensWins': womensWins,
-    'mixedWins': mixedWins,
-    'hybridWins': hybridWins,
+    'previousPosition': previousPosition,
+    'positionChange': positionChange,
+    'categoryWins': categoryWins,
     'recentForm': recentForm,
   };
 }

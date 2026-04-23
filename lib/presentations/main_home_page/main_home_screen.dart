@@ -779,6 +779,7 @@ class MainHomeScreen extends StatelessWidget {
                 'leagueId': leagueId,
                 'leagueTitle': leagueTitle,
                 'initialTab': 0,
+                'matchId': matchId,
               },
             )?.then((_) {
               controller.fetchPollResults();
@@ -890,6 +891,7 @@ class MainHomeScreen extends StatelessWidget {
                                 'leagueId': leagueId,
                                 'leagueTitle': leagueTitle,
                                 'initialTab': 0,
+                                'matchId': matchId,
                               },
                             )?.then((_) {
                               controller.fetchPollResults();
@@ -3054,6 +3056,11 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
+          image: DecorationImage(
+            image: AssetImage(Assets.imagesImgIconSwoot),
+            fit: BoxFit.contain,
+            opacity: 0.9, // 👈 direct opacity
+          ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
@@ -3092,27 +3099,25 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       fontWeight: FontWeight.w500,
     );
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(width: 20, child: Text("#", style: style)),
+        SizedBox(width: 40, child: Text("#", style: style)),
         Expanded(
           flex: 3,
-          child: SizedBox(width: 35, child: Text(" Teams", style: style)),
-        ),
-        // SizedBox(width: 30, child: Text("M",style: style)),
-        SizedBox(
-          width: 30,
-          child: Center(child: Text(" W", style: style)),
+          child: Text("Teams", style: style),
         ),
         SizedBox(
           width: 30,
-          child: Center(child: Text(" L", style: style)),
+          child: Center(child: Text("W", style: style)),
         ),
         SizedBox(
           width: 30,
+          child: Center(child: Text("L", style: style)),
+        ),
+        SizedBox(
+          width: 35,
           child: Center(
             child: Text(
-              " Pts",
+              "Pts",
               style: Get.textTheme.labelMedium!.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryColor,
@@ -3121,8 +3126,8 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         Expanded(
-          flex: 4,
-          child: Center(child: Text("Last 5 ", style: style)),
+          flex: 3,
+          child: Center(child: Text("Last 5", style: style)),
         ),
       ],
     );
@@ -3132,13 +3137,20 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
     return Row(
       children: [
         SizedBox(
-          width: 25,
-          child: Text(
-            "${standing.position ?? 0}",
-            style: Get.textTheme.bodySmall!.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
+          width: 40,
+          child: Row(
+            children: [
+              Text(
+                "${standing.position ?? 0}",
+                style: Get.textTheme.bodySmall!.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: _getPositionColor(standing.position, standing.positionChange),
+                ),
+              ),
+              SizedBox(width: 4),
+              _buildPositionChangeIndicator(standing.positionChange),
+            ],
           ),
         ),
         Expanded(
@@ -3202,7 +3214,6 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
             ],
           ),
         ),
-
         SizedBox(
           width: 30,
           child: Center(
@@ -3226,7 +3237,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         SizedBox(
-          width: 30,
+          width: 35,
           child: Center(
             child: Text(
               "${standing.points ?? 0}",
@@ -3238,18 +3249,53 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           ),
         ),
         Expanded(
-          flex: 4,
+          flex: 3,
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: _buildRecentFormIcons(standing.recentForm ?? []),
-              ),
+              ..._buildRecentFormIcons(standing.recentForm ?? []),
+              SizedBox(width: 4),
               Icon(Icons.arrow_back, size: 9, color: Colors.black),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Color _getPositionColor(int? position, int? positionChange) {
+    // Color based on position change only
+    if (positionChange == null || positionChange == 0) return Colors.grey;
+    return positionChange > 0 ? Colors.green : Colors.red;
+  }
+
+  Widget _buildPositionChangeIndicator(int? positionChange) {
+    if (positionChange == null || positionChange == 0) {
+      return SizedBox(
+        width: 12,
+        child: Center(
+          child: Text(
+            "-",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    final isUp = positionChange > 0;
+    final color = isUp ? Colors.green : Colors.red;
+    
+    return SizedBox(
+      width: 12,
+      child: Icon(
+        isUp ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+        color: color,
+        size: 16,
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
@@ -23,6 +24,18 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
   final LiveAndCompleteLeagueMatchController controller = Get.put(LiveAndCompleteLeagueMatchController());
 
   @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Obx(() {
       final ytController = controller.youtubeController.value;
@@ -30,8 +43,49 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
         return YoutubePlayerBuilder(
           player: YoutubePlayer(
             controller: ytController,
-            showVideoProgressIndicator: true,
-
+            showVideoProgressIndicator: false,
+            progressIndicatorColor: Colors.transparent,
+            progressColors: const ProgressBarColors(
+              playedColor: Colors.transparent,
+              handleColor: Colors.transparent,
+              bufferedColor: Colors.transparent,
+              backgroundColor: Colors.transparent,
+            ),
+            bottomActions: [
+              const Spacer(),
+              Obx(() => controller.showGoToLiveButton.value
+                  ? GestureDetector(
+                      onTap: controller.goToLive,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCD3529),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              "Go Live",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              const SizedBox(width: 8),
+              FullScreenButton(),
+            ],
+            onReady: () {
+              ytController.addListener(() {});
+            },
           ),
           builder: (context, player) => _buildScaffold(context, videoPlayer: player),
         );
@@ -103,12 +157,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
   Widget _buildVideoSection(Widget? player) {
     if (player != null) {
-      return Stack(
-        children: [
-          player,
-          // Positioned(left: 16, top: 16, child: _liveBadge()),
-        ],
-      );
+      return player;
     }
     return Stack(
       alignment: Alignment.center,
@@ -168,21 +217,30 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
     try {
       if (Get.isRegistered<LeagueController>()) {
         final leagueController = Get.find<LeagueController>();
-        return BuildSponsorBanner(controller: leagueController);
+        return Column(
+          children: [
+            BuildTitleSponsor(controller: leagueController),
+            Obx(() {
+              final sponsors = leagueController.sponsors.value?.data?.sponsors ?? [];
+              if (sponsors.isEmpty) return const SizedBox.shrink();
+              return BuildMoreSponsor(sponsors: sponsors);
+            }),
+          ],
+        );
       }
     } catch (e) {
       print('LeagueController not found: $e');
     }
-    return const SizedBox(height: 200);
+    return const SizedBox.shrink();
   }
   Widget _buildScoreSection() {
     return Stack(
       children: [
         SizedBox(
           width: double.infinity,
-          height: 140, // 👈 decrease height here safely
+          // height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
-            alignment: AlignmentGeometry.bottomCenter,
+            alignment: AlignmentGeometry.center,
             Assets.imagesFipPromesisBg,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
@@ -220,7 +278,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
 
                   /// SCORE
                   Transform.translate(
-                    offset: Offset(0, 8),
+                    offset: Offset(-3, 8),
                     child: Column(
                       children: [
                         Text(

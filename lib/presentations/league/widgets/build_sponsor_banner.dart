@@ -172,7 +172,10 @@ class _SeamlessSponsorTickerState extends State<_SeamlessSponsorTicker>
                 child: child,
               );
             },
-            child: row,
+            child: OverflowBox(
+                maxWidth: double.infinity, // 👈 allow infinite width
+                alignment: Alignment.centerLeft,
+                child: row),
           ),
         );
       },
@@ -182,7 +185,7 @@ class _SeamlessSponsorTickerState extends State<_SeamlessSponsorTicker>
   Widget _buildSponsorLogo(dynamic sponsor) {
     return SizedBox(
       width: _tileWidth,
-      height: 30,
+      // height: 30,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: sponsor.logo != null

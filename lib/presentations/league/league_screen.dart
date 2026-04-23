@@ -35,8 +35,8 @@ class LeagueScreen extends StatelessWidget {
         title: leagueTitle.toLowerCase() == 'swoot padel league'
             ? SvgPicture.asset(
           Assets.imagesImgSwootPadelLeague,
-          height: 22,
-          width: 25,
+          height: 27,
+          width: 30,
         )
             : Text(leagueTitle),
         centerTitle: true,
@@ -299,89 +299,124 @@ class LeagueScreen extends StatelessWidget {
     final allMatches = liveData.expand((data) => data.matches ?? []).toList();
     if (allMatches.isEmpty) return const SizedBox.shrink();
 
-    final firstMatch = allMatches.first;
-    final categoryType = liveData.firstOrNull?.categoryType ?? "Mixed Doubles";
-    final setsWon = liveData.firstOrNull?.matchId?.setsWon;
+    return Column(
+      children: [
+        SizedBox(
+          height: Get.height * 0.34,
+          child: PageView.builder(
+            controller: controller.liveMatchCarouselController,
+            onPageChanged: controller.onLiveMatchCarouselChanged,
+            itemCount: liveData.length,
+            itemBuilder: (context, index) {
+              final matchData = liveData[index];
+              final match = matchData.matches?.first;
+              if (match == null) return const SizedBox.shrink();
+              
+              final categoryType = matchData.categoryType ?? "Mixed Doubles";
+              final setsWon = matchData.matchId?.setsWon;
 
-      return Column(
-        children: [
-          GestureDetector(
-            onTap: (){
-              Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                "matchType":"live",
-                "matchId": liveData.firstOrNull?.matchId?.id ?? ""
-              });
-              print("MATCH ID-> ${ liveData.firstOrNull?.matchId?.id}");
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 0),
-              child: Stack(
+              return Column(
                 children: [
-                  SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
-                  Column(
-                    children: [
-                      /// LIVE TAG
-                      _AnimatedLiveTag(),
-                      /// SCORE ROW
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  GestureDetector(
+                    onTap: () {
+                      Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                        "matchType": "live",
+                        "matchId": matchData.matchId?.id ?? ""
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 0),
+                      child: Stack(
                         children: [
-                          _teamColumn(
-                            firstMatch.teamA?.clubType ?? "",
-                            "",
-                            "",
-                            (firstMatch.teamA?.players?.isNotEmpty ?? false) ? (firstMatch.teamA!.players![0].playerName ?? "") : "Player 1",
-                            (firstMatch.teamA?.players != null && firstMatch.teamA!.players!.length > 1) ? (firstMatch.teamA!.players![1].playerName ?? "") : "Player 2",
-                            AppColors.primaryColor,
-                          ),
-
-                            Transform.translate(
-                            offset: Offset(0, -15),
-                            child: Column(
-                              children: [
-                                Text(categoryType, style: Get.textTheme.labelMedium),
-                                SizedBox(height: 8),
-                                Obx(() {
-                                  final currentSetsWon = controller.upcomingMatches.value?.data
-                                    ?.where((data) => data.matchStatus == 'live')
-                                    .firstOrNull?.matchId?.setsWon;
-                                  return Text(
-                                  "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
-                                      style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor,fontSize: 42));
-                                }),
-                              ],
-                            ),
-                          ),
-                          _teamColumn(
-                            firstMatch.teamB?.clubType ?? "",
-                            "",
-                            "",
-                            (firstMatch.teamB?.players?.isNotEmpty ?? false) ? (firstMatch.teamB!.players![0].playerName ?? "") : "Player 3",
-                            (firstMatch.teamB?.players != null && firstMatch.teamB!.players!.length > 1) ? (firstMatch.teamB!.players![1].playerName ?? "") : "Player 4",
-                            AppColors.secondaryColor,
+                          SvgPicture.asset(Assets.imagesFipPromesisBg, fit: BoxFit.cover, width: Get.width),
+                          Column(
+                            children: [
+                              _AnimatedLiveTag(),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _teamColumn(
+                                    match.teamA?.clubType ?? "",
+                                    "",
+                                    "",
+                                    (match.teamA?.players?.isNotEmpty ?? false) ? (match.teamA!.players![0].playerName ?? "") : "Player 1",
+                                    (match.teamA?.players != null && match.teamA!.players!.length > 1) ? (match.teamA!.players![1].playerName ?? "") : "Player 2",
+                                    AppColors.primaryColor,
+                                  ),
+                                  Transform.translate(
+                                    offset: Offset(0, 0),
+                                    child: Column(
+                                      children: [
+                                        Text(categoryType, style: Get.textTheme.labelMedium),
+                                        SizedBox(height: 8),
+                                        Obx(() {
+                                          final liveMatches = controller.upcomingMatches.value?.data
+                                              ?.where((data) => data.matchStatus == 'live')
+                                              .toList() ?? [];
+                                          final currentIndex = controller.currentLiveMatchIndex.value < liveMatches.length ? controller.currentLiveMatchIndex.value : 0;
+                                          final currentSetsWon = liveMatches.isNotEmpty ? liveMatches[currentIndex].matchId?.setsWon : null;
+                                          return Text(
+                                              "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
+                                              style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor, fontSize: 42));
+                                        }),
+                                      ],
+                                    ),
+                                  ),
+                                  _teamColumn(
+                                    match.teamB?.clubType ?? "",
+                                    "",
+                                    "",
+                                    (match.teamB?.players?.isNotEmpty ?? false) ? (match.teamB!.players![0].playerName ?? "") : "Player 3",
+                                    (match.teamB?.players != null && match.teamB!.players!.length > 1) ? (match.teamB!.players![1].playerName ?? "") : "Player 4",
+                                    AppColors.secondaryColor,
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                children: [
+                                  _AnimatedWatchLiveButton(onTap: () {
+                                    Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+                                      "matchType": "live",
+                                      "matchId": matchData.matchId?.id ?? ""
+                                    });
+                                  }),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Column(
-                        children: [
-                          _AnimatedWatchLiveButton(onTap: (){
-                            Get.toNamed(RoutesName.liveAndCompleteLeagueMatch,arguments: {
-                              "matchType":"live",
-                              "matchId": liveData.firstOrNull?.matchId?.id ?? ""
-                            });
-                          }),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
+                  _buildScoreBoard(matchData).paddingOnly(right: Get.width * 0.05, left: Get.width * 0.05, top: 10),
                 ],
-              ),
-            ),
+              );
+            },
           ),
-          _buildScoreBoard(liveData.firstOrNull).paddingOnly(right: Get.width*0.05,left: Get.width*0.05,top: 10)
-        ],
-      );
+        ),
+        if (liveData.length > 1)
+          Obx(() => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              liveData.length,
+              (index) {
+                final isActive = controller.currentLiveMatchIndex.value == index;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: isActive ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primaryColor : Colors.black12,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                );
+              },
+            ),
+          ).paddingOnly(top: 8)),
+      ],
+    ).paddingOnly(bottom: 20);
   }
 
   Widget _teamColumn(
@@ -448,7 +483,7 @@ class LeagueScreen extends StatelessWidget {
           child: SizedBox(
             height: 40,
             width: 40,
-            child: CircularProgressIndicator(),
+            child: LoadingWidget(color: AppColors.primaryColor,),
           ),
         );
       }
@@ -1469,19 +1504,52 @@ class ResultMatchCard extends StatelessWidget {
 
 }
 
-class LeaderBoardWidget extends StatelessWidget {
+class LeaderBoardWidget extends StatefulWidget {
   const LeaderBoardWidget({super.key});
+
+  @override
+  State<LeaderBoardWidget> createState() => _LeaderBoardWidgetState();
+}
+
+class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
+  final List<ScrollController> _scrollControllers = [];
+  bool _isScrolling = false;
+
+  @override
+  void dispose() {
+    for (var controller in _scrollControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  ScrollController _createSyncedController() {
+    final controller = ScrollController();
+    controller.addListener(() {
+      if (_isScrolling) return;
+      _isScrolling = true;
+      for (var other in _scrollControllers) {
+        if (other != controller && other.hasClients) {
+          other.jumpTo(controller.offset);
+        }
+      }
+      _isScrolling = false;
+    });
+    _scrollControllers.add(controller);
+    return controller;
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LeagueController>();
+    _scrollControllers.clear();
     
     return RefreshIndicator(
       color: AppColors.whiteColor,
       onRefresh: () async {
         await Future.wait([
           controller.fetchLeaderBoard(),
-          controller.fetchUpcomingMatches(),
+          controller.fetchLeaderboardUpcomingMatches(),
         ]);
       },
       child: SingleChildScrollView(
@@ -1497,6 +1565,11 @@ class LeaderBoardWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
+              image: DecorationImage(
+                image: AssetImage(Assets.imagesImgIconSwoot),
+                fit: BoxFit.contain,
+                opacity: 0.9, // 👈 direct opacity
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.shade100,
@@ -1506,34 +1579,21 @@ class LeaderBoardWidget extends StatelessWidget {
                 )
               ],
             ),
-            child: Stack(
+            child: Column(
               children: [
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0,
-                    child: Image.asset(
-                      Assets.imagesImgIconSwoot,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Column(
-                  children: [
-                    _headerRow(),
-                    Divider(color: Colors.grey.shade300),
-                    ...standings.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final standing = entry.value;
-                      return Column(
-                        children: [
-                          _teamRow(standing),
-                          if (index < standings.length - 1)
-                            Divider(color: Colors.grey.shade300),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
+                _headerRow(),
+                Divider(color: Colors.grey.shade300),
+                ...standings.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final standing = entry.value;
+                  return Column(
+                    children: [
+                      _teamRow(standing),
+                      if (index < standings.length - 1)
+                        Divider(color: Colors.grey.shade300),
+                    ],
+                  );
+                }),
               ],
             ),
           ).paddingOnly(bottom: 20);
@@ -1545,7 +1605,7 @@ class LeaderBoardWidget extends StatelessWidget {
           return BuildMoreSponsor(sponsors: sponsors);
         }),
         Obx(() {
-          final hasUpcoming = (controller.upcomingMatches.value?.data ?? [])
+          final hasUpcoming = (controller.leaderboardUpcomingMatches.value?.data ?? [])
               .expand((d) => d.matches ?? []).isNotEmpty;
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1581,31 +1641,94 @@ class LeaderBoardWidget extends StatelessWidget {
 
   Widget _headerRow() {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
+    final controller = Get.find<LeagueController>();
+    final categories = controller.allCategories;
+    
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("#", style: style)),
-        Expanded(
-          flex: 3,
+        // Fixed section
+        SizedBox(width: 40, child: Text("#", style: style)),
+        SizedBox(
+          width: 120,
           child: Text("Teams", style: style),
         ),
-        SizedBox(width: 30, child: Center(child: Text("M", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("W", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("L", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
-        SizedBox(width: 30, child: Center(child: Text("Adv", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Int", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Mx", style: style))),
-        SizedBox(width: 30, child: Center(child: Text("Wm", style: style))),
+        // Scrollable section
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _createSyncedController(),
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                SizedBox(width: 30, child: Center(child: Text("M", style: style))),
+                SizedBox(width: 30, child: Center(child: Text("W", style: style))),
+                SizedBox(width: 30, child: Center(child: Text("L", style: style))),
+                SizedBox(width: 30, child: Center(child: Text("Pts", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w700,color: AppColors.primaryColor)))),
+                ...categories.map((cat) => SizedBox(
+                  width: 30,
+                  child: Center(child: Text(_getCategoryShortName(cat), style: style)),
+                )),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
+  
+  String _getCategoryShortName(String category) {
+    if (category.isEmpty) return '';
+    
+    // Remove special characters and split by spaces or capital letters
+    final words = category
+        .replaceAll(RegExp(r"[^a-zA-Z\s]"), '') // Remove special chars
+        .split(RegExp(r'\s+')) // Split by spaces
+        .where((word) => word.isNotEmpty)
+        .toList();
+    
+    if (words.isEmpty) {
+      // Fallback: take first 3 chars
+      return category.substring(0, category.length > 3 ? 3 : category.length);
+    }
+    
+    // If single word, take first 3 characters
+    if (words.length == 1) {
+      final word = words[0];
+      return word.substring(0, word.length > 3 ? 3 : word.length).capitalize ?? word;
+    }
+    
+    // If multiple words, take first letter of each word (max 3)
+    return words
+        .take(3)
+        .map((word) => word[0].toUpperCase())
+        .join();
+  }
 
   Widget _teamRow(standing) {
+    final controller = Get.find<LeagueController>();
+    final categories = controller.allCategories;
+    
     return Row(
       children: [
-        SizedBox(width: 25, child: Text("${standing.position ?? 0}", style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w600, fontSize: 10))),
-        Expanded(
-          flex: 3,
+        // Fixed section
+        SizedBox(
+          width: 40,
+          child: Row(
+            children: [
+              Text(
+                "${standing.position ?? 0}",
+                style: Get.textTheme.bodySmall!.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: _getPositionColor(standing.position, standing.positionChange),
+                ),
+              ),
+              SizedBox(width: 4),
+              _buildPositionChangeIndicator(standing.positionChange),
+            ],
+          ),
+        ),
+        SizedBox(
+          width: 120,
           child: Row(
             children: [
               standing.clubLogo != null && standing.clubLogo!.isNotEmpty
@@ -1651,15 +1774,66 @@ class LeaderBoardWidget extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.abWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.cdWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.mixedWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
-        SizedBox(width: 30, child: Center(child: Text("${standing.womensWins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+        // Scrollable section
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _createSyncedController(),
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              height: 25,
+              color: Colors.transparent,
+              child: Row(
+                children: [
+                  SizedBox(width: 30, child: Center(child: Text("${standing.played ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.wins ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.losses ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)))),
+                  SizedBox(width: 30, child: Center(child: Text("${standing.points ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600,color: AppColors.primaryColor)))),
+                  ...categories.map((cat) => SizedBox(
+                    width: 30,
+                    child: Center(child: Text("${standing.categoryWins?[cat] ?? 0}", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400))),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  Color _getPositionColor(int? position, int? positionChange) {
+    // Color based on position change only
+    if (positionChange == null || positionChange == 0) return Colors.grey;
+    return positionChange > 0 ? Colors.green : Colors.red;
+  }
+
+  Widget _buildPositionChangeIndicator(int? positionChange) {
+    if (positionChange == null || positionChange == 0) {
+      return SizedBox(
+        width: 12,
+        child: Center(
+          child: Text(
+            "-",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    final isUp = positionChange > 0;
+    final color = isUp ? Colors.green : Colors.red;
+    
+    return SizedBox(
+      width: 12,
+      child: Icon(
+        isUp ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+        color: color,
+        size: 16,
+      ),
     );
   }
 
@@ -1667,14 +1841,14 @@ class LeaderBoardWidget extends StatelessWidget {
     return Obx(() {
       final controller = Get.find<LeagueController>();
       
-      if (controller.isLoadingUpcomingMatches.value) {
+      if (controller.isLoadingLeaderboardUpcoming.value) {
         return SizedBox(
           height: 200,
           child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
         );
       }
 
-      final scheduleData = controller.upcomingMatches.value?.data ?? [];
+      final scheduleData = controller.leaderboardUpcomingMatches.value?.data ?? [];
       if (scheduleData.isEmpty) {
         return SizedBox(
           height: 200,
