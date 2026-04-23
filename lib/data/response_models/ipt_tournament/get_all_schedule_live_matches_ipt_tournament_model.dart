@@ -1,0 +1,463 @@
+class GetAllScheduleLiveMatchesIptTournamentModel {
+  bool? success;
+  List<IptTournamentScheduleMatchData>? data;
+  Pagination? pagination;
+
+  GetAllScheduleLiveMatchesIptTournamentModel({this.success, this.data, this.pagination});
+
+  factory GetAllScheduleLiveMatchesIptTournamentModel.fromJson(Map<String, dynamic> json) {
+    return GetAllScheduleLiveMatchesIptTournamentModel(
+      success: json['success'],
+      data: (json['data'] as List?)
+          ?.map((e) => IptTournamentScheduleMatchData.fromJson(e))
+          .toList(),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'success': success,
+    'data': data?.map((e) => e.toJson()).toList(),
+    'pagination': pagination?.toJson(),
+  };
+}
+
+// -------------------- Schedule --------------------
+
+class IptTournamentScheduleMatchData {
+  String? id;
+  LeagueId? leagueId;
+  String? categoryType;
+  VenueClubId? venueClubId;
+  String? date;
+  String? venue;
+  String? roundType;
+  List<Matches>? matches;
+  String? createdAt;
+  String? updatedAt;
+  int? v;
+  String? matchStatus;
+  MatchDetail? matchId;
+
+  IptTournamentScheduleMatchData({
+    this.id,
+    this.leagueId,
+    this.categoryType,
+    this.venueClubId,
+    this.date,
+    this.venue,
+    this.roundType,
+    this.matches,
+    this.createdAt,
+    this.updatedAt,
+    this.v,
+    this.matchStatus,
+    this.matchId,
+  });
+
+  factory IptTournamentScheduleMatchData.fromJson(Map<String, dynamic> json) =>
+      IptTournamentScheduleMatchData(
+        id: json['_id'],
+        leagueId: json['leagueId'] != null
+            ? LeagueId.fromJson(json['leagueId'])
+            : null,
+        categoryType: json['categoryType'],
+        venueClubId: json['venueClubId'] != null
+            ? VenueClubId.fromJson(json['venueClubId'])
+            : null,
+        date: json['date'],
+        venue: json['venue'],
+        roundType: json['roundType'],
+        matches: (json['matches'] as List?)
+            ?.map((e) => Matches.fromJson(e))
+            .toList(),
+        createdAt: json['createdAt'],
+        updatedAt: json['updatedAt'],
+        v: json['__v'],
+        matchStatus: json['matchStatus'],
+        matchId: json['matchId'] != null
+            ? MatchDetail.fromJson(json['matchId'])
+            : null,
+      );
+
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'leagueId': leagueId?.toJson(),
+    'categoryType': categoryType,
+    'venueClubId': venueClubId?.toJson(),
+    'date': date,
+    'venue': venue,
+    'roundType': roundType,
+    'matches': matches?.map((e) => e.toJson()).toList(),
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+    '__v': v,
+    'matchStatus': matchStatus,
+    'matchId': matchId?.toJson(),
+  };
+}
+
+// -------------------- Basic --------------------
+
+class LeagueId {
+  String? id;
+  String? leagueName;
+
+  LeagueId({this.id, this.leagueName});
+
+  factory LeagueId.fromJson(Map<String, dynamic> json) => LeagueId(
+    id: json['_id'],
+    leagueName: json['leagueName'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'leagueName': leagueName,
+  };
+}
+
+class VenueClubId {
+  String? id;
+  String? clubName;
+  String? logo;
+
+  VenueClubId({this.id, this.clubName,this.logo});
+
+  factory VenueClubId.fromJson(Map<String, dynamic> json) => VenueClubId(
+    id: json['_id'],
+    clubName: json['clubName'],
+    logo: json['logo'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'clubName': clubName,
+    'logo': logo,
+  };
+}
+
+// -------------------- Matches --------------------
+
+class Matches {
+  Team? teamA;
+  Team? teamB;
+  int? matchNo;
+  String? time;
+  String? startTime;
+  String? endTime;
+  int? duration;
+  String? status;
+  Score? score;
+  String? id;
+  String? winner;
+  Team? winningTeam;
+  Team? losingTeam;
+
+  Matches({
+    this.teamA,
+    this.teamB,
+    this.matchNo,
+    this.time,
+    this.startTime,
+    this.endTime,
+    this.duration,
+    this.status,
+    this.score,
+    this.id,
+    this.winner,
+    this.winningTeam,
+    this.losingTeam,
+  });
+
+  factory Matches.fromJson(Map<String, dynamic> json) => Matches(
+    teamA: json['teamA'] != null ? Team.fromJson(json['teamA']) : null,
+    teamB: json['teamB'] != null ? Team.fromJson(json['teamB']) : null,
+    matchNo: json['matchNo'],
+    time: json['time'],
+    startTime: json['startTime'],
+    endTime: json['endTime'],
+    duration: json['duration'],
+    status: json['status'],
+    score: json['score'] != null ? Score.fromJson(json['score']) : null,
+    id: json['_id'],
+    winner: json['winner'],
+    winningTeam: json['winningTeam'] != null
+        ? Team.fromJson(json['winningTeam'])
+        : null,
+    losingTeam: json['losingTeam'] != null
+        ? Team.fromJson(json['losingTeam'])
+        : null,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'teamA': teamA?.toJson(),
+    'teamB': teamB?.toJson(),
+    'matchNo': matchNo,
+    'time': time,
+    'startTime': startTime,
+    'endTime': endTime,
+    'duration': duration,
+    'status': status,
+    'score': score?.toJson(),
+    '_id': id,
+    'winner': winner,
+    'winningTeam': winningTeam?.toJson(),
+    'losingTeam': losingTeam?.toJson(),
+  };
+}
+
+// -------------------- Team --------------------
+
+class Team {
+  VenueClubId? clubId;
+  String? clubType;
+  String? teamName;
+  List<Player>? players;
+
+  Team({this.clubId, this.clubType, this.teamName, this.players});
+
+  factory Team.fromJson(Map<String, dynamic> json) => Team(
+    clubId: json['clubId'] != null
+        ? VenueClubId.fromJson(json['clubId'])
+        : null,
+    clubType: json['clubType'],
+    teamName: json['teamName'],
+    players: (json['players'] as List?)
+        ?.map((e) => Player.fromJson(e))
+        .toList(),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'clubId': clubId?.toJson(),
+    'clubType': clubType,
+    'teamName': teamName,
+    'players': players?.map((e) => e.toJson()).toList(),
+  };
+}
+
+class Player {
+  String? playerId;
+  String? playerName;
+  String? id;
+
+  Player({this.playerId, this.playerName, this.id});
+
+  factory Player.fromJson(Map<String, dynamic> json) => Player(
+    playerId: json['playerId'],
+    playerName: json['playerName'],
+    id: json['_id'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'playerId': playerId,
+    'playerName': playerName,
+    '_id': id,
+  };
+}
+
+// -------------------- Score (Short) --------------------
+
+class Score {
+  dynamic teamA;
+  dynamic teamB;
+
+  Score({this.teamA, this.teamB});
+
+  factory Score.fromJson(Map<String, dynamic> json) => Score(
+    teamA: json['teamA'] is Map<String, dynamic>
+        ? ScoreDetail.fromJson(json['teamA'])
+        : json['teamA'],
+    teamB: json['teamB'] is Map<String, dynamic>
+        ? ScoreDetail.fromJson(json['teamB'])
+        : json['teamB'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'teamA': teamA is ScoreDetail ? teamA.toJson() : teamA,
+    'teamB': teamB is ScoreDetail ? teamB.toJson() : teamB,
+  };
+}
+
+class ScoreDetail {
+  int? sets;
+  List<int>? games;
+
+  ScoreDetail({this.sets, this.games});
+
+  factory ScoreDetail.fromJson(Map<String, dynamic> json) => ScoreDetail(
+    sets: json['sets'],
+    games: (json['games'] as List?)?.map((e) => e as int).toList(),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'sets': sets,
+    'games': games,
+  };
+}
+
+// -------------------- Match Detail (IMPORTANT) --------------------
+
+class MatchDetail {
+  SetsWon? setsWon;
+  String? id;
+
+  MatchDetail({
+    this.setsWon,
+    this.id,
+  });
+
+  factory MatchDetail.fromJson(Map<String, dynamic> json) => MatchDetail(
+    setsWon: json['setsWon'] != null
+        ? SetsWon.fromJson(json['setsWon'])
+        : null,
+    id: json['_id'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'setsWon': setsWon?.toJson(),
+    '_id': id,
+  };
+}
+
+
+// -------------------- Match Score --------------------
+
+class MatchScore {
+  Points? points;
+  Tiebreak? tiebreak;
+  List<SetData>? sets;
+  dynamic advantage;
+  int? deuceCounter;
+
+  MatchScore({
+    this.points,
+    this.tiebreak,
+    this.sets,
+    this.advantage,
+    this.deuceCounter,
+  });
+
+  factory MatchScore.fromJson(Map<String, dynamic> json) => MatchScore(
+    points: json['points'] != null
+        ? Points.fromJson(json['points'])
+        : null,
+    tiebreak: json['tiebreak'] != null
+        ? Tiebreak.fromJson(json['tiebreak'])
+        : null,
+    sets: (json['sets'] as List?)
+        ?.map((e) => SetData.fromJson(e))
+        .toList(),
+    advantage: json['advantage'],
+    deuceCounter: json['deuceCounter'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'points': points?.toJson(),
+    'tiebreak': tiebreak?.toJson(),
+    'sets': sets?.map((e) => e.toJson()).toList(),
+  };
+}
+
+class Points {
+  String? teamA;
+  String? teamB;
+
+  Points({this.teamA, this.teamB});
+
+  factory Points.fromJson(Map<String, dynamic> json) => Points(
+    teamA: json['teamA'],
+    teamB: json['teamB'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'teamA': teamA,
+    'teamB': teamB,
+  };
+}
+
+class Tiebreak {
+  bool? active;
+  int? teamA;
+  int? teamB;
+
+  Tiebreak({this.active, this.teamA, this.teamB});
+
+  factory Tiebreak.fromJson(Map<String, dynamic> json) => Tiebreak(
+    active: json['active'],
+    teamA: json['teamA'],
+    teamB: json['teamB'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'active': active,
+    'teamA': teamA,
+    'teamB': teamB,
+  };
+}
+
+class SetData {
+  int? teamA;
+  int? teamB;
+  List<dynamic>? games;
+  String? id;
+
+  SetData({this.teamA, this.teamB, this.games, this.id});
+
+  factory SetData.fromJson(Map<String, dynamic> json) => SetData(
+    teamA: json['teamA'],
+    teamB: json['teamB'],
+    games: json['games'],
+    id: json['_id'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'teamA': teamA,
+    'teamB': teamB,
+    'games': games,
+    '_id': id,
+  };
+}
+
+class SetsWon {
+  int? teamA;
+  int? teamB;
+
+  SetsWon({this.teamA, this.teamB});
+
+  factory SetsWon.fromJson(Map<String, dynamic> json) => SetsWon(
+    teamA: json['teamA'],
+    teamB: json['teamB'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'teamA': teamA,
+    'teamB': teamB,
+  };
+}
+
+// -------------------- Pagination --------------------
+
+class Pagination {
+  int? total;
+  int? page;
+  int? limit;
+  int? totalPages;
+
+  Pagination({this.total, this.page, this.limit, this.totalPages});
+
+  factory Pagination.fromJson(Map<String, dynamic> json) => Pagination(
+    total: json['total'],
+    page: json['page'],
+    limit: json['limit'],
+    totalPages: json['totalPages'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'total': total,
+    'page': page,
+    'limit': limit,
+    'totalPages': totalPages,
+  };
+}
