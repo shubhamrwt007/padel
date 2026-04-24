@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
@@ -19,6 +21,9 @@ import 'package:padel_mobile/data/response_models/league/get_league_sponsors_mod
 import 'package:padel_mobile/data/response_models/league/get_league_poll_results_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_leader_board_model.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:padel_mobile/repositories/authentication_repository/sign_up_repository.dart';
+import 'package:padel_mobile/repositories/home_repository/profile_repository.dart';
+import 'package:padel_mobile/data/response_models/get_locations_model.dart';
 import 'dart:io';
 
 class MainHomeController extends GetxController {
@@ -53,6 +58,13 @@ class MainHomeController extends GetxController {
   final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
 
+  final RxString selectedLocationId = ''.obs;
+  final RxString selectedLocation = ''.obs;
+  var locations = <GetLocationData>[].obs;
+  var isLocationLoading = false.obs;
+  final SignUpRepository _signUpRepository = SignUpRepository();
+  final ProfileRepository _profileRepository = ProfileRepository();
+
   final List<String> padelBannerImages = [
     Assets.imagesNewHomeBanner,
     Assets.imagesNewHomeBanner2,
@@ -84,6 +96,206 @@ class MainHomeController extends GetxController {
     _initData();
   }
 
+  void checkAndShowCityPopup() {
+    final isCityNull = profileController.profileModel.value?.isCityNull ?? false;
+    if (isCityNull) {
+      Future.delayed(Duration(milliseconds: 500), () {
+        _showCitySelectionDialog();
+      });
+    }
+  }
+
+  Future<void> fetchLocations() async {
+    isLocationLoading.value = true;
+    try {
+      final response = await _signUpRepository.getLocations();
+      if (response.status == true) {
+        locations.assignAll(response.data?.toList() ?? []);
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      isLocationLoading.value = false;
+    }
+  }
+
+  Future<void> updateCityOnly() async {
+    if (selectedLocationId.value.isEmpty) return;
+    
+    try {
+      isLocationLoading.value = true;
+      
+      Map<String, dynamic> locationJson = {
+        "type": "Point",
+        "coordinates": [77.5947, 12.9717],
+      };
+
+      final updatedProfile = await _profileRepository.updateUserProfile(
+        city: selectedLocationId.value,
+        location: locationJson,
+      );
+
+      if (updatedProfile.status == "200") {
+        await profileController.fetchUserProfile();
+        Get.back();
+        print('✅ City updated successfully');
+      }
+    } catch (e) {
+      print('❌ Failed to update city: $e');
+    } finally {
+      isLocationLoading.value = false;
+    }
+  }
+
+  void _showCitySelectionDialog() async {
+    await fetchLocations();
+    
+    Get.dialog(
+      WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.location_on, size: 48, color: Get.theme.primaryColor),
+                SizedBox(height: 16),
+                Text(
+                  'Select Your City',
+                  style: Get.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Please select your city to continue',
+                  textAlign: TextAlign.center,
+                  style: Get.textTheme.bodyMedium,
+                ),
+                SizedBox(height: 24),
+                Obx(() {
+                  if (isLocationLoading.value) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                        color: Color(0xFFF5F5F5),
+                      ),
+                      child: Row(
+                        children: [
+                          CupertinoActivityIndicator(color: Get.theme.primaryColor, radius: 14),
+                          SizedBox(width: 12),
+                          Text('Loading Locations...', style: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (locations.isEmpty) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                        color: Color(0xFFF5F5F5),
+                      ),
+                      child: Text('No Location found', style: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500)),
+                    );
+                  }
+
+                  return DropdownButtonFormField<String>(
+                    value: selectedLocation.value.isEmpty ? null : selectedLocation.value,
+                    style: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      labelText: "Location / City",
+                      labelStyle: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500),
+                      filled: true,
+                      fillColor: Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(color: Get.theme.primaryColor, width: 2),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: Get.width * 0.04,
+                        vertical: 57 * 0.22,
+                      ),
+                    ),
+                    hint: Text('Select Location', style: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500)),
+                    dropdownColor: Colors.white,
+                    isExpanded: true,
+                    items: locations.map((location) {
+                      return DropdownMenuItem<String>(
+                        value: location.name ?? '',
+                        child: Text(
+                          location.name ?? '',
+                          style: Get.textTheme.headlineMedium?.copyWith(color: Color(0xFF252525), fontWeight: FontWeight.w500),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      selectedLocation.value = value ?? '';
+                      final selectedLoc = locations.firstWhere(
+                        (loc) => loc.name == value,
+                        orElse: () => GetLocationData(),
+                      );
+                      selectedLocationId.value = selectedLoc.id ?? '';
+                      print('Selected Location -> ${selectedLocation.value}, ID -> ${selectedLocationId.value}');
+                    },
+                  );
+                }),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text('Cancel'),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Obx(() => ElevatedButton(
+                        onPressed: isLocationLoading.value ? null : () => updateCityOnly(),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: isLocationLoading.value
+                            ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text('OK'),
+                      )),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
   Future<void> _initData() async {
     await fetchCategories();
     isLoadingLeagueSection.value = true;
@@ -105,6 +317,8 @@ class MainHomeController extends GetxController {
       fetchLeaderBoard(),
     ]);
     isLoadingLeagueSection.value = false;
+    
+    checkAndShowCityPopup();
   }
 
   Future<void> _fetchLeagueData() async {
