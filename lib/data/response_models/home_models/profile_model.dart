@@ -3,12 +3,14 @@ class ProfileModel {
   final String? message;
   final ProfileResponse? response;
   final bool? existsOpenMatchData;
+  final bool? isCityNull;
 
   const ProfileModel({
     this.status,
     this.message,
     this.response,
     this.existsOpenMatchData,
+    this.isCityNull,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class ProfileModel {
             ? ProfileResponse.fromJson(json['response'] as Map<String, dynamic>)
             : null,
         existsOpenMatchData: json['existsOpenMatchData'] as bool?,
+        isCityNull: json['isCityNull'] as bool?,
       );
     } catch (e) {
       print('Error parsing ProfileModel: $e');
@@ -32,6 +35,7 @@ class ProfileModel {
     'message': message,
     'response': response?.toJson(),
     'existsOpenMatchData': existsOpenMatchData,
+    'isCityNull': isCityNull,
   };
 }
 
