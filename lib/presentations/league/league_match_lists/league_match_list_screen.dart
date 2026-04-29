@@ -346,6 +346,7 @@ class LeagueMatchListScreen extends StatelessWidget {
                   orElse: () => scheduleData.first,
                 );
                 final isLive = matchData.matchStatus?.toLowerCase() == 'live';
+                final roundType = matchData.roundType??"";
                 return GestureDetector(
                   onTap: () {
                     if (isLive) {
@@ -360,11 +361,13 @@ class LeagueMatchListScreen extends StatelessWidget {
                           match: allMatches[index],
                           categoryType: matchData.categoryType,
                           setsWon: matchData.matchId?.setsWon,
+                    roundType: roundType,
                         )
                       : UpcomingMatchCard(
                           match: allMatches[index],
                           categoryType: matchData.categoryType,
                           date: matchData.date,
+                    roundType: roundType,
                         ),
                 );
               },
@@ -442,6 +445,7 @@ class LeagueMatchListScreen extends StatelessWidget {
                   (data) => data.matches?.contains(allMatches[index]) ?? false,
                   orElse: () => scheduleData.first,
                 );
+                final roundType = matchData.roundType??"";
                 return GestureDetector(
                   onTap: () {
                     final matchData = scheduleData.firstWhere(
@@ -458,6 +462,7 @@ class LeagueMatchListScreen extends StatelessWidget {
                     categoryType: matchData.categoryType,
                     date: matchData.date,
                     setsWon: matchData.matchId?.setsWon,
+                    roundType: roundType,
                   ),
                 );
               },
@@ -473,8 +478,9 @@ class UpcomingMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final String? date;
-  
-  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date});
+  final String? roundType;
+
+  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -605,7 +611,8 @@ class UpcomingMatchCard extends StatelessWidget {
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
-
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -715,8 +722,9 @@ class LiveMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final SetsWon? setsWon;
-  
-  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon});
+  final String? roundType;
+
+  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -865,6 +873,8 @@ class LiveMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -965,8 +975,9 @@ class ResultMatchCard extends StatelessWidget {
   final String? categoryType;
   final String? date;
   final SetsWon? setsWon;
-  
-  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon});
+  final String? roundType;
+
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
@@ -1122,6 +1133,8 @@ class ResultMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
 

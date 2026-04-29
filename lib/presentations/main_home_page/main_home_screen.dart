@@ -702,6 +702,7 @@ class MainHomeScreen extends StatelessWidget {
             data.categoryType,
             data.matchId?.id,
             data.matchId?.setsWon,
+            data.roundType??""
           ),
         );
       }).toList();
@@ -761,6 +762,7 @@ class MainHomeScreen extends StatelessWidget {
     String? categoryType,
     String? matchId,
     SetsWon? setsWon,
+    String? roundType,
   ) {
     if (match == null) return const SizedBox.shrink();
 
@@ -784,6 +786,7 @@ class MainHomeScreen extends StatelessWidget {
             )?.then((_) {
               controller.fetchPollResults();
               controller.fetchScheduleMatches();
+              controller.fetchUpcomingMatches();
               controller.fetchActiveLeagues();
               controller.fetchLeaderBoard();
             });
@@ -832,7 +835,7 @@ class MainHomeScreen extends StatelessWidget {
                         ),
 
                         Transform.translate(
-                          offset: Offset(0, -15),
+                          offset: Offset(0,roundType?.toLowerCase() == "regular"? -15:-8),
                           child: Column(
                             children: [
                               Text(
@@ -847,6 +850,8 @@ class MainHomeScreen extends StatelessWidget {
                                   fontSize: 42,
                                 ),
                               ),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                         ),
@@ -896,6 +901,7 @@ class MainHomeScreen extends StatelessWidget {
                             )?.then((_) {
                               controller.fetchPollResults();
                               controller.fetchScheduleMatches();
+                              controller.fetchUpcomingMatches();
                               controller.fetchActiveLeagues();
                               controller.fetchLeaderBoard();
                             });
@@ -939,7 +945,7 @@ class MainHomeScreen extends StatelessWidget {
 
       final teamAPlayers = firstMatch.teamA?.players ?? [];
       final teamBPlayers = firstMatch.teamB?.players ?? [];
-
+      final roundType = matchData.roundType??"";
       String formatDate(String? dateStr) {
         if (dateStr == null || dateStr.isEmpty) return "TBD";
         try {
@@ -978,7 +984,13 @@ class MainHomeScreen extends StatelessWidget {
               'leagueTitle': leagueTitle,
               'initialTab': 1,
             },
-          );
+          )?.then((_) {
+            controller.fetchPollResults();
+            controller.fetchScheduleMatches();
+            controller.fetchUpcomingMatches();
+            controller.fetchActiveLeagues();
+            controller.fetchLeaderBoard();
+          });
         },
         child: Container(
           width: double.infinity,
@@ -1036,7 +1048,7 @@ class MainHomeScreen extends StatelessWidget {
                         AppColors.primaryColor,
                       ),
                       Transform.translate(
-                        offset: Offset(0, -8),
+                        offset: Offset(0, 0),
                         child: Column(
                           children: [
                             Text(
@@ -1045,6 +1057,8 @@ class MainHomeScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 8),
                             SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                            roundType.toLowerCase() == "regular"?SizedBox.shrink():
+                            Text(roundType.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),).paddingOnly(top: 5),
                           ],
                         ),
                       ),
@@ -1064,9 +1078,25 @@ class MainHomeScreen extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
-                      //   "matchType": "upcoming"
-                      // });
+                      final leagueId =
+                          controller.activeLeagues.value?.data?.firstOrNull?.id ?? '';
+                      final leagueTitle =
+                          controller.activeLeagues.value?.data?.firstOrNull?.leagueName ??
+                              'League';
+                      Get.toNamed(
+                        RoutesName.league,
+                        arguments: {
+                          'leagueId': leagueId,
+                          'leagueTitle': leagueTitle,
+                          'initialTab': 1,
+                        },
+                      )?.then((_) {
+                        controller.fetchPollResults();
+                        controller.fetchScheduleMatches();
+                        controller.fetchUpcomingMatches();
+                        controller.fetchActiveLeagues();
+                        controller.fetchLeaderBoard();
+                      });
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
@@ -1724,6 +1754,7 @@ class MainHomeScreen extends StatelessWidget {
           )?.then((_) {
             controller.fetchPollResults();
             controller.fetchScheduleMatches();
+            controller.fetchUpcomingMatches();
             controller.fetchActiveLeagues();
             controller.fetchLeaderBoard();
           });
@@ -3361,6 +3392,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
           widget.controller.fetchPollResults();
           widget.controller.fetchScheduleMatches();
           widget.controller.fetchActiveLeagues();
+          widget.controller.fetchUpcomingMatches();
           widget.controller.fetchLeaderBoard();
         });
       },
@@ -3824,6 +3856,7 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
                     controller.fetchPollResults();
                     controller.fetchScheduleMatches();
                     controller.fetchActiveLeagues();
+                    controller.fetchUpcomingMatches();
                     controller.fetchLeaderBoard();
                   });
                 },
