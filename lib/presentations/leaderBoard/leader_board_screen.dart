@@ -85,27 +85,25 @@ class LeaderboardScreen extends StatelessWidget {
             ],
           ),
           body: RefreshIndicator(
+            backgroundColor: Colors.white,
             onRefresh: () => controller.fetchLeaderboardData(isRefresh: true),
-            color: AppColors.whiteColor,
+            color: AppColors.primaryColor,
             child: Stack(
               children: [
-                SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: Get.height,
-                    child: Column(
-                      children: [
-                        TopTabBar(),
-                        const SizedBox(height: 16),
-                        const SizedBox(height: 20),
+                SizedBox(
+                  height: Get.height,
+                  child: Column(
+                    children: [
+                      TopTabBar(),
+                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                        // ✅ Directly reactive podium
-                        Obx(() {
-                          final top3 = controller.topThreePlayers;
-                          return _buildPodiumSectionFor(top3);
-                        }),
-                      ],
-                    ),
+                      // ✅ Directly reactive podium
+                      Obx(() {
+                        final top3 = controller.topThreePlayers;
+                        return _buildPodiumSectionFor(top3);
+                      }),
+                    ],
                   ),
                 ),
 
