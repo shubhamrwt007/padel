@@ -657,7 +657,8 @@ class ScoreBoardController extends GetxController {
             print('🔄 isSwappingDuringMatch value: $isSwappingDuringMatch');
             print('🔄 isSwappingDuringMatch type: ${isSwappingDuringMatch.runtimeType}');
             
-            if (isSwappingDuringMatch == true) {
+            // CRITICAL: Only show dialog if match was actually started (has sets)
+            if (isSwappingDuringMatch == true && sets.isNotEmpty) {
               print('🎯 ========== SWAP DURING MATCH DETECTED ==========');
               
               // Extract pre-shuffle data
@@ -843,6 +844,13 @@ class ScoreBoardController extends GetxController {
         print('🔄 Data type: ${data.runtimeType}');
         
         if (data != null && data is Map) {
+          // CRITICAL: Only process if match was actually started (has sets)
+          if (sets.isEmpty) {
+            print('⚠️ Match not started yet (no sets), ignoring swap player event');
+            fetchScoreBoard(showLoader: false);
+            return;
+          }
+          
           print('🎯 ========== SWAP DURING MATCH DETECTED ==========');
           
           preShuffleUserInTeamA.value = isUserInTeamA;
@@ -1038,6 +1046,44 @@ class ScoreBoardController extends GetxController {
       final response = await repository.getScoreBoard(bookingId: bookingId.value);
       if (response.status == 200 && response.data!.isNotEmpty) {
         final item = response.data!.first;
+
+        // Update match type and status
+        matchType.value = (item.matchType ?? "Friendly").capitalizeFirst ?? "Friendly";
+        matchStatus.value = item.matchStatus ?? false;
+
+        // Update teams
+        final teamAPlayers = <Map<String, dynamic>>[];
+        final teamBPlayers = <Map<String, dynamic>>[];
+
+        if (item.teams != null && item.teams!.isNotEmpty) {
+          for (var t in item.teams!) {
+            final playersList = <Map<String, dynamic>>[];
+            if (t.players != null) {
+              for (var p in t.players!) {
+                String fullLevel = p.playerId?.level ?? p.playerId?.playerLevel ?? "";
+                String levelCode = fullLevel.contains(' – ') ? fullLevel.split(' – ')[0] : fullLevel;
+                playersList.add({
+                  "playerId": p.playerId?.sId ?? "",
+                  "name": p.playerId?.name ?? "Unknown",
+                  "lastName": p.playerId?.lastName ?? "",
+                  "pic": p.playerId?.profilePic ?? "",
+                  "level": levelCode,
+                });
+              }
+            }
+            final teamNameLower = (t.name ?? '').toLowerCase().replaceAll(' ', '');
+            if (teamNameLower == 'teama') {
+              teamAPlayers.addAll(playersList);
+            } else if (teamNameLower == 'teamb') {
+              teamBPlayers.addAll(playersList);
+            }
+          }
+        }
+
+        teams.clear();
+        teams.add({"name": "Team A", "players": teamAPlayers});
+        teams.add({"name": "Team B", "players": teamBPlayers});
+        teams.refresh();
 
         // Only update sets if API has data, don't clear existing sets
         if (item.sets != null && item.sets!.isNotEmpty) {
@@ -1906,7 +1952,7 @@ class ScoreBoardController extends GetxController {
       return;
     }
 
-    // Check if swapping during an active match
+    // Check if swapping during an active match (game must be started AND have sets)
     final isSwappingDuringMatch = isGameStarted.value && sets.isNotEmpty;
     
     CustomLogger.logMessage(

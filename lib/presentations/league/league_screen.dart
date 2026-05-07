@@ -23,13 +23,13 @@ class LeagueScreen extends StatelessWidget {
     final String leagueTitle = Get.arguments?['leagueTitle'] ?? 'League';
     final int initialTab = Get.arguments?['initialTab'] ?? 0;
     print(leagueTitle);
-    
+
     if (initialTab == 1 && controller.selectedTab.value == 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         controller.setSelectedTab(1);
       });
     }
-    
+
     return Scaffold(
       appBar: primaryAppBar(
         title: leagueTitle.toLowerCase() == 'swoot padel league'
@@ -126,7 +126,7 @@ class LeagueScreen extends StatelessWidget {
               ],
             ).paddingSymmetric(horizontal: 18,vertical: 8)),
             SizedBox(
-              height: Get.height * 0.45,
+              height:controller.isLoadingUpcomingMatches.value? Get.height * 0.45:Get.height*0.7,
               child: PageView(
                 controller: controller.pageController,
                 onPageChanged: controller.onPageChanged,
@@ -293,7 +293,7 @@ class LeagueScreen extends StatelessWidget {
   Widget _liveMatchCard() {
     final scheduleData = controller.upcomingMatches.value?.data ?? [];
     final liveData = scheduleData.where((data) => data.matchStatus == 'live').toList();
-    
+
     if (liveData.isEmpty) return const SizedBox.shrink();
 
     final allMatches = liveData.expand((data) => data.matches ?? []).toList();
@@ -311,9 +311,10 @@ class LeagueScreen extends StatelessWidget {
               final matchData = liveData[index];
               final match = matchData.matches?.first;
               if (match == null) return const SizedBox.shrink();
-              
+
               final categoryType = matchData.categoryType ?? "Mixed Doubles";
               final setsWon = matchData.matchId?.setsWon;
+              final roundType = matchData.roundType??"";
 
               return Column(
                 children: [
@@ -360,6 +361,8 @@ class LeagueScreen extends StatelessWidget {
                                               "${currentSetsWon?.teamA ?? setsWon?.teamA ?? 0} : ${currentSetsWon?.teamB ?? setsWon?.teamB ?? 0}",
                                               style: Get.textTheme.titleLarge!.copyWith(color: AppColors.blackColor, fontSize: 42));
                                         }),
+                                        roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                                        Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                                       ],
                                     ),
                                   ),
@@ -470,14 +473,14 @@ class LeagueScreen extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildScoreBoard(ScheduleMatchData? matchData) {
     return Obx(() {
       final scoreboardData = controller.liveMatchScoreboard.value;
       final liveMatchData = controller.upcomingMatches.value?.data
         ?.where((data) => data.matchStatus == 'live')
         .firstOrNull;
-      
+
       if (controller.isLoadingScoreboard.value) {
         return const Center(
           child: SizedBox(
@@ -487,10 +490,10 @@ class LeagueScreen extends StatelessWidget {
           ),
         );
       }
-      
+
       // Use live match data for real-time scores - this is the key change
       final currentMatchData = liveMatchData ?? matchData;
-      
+
       if (scoreboardData == null) {
         // Fallback to basic match data if scoreboard data is not available
         if (currentMatchData?.matches == null || currentMatchData!.matches!.isEmpty) {
@@ -500,7 +503,7 @@ class LeagueScreen extends StatelessWidget {
         final match = currentMatchData.matches!.first;
         final teamAPlayers = match.teamA?.players ?? [];
         final teamBPlayers = match.teamB?.players ?? [];
-        
+
         return Column(
           children: [
             if (teamAPlayers.isNotEmpty)
@@ -566,23 +569,23 @@ class LeagueScreen extends StatelessWidget {
       );
     });
   }
-  
+
   List<String> _formatRoundScores(List roundScores, int totalRounds) {
     final scores = <String>[];
-    
+
     // Add scores based on actual rounds played
     for (int i = 0; i < totalRounds && i < roundScores.length; i++) {
       scores.add(roundScores[i].toString());
     }
-    
+
     // If no rounds played yet, show at least one "0"
     if (scores.isEmpty) {
       scores.add("0");
     }
-    
+
     return scores;
   }
-  
+
   Widget _avatarWithInitials(String name, double left,Color? color) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
@@ -653,11 +656,11 @@ class LeagueScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final scheduleItem = allSchedules[index];
           final matches = scheduleItem.matches ?? [];
-          
+          final roundType = scheduleItem.roundType??"";
           if (matches.isEmpty) return const SizedBox.shrink();
-          
+
           final match = matches.first;
-          
+
           if (scheduleItem.matchStatus == 'live') {
             return GestureDetector(
               onTap: () {
@@ -670,14 +673,16 @@ class LeagueScreen extends StatelessWidget {
                 match: match,
                 categoryType: scheduleItem.categoryType,
                 setsWon: scheduleItem.matchId?.setsWon,
+                roundType: roundType,
               ),
             );
           }
-          
+
           return UpcomingMatchCard(
             match: match,
             categoryType: scheduleItem.categoryType,
             date: scheduleItem.date,
+            roundType: roundType,
           );
         },
       );
@@ -716,6 +721,7 @@ class LeagueScreen extends StatelessWidget {
             (data) => data.matches?.contains(allMatches[index]) ?? false,
             orElse: () => scheduleData.first,
           );
+          final roundType = matchData.roundType??"";
           return GestureDetector(
             onTap: () {
               final matchData = scheduleData.firstWhere(
@@ -732,6 +738,7 @@ class LeagueScreen extends StatelessWidget {
               categoryType: matchData.categoryType,
               date: matchData.date,
               setsWon: matchData.matchId?.setsWon,
+              roundType: roundType,
             ),
           );
         },
@@ -744,16 +751,17 @@ class UpcomingMatchCard extends StatelessWidget {
   final dynamic match;
   final String? categoryType;
   final String? date;
-  
-  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date});
+  final String? roundType;
+
+  const UpcomingMatchCard({super.key, this.match, this.categoryType, this.date,this.roundType});
 
   @override
   Widget build(BuildContext context) {
     if (match == null) return const SizedBox.shrink();
-    
+
     final teamAPlayers = match?.teamA?.players ?? [];
     final teamBPlayers = match?.teamB?.players ?? [];
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -875,6 +883,8 @@ class UpcomingMatchCard extends StatelessWidget {
                               SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -928,7 +938,7 @@ class UpcomingMatchCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return "TBD";
     try {
@@ -939,7 +949,7 @@ class UpcomingMatchCard extends StatelessWidget {
       return dateStr;
     }
   }
-  
+
   Widget _avatar(String name, double left, double top) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
@@ -975,7 +985,7 @@ class UpcomingMatchCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String formatName(String name) {
     final parts = name.trim().split(" ");
     if (parts.length > 1) {
@@ -989,15 +999,16 @@ class LiveMatchCard extends StatelessWidget {
   final Matches? match;
   final String? categoryType;
   final SetsWon? setsWon;
-  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon});
+  final String? roundType;
+  const LiveMatchCard({super.key, this.match, this.categoryType, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
     if (match == null) return const SizedBox.shrink();
-    
+
     final teamAPlayers = match?.teamA?.players ?? [];
     final teamBPlayers = match?.teamB?.players ?? [];
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -1130,6 +1141,8 @@ class LiveMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
                             ],
                           ),
                           Row(
@@ -1183,7 +1196,7 @@ class LiveMatchCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _avatar(String name, double left, double top) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
@@ -1232,18 +1245,19 @@ class ResultMatchCard extends StatelessWidget {
   final String? categoryType;
   final String? date;
   final SetsWon? setsWon;
-  
-  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon});
+  final String? roundType;
+
+  const ResultMatchCard({super.key, this.match, this.categoryType, this.date, this.setsWon,this.roundType});
 
   @override
   Widget build(BuildContext context) {
     if (match == null) return const SizedBox.shrink();
-    
+
     final teamAPlayers = match?.teamA?.players ?? [];
     final teamBPlayers = match?.teamB?.players ?? [];
     final teamAWon = (setsWon?.teamA ?? 0) > (setsWon?.teamB ?? 0);
     final teamBWon = (setsWon?.teamB ?? 0) > (setsWon?.teamA ?? 0);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Stack(
@@ -1391,6 +1405,8 @@ class ResultMatchCard extends StatelessWidget {
                               ),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
+                              roundType?.toLowerCase() == "regular"?SizedBox.shrink():
+                              Text(roundType?.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
 
                             ],
                           ),
@@ -1446,7 +1462,7 @@ class ResultMatchCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return "TBD";
     try {
@@ -1457,7 +1473,7 @@ class ResultMatchCard extends StatelessWidget {
       return dateStr;
     }
   }
-  
+
   Widget _avatarWithInitials(String name, double left, double top) {
     String getInitials(String fullName) {
       if (fullName.trim().isEmpty) return "?";
@@ -1493,7 +1509,7 @@ class ResultMatchCard extends StatelessWidget {
       ),
     );
   }
-  
+
   String formatName(String name) {
     final parts = name.trim().split(" ");
     if (parts.length > 1) {
@@ -1543,7 +1559,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
   Widget build(BuildContext context) {
     final controller = Get.find<LeagueController>();
     _scrollControllers.clear();
-    
+
     return RefreshIndicator(
       color: AppColors.whiteColor,
       onRefresh: () async {
@@ -1643,7 +1659,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
     final style = Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500);
     final controller = Get.find<LeagueController>();
     final categories = controller.allCategories;
-    
+
     return Row(
       children: [
         // Fixed section
@@ -1674,31 +1690,30 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
       ],
     );
   }
-  
+
   String _getCategoryShortName(String category) {
     if (category.isEmpty) return '';
-    
-    // Remove special characters and split by spaces or capital letters
+
     final words = category
-        .replaceAll(RegExp(r"[^a-zA-Z\s]"), '') // Remove special chars
-        .split(RegExp(r'\s+')) // Split by spaces
+        .replaceAll(RegExp(r"[^a-zA-Z\s]"), '')
+        .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .toList();
-    
+
     if (words.isEmpty) {
-      // Fallback: take first 3 chars
-      return category.substring(0, category.length > 3 ? 3 : category.length);
+      return category.substring(0, category.length > 2 ? 2 : category.length);
     }
-    
-    // If single word, take first 3 characters
+
+    // Single word → ONLY 2 letters
     if (words.length == 1) {
       final word = words[0];
-      return word.substring(0, word.length > 3 ? 3 : word.length).capitalize ?? word;
+      return word.substring(0, word.length > 2 ? 2 : word.length)
+          .capitalize ?? word;
     }
-    
-    // If multiple words, take first letter of each word (max 3)
+
+    // Multiple words → first letter of first 2 words
     return words
-        .take(3)
+        .take(2)
         .map((word) => word[0].toUpperCase())
         .join();
   }
@@ -1706,7 +1721,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
   Widget _teamRow(standing) {
     final controller = Get.find<LeagueController>();
     final categories = controller.allCategories;
-    
+
     return Row(
       children: [
         // Fixed section
@@ -1823,10 +1838,10 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
         ),
       );
     }
-    
+
     final isUp = positionChange > 0;
     final color = isUp ? Colors.green : Colors.red;
-    
+
     return SizedBox(
       width: 12,
       child: Icon(
@@ -1840,7 +1855,7 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
   Widget _upcomingListForLeaderboard() {
     return Obx(() {
       final controller = Get.find<LeagueController>();
-      
+
       if (controller.isLoadingLeaderboardUpcoming.value) {
         return SizedBox(
           height: 200,
@@ -1882,10 +1897,12 @@ class _LeaderBoardWidgetState extends State<LeaderBoardWidget> {
               (data) => data.matches?.contains(allMatches[index]) ?? false,
               orElse: () => scheduleData.first,
             );
+            final roundType = matchData.roundType??"";
             return UpcomingMatchCard(
               match: allMatches[index],
               categoryType: matchData.categoryType,
               date: matchData.date,
+              roundType: roundType,
             );
           },
         ),
@@ -1908,17 +1925,17 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _pulseAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -1926,7 +1943,7 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.2,
@@ -1934,7 +1951,7 @@ class _AnimatedLiveTagState extends State<_AnimatedLiveTag>
       parent: _scaleController,
       curve: Curves.elasticOut,
     ));
-    
+
     _pulseController.repeat(reverse: true);
     _scaleController.repeat(reverse: true);
   }
@@ -2084,7 +2101,7 @@ class _AnimatedLiveIndicatorState extends State<_AnimatedLiveIndicator>
 }
 class _AnimatedWatchLiveButton extends StatefulWidget {
   final VoidCallback onTap;
-  
+
   const _AnimatedWatchLiveButton({required this.onTap});
 
   @override
@@ -2103,22 +2120,22 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
   @override
   void initState() {
     super.initState();
-    
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _iconController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _pulseAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -2126,7 +2143,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-    
+
     _shimmerAnimation = Tween<double>(
       begin: -1.0,
       end: 2.0,
@@ -2134,7 +2151,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
       parent: _shimmerController,
       curve: Curves.easeInOut,
     ));
-    
+
     _iconAnimation = Tween<double>(
       begin: 0.8,
       end: 1.2,
@@ -2142,7 +2159,7 @@ class _AnimatedWatchLiveButtonState extends State<_AnimatedWatchLiveButton>
       parent: _iconController,
       curve: Curves.elasticInOut,
     ));
-    
+
     _pulseController.repeat(reverse: true);
     _shimmerController.repeat();
     _iconController.repeat(reverse: true);
