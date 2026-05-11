@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/request_models/create_review_model.dart';
 import 'package:padel_mobile/data/response_models/get_location_maps_model.dart';
 import 'package:padel_mobile/data/response_models/get_register_club_model.dart';
@@ -91,7 +92,7 @@ class HomeContentController extends GetxController{
 
       final response = await homeRepository.getRegisterClub(clubId: clubId, courtId: courtId);
       registerClubResponse.value = response;
-      address.value = "${response.data?.address??""}${response.data?.city}";
+      address.value = response.data?.location?.address??"";
       if (response.success == true) {
         CustomLogger.logMessage(msg: "Fetching Register Club Successfully", level: LogLevel.info);
         // Call fetchLocationUrl after address is set
@@ -122,19 +123,56 @@ class HomeContentController extends GetxController{
 
       if (response.status == 200) {
         final mapUrl = response.data?.mapUrl ?? '';
-        if (mapUrl.contains('iframe') || mapUrl.contains('embed')) {
+        final directLink = response.data?.directLink ?? '';
+        
+        // Convert search URL to embed URL
+        String embedUrl = '';
+        
+        if (directLink.isNotEmpty) {
+          embedUrl = _convertToEmbedUrl(directLink, address);
+        } else if (mapUrl.isNotEmpty) {
+          embedUrl = _convertToEmbedUrl(mapUrl, address);
+        }
+        
+        if (embedUrl.isNotEmpty) {
           isIframeUrl.value = true;
-          iframeUrl.value = _extractIframeUrl(mapUrl);
+          iframeUrl.value = embedUrl;
+          CustomLogger.logMessage(msg: "Using embed URL: $embedUrl", level: LogLevel.info);
         } else {
           isIframeUrl.value = false;
-          _extractCoordinatesFromUrl(mapUrl);
+          CustomLogger.logMessage(msg: "No valid map URL found", level: LogLevel.warning);
         }
+        
         CustomLogger.logMessage(msg: "Fetching Maps Location Successfully", level: LogLevel.info);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  String _convertToEmbedUrl(String url, String address) {
+    try {
+      // If already an embed URL, return as is
+      if (url.contains('/embed')) {
+        return url;
+      }
+      
+      // Extract query from search URL
+      String query = '';
+      if (url.contains('query=')) {
+        final uri = Uri.parse(url);
+        query = uri.queryParameters['query'] ?? address;
+      } else {
+        query = Uri.encodeComponent(address);
+      }
+      
+      // Create embed URL
+      return 'https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=$query';
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error converting to embed URL: $e", level: LogLevel.error);
+      return '';
     }
   }
 
@@ -201,21 +239,21 @@ class HomeContentController extends GetxController{
     }
   }
 
-  Future<void> openGoogleMaps() async {
-    final lat = mapLatitude.value;
-    final lng = mapLongitude.value;
-    final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-    
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      CustomLogger.logMessage(msg: "Could not launch Google Maps", level: LogLevel.error);
-    }
-  }
+  // Future<void> openGoogleMaps() async {
+  //   final encodedAddress = Uri.encodeComponent(address.value);
+  //   final url = 'https://www.google.com/maps/search/?api=1&query=$encodedAddress';
+  //
+  //   if (await canLaunchUrl(Uri.parse(url))) {
+  //     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  //   } else {
+  //     CustomLogger.logMessage(msg: "Could not launch Google Maps", level: LogLevel.error);
+  //   }
+  // }
 
   Future<void> makePhoneCall() async {
     final phoneNumber = registerClubResponse.value?.data?.ownerPhoneNumber;
     if (phoneNumber == null) {
+      AppToast.error("Phone number not available");
       CustomLogger.logMessage(msg: "Phone number not available", level: LogLevel.error);
       return;
     }
