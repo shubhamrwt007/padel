@@ -458,15 +458,18 @@ class BookACourtScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                     child: Row(
                       children: [
-                        ClipOval(
-                          child: Container(
-                            width: 44,
-                            height: 44,
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                             color: Colors.grey.shade200,
+                          ),
+                          child: ClipOval(
                             child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
                               imageUrl: clubData.registerClub!.logo!,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
                               placeholder: (context, url) => const Icon(Icons.sports_tennis),
                               errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),
                             )
