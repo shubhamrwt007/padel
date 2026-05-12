@@ -4,12 +4,12 @@ class AppEndpoints {
   /// -----------------------Staging URL--------------------------------------------
   // static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
   // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
-   /// -----------------------New Live URL------------------------------------------
-  // static const String base = "https://apimobile.swootapp.com/api/";
-  // static const String socketUrl = "https://apimobile.swootapp.com";
+  /// -----------------------New Live URL------------------------------------------
+  static const String base = "https://apimobile.swootapp.com/api/";
+  static const String socketUrl = "https://apimobile.swootapp.com";
   // ///-----------------------Local URL-----------------------------------------------
-  static const String base = "http://192.168.0.126:5070/api/";
-  static const String socketUrl = "http://192.168.0.126:5070";
+  // static const String base = "http://192.168.1.29:5070/api/";
+  // static const String socketUrl = "http://192.168.1.29:5070";
 
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
@@ -24,109 +24,171 @@ class AppEndpoints {
   static const String resetPassword = "${baseUrl}forgotPassword";
 
   ///Home Register Club---------------------------------------------------------
-  static const String getRegisterClub = "${baseUrl}court/registerCourt/getClubById?";
-  static const String getClub ="${baseUrl}court/registerCourt/getAllRegisteredCourts?limit=";
-  static const String getAllActiveCourtsForSlotWise = "${baseUrl}court/saveCourt/getAllActiveCourtsForSlotWise?";
+  static const String getRegisterClub =
+      "${baseUrl}court/registerCourt/getClubById?";
+  static const String getClub =
+      "${baseUrl}court/registerCourt/getAllRegisteredCourts?limit=";
+  static const String getAllActiveCourtsForSlotWise =
+      "${baseUrl}court/saveCourt/getAllActiveCourtsForSlotWise?";
   static const String getAllSlotPricesOfCourt = "${baseUrl}court/price/prices?";
-  static const String getCourtsByDuration = "${baseUrl}court/saveCourt/getCourtsByDuration?";
+  static const String getCourtsByDuration =
+      "${baseUrl}court/saveCourt/getCourtsByDuration?";
   static const String getLocations = "${baseUrl}court/state/getStates";
+
   ///Cart Urls------------------------------------------------------------------
   static const String getCartItems = "${baseUrl}court/cart/getCartForUser";
   static const String addCartItems = "${baseUrl}court/cart/createCarts";
   static const String removeCartItems = "${baseUrl}court/cart/removeUserCart";
+
   ///Booking
-  static const String cancelBooking = "${baseUrl}court/booking/updateBookingStatus";
+  static const String cancelBooking =
+      "${baseUrl}court/booking/updateBookingStatus";
   static const String carteBooking = "${baseUrl}court/booking/createBooking";
-  static const String updateMultipleCourtIds = "${baseUrl}court/openmatch/updateMultipleCourtIds";
-  static const String refundOpenMatch = "${baseUrl}court/openmatch/refundOpenMatch";
+  static const String updateMultipleCourtIds =
+      "${baseUrl}court/openmatch/updateMultipleCourtIds";
+  static const String refundOpenMatch =
+      "${baseUrl}court/openmatch/refundOpenMatch";
   static const String bookingUpdate = "${baseUrl}court/booking/bookingUpdate";
-  static const String convertBookingToOpenMatch = "${baseUrl}court/booking/convertBookingToOpenMatch";
-  static const String pushOpenMatchIdInScoreCard = "${baseUrl}court/scoreboard/pushOpenMatchIdInScoreCard";
-  static const String bookingHistory = "${baseUrl}court/booking/getUserBookings";
+  static const String convertBookingToOpenMatch =
+      "${baseUrl}court/booking/convertBookingToOpenMatch";
+  static const String pushOpenMatchIdInScoreCard =
+      "${baseUrl}court/scoreboard/pushOpenMatchIdInScoreCard";
+  static const String bookingHistory =
+      "${baseUrl}court/booking/getUserBookings";
   static const String bookingConfirmation = "${baseUrl}court/booking/findById";
-  static const String createAndGetSlotHistory = "${baseUrl}court/booking/createOrGetSlotHistory";
-  static const String deleteSlotHistory = "${baseUrl}court/booking/deleteSlotHistory";
-  static const String deleteBulkSlotHistory = "${baseUrl}court/booking/deleteBluckSlotHistory";
+  static const String createAndGetSlotHistory =
+      "${baseUrl}court/booking/createOrGetSlotHistory";
+  static const String deleteSlotHistory =
+      "${baseUrl}court/booking/deleteSlotHistory";
+  static const String deleteBulkSlotHistory =
+      "${baseUrl}court/booking/deleteBluckSlotHistory";
+
   ///Review---------------------------------------------------------------------
   static const String getReview = "${baseUrl}court/review/getReviews";
-  static const String createReview = "${baseUrl}court/review/saveCustomerReview";
+  static const String createReview =
+      "${baseUrl}court/review/saveCustomerReview";
+
   ///Open Matches---------------------------------------------------------------
-  static const String createMatches = "${baseUrl}court/openmatch/createOpenMatch";
-  static const String createOpenMatchSlotBookOnly = "${baseUrl}court/openmatch/create-openMatchOnly";
-  static const String findNearByPlayer = "${baseUrl}court/openmatch/findNearByPLayers";
-  static const String sendBookingInvitations = "${baseUrl}court/openmatch/sendBookingInvitations";
-  static const String getCustomerNameByPhoneNumber = "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
-  static const String withdrawRequest = "${baseUrl}court/openmatch/withDrawMatchRequest/";
-  static const String getPendingRequestCount = "${baseUrl}court/openmatch/getPendingInvitationCount";
+  static const String createMatches =
+      "${baseUrl}court/openmatch/createOpenMatch";
+  static const String createOpenMatchSlotBookOnly =
+      "${baseUrl}court/openmatch/create-openMatchOnly";
+  static const String findNearByPlayer =
+      "${baseUrl}court/openmatch/findNearByPLayers";
+  static const String sendBookingInvitations =
+      "${baseUrl}court/openmatch/sendBookingInvitations";
+  static const String getCustomerNameByPhoneNumber =
+      "${baseUrl}court/booking/getCustomerDataByPhoneNumber?";
+  static const String withdrawRequest =
+      "${baseUrl}court/openmatch/withDrawMatchRequest/";
+  static const String getPendingRequestCount =
+      "${baseUrl}court/openmatch/getPendingInvitationCount";
   // static const String getParticularMatch = "${BASE_URL}court/openmatch/findByOpenMatchId?_id=68d2300a723257df65e574ab";
-  static const String getOpenMatches = "${baseUrl}court/openmatch/getOpenMatches";
-  static const String createUserForOpenMatch = "${baseUrl}customerSignupWithOutPassword";
-  static const String addUserForOpenMatch = "${baseUrl}court/openmatch/addPlayerToMatch";
-  static const String requestUserForOpenMatch = "${baseUrl}court/openmatch/requestToJoin";
-  static const String requestToJoinBooking = "${baseUrl}court/openmatch/requestToJoinBooking";
-  static const String acceptOrRejectRequestUserForOpenMatch = "${baseUrl}court/openmatch/respondToRequest";
-  static const String respondToBookingRequest = "${baseUrl}court/openmatch/respondToBookingRequest";
-  static const String getRequestUserForOpenMatch = "${baseUrl}court/openmatch/pendingRequests";
-  static const String directJoinAdminMatch = "${baseUrl}court/openmatch/directJoinAdminMatch";
-  static const String joinPerShareMatchWithPayment = "${baseUrl}court/openmatch/joinPerShareMatchWithPayment";
-  static const String openMatchBooking = "${baseUrl}court/openmatch/getAllOpenMatches";
+  static const String getOpenMatches =
+      "${baseUrl}court/openmatch/getOpenMatches";
+  static const String createUserForOpenMatch =
+      "${baseUrl}customerSignupWithOutPassword";
+  static const String addUserForOpenMatch =
+      "${baseUrl}court/openmatch/addPlayerToMatch";
+  static const String requestUserForOpenMatch =
+      "${baseUrl}court/openmatch/requestToJoin";
+  static const String requestToJoinBooking =
+      "${baseUrl}court/openmatch/requestToJoinBooking";
+  static const String acceptOrRejectRequestUserForOpenMatch =
+      "${baseUrl}court/openmatch/respondToRequest";
+  static const String respondToBookingRequest =
+      "${baseUrl}court/openmatch/respondToBookingRequest";
+  static const String markBookingRequestViewed =
+      "${baseUrl}court/openmatch/markBookingRequestViewed";
+  static const String getRequestUserForOpenMatch =
+      "${baseUrl}court/openmatch/pendingRequests";
+  static const String directJoinAdminMatch =
+      "${baseUrl}court/openmatch/directJoinAdminMatch";
+  static const String joinPerShareMatchWithPayment =
+      "${baseUrl}court/openmatch/joinPerShareMatchWithPayment";
+  static const String openMatchBooking =
+      "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
+
   /// Notification---------------------------------------------------------------
-  static const String getNotification = "${baseUrl}court/userNotification/readNotification";
-  static const String getNotificationMarkAsRead = "${baseUrl}court/userNotification/markAsRead";
-  static const String getNotificationMarkAsReadALl = "${baseUrl}court/userNotification/markAsAllAsRead";
-  static const String getNotificationCount = "${baseUrl}court/userNotification/ureadCountData";
+  static const String getNotification =
+      "${baseUrl}court/userNotification/readNotification";
+  static const String getNotificationMarkAsRead =
+      "${baseUrl}court/userNotification/markAsRead";
+  static const String getNotificationMarkAsReadALl =
+      "${baseUrl}court/userNotification/markAsAllAsRead";
+  static const String getNotificationCount =
+      "${baseUrl}court/userNotification/ureadCountData";
+
   /// ScoreBoard-----------------------------------------------------------------
-  static const String createScoreBoard = "${baseUrl}court/scoreboard/createScoreboard";
-  static const String getScoreBoard = "${baseUrl}court/scoreboard/getScoreboards";
-  static const String updateScoreBoard = "${baseUrl}court/scoreboard/updateScoreboard";
+  static const String createScoreBoard =
+      "${baseUrl}court/scoreboard/createScoreboard";
+  static const String getScoreBoard =
+      "${baseUrl}court/scoreboard/getScoreboards";
+  static const String updateScoreBoard =
+      "${baseUrl}court/scoreboard/updateScoreboard";
+
   /// Google Maps Api------------------------------------------------------------
   static const String getLocationMaps = "${baseUrl}GetgoogleMap?";
+
   /// Wallet---------------------------------------------------------------------
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
   static const String testWalletCreate = "${baseUrl}wallet/order";
-  static const String appVersions= "${baseUrl}app-version/check";
+  static const String appVersions = "${baseUrl}app-version/check";
+
   /// LeaderBoard----------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
-  static const String removePlayer = "${baseUrl}court/openmatch/removePlayerFromMatch";
-  static const String geNaerCityPlayer = "${baseUrl}court/leaderBoard/geNaerCityPlayer";
-  static const String getMyRankGenderWise = "${baseUrl}court/leaderBoard/getMyRankGenderWise";
+  static const String removePlayer =
+      "${baseUrl}court/openmatch/removePlayerFromMatch";
+  static const String geNaerCityPlayer =
+      "${baseUrl}court/leaderBoard/geNaerCityPlayer";
+  static const String getMyRankGenderWise =
+      "${baseUrl}court/leaderBoard/getMyRankGenderWise";
 
   /// XP Points------------------------------------------------------------------
-  static const String getXpPoints = "${baseUrl}court/scoreboard/getUserXpHistory";
+  static const String getXpPoints =
+      "${baseUrl}court/scoreboard/getUserXpHistory";
+
   /// Get Category
   static const String getCategory = "${baseUrl}court/category/list";
+
   ///FCM Token------------------------------------------------------------------
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
   static const String support = "${baseUrl}support/send";
 
   ///League---------------------------------------------------------------------
-  static const String getAllScheduleLiveMatches = "${baseUrl}court/league-schedule/getAllSchedulesByStatus";
-  static const String getScheduleDates = "${baseUrl}court/league-schedule/getScheduleDates";
+  static const String getAllScheduleLiveMatches =
+      "${baseUrl}court/league-schedule/getAllSchedulesByStatus";
+  static const String getScheduleDates =
+      "${baseUrl}court/league-schedule/getScheduleDates";
   static const String getLeagueMatchDetails = "${base}score";
   static const String getLeagueLeaderBoard = "${base}score/league/";
-  static const String getLeagueSponsors = "${baseUrl}court/league/getLeagueSponsors";
+  static const String getLeagueSponsors =
+      "${baseUrl}court/league/getLeagueSponsors";
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
   static const String getLeaguePollResult = "${base}poll/results";
   static const String castLeaguePollVote = "${base}poll/vote";
 
-
   ///IptTournament--------------------------------------------------------------
-  static const String getAllScheduleLiveMatchesIptTournament = "${baseUrl}court/tournament-schedule/getAllSchedulesByStatus";
-  static const String getScheduleDatesIptTournament = "${baseUrl}court/tournament-schedule/getScheduleDates";
+  static const String getAllScheduleLiveMatchesIptTournament =
+      "${baseUrl}court/tournament-schedule/getAllSchedulesByStatus";
+  static const String getScheduleDatesIptTournament =
+      "${baseUrl}court/tournament-schedule/getScheduleDates";
   static const String getIptTournamentMatchDetails = "${base}tournament-score";
-  static const String getIptTournamentLeaderBoard = "${base}tournament-score/tournament/";
-  static const String getIptTournamentSponsors = "${baseUrl}court/tournament/getTournamentSponsors";
-  static const String getIptTournamentList = "${baseUrl}court/tournament/getAllTournaments?";
+  static const String getIptTournamentLeaderBoard =
+      "${base}tournament-score/tournament/";
+  static const String getIptTournamentSponsors =
+      "${baseUrl}court/tournament/getTournamentSponsors";
+  static const String getIptTournamentList =
+      "${baseUrl}court/tournament/getAllTournaments?";
   // static const String getIptTournamentPollResult = "";
   // static const String castIptTournamentPollVote = "";
 }
 
 class PaymentConfig {
   // Toggle this when switching environment
-  static const bool isLive = true
-  ;
+  static const bool isLive = true;
   // Test Key
   static const String _testKeyId = 'rzp_test_RtRFaVPUzoUtkG';
   // Live Key
