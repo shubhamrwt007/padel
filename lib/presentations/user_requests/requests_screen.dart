@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
@@ -927,9 +928,14 @@ class RequestsScreen extends StatelessWidget {
               ),
             ),
             if (controller.selectedTab.value == 1)
-              Text(
-                "Views: ${request.viewCount ?? 0} ",
-                style: Get.textTheme.headlineSmall!.copyWith(color: Colors.grey),
+              Row(
+                children: [
+                  Icon(CupertinoIcons.eye_fill,color: Colors.grey,size: 15,),
+                  Text(
+                    " ${request.viewCount ?? 0} ",
+                    style: Get.textTheme.headlineSmall!.copyWith(color: Colors.grey),
+                  ),
+                ],
               ),
           ],
         ),
