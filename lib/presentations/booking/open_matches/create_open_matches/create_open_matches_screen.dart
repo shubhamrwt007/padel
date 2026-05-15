@@ -598,7 +598,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
   }
 
   Widget _buildCourtSection(dynamic courtData, int index) {
-    final courtName = courtData.courtName ?? 'Unknown Court';
+    final courtName = (courtData.courtName ?? 'Unknown Court')
+        .replaceAll(RegExp(r'pickle\s*ball\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'padel\s*', caseSensitive: false), '')
+        .trim();
     final slotTimes = courtData.slots ?? [];
     final courtId = courtData.sId ?? '';
     log("Building court section for: $courtName with ${slotTimes.length} slots");
@@ -643,13 +646,51 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        courtName,
-                        style: Get.textTheme.titleSmall!.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryColor,
-                        ),
-                      ).paddingOnly(right: 5),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              courtName,
+                              style: Get.textTheme.titleSmall!.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                          if (courtData.slotDuration != null &&
+                              courtData.slotDuration!.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                courtData.slotDuration!
+                                    .map((d) => '${d}min')
+                                    .join('/'),
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                     Obx(() => GestureDetector(
                       onTap: () {
