@@ -626,8 +626,10 @@ class BookACourtScreen extends StatelessWidget {
                                 child: _courtRow(
                                   context: context,
                                   courtName:
-                                      court.courtName ??
-                                      'Court ${courtIndex + 1}',
+                                  (court.courtName ?? 'Court ${courtIndex + 1}')
+                                      .replaceAll(RegExp(r'pickle\s*ball\s*', caseSensitive: false), '')
+                                      .replaceAll(RegExp(r'padel\s*', caseSensitive: false), '')
+                                      .trim(),
                                   slotDuration: court.slotDuration,
                                   selectedIndex: courtIndex,
                                   availableSlots: court.slots,
@@ -796,7 +798,7 @@ class BookACourtScreen extends StatelessWidget {
                   ),
                   if (slotDuration != null && slotDuration.isNotEmpty)
                     Text(
-                      "(${slotDuration.map((d) => '${d}min').join(', ')})",
+                      "(${slotDuration.join('/')} min)",
                       style: Get.textTheme.labelSmall!.copyWith(
                         color: Colors.grey.shade600,
                         fontSize: 11,

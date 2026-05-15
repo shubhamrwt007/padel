@@ -526,8 +526,10 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                                 child: _courtRow(
                                   context: context,
                                   courtName:
-                                      court.courtName ??
-                                      'Court ${courtIndex + 1}',
+                                  (court.courtName ?? 'Court ${courtIndex + 1}')
+                                      .replaceAll(RegExp(r'pickle\s*ball\s*', caseSensitive: false), '')
+                                      .replaceAll(RegExp(r'padel\s*', caseSensitive: false), '')
+                                      .trim(),
                                   type:
                                       clubData.registerClub?.courtType?.join(
                                         ', ',
@@ -634,7 +636,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   ),
                   if (slotDuration != null && slotDuration.isNotEmpty)
                     Text(
-                      '(${slotDuration.first} min)',
+                      '(${slotDuration.join('/')} min)',
                       style: Get.textTheme.labelSmall!.copyWith(
                         color: Colors.grey,
                         fontSize: 11,

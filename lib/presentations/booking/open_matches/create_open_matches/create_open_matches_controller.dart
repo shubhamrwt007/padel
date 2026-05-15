@@ -254,6 +254,16 @@ class CreateOpenMatchesController extends GetxController {
 
   @override
   void onClose() {
+    log('🔴 CreateOpenMatchesController onClose called');
+    log('🔴 hasCalledSlotHistoryAPI: ${hasCalledSlotHistoryAPI.value}');
+    log('🔴 selectionsForCleanup: ${selectionsForCleanup.length}');
+    
+    // Don't cleanup here - let bottom sheet .then() handle it
+    // Only cleanup if user navigates away without opening bottom sheet
+    if (hasCalledSlotHistoryAPI.value && selectionsForCleanup.isNotEmpty) {
+      log('🚨 User navigated away - cleaning up in onClose');
+      deleteSlotHistory(slots: selectionsForCleanup);
+    }
     selectedSlots.clear();
     selectedSlotsWithCourtInfo.clear();
     multiDateSelections.clear();
@@ -268,7 +278,8 @@ class CreateOpenMatchesController extends GetxController {
     required List<Map<String, dynamic>> slots,
   }) async {
     try {
-      log('deleteSlotHistory called with body: $slots');
+      log('🔴 deleteSlotHistory called with body: $slots');
+      log('🔴 Called from: ${StackTrace.current}');
       await repository.deleteSlotHistory(data: {"slots": slots});
     } catch (e) {
       log('Error in deleteSlotHistory: $e');
@@ -276,7 +287,7 @@ class CreateOpenMatchesController extends GetxController {
   }
 
   Future<void> cleanupSlotHistory() async {
-    log('🧹 cleanupSlotHistory called');
+    log('🧹 cleanupSlotHistory called from: ${StackTrace.current}');
     log('selectionsForCleanup.length: ${selectionsForCleanup.length}');
     log('hasCalledSlotHistoryAPI.value: ${hasCalledSlotHistoryAPI.value}');
 
@@ -797,7 +808,6 @@ class CreateOpenMatchesController extends GetxController {
       isScrollControlled: true,
     ).then((_) {
       log('📱 Bottom sheet closed (Pay All) - calling cleanup');
-      // Cleanup when bottomsheet is closed
       cleanupSlotHistory();
       Get.delete<QuestionsBottomsheetController>(tag: 'questions');
     });
@@ -1319,7 +1329,10 @@ class CreateOpenMatchesController extends GetxController {
     log('⚠️ Deselected ${keysToRemove.length} slots that became booked/locked');
 
     if (slotsToDelete.isNotEmpty) {
-      deleteSlotHistory(slots: slotsToDelete);
+      log('⚠️ Auto-deleting ${slotsToDelete.length} conflicting slots from socket update');
+      // DON'T delete here - these are user's own selections that got locked
+      // Only delete when bottom sheet closes or user navigates away
+      // deleteSlotHistory(slots: slotsToDelete);
     }
   }
 
