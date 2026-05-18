@@ -1,14 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 import '../../data/request_models/booking/boking_history_model.dart';
 import '../../repositories/bookinghisory/booking_history_repository.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
+import '../main_home_page/main_home_controller.dart';
 
 class BookingHistoryController extends GetxController with GetSingleTickerProviderStateMixin {
   late TabController tabController;
@@ -35,9 +39,21 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   RxBool isLoadingMore = false.obs;
   RxString errorMessage = ''.obs;
 
+  RxString categoryId = ''.obs;
+  RxString location = ''.obs;
+
   @override
   void onInit() {
     tabController = TabController(length: 3, vsync: this); // Changed from 2 to 3
+
+    // Get categoryId and location from MainHomeController
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      categoryId.value = mainHomeController.selectedCategoryId.value;
+      location.value = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+    } catch (e) {
+      print("Error getting MainHomeController: $e");
+    }
 
     // Add tab listener to fetch data when switching tabs
     tabController.addListener(() {
@@ -94,7 +110,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   }
 
   Future<void> _fetchBookingType(String type) async {
-    final data = await bookingRepo.getBookingHistory(type: type, page: 1, limit: 30);
+    final data = await bookingRepo.getBookingHistory(
+      type: type,
+      page: 1,
+      limit: 30,
+      categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+      locationId: location.value.isNotEmpty ? location.value : null,
+    );
     data.data ??= [];
 
     switch (type) {
@@ -153,7 +175,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading upcoming page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Upcoming page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -188,7 +216,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading in-progress page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("In-progress page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -223,7 +257,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading completed page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Completed page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -258,7 +298,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
             print("Loading cancelled page: $nextPage");
           }
 
-          newData = await bookingRepo.getBookingHistory(type: type, page: nextPage, limit: 10);
+          newData = await bookingRepo.getBookingHistory(
+            type: type,
+            page: nextPage,
+            limit: 10,
+            categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+            locationId: location.value.isNotEmpty ? location.value : null,
+          );
           if (kDebugMode) {
             print("Cancelled page $nextPage - page: ${newData.page}, totalPages: ${newData.totalPages}, data: ${newData.data?.length}");
           }
@@ -353,15 +399,15 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       final result = await bookingRepo.updateNewCourtBookingModel(body: body);
       
       if (result?.status == 200) {
-        // Get.snackbar('Success', 'Court booking updated successfully');
         Get.back(); // Close the sheet
         refreshBookings(); // Refresh the bookings list
         CustomLogger.logMessage(msg: "MESSAGE-> ${result?.message??""}", level: LogLevel.debug);
       } else {
-        // Get.snackbar('Error', 'Failed to update court booking');
+        CustomLogger.logMessage(msg: "Failed to update court booking", level: LogLevel.debug);
+
       }
     } catch (e) {
-      // Get.snackbar('Error', 'Failed to update court booking: $e');
+      CustomLogger.logMessage(msg: "Failed to update court booking: $e", level: LogLevel.debug);
     } finally {
       isLoading.value = false;
     }
@@ -382,13 +428,16 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       final result = await bookingRepo.updateRefundAmount(body: body);
       
       if (result?.status == 200) {
-        // Get.snackbar('Success', 'Refund processed successfully');
+        CustomLogger.logMessage(msg: "Refund processed successfully", level: LogLevel.debug);
+
         refreshBookings();
       } else {
-        // Get.snackbar('Error', 'Failed to process refund');
+        CustomLogger.logMessage(msg: "Failed to process refund", level: LogLevel.debug);
+
       }
     } catch (e) {
-      // Get.snackbar('Error', 'Failed to process refund: $e');
+      CustomLogger.logMessage(msg: "Failed to process refund: $e", level: LogLevel.debug);
+
     } finally {
       isLoading.value = false;
     }
@@ -414,28 +463,36 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
   Future<void> downloadInvoice(String invoiceUrl) async {
     try {
-      // Request storage permission
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        status = await Permission.storage.request();
-        if (!status.isGranted) {
-          Get.snackbar("Permission Denied", "Storage permission is required to download invoice");
-          return;
-        }
-      }
-
-      // Show loading
       Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+        const Center(child: LoadingWidget(color: Colors.white,)),
         barrierDismissible: false,
       );
 
-      // Download the file
-      final response = await http.get(Uri.parse(invoiceUrl));
+      // Request storage permission based on Android version
+      PermissionStatus status;
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          // Android 13+ doesn't need storage permission for downloads
+          status = PermissionStatus.granted;
+        } else {
+          status = await Permission.storage.request();
+        }
+      } else {
+        status = await Permission.storage.request();
+      }
       
+      if (status.isDenied) {
+        Get.back();
+        AppToast.error("Storage permission denied");
+        return;
+      }
+
+      final response = await http.get(Uri.parse(invoiceUrl));
+
       if (response.statusCode == 200) {
-        // Get the downloads directory
         Directory? directory;
+        
         if (Platform.isAndroid) {
           directory = Directory('/storage/emulated/0/Download');
           if (!await directory.exists()) {
@@ -445,47 +502,25 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
           directory = await getApplicationDocumentsDirectory();
         }
 
-        if (directory != null) {
-          // Generate filename with timestamp
-          final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'invoice_$timestamp.pdf';
-          final filePath = '${directory.path}/$fileName';
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = 'invoice_$timestamp.pdf';
+        final filePath = '${directory!.path}/$fileName';
 
-          // Write the file
-          final file = File(filePath);
-          await file.writeAsBytes(response.bodyBytes);
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
 
-          // Close loading dialog
-          Get.back();
-
-          // Show success message
-          // Get.snackbar(
-          //   "Success",
-          //   "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
-          //   duration: const Duration(seconds: 3),
-          // );
-          Fluttertoast.showToast(
-            msg: "Invoice downloaded to ${Platform.isAndroid ? 'Downloads' : 'Documents'} folder",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0,
-            timeInSecForIosWeb: 3,
-          );
-        } else {
-          Get.back();
-          // Get.snackbar("Error", "Could not access storage directory");
-        }
+        Get.back();
+        AppToast.error("Invoice downloaded to Downloads folder");
       } else {
         Get.back();
-        // Get.snackbar("Error", "Failed to download invoice");
+        AppToast.error("Failed to download invoice");
       }
     } catch (e) {
       Get.back();
-      // Get.snackbar("Error", "Failed to download invoice: $e");
+      AppToast.error("Error downloading invoice: $e");
     }
   }
+
 
   @override
   void onClose() {

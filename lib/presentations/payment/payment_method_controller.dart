@@ -1,20 +1,19 @@
 import 'dart:developer';
-import 'dart:io';
-import 'dart:math';
+
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import '../../data/response_models/cart/carte_booking_model.dart';
 import '../../services/payment_services/razorpay.dart';
 import '../auth/forgot_password/widgets/forgot_password_exports.dart';
 import '../booking/successful_screens/booking_successful_screen.dart';
 import '../../repositories/cart/cart_repository.dart';
-import '../cart/cart_controller.dart';
 import '../book_a_court/book_a_court_controller.dart';
 import '../booking/book_session/book_session_controller.dart';
+import '../booking/booking_controller.dart';
+import '../profile/profile_controller.dart';
 
 class PaymentMethodController extends GetxController {
   var option = ''.obs;
@@ -35,12 +34,20 @@ class PaymentMethodController extends GetxController {
 
   static final _cartRepository = CartRepository();
 
-  CartController? get _cartController =>
-      Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
+  // CartController? get _cartController =>
+  //     Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
   
   BookACourtController? get bookACourtController {
     try {
       return Get.isRegistered<BookACourtController>() ? Get.find<BookACourtController>() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  BookSessionController? get bookSessionController {
+    try {
+      return Get.isRegistered<BookSessionController>() ? Get.find<BookSessionController>() : null;
     } catch (e) {
       return null;
     }
@@ -57,17 +64,23 @@ class PaymentMethodController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize Razorpay for both iOS and Android
     _paymentService = RazorpayPaymentService();
-    _paymentService!.onPaymentSuccess = _handlePaymentSuccess;
-    _paymentService!.onPaymentFailure = _handlePaymentFailure;
-    // _paymentService!.onExternalWallet = _handleExternalWallet;
     
-    // Create initial booking
-    // _createInitialBooking();
-  }
+    _paymentService!.onPaymentSuccess = (response) {
+      _handlePaymentSuccess(response);
+    };
+    
+    _paymentService!.onPaymentFailure = (response) {
+      _handlePaymentFailure(response);
+    };
+      }
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     isProcessing.value = false;
+
+    // Extract signature from response
+    final signature = response.signature;
+    
+    CustomLogger.logMessage(msg: 'Payment Success - PaymentId: ${response.paymentId}, OrderId: ${response.orderId}, Signature: $signature',level: LogLevel.debug);
 
     Get.generalDialog(
       barrierDismissible: false,
@@ -103,13 +116,32 @@ class PaymentMethodController extends GetxController {
     await _processBookingAfterPayment(
       razorpayPaymentId: response.paymentId,
       razorpayOrderId: _razorpayOrderId,
+      razorpaySignature: signature,
     );
   }
 
   void _handlePaymentFailure(PaymentFailureResponse response) {
     isProcessing.value = false;
+    
+    // Unlock slots when payment fails
+    if (Get.isRegistered<BookSessionController>()) {
+      final c = Get.find<BookSessionController>();
+      if (c.hasCalledSlotHistoryAPI.value) {
+        log('❌ Payment failed, unlocking slots');
+        c.cleanupOnBack();
+        c.hasCalledSlotHistoryAPI.value = false;
+      }
+    }
+    
+    if (Get.isRegistered<BookACourtController>()) {
+      final c = Get.find<BookACourtController>();
+      if (c.hasCalledSlotHistoryAPI.value) {
+        log('❌ Payment failed, unlocking slots');
+        c.cleanupOnBack();
+        c.hasCalledSlotHistoryAPI.value = false;
+      }
+    }
     // Get.back();
-    // SnackBarUtils.showErrorSnackBar("Payment Failed: ${response.message}");
   }
 
   // Direct booking without payment (for Android)
@@ -153,17 +185,20 @@ class PaymentMethodController extends GetxController {
   Future<void> _processBookingAfterPayment({
     String? razorpayPaymentId,
     String? razorpayOrderId,
+    String? razorpaySignature,
   }) async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
       if (isFromBookSession && directBookingPayload != null) {
+        CustomLogger.logMessage(msg: "object------------------------",level: LogLevel.debug);
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
+        CustomLogger.logMessage(msg: "From Book A Court PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookACourtController!.buildBookingPayload();
-      } else {
-        final cart = _cartController;
-        bookingPayload = cart != null ? cart.buildBookingPayload() : null;
+      } else if (bookSessionController != null) {
+        CustomLogger.logMessage(msg: "From Book Session PAge----------------------",level: LogLevel.debug);
+        bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
@@ -175,13 +210,15 @@ class PaymentMethodController extends GetxController {
         for (var payload in bookingPayload) {
           payload['razorpay_payment_id'] = razorpayPaymentId;
           payload['razorpay_order_id'] = razorpayOrderId;
+          if (razorpaySignature != null) {
+            payload['razorpay_signature'] = razorpaySignature;
+          }
           payload['initiatePayment'] = true;
           payload['type'] = 'booked';
-
         }
       }
 
-      print("Booking payload after payment: $bookingPayload");
+      CustomLogger.logMessage(msg: "Booking payload after payment: $bookingPayload",level: LogLevel.debug);
 
       final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
@@ -189,15 +226,17 @@ class PaymentMethodController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        print("Booking confirmed: ${response.data}");
+        CustomLogger.logMessage(msg: "Booking confirmed: ${response.data}",level: LogLevel.debug);
 
         if (!isFromBookSession) {
-          final cart = _cartController;
-          if (cart != null) await cart.getCartItems();
+          // final cart = _cartController;
+          // if (cart != null) await cart.getCartItems();
         } else {
           directBookingPayload = null;
           if (Get.isRegistered<BookSessionController>()) {
             final c = Get.find<BookSessionController>();
+            // Reset the flag since payment was successful
+            c.hasCalledSlotHistoryAPI.value = false;
             c.clearAllSelections();
           }
         }
@@ -212,7 +251,7 @@ class PaymentMethodController extends GetxController {
         showBookingErrorDialog();
       }
     } catch (e) {
-      print("Error processing booking after payment: $e");
+      CustomLogger.logMessage(msg: "Error processing booking after payment: $e",level: LogLevel.debug);
       Get.close(2);
       showBookingErrorDialog();
     }
@@ -254,29 +293,29 @@ class PaymentMethodController extends GetxController {
                     style: TextStyle(fontSize: 16),
                   ),
 
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Your payment has been received successfully, "
-                        "but we couldn't confirm your booking at this moment.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Please contact support for assistance or a refund.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                    ),
-                  ),
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Your payment has been received successfully, "
+                  //       "but we couldn't confirm your booking at this moment.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //     height: 1.4,
+                  //   ),
+                  // ),
+                  //
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Please contact support for assistance or a refund.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 40),
 
@@ -292,6 +331,21 @@ class PaymentMethodController extends GetxController {
                         ),
                       ),
                       onPressed: () {
+                        // Unlock slots before going home
+                        if (Get.isRegistered<BookSessionController>()) {
+                          final c = Get.find<BookSessionController>();
+                          if (c.hasCalledSlotHistoryAPI.value) {
+                            c.cleanupOnBack();
+                            c.hasCalledSlotHistoryAPI.value = false;
+                          }
+                        }
+                        if (Get.isRegistered<BookACourtController>()) {
+                          final c = Get.find<BookACourtController>();
+                          if (c.hasCalledSlotHistoryAPI.value) {
+                            c.cleanupOnBack();
+                            c.hasCalledSlotHistoryAPI.value = false;
+                          }
+                        }
                         Get.offAllNamed(RoutesName.bottomNav);
                       },
                       child: const Text(
@@ -345,28 +399,28 @@ class PaymentMethodController extends GetxController {
     debugPrint('Verifying payment: $paymentId, $orderId, $signature');
   }
 
-  String _generateRandomPaymentId() {
-    final random = Random();
-    final chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return 'pay_${List.generate(14, (index) => chars[random.nextInt(chars.length)]).join()}';
-  }
-
-
   Future<void> createInitialBooking() async {
     try {
       List<Map<String, dynamic>>? bookingPayload;
 
+      // final mainHomeController = Get.isRegistered<MainHomeController>() ? Get.find<MainHomeController>() : null;
+      // final profileController = Get.isRegistered<ProfileController>() ? Get.find<ProfileController>() : null;
+      // final categoryId = mainHomeController?.selectedCategoryId.value;
+      // final locationId = profileController?.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+
       if (isFromBookSession && directBookingPayload != null) {
+        CustomLogger.logMessage(msg: "Direct----------------------",level: LogLevel.debug);
         bookingPayload = List<Map<String, dynamic>>.from(directBookingPayload!);
       } else if (isFromBookACourt && bookACourtController != null) {
+        CustomLogger.logMessage(msg: "From Book A Court PAge----------------------",level: LogLevel.debug);
         bookingPayload = bookACourtController!.buildBookingPayload();
-      } else {
-        final cart = _cartController;
-        bookingPayload = cart?.buildBookingPayload();
+      } else if (bookSessionController != null) {
+        CustomLogger.logMessage(msg: "From Book Session PAge----------------------",level: LogLevel.debug);
+        bookingPayload = bookSessionController!.buildBookingPayload();
       }
 
       if (bookingPayload == null || bookingPayload.isEmpty) {
-        print("No booking payload available");
+        CustomLogger.logMessage(msg: "No booking payload available",level: LogLevel.debug);
         return;
       }
 
@@ -374,7 +428,7 @@ class PaymentMethodController extends GetxController {
         payload['initiatePayment'] = false;
       }
 
-      print("Initial booking payload: $bookingPayload");
+      CustomLogger.logMessage(msg: "Initial booking payload: $bookingPayload",level: LogLevel.debug);
 
       final response = await _cartRepository.dioClient.post(
         AppEndpoints.carteBooking,
@@ -383,9 +437,9 @@ class PaymentMethodController extends GetxController {
 
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;
-        print("Booking API response: $responseData");
+        CustomLogger.logMessage(msg: "Booking API response: $responseData",level: LogLevel.debug);
 
-        _razorpayOrderId = responseData['orderId'];
+        _razorpayOrderId = responseData['orderId']; // Use razorpayOrderId from backend
         initiatePayment = responseData.containsKey('requiresPayment')
             ? (responseData['requiresPayment'] as bool)
             : false;
@@ -394,9 +448,9 @@ class PaymentMethodController extends GetxController {
         razorpayAmountUsed.value =
             (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 0.0;
 
-        print(
-          "Booking created with order ID: $_razorpayOrderId\n"
-          "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
+        CustomLogger.logMessage(msg:
+          "Booking created with Razorpay order ID: $_razorpayOrderId\n"
+          "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",level: LogLevel.debug
         );
 
         if (initiatePayment == false) {
@@ -406,8 +460,7 @@ class PaymentMethodController extends GetxController {
         }
       }
     } catch (e, st) {
-      print("Error creating initial booking: $e");
-      print(st);
+      CustomLogger.logMessage(msg: "Error creating initial booking: $e,$st",level: LogLevel.debug);
     }
   }
 
@@ -430,7 +483,7 @@ class PaymentMethodController extends GetxController {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
+                  color: Colors.green.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -470,18 +523,25 @@ class PaymentMethodController extends GetxController {
                 child: ElevatedButton(
                   onPressed: () {
                     if (!isFromBookSession) {
-                      final cart = _cartController;
-                      if (cart != null) cart.getCartItems();
+                      // final cart = _cartController;
+                      // if (cart != null) cart.getCartItems();
                     } else {
                       directBookingPayload = null;
                       if (Get.isRegistered<BookSessionController>()) {
-                        Get.find<BookSessionController>().clearAllSelections();
+                        final c = Get.find<BookSessionController>();
+                        // Reset the flag since booking was successful without payment
+                        c.hasCalledSlotHistoryAPI.value = false;
+                        c.clearAllSelections();
                       }
                     }
                     if (isFromBookACourt && bookACourtController != null) {
                       bookACourtController!.clearAllSelections();
                     }
                     Get.back();
+                  // Call deleteSlotHistory when returning from payment
+                  if (Get.isRegistered<BookingController>()) {
+                    Get.find<BookingController>().onPageResumed();
+                  }
                     Get.offAllNamed(RoutesName.bottomNav);
                   },
                   style: ElevatedButton.styleFrom(
@@ -507,56 +567,43 @@ class PaymentMethodController extends GetxController {
       ),
     );
   }
+  final ProfileController profileController = Get.put(ProfileController());
   Future<void> startPayment() async {
     if (option.value.isEmpty) {
-      Get.snackbar("Payment Method", "Please select a payment method");
+      AppToast.error("Please select a payment method");
       return;
     }
 
-    if (_razorpayOrderId == null) {
-      SnackBarUtils.showErrorSnackBar("Booking not initialized. Please try again.");
+    if (_razorpayOrderId == null || _razorpayOrderId!.isEmpty) {
+      AppToast.error("Booking not initialized. Please try again.");
       return;
     }
+
+    print("Starting payment with Razorpay Order ID: $_razorpayOrderId");
 
     isProcessing.value = true;
 
     try {
       await _paymentService!.initiatePayment(
-        // keyId: 'rzp_live_RtOIWe2johK6H7',
-        keyId: 'rzp_test_1DP5mmOlF5G5ag',
+        keyId: PaymentConfig.keyId,
+        orderId: _razorpayOrderId,
         amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
         description: 'Paying for court booking',
         image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
-        userEmail: 'test@example.com',
-        userContact: '9999999999',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
       );
     } catch (e) {
       isProcessing.value = false;
       CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Payment failed: $e");
     }
   }
 
   @override
-  void dispose() {
+  void onClose() {
     _paymentService?.dispose();
-    super.dispose();
+    super.onClose();
   }
-
-  final List<Map<String, String>> paymentList = [
-    {
-      "name": "Google Pay",
-      "icon": Assets.imagesIcGooglePayment,
-      "value": "google_pay",
-    },
-    {"name": "PayPal", "icon": Assets.imagesIcPaypal, "value": "paypal"},
-    {"name": "ApplePay", "icon": Assets.imagesIcApple, "value": "apple_pay"},
-    {
-      "name": ".... .... .... 4698",
-      "icon": Assets.imagesIcMasterCardPayment,
-      "value": "mastercard",
-    },
-  ];
 }

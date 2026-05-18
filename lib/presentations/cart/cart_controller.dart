@@ -27,7 +27,7 @@ class CartController extends GetxController {
   @override
   void onInit() async{
     super.onInit();
-    await getCartItems();
+    // await getCartItems();
   }
 
   // 🔹 Fetch Cart Items
@@ -155,26 +155,10 @@ class CartController extends GetxController {
         totalPrice.value = result.newTotalAmount!;
       }
 
-      // Get.snackbar(
-      //   "Success",
-      //   result.message ?? "Selected items removed from cart.",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.green,
-      //   colorText: Colors.white,
-      // );
-
       log("Items removed successfully");
     } catch (e) {
       log("Remove cart error: $e");
       await getCartItems();
-
-      Get.snackbar(
-        "Error",
-        "Failed to remove items: ${e.toString()}",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     } finally {
       isLoading.value = false;
       calculateTotals();
@@ -224,7 +208,7 @@ extension CartControllerBooking on CartController {
       }
     }
   }
-  List<Map<String, dynamic>>? buildBookingPayload() {
+  List<Map<String, dynamic>>? buildBookingPayload({String? categoryId, String? locationId}) {
     final selectedItems = cartItems
         .where((c) => selectedClubIds.contains(c.registerClubId?.sId ?? ""))
         .toList();
@@ -298,16 +282,22 @@ extension CartControllerBooking on CartController {
             "bookingDate": slotTime.bookingDate ?? "",
             "duration": finalDuration,
             "totalTime": totalTimeForBooking,
-            "bookingTime": finalBookingTime
+            "bookingTime": finalBookingTime,
+            "locationId": slotTime.locationId ?? "",
           });
         }
       }
 
       if (slotData.isNotEmpty) {
+        final clubLocationId = slotData.first['locationId'] ?? '';
+
         final bookingPayload = {
           "slot": slotData,
           "register_club_id": cart.registerClubId?.sId ?? "",
           "ownerId": cart.registerClubId?.ownerId ?? "",
+          "categoryId": categoryId ?? "",
+          "location": clubLocationId,
+          "stateId": locationId ?? "",
         };
 
         payloadList.add(bookingPayload);

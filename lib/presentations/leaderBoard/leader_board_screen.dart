@@ -6,9 +6,10 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
+import 'package:padel_mobile/presentations/bottomnav/bottom_nav_controller.dart';
 import 'package:padel_mobile/presentations/leaderBoard/widgets/top_tab_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
 import 'leader_board_controller.dart';
 class LeaderboardScreen extends StatelessWidget {
   final String? buttonType;
@@ -20,20 +21,7 @@ class LeaderboardScreen extends StatelessWidget {
     return name.split(' ').map((word) => word.isNotEmpty ? word[0] : '').take(2).join().toUpperCase();
   }
 
-  String _formatName(String name) {
-    final words = name.split(' ');
-    if (words.length <= 1) return name;
-    return '${words[0]} ${words[1][0]}.';
-  }
 
-  String _getFirstName(String name) {
-    return name.split(' ').first;
-  }
-
-  String _getLastName(String name) {
-    final words = name.split(' ');
-    return words.length > 1 ? words.sublist(1).join(' ') : '';
-  }
 
   String _truncateName(String name, int maxLength) {
     if (name.length <= maxLength) return name;
@@ -42,270 +30,89 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        backgroundColor: AppColors.primaryColor,
-        appBar: primaryAppBar(
-          systemOverlayStyle: SystemUiOverlayStyle.light,
-          leadingButtonColor: AppColors.whiteColor,
-          titleTextColor: AppColors.whiteColor,
-          centerTitle: true,
-          showLeading: buttonType=="drawer"?true:false,
-          title: const Text("Leaderboard"),
-          context: context,
-          action: [
-            Obx(() {
-              final options = controller.genderFilterOptions;
-              return Container(
-                height: 30,
-                width: Get.width*.25,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: controller.selectedGenderFilter.value,
-                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                    dropdownColor: AppColors.primaryColor,
-                    items: options.map((option) {
-                      return DropdownMenuItem(
-                        value: option,
-                        child: Text(
-                          option == 'all' ? 'All' : option,
-                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        controller.selectedGenderFilter.value = value;
-                      }
-                    },
-                  ).paddingOnly(left: 5, right: 5),
-                ),
-              );
-            }),
-          ],
-        ),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                TopTabBar(),
-                const SizedBox(height: 16),
-                const SizedBox(height: 20),
-
-                // ✅ Directly reactive podium
-                Obx(() {
-                  final top3 = controller.topThreePlayers;
-                  return _buildPodiumSectionFor(top3);
-                }),
-              ],
-            ),
-
-            // ✅ Directly reactive leaderboard sheet
-            _buildLeaderboardSheet(context, buttonType??""),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-
-
-  Widget _buildTabBar() {
-    return Obx(() {
-      final titles = ['All Time', 'Weekly', 'Monthly'];
-      return Container(
-        width: Get.width,
-        padding: const EdgeInsets.all(4),
-        margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-        decoration: BoxDecoration(
-          // color: const Color(0xFF4F6DF6),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: List.generate(titles.length, (i) {
-            final selected = controller.selectedTab.value == i;
-
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => controller.selectedTab.value = i,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+    return WillPopScope(
+      onWillPop: () async {
+        final bottomNavController = Get.find<BottomNavigationController>();
+        bottomNavController.updateIndex(0);
+        Get.offAll(() => BottomNavUi());
+        return true;
+      },
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Scaffold(
+          backgroundColor: AppColors.primaryColor,
+          appBar: primaryAppBar(
+            systemOverlayStyle: SystemUiOverlayStyle.light,
+            leadingButtonColor: AppColors.whiteColor,
+            titleTextColor: AppColors.whiteColor,
+            centerTitle: true,
+            showLeading: buttonType=="drawer"?true:false,
+            title: const Text("Leaderboard"),
+            context: context,
+            action: [
+              Obx(() {
+                final options = controller.genderFilterOptions;
+                return Container(
+                  height: 30,
+                  width: Get.width*.25,
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0xFF0B3BA7) : Colors
-                        .transparent,
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    titles[i],
-                    style: Get.textTheme.headlineSmall!.copyWith(
-                      color: selected ? AppColors.whiteColor : AppColors
-                          .primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-      );
-    });
-  }
-  Widget _buildTournamentFilters() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-      child: Row(
-        children: [
-          // 🔍 Location Search Field
-          Expanded(
-            flex: 3,
-            child: Container(
-              height: 39, // decrease height here
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        cursorHeight: 15,
-                        keyboardType: TextInputType.text,
-                        textInputAction: TextInputAction.done,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: 'Location',
-                          hintStyle: const TextStyle(
-                            color: AppColors.primaryColor,
-                            fontSize: 14,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: controller.selectedGenderFilter.value,
+                      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                      dropdownColor: AppColors.primaryColor,
+                      items: options.map((option) {
+                        return DropdownMenuItem(
+                          value: option,
+                          child: Text(
+                            option == 'all' ? 'All' : option,
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
                           ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding:
-                          const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textColor,
-                        ),
-                      ),
-                    ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          controller.selectedGenderFilter.value = value;
+                        }
+                      },
+                    ).paddingOnly(left: 5, right: 5),
                   ),
-                  Container(
-                    height: 24,
-                    width: 1,
-                    color: Colors.grey.shade300,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(
-                      Icons.search,
-                      color: Color(0xFF4F6DF6),
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                );
+              }),
+            ],
           ),
-          const SizedBox(width: 8),
+          body: RefreshIndicator(
+            backgroundColor: Colors.white,
+            onRefresh: () => controller.fetchLeaderboardData(isRefresh: true),
+            color: AppColors.primaryColor,
+            child: Stack(
+              children: [
+                SizedBox(
+                  height: Get.height,
+                  child: Column(
+                    children: [
+                      TopTabBar(),
+                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-          // 🔹 Gender Dropdown
-        Expanded(
-          flex: 2,
-          child: Container(
-            height: 39,
-            padding: const EdgeInsets.only(left: 10, right: 5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Obx(() {
-              return PopupMenuButton<String>(
-                padding: EdgeInsets.zero,
-                offset: Offset(10, 39),
-                onSelected: (value) {
-                  controller.selectedGender.value = value;
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(value: 'Male', child: Text('Male',style: Get.textTheme.bodyLarge,)),
-                  PopupMenuItem(value: 'Female', child: Text('Female',style: Get.textTheme.bodyLarge,)),
-                  PopupMenuItem(value: 'Others', child: Text('Others',style: Get.textTheme.bodyLarge,)),
-                ],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      controller.selectedGender.value.isEmpty
-                          ? "Gender"
-                          : controller.selectedGender.value,
-                      style: const TextStyle(
-                        color: AppColors.primaryColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-                  ],
+                      // ✅ Directly reactive podium
+                      Obx(() {
+                        final top3 = controller.topThreePlayers;
+                        return _buildPodiumSectionFor(top3);
+                      }),
+                    ],
+                  ),
                 ),
-              );
-            }),
-          ),
-        ),
-          const SizedBox(width: 8),
 
-          // 🔹 Year Dropdown
-      Expanded(
-        flex: 2,
-        child: Container(
-          height: 39,
-          padding: const EdgeInsets.only(left: 10, right: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Obx(() {
-            return PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              offset: Offset(10, 39),
-              onSelected: (value) {
-                controller.selectedYear.value = value;
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(value: '2023', child: Text('2023',style: Get.textTheme.bodyLarge,)),
-                PopupMenuItem(value: '2024', child: Text('2024',style: Get.textTheme.bodyLarge,)),
-                PopupMenuItem(value: '2025', child: Text('2025',style: Get.textTheme.bodyLarge,)),
+                // ✅ Directly reactive leaderboard sheet
+                _buildLeaderboardSheet(context, buttonType??""),
               ],
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    controller.selectedYear.value.isEmpty
-                        ? "Year"
-                        : controller.selectedYear.value,
-                    style: const TextStyle(
-                      color: AppColors.primaryColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: AppColors.primaryColor),
-                ],
-              ),
-            );
-          }),
+            ),
+          ),
         ),
-      )
-        ],
       ),
     );
   }
@@ -317,7 +124,6 @@ class LeaderboardScreen extends StatelessWidget {
         child: Center(child: Text('No data available', style: TextStyle(color: Colors.white))),
       );
     }
-    
     if (top3.length < 3) {
       return const SizedBox(
         height: 300,
@@ -331,7 +137,7 @@ class LeaderboardScreen extends StatelessWidget {
       child: Stack(
         children: [
           Transform.scale(
-            scale: 1.2,
+            scale: 1.25,
             child: SvgPicture.asset(
               Assets.imagesImgLeaderBoardBg,
               fit: BoxFit.cover,
@@ -392,7 +198,7 @@ class LeaderboardScreen extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 CircleAvatar(
-                  radius: position == 1 ? 37 : 32,
+                  radius: position == 1 ? 36 : 31,
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
                     radius: position == 1 ? 35 : 30,
@@ -451,7 +257,7 @@ class LeaderboardScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Container(
-                width: 100,
+                width: Get.width*.26,
                 color: Colors.transparent,
                 child: Text(
                   _truncateName(player.name, 15),
@@ -468,11 +274,10 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 4),
+            // SizedBox(height: Get.height * 0.012),
 
-            // Score box
             Container(
-              height: 16,
+              height: 22,
               width: 55,
               alignment: Alignment.center,
               decoration: BoxDecoration(
@@ -489,7 +294,7 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: Get.height * 0.015),
+            SizedBox(height: Get.height * 0.038,),
 
             // Position text (1, 2, 3)
             Text(
@@ -499,14 +304,14 @@ class LeaderboardScreen extends StatelessWidget {
                 color: AppColors.whiteColor,
                 fontSize: 40,
               ),
-            ).paddingOnly(top: 10),
+            ),
           ],
         ),
       ),
     );
   }
   Widget _buildLeaderboardSheet(BuildContext context, String buttonType) {
-    final double minSize = buttonType == "drawer" ? 0.56 : 0.50;
+    final double minSize = buttonType == "drawer" ? 0.57 : 0.51;
     const double maxSize = 1.0;
 
     return NotificationListener<DraggableScrollableNotification>(
@@ -543,7 +348,7 @@ class LeaderboardScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // Empty space for drag handle (non-scrollable)
-                      SizedBox(height: 35),
+                      SizedBox(height: 20),
 
                       // Fixed header (non-scrollable)
                       Padding(
@@ -630,16 +435,6 @@ class LeaderboardScreen extends StatelessWidget {
                                       child: Center(child: LoadingWidget(color: AppColors.primaryColor)),
                                     );
                                   }
-                                  if (!controller.hasMoreData.value && data.isNotEmpty) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(bottom: 20, top: 16),
-                                      child: Text(
-                                        'No more data to load',
-                                        style: TextStyle(color: Colors.grey),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    );
-                                  }
                                   return const SizedBox(height: 20);
                                 });
                               },
@@ -689,7 +484,8 @@ class LeaderboardScreen extends StatelessWidget {
         },
       ),
     );
-  }  Widget _buildStateLevelFilters() {
+  }
+  Widget _buildStateLevelFilters() {
     return Row(
       children: [
         // All Location Dropdown
@@ -792,7 +588,7 @@ class LeaderboardScreen extends StatelessWidget {
                     child: Text(
                       '${myRank['rank']}',
                       style: Get.textTheme.labelLarge!.copyWith(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primaryColor,
                       ),
@@ -801,34 +597,45 @@ class LeaderboardScreen extends StatelessWidget {
                   Container(
                     color: Colors.transparent,
                     width: 30,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${myRank['change'] > 0 ? '+' : ''}${myRank['change']}',
-                          style: TextStyle(
-                            color: myRank['change'] > 0
-                                ? Colors.green
-                                : (myRank['change'] < 0 ? Colors.red : Colors.grey),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        if (myRank['change'] > 0)
-                          SvgPicture.asset(
-                            Assets.imagesIcTreadingUp,
-                            height: 14,
-                            width: 14,
+                    child: myRank['change'] != 0
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${myRank['change'] > 0 ? '+' : ''}${myRank['change']}',
+                                style: TextStyle(
+                                  color: myRank['change'] > 0
+                                      ? Colors.green
+                                      : Colors.red,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              if (myRank['change'] > 0)
+                                SvgPicture.asset(
+                                  Assets.imagesIcTreadingUp,
+                                  height: 14,
+                                  width: 14,
+                                )
+                              else
+                                SvgPicture.asset(
+                                  Assets.imagesIcTradingDown,
+                                  height: 14,
+                                  width: 14,
+                                ),
+                            ],
                           )
-                        else if (myRank['change'] < 0)
-                          SvgPicture.asset(
-                            Assets.imagesIcTradingDown,
-                            height: 14,
-                            width: 14,
+                        : Center(
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.circleColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                           ),
-                      ],
-                    ),
                   ),
                   CircleAvatar(
                     radius: 15,
@@ -1034,40 +841,50 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                           width: 35,
                           child: Text(
                             '${item['rank']}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 12),
                           ),
                         ),
                         Container(
                           color: Colors.transparent,
                           width: 30,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '${item['change'] > 0 ? '+' : ''}${item['change']}',
-                                style: TextStyle(
-                                  color: item['change'] > 0
-                                      ? Colors.green
-                                      : (item['change'] < 0 ? Colors.red : Colors.grey),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              if (item['change'] > 0)
-                                SvgPicture.asset(
-                                  Assets.imagesIcTreadingUp,
-                                  height: 14,
-                                  width: 14,
+                          child: item['change'] != 0
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '${item['change'] > 0 ? '+' : ''}${item['change']}',
+                                      style: TextStyle(
+                                        color: item['change'] > 0
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    if (item['change'] > 0)
+                                      SvgPicture.asset(
+                                        Assets.imagesIcTreadingUp,
+                                        height: 14,
+                                        width: 14,
+                                      )
+                                    else
+                                      SvgPicture.asset(
+                                        Assets.imagesIcTradingDown,
+                                        height: 14,
+                                        width: 14,
+                                      ),
+                                  ],
                                 )
-                              else if (item['change'] < 0)
-                                SvgPicture.asset(
-                                  Assets.imagesIcTradingDown,
-                                  height: 14,
-                                  width: 14,
+                              : Center(
+                                  child: Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.circleColor,                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 ),
-                            ],
-                          ),
                         ),
                         CircleAvatar(
                           radius: 15,
@@ -1112,7 +929,7 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                         ).paddingOnly(right: 10),
                         Container(
                           color: Colors.transparent,
-                          width: 70,
+                          width: 120,
                           child: Text(
                             item['name'],
                             style: Get.textTheme.labelLarge!.copyWith(fontSize: 12,fontWeight: FontWeight.w500),

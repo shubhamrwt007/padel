@@ -28,6 +28,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to the camera to take profile pictures.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -36,6 +40,11 @@
 	<string>This app needs access to your photo library to select images.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

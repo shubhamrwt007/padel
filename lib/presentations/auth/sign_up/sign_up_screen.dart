@@ -2,6 +2,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
 
+import '../../../handler/text_formatter.dart';
+
 class SignUpScreen extends GetView<SignUpController> {
   const SignUpScreen({super.key});
 
@@ -55,6 +57,7 @@ class SignUpScreen extends GetView<SignUpController> {
             keyboardType: TextInputType.phone,
             action: TextInputAction.next,
             maxLength: 10,
+            formatter: [PhoneNumberInputFormatter()],
             onFieldSubmitted: (v) => controller.onFieldSubmit(),
             controller: controller.phoneController,
             focusNode: controller.phoneFocusNode,
@@ -325,6 +328,7 @@ class SignUpScreen extends GetView<SignUpController> {
                       title: Text(location.name ?? ''),
                       onTap: () {
                         controller.selectedLocation.value = location.name ?? '';
+                        controller.selectedLocationId.value = location.id ?? '';
                         Get.back();
                       },
                     );

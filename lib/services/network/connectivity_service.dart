@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 
 import '../../configs/components/snack_bars.dart';
 
@@ -125,16 +126,8 @@ class ConnectivityService extends GetxService {
     if (_isShowingNoInternetSnackBar) return;
     
     _isShowingNoInternetSnackBar = true;
-    // SnackBarUtils.showErrorSnackBar('. Please check your network settings.');
-    Fluttertoast.showToast(
-      msg: "No internet connection",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.TOP,
-      backgroundColor: Colors.red,
-      textColor: Colors.white,
-      fontSize: 16.0,
-      timeInSecForIosWeb: 3,
-    );
+     // AppToast.error('. Please check your network settings.');
+    AppToast.error("No internet connection");
     
     // Start cooldown timer
     _snackBarCooldownTimer?.cancel();

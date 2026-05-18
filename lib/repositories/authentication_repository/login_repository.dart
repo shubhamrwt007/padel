@@ -41,11 +41,7 @@ class LoginRepository {
       rethrow;
     }
   }
-
-
   Future<LoginModel> loginUser({required Map<String,dynamic> body}) async {
-
-
     try {
       CustomLogger.logMessage(
         msg: "LOGIN BODY:-> $body",

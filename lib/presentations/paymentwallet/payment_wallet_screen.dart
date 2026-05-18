@@ -20,7 +20,7 @@ class PaymentWalletScreen extends StatelessWidget {
       appBar: primaryAppBar(
         showLeading: true,
         centerTitle: true,
-        title: Text("Payment").paddingOnly(left: Get.width * 0.02),
+        title: Text("Transactions").paddingOnly(left: Get.width * 0.02),
         context: context,
       ),
       body: RefreshIndicator(
@@ -180,22 +180,23 @@ class PaymentWalletScreen extends StatelessWidget {
             color: AppColors.blackColor,
           ),
         ),
-        GestureDetector(
-          onTap: (){
-            Get.toNamed(RoutesName.paymentFilter);
-          },
-          child: Container(height: 28,width: 32,
-            decoration: BoxDecoration(
-                color: AppColors.tabSelectedColor,
-                borderRadius: BorderRadius.circular(8)
-
-            ),
-            child: Image.asset(
-              Assets.imagesIcFilter,
-              scale: 5,
-            ),
-          ),
-        ) ,              ],
+        // GestureDetector(
+        //   onTap: (){
+        //     Get.toNamed(RoutesName.paymentFilter);
+        //   },
+        //   child: Container(height: 28,width: 32,
+        //     decoration: BoxDecoration(
+        //         color: AppColors.tabSelectedColor,
+        //         borderRadius: BorderRadius.circular(8)
+        //
+        //     ),
+        //     child: Image.asset(
+        //       Assets.imagesIcFilter,
+        //       scale: 5,
+        //     ),
+        //   ),
+        // ) ,
+      ],
     ).paddingOnly(top: 15,bottom: 15);
   }
   Widget paymentTiles({required String clubName,required String bookingDate,required String slot,required String amount,required String courtName}){

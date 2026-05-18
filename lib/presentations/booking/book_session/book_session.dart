@@ -6,15 +6,138 @@ import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
+import 'package:padel_mobile/services/socket_service.dart';
 import '../../../handler/text_formatter.dart';
-class BookSession extends StatelessWidget {
-  BookSession({super.key});
+import 'book_session_controller.dart';
+class BookSession extends StatefulWidget {
+  const BookSession({super.key});
+
+  @override
+  State<BookSession> createState() => _BookSessionState();
+}
+
+class _BookSessionState extends State<BookSession> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   final BookSessionController controller = Get.put(BookSessionController());
-  
-  // Map to track expanded state for each court
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
+  bool _isReturningFromPayment = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    log('🟢 BookSession initState - Observer added');
+    // Ensure socket is connected when book session screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final socketService = SocketService.instance;
+        log('BookSession: Checking socket connection status');
+        
+        if (!socketService.isConnected) {
+          log('BookSession: Socket not connected, attempting to connect');
+          socketService.connect();
+          
+          // Wait a bit for connection to establish
+          Future.delayed(const Duration(seconds: 2), () {
+            if (socketService.isConnected) {
+              log('BookSession: Socket connected successfully');
+              socketService.testConnection();
+            } else {
+              log('BookSession: Socket connection failed after 2 seconds');
+            }
+          });
+        } else {
+          log('BookSession: Socket already connected');
+          socketService.testConnection();
+        }
+      } catch (e) {
+        log('Socket connection error in book session: $e');
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    log('📱 App lifecycle state changed to: $state');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections.isNotEmpty: ${controller.multiDateSelections.isNotEmpty}');
+    
+    if (state == AppLifecycleState.resumed) {
+      log('📱 App resumed - checking if slots need to be unlocked');
+      _checkAndUnlockSlots();
+    }
+  }
+
+  Future<void> _checkAndUnlockSlots() async {
+    log('🔍 _checkAndUnlockSlots called');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+    
+    // IMPORTANT: Check the flag BEFORE checking if selections exist
+    // because selections might have been cleared already
+    if (controller.hasCalledSlotHistoryAPI.value) {
+      log('🔓 Unlocking slots after returning to BookSession');
+      
+      // Call cleanup which will unlock slots, refresh data, and validate selections
+      await controller.cleanupOnBack();
+      controller.hasCalledSlotHistoryAPI.value = false;
+      log('✅ Slots unlocked and selections validated');
+      
+      // No need to refresh again - cleanupOnBack already does it with preserveSelections: true
+    } else {
+      log('❌ Conditions not met for unlocking');
+      log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    }
+  }
+
+  @override
+  void dispose() {
+    log('🔴 BookSession dispose - Removing observer');
+    WidgetsBinding.instance.removeObserver(this);
+    try {
+      final socketService = SocketService.instance;
+      final clubId = controller.argument.id;
+      final selectedDate = controller.selectedDate.value;
+      final dateString = "${selectedDate?.year}-${selectedDate?.month.toString().padLeft(2, '0')}-${selectedDate?.day.toString().padLeft(2, '0')}";
+      
+      if (clubId != null) {
+        socketService.unsubscribeFromSlotWiseUpdates(
+          clubId: clubId,
+          date: dateString,
+        );
+        log('BookSession: Unsubscribed from slot updates for club: $clubId, date: $dateString');
+      }
+    } catch (e) {
+      log('Error unsubscribing from slot updates: $e');
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    log('🔄 BookSession build() called');
+    log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+    log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+    log('   - _isReturningFromPayment: $_isReturningFromPayment');
+    
+    // Check when widget becomes visible again
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      log('📍 PostFrameCallback - Checking if need to unlock slots');
+      log('   - hasCalledSlotHistoryAPI: ${controller.hasCalledSlotHistoryAPI.value}');
+      log('   - multiDateSelections count: ${controller.multiDateSelections.length}');
+      log('   - _isReturningFromPayment: $_isReturningFromPayment');
+      
+      if (!_isReturningFromPayment && controller.hasCalledSlotHistoryAPI.value && controller.multiDateSelections.isNotEmpty) {
+        log('🔓 Triggering slot unlock from PostFrameCallback');
+        _isReturningFromPayment = true;
+        _checkAndUnlockSlots();
+      }
+    });
+    
     return Stack(  // Change from Scaffold to Stack
       children: [
         SingleChildScrollView(
@@ -127,6 +250,12 @@ class BookSession extends StatelessWidget {
                           final now = DateTime.now();
                           final today = DateTime(now.year, now.month, now.day);
                           final currentDate = DateTime(date.year, date.month, date.day);
+                          
+                          // Hide current date if time is 11 PM or later
+                          if (now.hour >= 23 && currentDate.isAtSameMomentAs(today)) {
+                            return const SizedBox.shrink();
+                          }
+                          
                           if (currentDate.isBefore(today)) return const SizedBox.shrink();
 
                           final dayName = DateFormat('E').format(date);
@@ -236,18 +365,13 @@ class BookSession extends StatelessWidget {
                           );
                         },
 
-                        onDateChange: (date) async {
+                        onDateChange: (date) {
                           controller.selectedDate.value = date;
                           controller.focusedMonth.value =
                               DateTime(date.year, date.month, 1);
-                          controller.isLoadingCourts.value = true;
-                          await controller.fetchAllSlotPrices();
-                          await controller.getAvailableCourtsById(
-                            controller.argument.id!,
-                            showUnavailable: true, // Always show both available and unavailable
-                          );
-                          controller.slots.refresh();
-                          controller.isLoadingCourts.value = false;
+                          // Re-subscribe to slot updates for new date
+                          // (socket fallback will call API if no socket data in 3s)
+                          controller.resubscribeToSlotUpdates();
                         },
                       ),
                     ),
@@ -340,8 +464,10 @@ class BookSession extends StatelessWidget {
                         duration: const Duration(milliseconds: 250),
                         height: 30,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.white,
+                          color: isSelected ? AppColors.primaryColor : Colors.white,
                           borderRadius: BorderRadius.circular(10),
+                            border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
+
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -357,7 +483,7 @@ class BookSession extends StatelessWidget {
                             tab["icon"] as IconData,
                             size: 20,
                             color: isSelected
-                                ? AppColors.primaryColor
+                                ? AppColors.whiteColor
                                 : Colors.black87,
                           ),
                         ),
@@ -410,7 +536,47 @@ class BookSession extends StatelessWidget {
         return const Center(child: Text("No courts available"));
       }
 
-      final courts = slotsData.data!;
+      // Filter courts that have at least one non-past slot
+      final courts = slotsData.data!.where((court) {
+        final slotTimes = court.slots ?? [];
+        return slotTimes.any((slot) => !controller.isPastAndUnavailable(slot));
+      }).toList();
+
+      // If no courts have available slots, show "No slots available" message
+      if (courts.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "No slots available",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "All slots have passed for this time period",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
 
       return GestureDetector(
         onHorizontalDragEnd: (details) {
@@ -553,7 +719,8 @@ class BookSession extends StatelessWidget {
   }
   /// Build slots grid for a specific court
   Widget _buildSlotsGrid(List<dynamic> slotTimes, String courtId) {
-    final filteredSlots = slotTimes;
+    // Filter out past time slots
+    final filteredSlots = slotTimes.where((slot) => !controller.isPastAndUnavailable(slot)).toList();
 
     if (filteredSlots.isEmpty) {
       return Center(
@@ -615,16 +782,21 @@ class BookSession extends StatelessWidget {
     final isHalfSlot = supports30Min;
 
     final isUnavailable = controller.isPastAndUnavailable(slot) ||
-        (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability')||
+        (slot.availabilityStatus?.toLowerCase() == 'tournament');
 
     // Check for booked slots
     final isLeftHalfBooked = controller.isLeftHalfBooked(slot);
     final isRightHalfBooked = controller.isRightHalfBooked(slot);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
+    
+    // Debug logs - ALWAYS print for debugging
+    log('UI DEBUG - Slot: ${slot.time}, bookingTime: ${slot.bookingTime}, duration: ${slot.duration}, status: ${slot.status}');
+    log('UI DEBUG - supports30Min: $supports30Min, has30MinPrice: ${slot.has30MinPrice}');
+    log('UI DEBUG - isLeftHalfBooked: $isLeftHalfBooked, isRightHalfBooked: $isRightHalfBooked');
 
     // For slots that don't support 30min, if any half is booked, the whole slot is unavailable
     final isSlotBookedForFullSlot = !supports30Min && isAnyHalfBooked;
@@ -636,25 +808,20 @@ class BookSession extends StatelessWidget {
     return Builder(
       builder: (BuildContext slotContext) {
         return GestureDetector(
-          onTapDown: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
-              ? null
-              : (details) {
+          onTapDown: (details) {
+            // Prevent selection if slot is unavailable or booked
+            if (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) {
+              return;
+            }
+
             if (supports30Min) {
               // For slots that support 30-min pricing, detect left/right half tap
               final RenderBox box = slotContext.findRenderObject() as RenderBox;
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Check if the tapped half is already booked
+              // Prevent selection if the tapped half is already booked
               if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
                 return;
               }
 
@@ -665,16 +832,8 @@ class BookSession extends StatelessWidget {
                 isLeftHalf: isLeftHalf,
               );
             } else {
-              // For slots that don't support 30-min pricing or when selecting full slots
+              // For full slots, prevent selection if any part is booked
               if (isAnyHalfBooked) {
-                Get.snackbar(
-                  "Slot Unavailable",
-                  "This slot is already booked.",
-                  backgroundColor: Colors.redAccent,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
-                );
                 return;
               }
 
@@ -691,10 +850,12 @@ class BookSession extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
-                color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) ? Colors.grey.shade100 : Colors.white,
+                color: (isUnavailable || (isBothHalvesBooked && supports30Min) || isSlotBookedForFullSlot) 
+                    ? Colors.grey.shade100
+                    : Colors.white,
                 border: Border.all(
-                  color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
-                      ? Colors.grey.shade300
+                  color: (isUnavailable || isAnyHalfBooked)
+                      ? Colors.transparent
                       : (isSelected || isPartOfGroup)
                       ? Colors.transparent
                       : Colors.grey.shade300,
@@ -783,88 +944,85 @@ class BookSession extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
                       ),
                     ),
 
-                  /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS
-                  if ((!supports30Min || !isHalfSlot) && isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                  /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS (NON-30MIN SLOTS ONLY)
+                  if (!supports30Min && isAnyHalfBooked && !isSelected && !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
-                          color: Colors.grey.shade300.withOpacity(0.8),
+                          color: AppColors.lightred,
                         ),
-                        // child: Center(
-                        //   child: Icon(
-                        //     Icons.block,
-                        //     size: 20,
-                        //     color: Colors.grey.shade600,
-                        //   ),
-                        // ),
+                      ),
+                    ),
+
+                  /// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
+                  if (isUnavailable && !isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius),
+                          color: AppColors.lightred,
+                        ),
                       ),
                     ),
 
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
+                  if (isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(radius),
                             bottomLeft: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
                         // child: Center(
                         //   child: Icon(
                         //     Icons.block,
                         //     size: 16,
-                        //     color: Colors.grey.shade600,
+                        //     color: Colors.red.shade600,
                         //   ),
                         // ),
                       ),
                     ),
 
                   /// RIGHT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY RIGHT IS BOOKED)
-                  if (supports30Min && isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
+                  if (isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
                       bottom: 0,
-                      width: 40, // Half width of the slot tile
+                      width: 40,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(radius),
                             bottomRight: Radius.circular(radius),
                           ),
-                          color: Colors.grey.shade300,
+                          color: AppColors.lightred,
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.block,
-                            size: 16,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
+                        // child: Center(
+                        //   child: Icon(
+                        //     Icons.block,
+                        //     size: 16,
+                        //     color: Colors.red.shade600,
+                        //   ),
+                        // ),
                       ),
                     ),
 
                   /// VERTICAL DIVIDER FOR 30MIN SLOTS THAT SUPPORT IT
-                  if (supports30Min && !isUnavailable && !isBothHalvesBooked && !isSlotBookedForFullSlot)
+                  if (supports30Min && !isUnavailable && !isBothHalvesBooked)
                     Positioned(
                       left: 40, // Center of the 80px wide slot tile
                       top: 0,
@@ -875,8 +1033,8 @@ class BookSession extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
-                  if (!isUnavailable && !isSelected && !isPartOfGroup)
+                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE)
+                  if (!isSelected && !isPartOfGroup)
                     Positioned.fill(
                       left: 0,
                       child: Align(
@@ -884,7 +1042,7 @@ class BookSession extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: blueColor,
+                            color: (isAnyHalfBooked || isUnavailable) ? Colors.red : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
@@ -1054,7 +1212,7 @@ class BookSession extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: isUnavailable
+                              color: (isUnavailable || isAnyHalfBooked)
                                   ? Colors.grey.shade500
                                   : (isSelected || isPartOfGroup)
                                   ? Colors.white
@@ -1067,7 +1225,7 @@ class BookSession extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: isUnavailable
+                                color: (isUnavailable || isAnyHalfBooked)
                                     ? Colors.grey.shade400
                                     : (isSelected || isPartOfGroup)
                                     ? Colors.white70
@@ -1132,7 +1290,6 @@ class BookSession extends StatelessWidget {
       final double collapsedHeight = Get.height * .11;
       final double expandedHeight = Get.height * .13;
       void openSelectedSlotsBottomSheet(BuildContext context) {
-        if (Get.isSnackbarOpen) return;
         if (controller.multiDateSelections.isEmpty) return;
 
         showModalBottomSheet(
@@ -1618,10 +1775,11 @@ class BookSession extends StatelessWidget {
                 width: Get.width * 0.9,
                 onTap: () {
                   if (controller.multiDateSelections.isEmpty) {
-                    SnackBarUtils.showInfoSnackBar(
-                        "Please select at least one slot before booking.");
+                    CustomLogger.logMessage(msg: "Please select at least one slot before booking.", level: LogLevel.error);
                     return;
                   }
+                  log('🟢 Book Now tapped - Setting _isReturningFromPayment to false');
+                  _isReturningFromPayment = false;
                   controller.proceedToPayment();
                 },
                 child: controller.cartLoader.value

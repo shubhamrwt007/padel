@@ -30,18 +30,22 @@ class Player {
   final String? id;
   final String? name;
   final String? city;
+  final String? cityName;
   final String? level;
   final String? profilePic;
   final int? totalMatchesPlayed;
+  final bool? hasPendingRequest;
   final dynamic? xpPoints;
 
   const Player({
     this.id,
     this.name,
     this.city,
+    this.cityName,
     this.level,
     this.profilePic,
     this.totalMatchesPlayed,
+    this.hasPendingRequest,
     this.xpPoints,
   });
 
@@ -50,9 +54,11 @@ class Player {
       id: json['_id'],
       name: json['name'],
       city: json['city'],
-      level: json['playerLevel'],
+      cityName: json['cityName'],
+      level: json['level'],
       profilePic: json['profilePic'],
       totalMatchesPlayed: json['totalMatchesPlayed'],
+      hasPendingRequest: json['hasPendingRequest'],
       xpPoints: json['xpPoints'],
     );
   }
@@ -61,9 +67,11 @@ class Player {
     '_id': id,
     'name': name,
     'city': city,
+    'cityName': cityName,
     'playerLevel': level,
     'profilePic': profilePic,
     'totalMatchesPlayed': totalMatchesPlayed,
+    'hasPendingRequest': hasPendingRequest,
     'xpPoints': xpPoints,
   };
 }

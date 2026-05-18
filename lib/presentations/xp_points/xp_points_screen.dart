@@ -6,6 +6,7 @@ import 'package:rolling_number_text/rolling_number_text.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
+import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/presentations/xp_points/xp_points_controller.dart';
 
 class XpPointsScreen extends StatelessWidget {
@@ -115,16 +116,25 @@ class XpPointsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Obx(() => controller.isLoading.value
                       ? Center(child: LoadingWidget(color:AppColors.primaryColor,))
-                      : controller.transactionList.isEmpty
-                      ? Center(child: Text("No data available"))
-                      : ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: controller.transactionList.length,
-                    separatorBuilder: (_, __) => fadeDivider(),
-                    itemBuilder: (context, index) {
-                      final transaction = controller.transactionList[index];
-                      return _XpRow(transaction: transaction);
+                      : RefreshIndicator(
+                    color: AppColors.whiteColor,
+                    onRefresh: () async {
+                      await Future.wait([
+                        controller.fetchXpTransaction(isRefresh: true),
+                        controller.profileController.fetchUserProfile(),
+                      ]);
                     },
+                    child: controller.transactionList.isEmpty
+                        ? ListView(children: [Center(child: Text("No data available"))])
+                        : ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: controller.transactionList.length,
+                      separatorBuilder: (_, __) => fadeDivider(),
+                      itemBuilder: (context, index) {
+                        final transaction = controller.transactionList[index];
+                        return _XpRow(transaction: transaction);
+                      },
+                    ),
                   )
                   ),
                 ),
@@ -158,7 +168,6 @@ class XpPointsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// AppBar Row
-          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -206,53 +215,76 @@ class _XpRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWin = transaction.result == "W";
+    final leagueMatchId = transaction.leagueMatchId?.id;
+    final bookingId = transaction.bookingId;
+    final startTime = transaction.leagueMatchId?.startTime ?? transaction.scoreboardId?.startTime ?? '';
+    final endTime = transaction.leagueMatchId?.endTime ?? transaction.scoreboardId?.endTime ?? '';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          // Circle W / L
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Color(0xffF5F5F5),
-            child: Text(
-              isWin ? "W" : "L",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isWin ? Colors.green : Colors.red,
+    return GestureDetector(
+      onTap: () {
+        if (leagueMatchId != null && leagueMatchId.isNotEmpty) {
+          Get.toNamed(RoutesName.liveAndCompleteLeagueMatch, arguments: {
+            "matchType": "result",
+            "matchId": leagueMatchId
+          });
+        } else if (bookingId != null && bookingId.isNotEmpty) {
+          Get.toNamed(RoutesName.scoreBoard, arguments: {
+            "bookingId": bookingId
+          });
+        } else {
+          print(transaction);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Container(
+          color: Colors.transparent,
+          child: Row(
+            children: [
+            // Circle W / L
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: Color(0xffF5F5F5),
+              child: Text(
+                isWin ? "W" : "L",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isWin ? Colors.green : Colors.red,
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-          // Date & Time
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children:  [
-                Text(
-                    transaction.createdAt != null
-                        ? DateFormat('dd MMM yyyy').format(DateTime.parse(transaction.createdAt!))
-                        : "N/A",
-                    style: Get.textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w400)
-                ),
-                SizedBox(height: 4),
-                Text(
-                    "${transaction.scoreboardId?.startTime ?? ''} - ${transaction.scoreboardId?.endTime ?? ''}",
-                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
-                ),
-              ],
+            // Date & Time
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:  [
+                  Text(
+                      transaction.createdAt != null
+                          ? DateFormat('dd MMM yyyy').format(DateTime.parse(transaction.createdAt!))
+                          : "N/A",
+                      style: Get.textTheme.headlineSmall!.copyWith(fontWeight: FontWeight.w400)
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                      "$startTime - $endTime",
+                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // XP Value
-          Text(
-              "${(transaction.xpChange ?? 0) > 0 ? '+' : ''}${(transaction.xpChange ?? 0).toStringAsFixed(2)} XP",
-              style:Get.textTheme.titleSmall!.copyWith(color: (transaction.xpChange ?? 0) > 0 ? Colors.green : Colors.red,)
+            // XP Value
+            Text(
+                "${(transaction.xpChange ?? 0) > 0 ? '+' : ''}${(transaction.xpChange ?? 0).toStringAsFixed(2)} XP",
+                style:Get.textTheme.titleSmall!.copyWith(color: (transaction.xpChange ?? 0) > 0 ? Colors.green : Colors.red,)
+            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

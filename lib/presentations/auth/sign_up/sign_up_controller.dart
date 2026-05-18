@@ -1,11 +1,17 @@
 // SignUpController.dart
 import 'dart:developer';
+import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/data/request_models/authentication_models/sign_up_model.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
+import 'package:padel_mobile/presentations/home/home_controller.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 class SignUpController extends GetxController {
   SignUpRepository signUpRepository = SignUpRepository();
@@ -41,8 +47,12 @@ class SignUpController extends GetxController {
   String? validatePhone() {
     if (phoneController.text.isEmpty) {
       return "Phone number is required";
+    } else if (phoneController.text.length != 10) {
+      return "Phone number must be exactly 10 digits";
     } else if (!GetUtils.isPhoneNumber(phoneController.text)) {
       return "Invalid phone number";
+    } else if (phoneController.text.startsWith(RegExp(r'[1-5]'))) {
+      return "Phone number cannot start with 1, 2, 3, 4, or 5";
     }
     return null;
   }
@@ -111,15 +121,7 @@ class SignUpController extends GetxController {
         if (!userExists) {
           await sendOTP();
         } else {
-          Fluttertoast.showToast(
-            msg: "Phone number ${phoneController.text.trim()} already exists",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0,
-            timeInSecForIosWeb: 3,
-          );
+          AppToast.error("Phone number ${phoneController.text.trim()} already exists");
         }
       } catch (e) {
         log(e.toString());
@@ -131,27 +133,11 @@ class SignUpController extends GetxController {
 
   Future<void> sendOTP() async {
     if (selectedGender.value.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please select your gender",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please select your gender");
       return;
     }
     else if (selectedLocation.value.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please select your Location",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 2,
-      );
+      AppToast.error("Please select your Location");
       return;
     }
     Map<String, dynamic> body = {
@@ -167,20 +153,14 @@ class SignUpController extends GetxController {
           // "email": emailController.text.trim(),
           "phoneNumber": phoneController.text.trim(),
           "type": OtpScreenType.createAccount,
+          "otp": result.otp,
           // "name": firstNameController.text.trim(),
           // "lastName": lastNameController.text.trim(),
         },
       );
+
     } else {
-      Fluttertoast.showToast(
-        msg: result.message!,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
+      AppToast.error(result.message!);
     }
   }
 
@@ -193,8 +173,9 @@ class SignUpController extends GetxController {
       "countryCode": "+91",
       "phoneNumber": phoneController.text.trim(),
       // "password": passwordController.text.trim(),
-      "city": selectedLocation.value,
+      "city": selectedLocationId.value,
       "gender": selectedGender.value,
+      "deviceType": Platform.isIOS ? "ios" : "android",
       // "agreeTermsAndCondition": true,
       // "location": {
       //   "type": "Point",
@@ -219,25 +200,42 @@ class SignUpController extends GetxController {
       if (firebaseToken != null && firebaseToken.isNotEmpty) {
         loginBody["fcmToken"] = firebaseToken;
       }
-      
+
+      final deviceInfo = DeviceInfoPlugin();
+      String? deviceId;
+      if (Platform.isAndroid) {
+        deviceId = (await deviceInfo.androidInfo).id;
+      } else if (Platform.isIOS) {
+        deviceId = (await deviceInfo.iosInfo).identifierForVendor;
+      }
+      if (deviceId != null && deviceId.isNotEmpty) {
+        loginBody["deviceId"] = deviceId;
+      }
+
       LoginModel loginResult = await loginRepository.loginUser(body: loginBody);
 
       if (loginResult.status == "200") {
-        storage.write('token', loginResult.response!.token);
-        storage.write('userId', loginResult.response!.user!.id);
-        Get.offAllNamed(RoutesName.bottomNav);
+        // Clear old data first
+        await storage.remove('token');
+        await storage.remove('userId');
+        
+        // Write new user data
+        await storage.write('token', loginResult.response!.token);
+        await storage.write('userId', loginResult.response!.user!.id);
+        
+        log("🔑 New user logged in - userId: ${loginResult.response!.user!.id}");
+        
+        // Delete old controllers to prevent showing old user data
+        Get.delete<HomeController>(force: true);
+        Get.delete<MainHomeController>(force: true);
+        Get.delete<ProfileController>(force: true);
+        
+        Get.offAllNamed(RoutesName.tutorial);
       }
 
     } else {
-      Fluttertoast.showToast(
-        msg: result.message!,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-        timeInSecForIosWeb: 3,
-      );
+      AppToast.error(result.message!);
+      print("ERROR----------------->${result.message!}");
     }
   }
   Future<String?> getFcmToken() async {
@@ -291,6 +289,7 @@ class SignUpController extends GetxController {
   var isLocationLoading = false.obs;
   var locations = <GetLocationData>[].obs;
   var selectedLocation = ''.obs;
+  var selectedLocationId = ''.obs;
   Future<void>fetchLocations()async{
     isLocationLoading.value = true;
     try{

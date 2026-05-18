@@ -3,86 +3,80 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/services/network/session_expired_screen.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../configs/components/snack_bars.dart';
 import '../../presentations/auth/forgot_password/widgets/forgot_password_exports.dart'
     hide Response;
 import '../../services/network/connectivity_service.dart';
 import 'dio_client.dart';
+
 class LoggerInterceptor extends Interceptor {
-  Logger logger = Logger(
-    printer: PrettyPrinter(methodCount: 0, colors: false, printEmojis: true),
+  final _prettyLogger = PrettyDioLogger(
+    requestHeader: true,
+    requestBody: true,
+    responseBody: true,
+    responseHeader: false,
+    error: true,
+    compact: true,
   );
 
   final ConnectivityService _connectivityService = ConnectivityService();
-
+  String? _getToken() => storage.read('token');
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    final options = err.requestOptions;
-    final requestPath = '${options.baseUrl}${options.path}';
-    logger.e('${options.method} request ==> $requestPath');
-    logger.d(
-      'Error type: ${err.error} \n'
-      'Error message: ${err.message}',
-    );
-    logger.d("TOKEN: ${storage.read('token')}");
+    final token = _getToken();
+    _highlightLog("🔴 ==============================");
+    _highlightLog("🔴 ERROR TOKEN: $token");
+    _highlightLog("🔴 ==============================");
 
     // Handle 401 Unauthorized (Token expired)
     if (err.response?.statusCode == 401) {
       final token = storage.read('token');
+      print("DDDDDDDDDDDDDDDDDDDDDDDDDD------------$token");
       if (token != null && token.isNotEmpty) {
         log("Token expired - redirecting to session expired page");
         await _handleTokenExpiration();
       } else {
         log("No token found, user hasn't logged in yet");
-        // Do nothing, let user continue to login/registration flow
       }
-      return handler.next(err);
-    }
-    // Check if it's a connectivity error
-    else if (err.type == DioExceptionType.connectionError ||
-        err.type == DioExceptionType.connectionTimeout ||
-        err.error is Exception &&
-            err.error.toString().contains('SocketException')) {
-      await _connectivityService.checkConnectivity();
-    } else if (err.response != null && err.response?.statusCode != 404) {
-      CustomLogger.logMessage(msg:  err.response?.data?['message'] ?? 'Api takes to much time to load', level: LogLevel.error);
     }
 
-    handler.next(err);
+    // Check if it's a connectivity error
+    if (err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        err.error is Exception && err.error.toString().contains('SocketException')) {
+      await _connectivityService.checkConnectivity();
+    }
+
+    _prettyLogger.onError(err, handler);
   }
 
-  /// Handle token expiration by clearing data and navigating to session expired page
   Future<void> _handleTokenExpiration() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _navigateToSessionExpired();
     });
   }
 
-  /// Navigate to session expired page
   void _navigateToSessionExpired() {
     try {
       if (Get.context != null) {
-        Get.to(() => SessionExpiredPage());
+        Get.offAll(() => SessionExpiredPage());
       }
     } catch (e) {
       log("Error navigating to session expired page: $e");
-      Get.to(() => SessionExpiredPage());
+      Get.offAll(() => SessionExpiredPage());
     }
   }
 
   @override
-  void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    final requestPath = '${options.baseUrl}${options.path}';
-    logger.i('${options.method} request ==> $requestPath');
-    logger.d("TOKEN: ${storage.read('token')}");
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    final token = _getToken();
+    _highlightLog("🟡 ==============================");
+    _highlightLog("🟡 REQUEST TOKEN: $token}");
+    _highlightLog("🟡 ==============================");
 
-    // Check for connectivity before making the request
     final isConnected = await _connectivityService.checkConnectivity();
     if (!isConnected) {
-      // The connectivity service will show the snackbar
       return handler.reject(
         DioException(
           requestOptions: options,
@@ -93,18 +87,26 @@ class LoggerInterceptor extends Interceptor {
       );
     }
 
-    handler.next(options);
+    _prettyLogger.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) async {
-    logger.d(
-      'STATUSCODE: ${response.statusCode} \n '
-      'STATUSMESSAGE: ${response.statusMessage} \n'
-      'HEADERS: ${response.headers} \n'
-      'Data: ${response.data}',
-    );
-    logger.d("TOKEN: ${storage.read('token')}");
-    handler.next(response);
+    final token = _getToken();
+    _highlightLog("🟢 ==============================");
+    _highlightLog("🟢 RESPONSE TOKEN: $token");
+    _highlightLog("🟢 ==============================");
+
+    _prettyLogger.onResponse(response, handler);
   }
+  void _highlightLog(String message) {
+    const yellow = '\x1B[33m';
+    const green = '\x1B[32m';
+    const red = '\x1B[31m';
+    const cyan = '\x1B[36m';
+    const reset = '\x1B[0m';
+
+    print('$cyan$message$reset');
+  }
+
 }

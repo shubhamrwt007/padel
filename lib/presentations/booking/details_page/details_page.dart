@@ -43,7 +43,8 @@ class DetailsScreen extends StatelessWidget {
     final loggedInUserId = controller.profileController.profileModel.value?.response?.sId;
     
     if (loggedInUserId == null || loggedInUserId.isEmpty) {
-      SnackBarUtils.showErrorSnackBar("Please login to access chat");
+      CustomLogger.logMessage(msg: "Please login to access chat", level: LogLevel.error);
+
       return;
     }
 
@@ -57,7 +58,8 @@ class DetailsScreen extends StatelessWidget {
     if (isUserInTeamA || isUserInTeamB) {
       Get.toNamed(RoutesName.chat, arguments: {"matchID": matchID});
     } else {
-      SnackBarUtils.showErrorSnackBar("Only match players can access the chat");
+      CustomLogger.logMessage(msg: "Only match players can access the chat", level: LogLevel.error);
+
     }
   }
   @override
@@ -924,7 +926,8 @@ class DetailsScreen extends StatelessWidget {
     final data = controller.localMatchData;
 
     return Container(
-      alignment: Alignment.center,
+      alignment: Alignment
+          .center,
       height: Get.height * .12,
       decoration: const BoxDecoration(
         color: Colors.white,

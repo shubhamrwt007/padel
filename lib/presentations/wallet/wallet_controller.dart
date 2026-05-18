@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
+import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/request_models/test_create_wallet_balance_model.dart';
 import 'package:padel_mobile/data/response_models/wallet/get_wallet_model.dart';
 import 'package:padel_mobile/data/response_models/wallet/transaction_history_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_controller.dart';
+import 'package:padel_mobile/presentations/user_requests/requests_controller.dart';
 import 'package:padel_mobile/repositories/wallet_repository/wallet_repository.dart';
 import 'package:padel_mobile/services/payment_services/razorpay.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
@@ -17,7 +21,6 @@ class WalletController extends GetxController {
   final WalletRepository repository = Get.put(WalletRepository());
   RazorpayPaymentService? _paymentService;
   ProfileController profileController = Get.put(ProfileController());
-
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
   var isWalletLoading = false.obs;
@@ -31,6 +34,15 @@ class WalletController extends GetxController {
   var hasMoreTransactions = true.obs;
   var selectedStartDate = Rxn<DateTime>();
   var selectedEndDate = Rxn<DateTime>();
+  
+  // Pending request context
+  String? pendingMatchId;
+  String? pendingBookingId;
+  String? pendingTeam;
+  dynamic pendingPrice;
+  String? pendingAcceptRequestId;
+  String? pendingAcceptRequestType;
+  final storage = GetStorage();
 
   Future<void> fetchTransaction({bool isRefresh = false}) async {
     try {
@@ -110,12 +122,11 @@ class WalletController extends GetxController {
       if (response.orderId != null && response.amount != null) {
         await _initiateRazorpayPayment(response.orderId!, response.amount!);
       } else {
-        // SnackBarUtils.showErrorSnackBar("Failed to create wallet order");
+        CustomLogger.logMessage(msg: "Failed to create wallet order", level: LogLevel.error);
         isAddingBalance.value = false;
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Something went wrong");
       isAddingBalance.value = false;
     }
   }
@@ -124,7 +135,6 @@ class WalletController extends GetxController {
     try {
       await _paymentService!.initiatePayment(
 
-        // keyId: 'rzp_test_1DP5mmOlF5G5ag',
         ///Live Key-----------------------------
         keyId: 'rzp_live_RtOIWe2johK6H7',
         amount: amount.toDouble(),
@@ -133,9 +143,8 @@ class WalletController extends GetxController {
         description: 'Add balance to wallet',
         image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         orderId: orderId,
-        userEmail: profileController.profileModel.value?.response?.email ??
-            'test@example.com',
-        userContact: '9999999999',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
         notes: {
           'user_id': profileController.profileModel.value?.response?.sId ?? '',
           'type': 'wallet_recharge',
@@ -146,7 +155,6 @@ class WalletController extends GetxController {
     } catch (e) {
       CustomLogger.logMessage(
           msg: "Payment initiation error: $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment");
       isAddingBalance.value = false;
     }
   }
@@ -154,18 +162,102 @@ class WalletController extends GetxController {
   Future<void> _onPaymentSuccess(String paymentId, String orderId,
       String signature) async {
     try {
-      // SnackBarUtils.showSuccessSnackBar("Balance added successfully");
       await fetchWallet();
       await fetchTransaction(isRefresh: true);
+      
+      // If there's a pending request, call the request API
+      if (pendingMatchId != null && pendingBookingId != null && pendingTeam != null) {
+        await _executeRequestAfterPayment();
+      }
+      
+      // If there's a pending accept request, call the accept API
+      if (pendingAcceptRequestId != null && pendingAcceptRequestType != null) {
+        await _executeAcceptAfterPayment();
+      }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR -> $e", level: LogLevel.error);
     } finally {
       isAddingBalance.value = false;
     }
   }
+  
+  Future<void> _executeRequestAfterPayment() async {
+    try {
+      final addPlayerController = Get.put(AddPlayerController());
+      addPlayerController.matchId.value = pendingMatchId!;
+      addPlayerController.selectedTeam.value = pendingTeam!;
+      addPlayerController.playerId.value = storage.read("userId") ?? '';
+      
+      final success = await addPlayerController.requestPlayerForOpenMatch(
+        bookingId: pendingBookingId!,
+        price: pendingPrice,
+      );
+      
+      if (success) {
+        // Refresh match list
+        if (addPlayerController.openMatchForAllCourtController != null) {
+          await addPlayerController.openMatchForAllCourtController!.fetchMatchesForSelection();
+        }
+        
+        Get.back(result: true);
+        CustomLogger.logMessage(
+          msg: "Request sent successfully after payment",
+          level: LogLevel.info,
+        );
+      }
+      
+      // Clear pending context
+      pendingMatchId = null;
+      pendingBookingId = null;
+      pendingTeam = null;
+      pendingPrice = null;
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "Error executing request after payment: $e",
+        level: LogLevel.error,
+      );
+    }
+  }
+
+  Future<void> _executeAcceptAfterPayment() async {
+    try {
+      final requestsController = Get.put(RequestsController());
+      final body = {
+        "requestId": pendingAcceptRequestId!,
+        "action": "accept",
+      };
+
+      if (pendingAcceptRequestType == 'booking_invitation') {
+        await requestsController.repository.respondToBookingRequest(body: body);
+      } else if (pendingAcceptRequestType == 'request') {
+        body["type"] = "MatchCreator";
+        await requestsController.repository.acceptOrRejectRequestPlayer(body: body);
+      } else if (pendingAcceptRequestType == 'invitation') {
+        await requestsController.repository.acceptOrRejectRequestPlayer(body: body);
+      }
+
+      // Refresh requests
+      await requestsController.fetchJoinRequests();
+      await profileController.fetCustomerLeaderBoardRank();
+      
+      Get.back(result: true);
+      CustomLogger.logMessage(
+        msg: "Request accepted successfully after payment",
+        level: LogLevel.info,
+      );
+      
+      // Clear pending context
+      pendingAcceptRequestId = null;
+      pendingAcceptRequestType = null;
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "Error accepting request after payment: $e",
+        level: LogLevel.error,
+      );
+    }
+  }
 
   void _onPaymentError(String error) {
-    // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
     CustomLogger.logMessage(
         msg: "Payment failed: $error", level: LogLevel.error);
     isAddingBalance.value = false;

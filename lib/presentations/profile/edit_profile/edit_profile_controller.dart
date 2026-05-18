@@ -1,8 +1,10 @@
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
+import 'package:padel_mobile/presentations/home/home_controller.dart';
 class EditProfileController extends GetxController{
   ProfileController profileController = Get.put(ProfileController());
     TextEditingController nameController = TextEditingController();
@@ -16,6 +18,7 @@ class EditProfileController extends GetxController{
 
   RxBool isLoading = false.obs;
   RxString selectedGender = ''.obs;
+  final RxString lockedGender = ''.obs; // gender is display-only on edit profile
   Rx<XFile?> profileImage = Rx<XFile?>(null);
   RxBool isProfileUpdated = false.obs;
     RxString profileImageUrl = ''.obs;
@@ -26,6 +29,7 @@ class EditProfileController extends GetxController{
     emailController.text = model?.response?.email ?? '';
     phoneController.text = model?.response?.phoneNumber?.toString() ?? '';
     selectedGender.value = model?.response?.gender ?? "";
+    lockedGender.value = selectedGender.value;
     profileImageUrl.value = model?.response?.profilePic?.toString() ?? '';
     // Format DOB
     final dob = model?.response?.dob;
@@ -39,7 +43,8 @@ class EditProfileController extends GetxController{
     } else {
       selectedDate.value = "";
     }
-    selectedLocation.value = model?.response?.city ?? '';
+    selectedLocation.value = model?.response?.city?.name ?? '';
+    selectedLocationId.value = model?.response?.city?.sId ?? '';
   }
 
   void selectDate(BuildContext context) async {
@@ -198,29 +203,44 @@ class EditProfileController extends GetxController{
 
       }
 
+      final locationId = selectedLocationId.value.isNotEmpty 
+          ? selectedLocationId.value 
+          : locations.firstWhere((loc) => loc.name == selectedLocation.value, orElse: () => GetLocationData()).id ?? '';
+
       final updatedProfile = await profileRepository.updateUserProfile(
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         // lastName: lastNameController.text.trim(),
-        gender: selectedGender.value,
+        gender: lockedGender.value,
         dob: formattedDate,
-        city: selectedLocation.value,
+        city: locationId,
         location: locationJson,
         profileImage: profileImage.value != null ? File(profileImage.value!.path) : null,
       );
 
       if (updatedProfile.status == "200") {
         await profileController.fetchUserProfile();
+        
+        // Refresh MainHomeController and HomeController APIs
+        try {
+          final mainHomeController = Get.find<MainHomeController>();
+          final homeController = Get.find<HomeController>();
+          final locationId = profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+          final categoryId = mainHomeController.selectedCategoryId.value;
+          
+          await Future.wait([
+            homeController.fetchBookings(categoryId: categoryId, locationId: locationId),
+            homeController.fetchClubs(isRefresh: true, categoryId: categoryId, locationId: locationId),
+            mainHomeController.fetchOpenMatches(),
+            mainHomeController.fetchNearCityPlayers(),
+          ]);
+        } catch (e) {
+          CustomLogger.logMessage(msg: 'Error refreshing home data: $e', level: LogLevel.error);
+        }
+        
         Get.back();
-        Fluttertoast.showToast(
-          msg: "Profile Updated Successfully",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: AppColors.secondaryColor,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.success("Profile Updated Successfully");
+
       } else {
         CustomLogger.logMessage(msg: "UPDATE PROFILE ERROR",level: LogLevel.error);
       }
@@ -254,9 +274,9 @@ class EditProfileController extends GetxController{
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imagePath,
         aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressQuality: 100,
-        maxWidth: 1000,
-        maxHeight: 1000,
+        compressQuality: 70,
+        maxWidth: 512,
+        maxHeight: 512,
         compressFormat: ImageCompressFormat.jpg,
         uiSettings: [
           AndroidUiSettings(
@@ -265,10 +285,12 @@ class EditProfileController extends GetxController{
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: true,
+            cropStyle: CropStyle.circle,
           ),
           IOSUiSettings(
             title: 'Crop Image',
             aspectRatioLockEnabled: true,
+            cropStyle: CropStyle.circle,
           ),
         ],
       );
@@ -347,6 +369,7 @@ class EditProfileController extends GetxController{
   var locations = <GetLocationData>[].obs;
   var isLocationLoading = false.obs;
   var selectedLocation = "".obs;
+  var selectedLocationId = "".obs;
   SignUpRepository signUpRepository = Get.put(SignUpRepository());
   Future<void>fetchLocations()async{
     isLocationLoading.value = true;

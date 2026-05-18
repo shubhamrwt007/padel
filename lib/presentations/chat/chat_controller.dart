@@ -336,10 +336,6 @@ class ChatController extends GetxController {
   /// Mark all messages as read for this match
   void markAllMessagesAsRead() {
     if (!isChatScreenActive.value) {
-      CustomLogger.logMessage(
-        msg: '⚠️ Chat screen not active, skipping mark as read',
-        level: LogLevel.info,
-      );
       return;
     }
     if (socket.connected && matchId.value.isNotEmpty) {
@@ -348,21 +344,6 @@ class ChatController extends GetxController {
         msg: '📖 Marked all messages as read for match: ${matchId.value}',
         level: LogLevel.info,
       );
-    } else {
-      CustomLogger.logMessage(
-        msg: '⚠️ Cannot mark messages as read - socket not connected or matchId empty',
-        level: LogLevel.warning,
-      );
-      // Retry after a short delay if socket not connected yet
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (socket.connected && matchId.value.isNotEmpty) {
-          socket.emit('markMessageRead', {'matchId': matchId.value});
-          CustomLogger.logMessage(
-            msg: '📖 Marked all messages as read for match: ${matchId.value} (retry)',
-            level: LogLevel.info,
-          );
-        }
-      });
     }
   }
 
@@ -373,10 +354,6 @@ class ChatController extends GetxController {
   void onScrollStart() {
     showDateHeader.value = true;
     updateCurrentScrollDate();
-    // Mark messages as read when user scrolls (indicating they're viewing)
-    if (isChatScreenActive.value) {
-      markAllMessagesAsRead();
-    }
   }
 
   void onScrollEnd() {
@@ -449,15 +426,24 @@ class ChatController extends GetxController {
         _sharedSocket = null;
       } else {
         CustomLogger.logMessage(msg: "♻️ CHAT: Reusing existing socket for same user", level: LogLevel.info);
-        isConnected.value = true;
+        isConnected.value = _sharedSocket!.connected;
+        
+        if (!_sharedSocket!.connected) {
+          CustomLogger.logMessage(msg: "🔄 CHAT: Socket exists but not connected, reconnecting...", level: LogLevel.warning);
+          _sharedSocket!.connect();
+        }
+        
+        // Bind listeners FIRST before joining match to catch all events
+        _bindSocketListeners();
+        // Then join the match
         _sharedSocket!.emit('joinMatch', matchId.value);
+        CustomLogger.logMessage(
+            msg: '🚪 Joined match (reused socket): ${matchId.value}', level: LogLevel.info);
         _sharedSocket!.emit('getConnectedPlayers', {'matchId': matchId.value});
         getMatchPlayers();
         if (messages.isEmpty) {
           getMessages();
         }
-        // Ensure listeners point to THIS controller instance
-        _bindSocketListeners();
         return;
       }
     }
@@ -473,6 +459,10 @@ class ChatController extends GetxController {
           .build(),
     );
     CustomLogger.logMessage(msg: "🔗 CHAT: Socket created with auth userId: $currentUserId",level: LogLevel.info);
+    
+    // Bind listeners BEFORE connecting to ensure we catch all events
+    _bindSocketListeners();
+    
     _sharedSocket!.connect();
 
     // Log all incoming events to understand what the backend is sending
@@ -487,23 +477,45 @@ class ChatController extends GetxController {
       CustomLogger.logMessage(
           msg: '✅ Socket connected successfully', level: LogLevel.info);
       isConnected.value = true;
+      
+      // Ensure listeners are bound (in case of reconnection)
+      _bindSocketListeners();
+      
       // Join the match once connected
       _sharedSocket!.emit('joinMatch', matchId.value);
+      CustomLogger.logMessage(
+          msg: '🚪 Joined match: ${matchId.value}', level: LogLevel.info);
       // Request connected players
       _sharedSocket!.emit('getConnectedPlayers', {'matchId': matchId.value});
       // Request all match players
       getMatchPlayers();
-      // Fetch existing messages only if not already loaded
+      // Only fetch messages if we don't have any yet
       if (messages.isEmpty) {
+        CustomLogger.logMessage(
+            msg: '📥 Fetching initial messages', level: LogLevel.info);
         getMessages();
+      } else {
+        CustomLogger.logMessage(
+            msg: '✅ Already have ${messages.length} messages, relying on real-time updates', level: LogLevel.info);
       }
     });
-    _bindSocketListeners();
+    
+    // Don't bind listeners here again - already bound before connect
 
     _sharedSocket!.on('disconnect', (reason) {
       CustomLogger.logMessage(
           msg: '❌ Socket disconnected: $reason', level: LogLevel.error);
       isConnected.value = false;
+      // Auto-reconnect if not intentional disconnect
+      if (reason != 'io client disconnect') {
+        CustomLogger.logMessage(
+            msg: '🔄 Attempting to reconnect...', level: LogLevel.info);
+        Future.delayed(const Duration(seconds: 2), () {
+          if (_sharedSocket != null && !_sharedSocket!.connected) {
+            _sharedSocket!.connect();
+          }
+        });
+      }
     });
 
     _sharedSocket!.on('connect_error', (error) {
@@ -522,6 +534,11 @@ class ChatController extends GetxController {
   /// instance consuming events when we reuse the shared socket.
   void _bindSocketListeners() {
     if (_sharedSocket == null) return;
+
+    CustomLogger.logMessage(
+      msg: '🔗 Binding socket listeners for match: ${matchId.value}',
+      level: LogLevel.info,
+    );
 
     // Remove previous bindings for these events to prevent duplicate handlers
     _sharedSocket!
@@ -547,6 +564,11 @@ class ChatController extends GetxController {
     _sharedSocket!.on('playersReceived', _handleMatchPlayers);
     _sharedSocket!.on('allPlayersReceived', _handleMatchPlayers);
     _sharedSocket!.on('matchPlayers', _handleMatchPlayers);
+    
+    CustomLogger.logMessage(
+      msg: '✅ Socket listeners bound successfully',
+      level: LogLevel.info,
+    );
   }
 
   void sendMessage() {
@@ -554,7 +576,7 @@ class ChatController extends GetxController {
     
     // Mark all messages as read when user sends a message
     markAllMessagesAsRead();
-    
+    print("Send Message -- ");
     socket.emit('sendMessage', {
       'matchId': matchId.value,
       'message': messageController.text.trim()
@@ -584,7 +606,21 @@ class ChatController extends GetxController {
       scrollToBottom();
     });
   }
-  Future<void> getMessages() async {
+  void getMessages() {
+    if (!socket.connected) {
+      CustomLogger.logMessage(
+        msg: '⚠️ Cannot get messages - socket not connected',
+        level: LogLevel.warning,
+      );
+      // Retry after connection
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (socket.connected) {
+          getMessages();
+        }
+      });
+      return;
+    }
+    
     socket.emit('getMessages', {
       'matchId': matchId.value,
     });
@@ -890,18 +926,7 @@ class ChatController extends GetxController {
       // Auto-scroll to bottom after loading messages
       WidgetsBinding.instance.addPostFrameCallback((_) {
         scrollToBottom();
-        // Mark all loaded messages as read since user opened chat
-        Future.delayed(const Duration(milliseconds: 1000), () {
-          if (isChatScreenActive.value) {
-            markAllMessagesAsRead();
-          }
-        });
       });
-
-      // Mark messages as read immediately when messages are loaded
-      if (isChatScreenActive.value) {
-        markAllMessagesAsRead();
-      }
 
       // PRINT / LOG ALL MESSAGES AFTER MAPPING
       CustomLogger.logMessage(
@@ -920,6 +945,11 @@ class ChatController extends GetxController {
   /// Handle a single new message pushed from the backend.
   void _handleNewMessage(dynamic data) {
     try {
+      CustomLogger.logMessage(
+        msg: '🆕 _handleNewMessage received: $data',
+        level: LogLevel.info,
+      );
+      
       final map = Map<String, dynamic>.from(
           data is Map ? data : (data['message'] as Map));
       // Handle both flat and nested senderId (same as in _handleMessages)
@@ -943,6 +973,10 @@ class ChatController extends GetxController {
       // we already added it optimistically in `sendMessage()`.
       // Skip adding again to avoid showing the same text on both sides.
       if (senderId == userId) {
+        CustomLogger.logMessage(
+          msg: '⏭️ Skipping own message from server (already added locally)',
+          level: LogLevel.info,
+        );
         return;
       }
 
@@ -969,6 +1003,11 @@ class ChatController extends GetxController {
         'dateTime': dateTime,
         'messageId': messageId,
       };
+      
+      CustomLogger.logMessage(
+        msg: '✅ Adding new message from ${senderName}: ${newMessage['message']}',
+        level: LogLevel.info,
+      );
       
       messages.add(newMessage);
       messages.refresh();
@@ -1002,8 +1041,8 @@ class ChatController extends GetxController {
         );
       }
       
-      // Mark new message as read since chat is open
-      Future.delayed(const Duration(milliseconds: 500), () {
+      // Mark new message as read after a delay
+      Future.delayed(const Duration(seconds: 1), () {
         if (isChatScreenActive.value) {
           markAllMessagesAsRead();
         }

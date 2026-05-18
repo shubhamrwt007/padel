@@ -40,6 +40,19 @@ class SignUpRepository {
           "Sign up failed with status code: ${response.statusCode}",
         );
       }
+    } on DioException catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Login failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      if (e.response != null && e.response!.data is Map) {
+        return SignUpModel(
+          status: e.response!.data['status'] ?? '${e.response!.statusCode}',
+          message: e.response!.data['message'] ?? 'Something went wrong',
+        );
+      }
+      rethrow;
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Login failed with error: ${e.toString()}",

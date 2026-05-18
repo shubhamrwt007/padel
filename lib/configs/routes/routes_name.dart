@@ -65,12 +65,31 @@ class RoutesName {
   //ScoreBoard------------------------------------------------------------------
   static const String scoreBoard = '/scoreBoard';
   //New---
-  static const String yourMatchRequest = '/yourMatchRequest';
   static const String requests = '/requests';
 
   //Wallet----------------------------------------------------------------------
   static const String wallet = '/wallet';
 
-  //Xp Points----------------------------------------------------------------------
+  //Xp Points-------------------------------------------------------------------
   static const String xpPoints = '/xpPoints';
+
+  //Tutorial--------------------------------------------------------------------
+  static const String tutorial = '/tutorial';
+
+  //Tournaments-----------------------------------------------------------------
+  static const String tournaments = '/tournaments';
+  static const String fipPromises = '/fipPromises';
+  static const String liveTournament = '/liveTournament';
+  static const String joinTournament = '/joinTournament';
+
+  //League----------------------------------------------------------------------
+  static const String league = '/league';
+  static const String leagueMatchLists = '/leagueMatchLists';
+  static const String liveAndCompleteLeagueMatch = '/liveAndCompleteLeagueMatch';
+
+  //IPT Tournament--------------------------------------------------------------
+  static const String iptTournament = '/iptTournament';
+  static const String iptTournamentMatchLists = '/iptTournamentMatchLists';
+  static const String liveAndCompleteIptTournamentMatch = '/liveAndCompleteIptTournamentMatch';
+
 }

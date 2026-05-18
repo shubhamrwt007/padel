@@ -1,4 +1,4 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_binding.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_screen.dart';
@@ -10,14 +10,10 @@ import 'package:padel_mobile/presentations/book_a_court/book_a_court_binding.dar
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_screen.dart';
 import 'package:padel_mobile/presentations/booking/americano/americano_binding.dart';
 import 'package:padel_mobile/presentations/booking/americano/americano_screen.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_binding.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_binding.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/create_open_matches/create_open_matches_binding.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/create_open_matches/create_open_matches_screen.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_binding.dart';
-import 'package:padel_mobile/presentations/booking/open_matches/your_match_requests/your_match_requests_screen.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_binding.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/booking/booking_binding.dart';
@@ -28,8 +24,20 @@ import 'package:padel_mobile/presentations/bottomnav/bottom_nav.dart';
 import 'package:padel_mobile/presentations/chat/chat_screen.dart';
 import 'package:padel_mobile/presentations/home/home_binding.dart';
 import 'package:padel_mobile/presentations/home/home_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_match_lists/ipt_tournament_match_list_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_match_lists/ipt_tournament_match_list_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_screen.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/live_and_complete_ipt_tournament_match_details/live_and_complete_ipt_tournament_match_binding.dart';
+import 'package:padel_mobile/presentations/ipt_tournament/live_and_complete_ipt_tournament_match_details/live_and_complete_ipt_tournament_match_screen.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_binding.dart';
 import 'package:padel_mobile/presentations/leaderBoard/leader_board_screen.dart';
+import 'package:padel_mobile/presentations/league/league_binding.dart';
+import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_binding.dart';
+import 'package:padel_mobile/presentations/league/league_match_lists/league_match_list_screen.dart';
+import 'package:padel_mobile/presentations/league/league_screen.dart';
+import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_binding.dart';
+import 'package:padel_mobile/presentations/league/live_and_complete_league_match_details/live_and_complete_league_match_screen.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_binding.dart';
 import 'package:padel_mobile/presentations/main_home_page/main_home_screen.dart';
 import 'package:padel_mobile/presentations/notification/notification_binding.dart';
@@ -60,6 +68,16 @@ import 'package:padel_mobile/presentations/scoreview/score_view_binding.dart';
 import 'package:padel_mobile/presentations/splash/splash_screen.dart';
 import 'package:padel_mobile/presentations/support/support_binding.dart';
 import 'package:padel_mobile/presentations/support/support_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/fip_promises/fip_promises_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/join_tournament/join_tournament_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/live_tournament/live_tournament_screen.dart';
+import 'package:padel_mobile/presentations/tournaments/tournaments_binding.dart';
+import 'package:padel_mobile/presentations/tournaments/tournaments_screen.dart';
+import 'package:padel_mobile/presentations/tutorial/tutorial_binding.dart';
+import 'package:padel_mobile/presentations/tutorial/tutorial_screen.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_binding.dart';
 import 'package:padel_mobile/presentations/user_requests/requests_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_binding.dart';
@@ -296,7 +314,7 @@ class Routes {
     ///New UI-------------------------------------------------------------------
     GetPage(
       name: RoutesName.openMatchForAllCourts,
-      page: () => OpenMatchForAllCourtScreen(),
+      page: () => const OpenMatchForAllCourtScreen(),
       binding: OpenMatchForAllCourtBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
@@ -341,13 +359,7 @@ class Routes {
       transitionDuration: defaultDuration,
     ),
     ///Requests-----------------------------------------------------------------
-    GetPage(
-      name: RoutesName.yourMatchRequest,
-      page: () => YourMatchRequestsScreen(),
-      binding: YourMatchRequestsBinding(),
-      transition: Transition.rightToLeft,
-      transitionDuration: defaultDuration,
-    ),   GetPage(
+   GetPage(
       name: RoutesName.requests,
       page: () => RequestsScreen(),
       binding: RequestsBinding(),
@@ -364,11 +376,97 @@ class Routes {
       transitionDuration: defaultDuration,
     ),
 
+
     ///XP Points----------------------------------------------------------------
     GetPage(
       name: RoutesName.xpPoints,
       page: () => XpPointsScreen(),
       binding: XpPointsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    ///Tutorial----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.tutorial,
+      page: () => TutorialScreen(),
+      binding: TutorialBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///Tournaments----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.tournaments,
+      page: () => TournamentsScreen(),
+      binding: TournamentsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.fipPromises,
+      page: () => FipPromisesScreen(),
+      binding: FipPromisesBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveTournament,
+      page: () => LiveTournamentScreen(),
+      binding: LiveTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.joinTournament,
+      page: () => JoinTournamentScreen(),
+      binding: JoinTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///League-------------------------------------------------------------------
+    GetPage(
+      name: RoutesName.league,
+      page: () => LeagueScreen(),
+      binding: LeagueBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.leagueMatchLists,
+      page: () => LeagueMatchListScreen(),
+      binding: LeagueMatchListBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveAndCompleteLeagueMatch,
+      page: () => LiveAndCompleteLeagueMatchScreen(),
+      binding: LiveAndCompleteLeagueMatchBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+
+    ///IPT TOURNAMENT-----------------------------------------------------------
+    GetPage(
+      name: RoutesName.iptTournament,
+      page: () => IptTournamentScreen(),
+      binding: IptTournamentBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.iptTournamentMatchLists,
+      page: () => IptTournamentListScreen(),
+      binding: IptTournamentListBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveAndCompleteIptTournamentMatch,
+      page: () => LiveAndCompleteIptTournamentMatchScreen(),
+      binding: LiveAndCompleteIptTournamentMatchBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

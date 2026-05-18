@@ -28,11 +28,13 @@ class GetCourtsByDurationData {
   String? clubName;
   RegisterClub? registerClub;
   List<Court>? courts;
+  bool? isRequestedTime;
 
   GetCourtsByDurationData({
     this.clubName,
     this.registerClub,
     this.courts,
+    this.isRequestedTime,
   });
 
   GetCourtsByDurationData.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class GetCourtsByDurationData {
     registerClub = json['register_club_id'] != null
         ? RegisterClub.fromJson(json['register_club_id'])
         : null;
+    isRequestedTime = json['isRequestedTime'];
 
     if (json['courts'] != null) {
       courts = <Court>[];
@@ -53,17 +56,20 @@ class GetCourtsByDurationData {
 class Court {
   String? id;
   String? courtName;
+  List<int>? slotDuration;
   List<CourtSlot>? slots;
 
   Court({
     this.id,
     this.courtName,
+    this.slotDuration,
     this.slots,
   });
 
   Court.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
     courtName = json['courtName'];
+    slotDuration = json['slotDuration']?.cast<int>();
 
     if (json['slots'] != null) {
       slots = <CourtSlot>[];
@@ -84,7 +90,9 @@ class RegisterClub {
   int? totalAmount;
   String? zipCode;
   String? city;
+  String? logo;
   List<String>? courtImage;
+  List<Location>? locations;
 
   RegisterClub({
     this.id,
@@ -96,7 +104,9 @@ class RegisterClub {
     this.totalAmount,
     this.zipCode,
     this.city,
+    this.logo,
     this.courtImage,
+    this.locations,
   });
 
   RegisterClub.fromJson(Map<String, dynamic> json) {
@@ -108,12 +118,20 @@ class RegisterClub {
     totalAmount = json['totalAmount'];
     zipCode = json['zipCode'];
     city = json['city'];
+    logo = json['logo'];
     courtImage = json['courtImage']?.cast<String>();
 
     if (json['businessHours'] != null) {
       businessHours = <BusinessHour>[];
       json['businessHours'].forEach((v) {
         businessHours!.add(BusinessHour.fromJson(v));
+      });
+    }
+
+    if (json['locations'] != null) {
+      locations = <Location>[];
+      json['locations'].forEach((v) {
+        locations!.add(Location.fromJson(v));
       });
     }
   }
@@ -137,15 +155,47 @@ class BusinessHour {
   }
 }
 
+class Location {
+  String? id;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+  List<String>? courtType;
+  List<String>? categories;
+
+  Location({
+    this.id,
+    this.city,
+    this.address,
+    this.zipCode,
+    this.state,
+    this.courtType,
+    this.categories,
+  });
+
+  Location.fromJson(Map<String, dynamic> json) {
+    id = json['_id'];
+    city = json['city'];
+    address = json['address'];
+    zipCode = json['zipCode'];
+    state = json['state'];
+    courtType = json['courtType']?.cast<String>();
+    categories = json['categories']?.cast<String>();
+  }
+}
+
 class CourtSlot {
   String? id;
   String? time;
   int? amount;
+
   int? duration;
   String? status;
   String? bookingTime;
   int? bookingCount;
   bool? has30MinPrice;
+  bool? isRequestedTime;
 
   CourtSlot({
     this.id,
@@ -156,6 +206,7 @@ class CourtSlot {
     this.bookingTime,
     this.bookingCount,
     this.has30MinPrice,
+    this.isRequestedTime,
   });
 
   CourtSlot.fromJson(Map<String, dynamic> json) {
@@ -167,5 +218,6 @@ class CourtSlot {
     bookingTime = json['bookingTime'];
     bookingCount = json['bookingCount'];
     has30MinPrice = json['has30MinPrice'];
+    isRequestedTime = json['isRequestedTime'];
   }
 }

@@ -74,11 +74,19 @@ class OpenMatchesController extends GetxController {
   Courts argument = Courts();
   Rx<DateTime> focusedDate = DateTime.now().obs; // Add this new line
 
+  var categoryId = "".obs;
+  var locationID = "".obs;
+  var locationsId = "".obs;
+  var sId = "".obs;
   @override
   void onInit() {
     super.onInit();
     focusedDate.value = selectedDate.value; // Add this line
     argument = Get.arguments["data"];
+    sId.value = Get.arguments['sID']??"";
+    categoryId.value = Get.arguments['categoryId']??"";
+    locationID.value = Get.arguments['location']??"";
+    locationsId.value = Get.arguments['locationsId']??"";
     if (timeSlots.isNotEmpty) {
       final firstAvail = firstAvailableSlot();
       if (firstAvail != null) {
@@ -94,7 +102,7 @@ class OpenMatchesController extends GetxController {
     }
   }
 
-  /// Get time period (morning, noon, night) for a given time slot
+  /// Get time period (morning, noon, evening) for a given time slot
   String getTimePeriod(String timeSlot) {
     try {
       final cleaned = timeSlot.replaceAll(' ', '').toUpperCase();
@@ -109,7 +117,7 @@ class OpenMatchesController extends GetxController {
           try {
             parsed = DateFormat('ha').parse(cleaned);
           } catch (_) {
-            return 'morning'; // default fallback
+            return 'morning';
           }
         }
       }
@@ -118,10 +126,10 @@ class OpenMatchesController extends GetxController {
 
       if (hour >= 6 && hour < 12) {
         return 'morning'; // 6 AM - 11:59 AM
-      } else if (hour >= 12 && hour < 18) {
-        return 'noon'; // 12 PM - 5:59 PM
+      } else if (hour >= 12 && hour < 17) {
+        return 'afternoon'; // 12 PM - 4:59 PM
       } else {
-        return 'night'; // 6 PM - 5:59 AM
+        return 'evening'; // 5 PM onwards
       }
     } catch (_) {
       return 'morning';
@@ -131,6 +139,13 @@ class OpenMatchesController extends GetxController {
   /// Filter slots by selected time period
   List<String> filterSlotsByPeriod(List<String> slots) {
     final filter = selectedTimeFilter.value;
+    if (filter == 'afternoon') {
+      // Noon: 12 PM to 4 PM
+      return slots.where((slot) => getTimePeriod(slot) == 'afternoon').toList();
+    } else if (filter == 'evening') {
+      // Evening: 5 PM to 11 PM
+      return slots.where((slot) => getTimePeriod(slot) == 'evening').toList();
+    }
     return slots.where((slot) => getTimePeriod(slot) == filter).toList();
   }
 
@@ -150,7 +165,7 @@ class OpenMatchesController extends GetxController {
       isLoading.value = true;
 
       if (selectedTime == null) {
-        Get.snackbar("Error", "Please select a time slot");
+        CustomLogger.logMessage(msg: "Please select a time slot", level: LogLevel.error);
         return;
       }
 
@@ -165,10 +180,10 @@ class OpenMatchesController extends GetxController {
       final response = await repository.createMatch(data: data);
 
       createdMatch.value = response;
+      CustomLogger.logMessage(msg: "Match created successfully!", level: LogLevel.error);
 
-      Get.snackbar("Success", "Match created successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomLogger.logMessage(msg: e, level: LogLevel.error);
     } finally {
       isLoading.value = false;
     }
@@ -194,6 +209,7 @@ class OpenMatchesController extends GetxController {
         matchTime: '',
         cubId: argument.id ?? "",
         search: selectedGameLevel.value == 'Game Level' ? '' : selectedGameLevel.value,
+        dayfilter: selectedTimeFilter.value,
       );
       matchesBySelection.value = response;
     } catch (e) {
@@ -308,7 +324,6 @@ class OpenMatchesController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -327,9 +342,7 @@ class OpenMatchesController extends GetxController {
       
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      
-      SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
-      
+
       // Refresh matches
       await fetchMatchesForSelection();
     } catch (e) {
@@ -352,7 +365,6 @@ class OpenMatchesController extends GetxController {
       
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      SnackBarUtils.showSuccessSnackBar("Request rejected");
     } catch (e) {
       CustomLogger.logMessage(msg: "Error rejecting request: $e", level: LogLevel.error);
     } finally {
@@ -360,12 +372,12 @@ class OpenMatchesController extends GetxController {
     }
   }
   /// Find Near By Players Api--------------------------------------------------
-  Future<void> fetchNearByPlayers({String search = ''}) async {
+  Future<void> fetchNearByPlayers({String search = '', String? bookingId = ''}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
       
-      final response = await repository.findNearByPlayer(search: search);
+      final response = await repository.findNearByPlayer(search: search,bookingId:bookingId );
       if(response.status == 200 && response.players != null){
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
@@ -373,9 +385,11 @@ class OpenMatchesController extends GetxController {
           // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName': player.cityName ?? '',
           'level': player.level ?? '',
           'xpPoints': player.xpPoints ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+          'hasPendingRequest': player.hasPendingRequest??false
         }).toList();
       }
     } catch (e) {

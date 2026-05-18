@@ -1,17 +1,14 @@
 name: padel_mobile
 description: "A new Flutter project."
 publish_to: 'none'
-
-#version: 1.0.1+7
-version: 1.0.2
+version: 1.0.18
+#version: 1.0.15+27
 
 environment:
   sdk: ^3.8.1
-
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
   get:
   uuid:
@@ -27,6 +24,7 @@ dependencies:
   intl:
   flutter_map:
   latlong2:
+  webview_flutter:
   google_nav_bar:
   flutter_slidable:
   dropdown_search:
@@ -34,11 +32,12 @@ dependencies:
   image_cropper:
   cached_network_image:
   razorpay_flutter: ^1.4.0
-  flutter_local_notifications:
+  flutter_local_notifications: ^17.0.0
   firebase_messaging:
   timezone:
   permission_handler:
   path_provider:
+  device_info_plus:
   firebase_core:
   flutter_dash:
   shimmer:
@@ -54,12 +53,25 @@ dependencies:
   fluttertoast:
   rolling_number_text:
   animate_do: ^3.3.4
+  youtube_player_flutter: ^9.1.1
+  sms_autofill:
+  otp_autofill: ^4.1.0
+  pretty_dio_logger:
+  package_info_plus: ^9.0.0
+  marquee_widget: ^1.2.0
 
 dev_dependencies:
+  flutter_launcher_icons:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/playstore.png"
+  image_path: "assets/images/playstore.png"
 
 flutter:
   uses-material-design: true

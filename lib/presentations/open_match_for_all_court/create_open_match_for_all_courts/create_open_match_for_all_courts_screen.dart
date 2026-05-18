@@ -1,5 +1,5 @@
+import 'dart:developer';
 import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
@@ -16,16 +16,16 @@ import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart' as GetCourtsByDurationModel;
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
+import 'package:padel_mobile/services/socket_service.dart';
+import 'package:padel_mobile/core/network/dio_client.dart' show storage;
 import 'create_open_match_for_all_courts_controller.dart';
-
-
-
 class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   final CreateOpenMatchForAllCourtsController controller = Get.put(CreateOpenMatchForAllCourtsController());
   final WalletController walletController = Get.put(WalletController());
@@ -39,6 +39,24 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     // Fetch wallet balance when screen builds
     walletController.fetchWallet();
 
+    // Ensure socket is connected with userId
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final socketService = SocketService.instance;
+        final userId = storage.read('userId')?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          socketService.setUserIdAndConnect(userId);
+        } else if (!socketService.isConnected) {
+          socketService.connect();
+        }
+      } catch (e) {
+        log('Socket connection error in CreateOpenMatchForAllCourtsScreen: $e');
+      }
+    });
+
+    // Start periodic timer to check and remove expired slots
+    _startSlotExpiryCheck();
+
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       bottomNavigationBar: _buildPaymentPanel(),
@@ -47,6 +65,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text("Create a Game").paddingOnly(right: 5),
+            
             Tooltip(
                 textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
                 decoration: BoxDecoration(
@@ -119,62 +138,76 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       controller.showMainGrid.value ? 'Prefer Slots' : 'Selected Slots',
                       style: Get.textTheme.labelLarge
                   ),
-                  Row(
-                    children: [
-                      Obx(() {
-                        final is30 = controller.is30Slots.value;
+                  if (!controller.showMainGrid.value && controller.courtsByDuration.value != null)
+                    GestureDetector(
+                      onTap: () {
+                        controller.showMainGrid.value = true;
+                      },
+                      child: Text(
+                        '+ Add more slots',
+                        style: Get.textTheme.labelMedium!.copyWith(
+                          color: AppColors.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  if (controller.showMainGrid.value)
+                    Row(
+                      children: [
+                        Obx(() {
+                          final is30 = controller.is30Slots.value;
 
-                        return Transform.scale(
-                          scale: 0.7,
-                          child: ToggleButtons(
-                            isSelected: [is30, !is30],
-                            borderRadius: BorderRadius.circular(5),
-                            constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
-                            fillColor: Colors.transparent, // important
-                            selectedColor: Colors.white,
-                            color: Colors.black,
-                            textStyle: const TextStyle(fontSize: 12),
-                            onPressed: (index) {
-                              controller.is30Slots.value = index == 0;
-                              controller.updateDurationFromToggle();
-                              // Clear selections when duration changes
-                              // controller.clearAllSelections();
-                            },
-                            children: [
-                              _buildGradientToggleChild(
-                                text: "Half",
-                                isSelected: is30,
-                              ),
-                              _buildGradientToggleChild(
-                                text: "Full",
-                                isSelected: !is30,
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      GestureDetector(
-                        onTap: () {
-                          controller.toggleSlotsCollapse();
-                        },
-                        child: AnimatedRotation(
-                          turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 250),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: AppColors.primaryColor,
-                                shape: BoxShape.circle
+                          return Transform.scale(
+                            scale: 0.7,
+                            child: ToggleButtons(
+                              isSelected: [is30, !is30],
+                              borderRadius: BorderRadius.circular(25),
+                              constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
+                              fillColor: Colors.transparent, // important
+                              selectedColor: Colors.white,
+                              color: Colors.black,
+                              textStyle: const TextStyle(fontSize: 12),
+                              onPressed: (index) {
+                                controller.is30Slots.value = index == 0;
+                                controller.updateDurationFromToggle();
+                                // Clear selections when duration changes
+                                // controller.clearAllSelections();
+                              },
+                              children: [
+                                _buildGradientToggleChild(
+                                  text: "Half",
+                                  isSelected: is30,
+                                ),
+                                _buildGradientToggleChild(
+                                  text: "Full",
+                                  isSelected: !is30,
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.keyboard_arrow_up,
-                              size: 22,
-                              color: AppColors.whiteColor,
+                          );
+                        }),
+                        GestureDetector(
+                          onTap: () {
+                            controller.toggleSlotsCollapse();
+                          },
+                          child: AnimatedRotation(
+                            turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 250),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: AppColors.primaryColor,
+                                  shape: BoxShape.circle
+                              ),
+                              child: Icon(
+                                Icons.keyboard_arrow_up,
+                                size: 22,
+                                color: AppColors.whiteColor,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               )),
               Obx(() => AnimatedSwitcher(
@@ -196,7 +229,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 },
                 child: controller.showMainGrid.value
                     ? _buildAllCourtsWithSlots()
-                    : _buildSelectedSlotsList(),
+                    : _buildSelectedSlotsList().paddingOnly(top: 10),
               )),
               Align(
                 alignment: AlignmentGeometry.centerRight,
@@ -217,9 +250,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                   ),
                 )
                     : SizedBox.shrink()),
-              ).paddingOnly(bottom: 10),
+              ).paddingOnly(bottom: 10,top: 10),
               Obx(() => !controller.showMainGrid.value
-                  ? availableCourts()
+                  ? availableCourts(context)
                   : SizedBox.shrink()),
               const SizedBox(height: 20),
             ],
@@ -227,11 +260,12 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         ),
       ),
     );
+
   }
 
 
 
-  Widget availableCourts() {
+  Widget availableCourts(BuildContext context) {
     return Obx(() {
       // Check if no slots are selected from main grid
       if (controller.multiDateSelections.isEmpty) {
@@ -297,6 +331,14 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
       final clubsData = courtsByDuration.data!;
 
+      // Auto-expand first club (since all clubs have the requested time)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (clubsData.isNotEmpty && controller.expandedIndex.value == -1) {
+          controller.expandedIndex.value = 0; // Expand first club
+          log('🔵 Auto-expanding first club at index 0');
+        }
+      });
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -320,9 +362,9 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             color: Colors.grey.shade200,
-                            child: clubData.registerClub?.courtImage != null && clubData.registerClub!.courtImage!.isNotEmpty
+                            child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
-                              imageUrl: clubData.registerClub!.courtImage!.first,
+                              imageUrl: clubData.registerClub!.logo!,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Icon(Icons.sports_tennis),
                               errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),
@@ -345,9 +387,13 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                                 children: [
                                   Image.asset(Assets.imagesIcLocation,color: AppColors.textColor,scale: 2.2,),
                                   Text(
-                                      clubData.registerClub?.city ?? '',
-                                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
+                                    clubData.registerClub?.locations?.isNotEmpty == true
+                                        ? clubData.registerClub!.locations!.first.city ?? ''
+                                        : '',
+                                    style: Get.textTheme.labelMedium!
+                                        .copyWith(fontWeight: FontWeight.w400),
                                   ),
+
                                 ],
                               ),
                             ],
@@ -392,13 +438,15 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         curve: Curves.easeInOut,
                         child: isExpanded && court.slots != null && court.slots!.isNotEmpty
                             ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           child: _courtRow(
+                            context: context,
                             courtName: court.courtName ?? 'Court ${courtIndex + 1}',
-                            type: clubData.registerClub?.courtType?.join(', ') ?? 'Court',
+                            type: clubData.registerClub?.courtType?.join(', ') ?? '',
                             selectedIndex: courtIndex,
                             availableSlots: court.slots,
                             courtId: court.id ?? '',
+                            slotDuration: court.slotDuration,
                           ),
                         )
                             : const SizedBox.shrink(),
@@ -418,20 +466,59 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
   }
 
   Widget _courtRow({
+    required BuildContext context,
     required String courtName,
     required String type,
     required int selectedIndex,
     List<CourtSlot>? availableSlots,
     String? courtId,
-  }) {
+    List<int>? slotDuration,
+  })
+  {
     // Show all slots from API
     final displaySlots = availableSlots?.isNotEmpty == true
         ? availableSlots!.map((slot) => Slots(
       sId: slot.id ?? 'slot_${selectedIndex}_${slot.time}',
       time: slot.time ?? '',
       amount: slot.amount ?? 0,
+      duration: slot.duration,
     )).toList()
         : <Slots>[];
+
+    final scrollController = ScrollController();
+    final clubIndex = selectedIndex; // Use selectedIndex as clubIndex
+
+    // Auto-scroll to requested time slot when club is expanded
+    if (displaySlots.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (controller.expandedIndex.value == (clubIndex * 100)) {
+          Future.delayed(Duration(milliseconds: 350), () {
+            if (scrollController.hasClients && availableSlots != null) {
+              // Find the slot marked as isRequestedTime in the API response
+              int foundIndex = -1;
+              for (int i = 0; i < availableSlots.length; i++) {
+                if (availableSlots[i].isRequestedTime == true) {
+                  foundIndex = i;
+                  log('✅ Found requested slot at index $foundIndex: ${availableSlots[i].time}');
+                  break;
+                }
+              }
+              
+              if (foundIndex != -1) {
+                final offset = (foundIndex * 98.0).clamp(0.0, scrollController.position.maxScrollExtent);
+                scrollController.animateTo(
+                  offset,
+                  duration: Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              } else {
+                log('❌ No slot found with isRequestedTime: true');
+              }
+            }
+          });
+        }
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,44 +527,56 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// LEFT TEXT
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(courtName, style: Get.textTheme.headlineMedium),
-                Text(
-                  type.split(',').first,
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-              ],
+            SizedBox(
+              width: 80,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    courtName,
+                    style: Get.textTheme.headlineLarge!.copyWith(fontSize: 13,fontWeight: FontWeight.w500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (slotDuration != null && slotDuration.isNotEmpty)
+                    Text(
+                      '(${slotDuration.first} min)',
+                      style: Get.textTheme.labelSmall!.copyWith(
+                        color: Colors.grey,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            SizedBox(width: 15,),
+            SizedBox(width: 15),
 
-            /// TIME SLOTS - Show all slots in grid format
+            /// TIME SLOTS - Show all slots in horizontal scroll
             if (displaySlots.isNotEmpty)
               Expanded(
-                child: GridView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.6,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: displaySlots.map((slot) {
+                      final index = displaySlots.indexOf(slot);
+                      return Padding(
+                        padding: EdgeInsets.only(right: index < displaySlots.length - 1 ? 10 : 0),
+                        child: SizedBox(
+                          width: 88,
+                          child: Obx(() => _buildCourtSlotTile(
+                            context,
+                            slot,
+                            courtName,
+                            selectedIndex,
+                            index,
+                            courtId: courtId ?? 'court$selectedIndex',
+                            availableSlots: displaySlots,
+                          )),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  itemCount: displaySlots.length,
-                  itemBuilder: (context, index) {
-                    final slot = displaySlots[index];
-                    return Obx(() => _buildCourtSlotTile(
-                      context,
-                      slot,
-                      courtName,
-                      selectedIndex,
-                      index,
-                      courtId: courtId ?? 'court$selectedIndex',
-                      availableSlots: displaySlots,
-                    ));
-                  },
                 ),
               )
             else
@@ -736,6 +835,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                               controller.showUnavailableSlots.value,
                             );
                             controller.slots.refresh();
+                            // Show main grid when date changes
+                            controller.showMainGrid.value = true;
 
                             // If clubs were showing before date change, refetch them after slots are refreshed
                             if (wasShowingClubs) {
@@ -845,6 +946,25 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
       final court = slotsData.data!.first;
       var slotTimes = court.slots ?? [];
+
+      // Filter out past time slots if selected date is today
+      final now = DateTime.now();
+      final selectedDate = controller.selectedDate.value;
+      final isToday = selectedDate?.year == now.year &&
+          selectedDate?.month == now.month &&
+          selectedDate?.day == now.day;
+
+      if (isToday) {
+        slotTimes = slotTimes.where((slot) {
+          final slotTime = slot.time ?? '';
+          final slotMinutes = _parseTimeToMinutes(slotTime);
+          final currentMinutes = now.hour * 60 + now.minute;
+          
+          // Keep slot available until AFTER 15 minutes past start time
+          // User can select at 5:15 for a 5:00 slot, removed at 5:16
+          return currentMinutes < slotMinutes + 16;
+        }).toList();
+      }
 
       // Filter to show only the row containing selected slot when collapsed
       if (controller.isSlotsCollapsed.value && controller.selectedSearchSlotId.value != null) {
@@ -1037,6 +1157,28 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     );
   }
 
+  // Helper method to find corresponding API slot for status check
+  CourtSlot? _findCorrespondingApiSlot(dynamic slot, String courtId) {
+    final courtsByDuration = controller.courtsByDuration.value;
+    if (courtsByDuration?.data == null) return null;
+    
+    for (var clubData in courtsByDuration!.data!) {
+      if (clubData.courts != null) {
+        for (var court in clubData.courts!) {
+          // Match both court ID and slot time
+          if (court.id == courtId && court.slots != null) {
+            for (var apiSlot in court.slots!) {
+              if (apiSlot.time == slot.time) {
+                return apiSlot;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   /// Build slot tile for court rows with half-slot selection support
   Widget _buildCourtSlotTile(
       BuildContext context,
@@ -1046,12 +1188,26 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       int slotIndex, {
         String? courtId,
         List<dynamic>? availableSlots,
-      }) {
+      })
+  {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
     final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
-    final isLeftHalfBooked = supports30Min && controller.isLeftHalfBooked(slot, resolvedCourtId);
-    final isRightHalfBooked = supports30Min && controller.isRightHalfBooked(slot, resolvedCourtId);
+    
+    // Check for booked slots from API response
+    final correspondingApiSlot = _findCorrespondingApiSlot(slot, resolvedCourtId);
+    final _status = correspondingApiSlot?.status?.toLowerCase();
+    final isSlotBooked = _status == 'booked' || _status == 'unavailable' || _status == "lock";
+    
+    final isLeftHalfBooked = supports30Min && (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+    final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+    final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
+    final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
+
+    // Check if this is the first selection for this court
+    final isFirstSelectionForCourt = controller.realCourtSelections.entries
+        .where((e) => (e.value['courtId'] as String) == resolvedCourtId)
+        .isEmpty;
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
@@ -1059,38 +1215,59 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     return Builder(
       builder: (BuildContext builderContext) {
         return GestureDetector(
-          onTapDown: supports30Min ? (details) {
-            // For 30-minute support, detect left/right half tap
+          onTapDown: (details) {
             final RenderBox? box = builderContext.findRenderObject() as RenderBox?;
             if (box != null) {
               final localPosition = box.globalToLocal(details.globalPosition);
               final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Prevent selection of left half if it's booked
-              if (isLeftHalf && isLeftHalfBooked) {
-                return;
-              }
-              // Prevent selection of right half if it's booked
-              if (!isLeftHalf && isRightHalfBooked) {
-                return;
-              }
+              // Check if this is the first selection for this court
+              final isFirstSelectionForCourt = controller.realCourtSelections.entries
+                  .where((e) => (e.value['courtId'] as String) == resolvedCourtId)
+                  .isEmpty;
 
-              controller.toggleCourtRowSlotSelection(
-                slot,
-                courtId: resolvedCourtId,
-                courtName: courtName,
-                isHalfSlot: true,
-                isFirstHalf: isLeftHalf,
-              );
+              // Check if full slot is already selected
+              final currentDate = controller.selectedDate.value ?? DateTime.now();
+              final dateString = "${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}";
+              final realCourtKey = '${dateString}_${resolvedCourtId}_${slot.sId}';
+              final isFullSlotSelected = controller.realCourtSelections.containsKey(realCourtKey);
+
+              if (isFullSlotSelected) {
+                // Full slot is selected - unselect it completely
+                controller.toggleCourtRowSlotSelection(
+                  slot,
+                  courtId: resolvedCourtId,
+                  courtName: courtName,
+                );
+              } else if (supports30Min && !isFirstSelectionForCourt) {
+                // Half slot selection for subsequent selections
+                // Prevent selection of left half if it's booked
+                if (isLeftHalf && isLeftHalfBooked) {
+                  return;
+                }
+                // Prevent selection of right half if it's booked
+                if (!isLeftHalf && isRightHalfBooked) {
+                  return;
+                }
+
+                controller.toggleCourtRowSlotSelection(
+                  slot,
+                  courtId: resolvedCourtId,
+                  courtName: courtName,
+                  isHalfSlot: true,
+                  isFirstHalf: isLeftHalf,
+                );
+              } else {
+                // Full slot selection for first selection or non-30min
+                if (isSlotBooked) return;
+                controller.toggleCourtRowSlotSelection(
+                  slot,
+                  courtId: resolvedCourtId,
+                  courtName: courtName,
+                );
+              }
             }
-          } : null,
-          onTap: !supports30Min ? () {
-            controller.toggleCourtRowSlotSelection(
-              slot,
-              courtId: resolvedCourtId,
-              courtName: courtName,
-            );
-          } : null,
+          },
           child: Container(
             height: 34,
             decoration: BoxDecoration(
@@ -1113,8 +1290,10 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     ),
                   ),
 
-                /// FULL GRADIENT FOR NON-30MIN SELECTIONS
-                if (isSelected && !supports30Min)
+                /// FULL GRADIENT FOR FULL SLOT SELECTION (NON-30MIN OR FIRST SELECTION)
+                if (isSelected && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId) && 
+                    !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId) && 
+                    !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(radius),
@@ -1168,6 +1347,49 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     ),
                   ),
 
+                /// LEFT HALF BOOKED OVERLAY (RED)
+                if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 44,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(radius),
+                          bottomLeft: Radius.circular(radius),
+                        ),
+                        color: AppColors.lightred,
+                      ),
+                    ),
+                  ),
+
+                /// RIGHT HALF BOOKED OVERLAY (RED)
+                if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      width: 44,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(radius),
+                          bottomRight: Radius.circular(radius),
+                        ),
+                        color: AppColors.lightred,
+                      ),
+                    ),
+                  ),
+
+                /// FULL SLOT BOOKED OVERLAY (RED) - for non-30min slots or both halves booked
+                if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(radius),
+                      color: AppColors.lightred,
+                    ),
+                  ),
+
                 /// LEFT HALF BOOKED OVERLAY (FADED)
                 if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
                   Align(
@@ -1212,7 +1434,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     ),
                   ),
 
-                /// LEFT BLUE STRIP (ONLY WHEN NOT SELECTED)
+                /// LEFT STRIP (ONLY WHEN NOT SELECTED) - RED FOR BOOKED, BLUE FOR AVAILABLE
                 if (!isSelected)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -1220,7 +1442,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       width: 4,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: blueColor,
+                        color: (isSlotBooked || isAnyHalfBooked) ? AppColors.redColor : blueColor,
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(radius),
                           bottomLeft: Radius.circular(radius),
@@ -1243,8 +1465,32 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         ),
                       ),
 
+                      // Full white text for full slot selection (no half selections)
+                      if (isSelected && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId) && 
+                          !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId) && 
+                          !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                        Text(
+                          controller.formatTimeForDisplay(slot.time),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+
+                      // Full white text for both halves selected
+                      if (supports30Min && controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
+                        Text(
+                          controller.formatTimeForDisplay(slot.time),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+
                       // Left half white text overlay
-                      if (supports30Min && controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId) && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: LeftHalfClipper(),
                           child: Text(
@@ -1258,7 +1504,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         ),
 
                       // Right half white text overlay
-                      if (supports30Min && controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min && controller.isRightHalfSelectedInCourt(slot, resolvedCourtId) && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
                         ClipRect(
                           clipper: RightHalfClipper(),
                           child: Text(
@@ -1299,14 +1545,14 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                           ),
                         ),
 
-                      // Full white text for non-30min selections or both halves selected
-                      if ((!supports30Min && isSelected) || (supports30Min && controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                      // Full slot grayed text for booked slots
+                      if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
                         Text(
                           controller.formatTimeForDisplay(slot.time),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: Colors.grey.shade600,
                           ),
                         ),
                     ],
@@ -1330,7 +1576,11 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability');
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability'||
+        (slot.availabilityStatus?.toLowerCase() == 'tournament'));
+
+    // Check if this is the first selection
+    final isFirstSelection = controller.multiDateSelections.isEmpty;
 
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
@@ -1338,8 +1588,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     return Builder(
       builder: (BuildContext builderContext) {
         return GestureDetector(
-          onTapDown: supports30Min ? (details) {
-            // For 30-minute support, detect left/right half tap
+          onTapDown: supports30Min && !isFirstSelection ? (details) {
+            // For 30-minute support (only if NOT first selection), detect left/right half tap
             final RenderBox? box = builderContext.findRenderObject() as RenderBox?;
             if (box != null) {
               final localPosition = box.globalToLocal(details.globalPosition);
@@ -1354,7 +1604,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               );
             }
           } : null,
-          onTap: !supports30Min && !isUnavailable ? () {
+          onTap: (!supports30Min || isFirstSelection) && !isUnavailable ? () {
+            // Full slot selection for non-30min OR first selection
             controller.toggleSlotSelection(
               slot,
               courtId: courtId,
@@ -1461,7 +1712,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       ),
                     ),
 
-                  /// LEFT BLUE STRIP (ONLY WHEN AVAILABLE AND NOT SELECTED)
+                  /// LEFT STRIP (ONLY WHEN NOT SELECTED) - RED FOR BOOKED, BLUE FOR AVAILABLE
                   if (!isSelected)
                     Positioned.fill(
                       left: 0,
@@ -1470,7 +1721,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: blueColor,
+                            color: isUnavailable ? AppColors.lightred : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
@@ -1547,9 +1798,6 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       },
     );
   }
-
-
-
   String formatTimeSlot(String time) {
     return controller.formatTimeForDisplay(time);
   }
@@ -1569,8 +1817,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
   Widget _buildPaymentPanel() {
     return Obx(() {
-      final totalSelections = controller.getTotalSelectionsCount();
-      final hasSelections = totalSelections > 0;
+      final hasCourtSlotSelections = controller.realCourtSelections.isNotEmpty;
+      final isEnabled = hasCourtSlotSelections;
 
       final double collapsedHeight = Get.height * .11;
       final double expandedHeight = Get.height * .11;
@@ -1579,7 +1827,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
         alignment: Alignment.center,
-        height: hasSelections ? expandedHeight : collapsedHeight,
+        height: isEnabled ? expandedHeight : collapsedHeight,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -1595,31 +1843,26 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            CustomButton(
-              width: Get.width*0.9,
-              child: Text("Next",style:  Get.textTheme.headlineMedium!.copyWith(
-                color: AppColors.whiteColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
-              ),).paddingOnly(right: 40),
-              onTap: () {
-                if (!hasSelections) {
-                  // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
-                  return;
-                }
-                // SnackBarUtils.showInfoSnackBar("Note\nYou'll be refunded for all players except your own share once players are added.",duration: Duration(seconds: 4));
-                // controller.onNext();
-                Get.bottomSheet(
-                  backgroundColor: Colors.transparent,
-                  SizedBox(
-                    height: Get.height,
-                    child: PaymentOptionSheet(),
-                  ),
-                  isScrollControlled: true,
-                );
-
-
-              },
+            Opacity(
+              opacity: isEnabled ? 1.0 : 0.5,
+              child: CustomButton(
+                width: Get.width*0.9,
+                child: Text("Next",style:  Get.textTheme.headlineMedium!.copyWith(
+                  color: AppColors.whiteColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                ),).paddingOnly(right: 40),
+                onTap: isEnabled ? () {
+                  Get.bottomSheet(
+                    backgroundColor: Colors.transparent,
+                    SizedBox(
+                      height: Get.height,
+                      child: PaymentOptionSheet(),
+                    ),
+                    isScrollControlled: true,
+                  );
+                } : null,
+              ),
             )
           ],
         ),
@@ -1821,7 +2064,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                       final dateString = selection['date'] as String;
                       final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
                       final duration = isHalfSlot ? 30 : 60;
-
+                      final userId = storage.read("userId")??"";
                       slotsToDelete.add({
                         "slotId": slotId,
                         "courtId": courtId,
@@ -1829,6 +2072,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                         "time": slot.time ?? '',
                         "bookingTime": slot.time ?? '',
                         "duration": duration,
+                        "userId":userId
                       });
                     }
 
@@ -1964,6 +2208,83 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     }
   }
 
+  bool _isSlotPastExpiry(dynamic slot) {
+    final now = DateTime.now();
+    final selectedDate = controller.selectedDate.value;
+    
+    // If no date selected or not today, slot is not expired
+    if (selectedDate == null) return false;
+    
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
+
+    if (!isToday) return false;
+
+    final slotTime = slot.time ?? '';
+    if (slotTime.isEmpty) return false;
+    
+    final slotMinutes = _parseTimeToMinutes(slotTime);
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    // Slot is expired if current time is MORE than 15 minutes past slot time
+    return currentMinutes > slotMinutes + 15;
+  }
+
+  void _startSlotExpiryCheck() {
+    // Check every minute for expired slots
+    Stream.periodic(const Duration(minutes: 1)).listen((_) {
+      _removeExpiredSlots();
+    });
+  }
+
+  void _removeExpiredSlots() {
+    final now = DateTime.now();
+    final selectedDate = controller.selectedDate.value;
+    final isToday = selectedDate?.year == now.year &&
+        selectedDate?.month == now.month &&
+        selectedDate?.day == now.day;
+
+    if (!isToday) return;
+
+    final currentMinutes = now.hour * 60 + now.minute;
+    final keysToRemove = <String>[];
+
+    controller.multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotTime = slot.time ?? '';
+      final slotMinutes = _parseTimeToMinutes(slotTime);
+
+      if (currentMinutes > slotMinutes + 15) {
+        keysToRemove.add(key);
+      }
+    });
+
+    for (var key in keysToRemove) {
+      controller.multiDateSelections.remove(key);
+    }
+
+    // Also remove from realCourtSelections
+    final realKeysToRemove = <String>[];
+    controller.realCourtSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotTime = slot.time ?? '';
+      final slotMinutes = _parseTimeToMinutes(slotTime);
+
+      if (currentMinutes > slotMinutes + 15) {
+        realKeysToRemove.add(key);
+      }
+    });
+
+    for (var key in realKeysToRemove) {
+      controller.realCourtSelections.remove(key);
+    }
+
+    if (keysToRemove.isNotEmpty || realKeysToRemove.isNotEmpty) {
+      controller.recalculateRealCourtTotalAmount();
+    }
+  }
+
 
   void _initiatePayment() {
     isProcessing.value = true;
@@ -1971,9 +2292,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
     // Simulate payment processing
     Future.delayed(const Duration(seconds: 2), () {
       isProcessing.value = false;
-      // SnackBarUtils.showSuccessSnackBar(
-      //   "Payment successful! Booking confirmed.",
-      // );
+      CustomLogger.logMessage(msg: "Payment successful! Booking confirmed.", level: LogLevel.debug);
       controller.clearAllSelections();
     });
   }
@@ -2116,11 +2435,12 @@ class ChangeLocationBottomSheet extends StatelessWidget {
               }),
             ),
 
-            /// CHANGE BUTTON
+            /// UPDATE BUTTON
             Padding(
               padding: const EdgeInsets.all(16),
               child: Obx(() {
                 final isEnabled = controller.selectedCityId.value.isNotEmpty;
+                final isLoading = controller.isUpdatingLocation.value;
 
                 return SizedBox(
                   width: double.infinity,
@@ -2134,23 +2454,32 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: isEnabled
-                        ? () {
-                      // handle change location
-                      final selectedId =
-                          controller.selectedCityId.value;
-                      print("Selected city: $selectedId");
-                      Navigator.pop(context);
+                    onPressed: (isEnabled && !isLoading)
+                        ? () async {
+                      final selectedId = controller.selectedCityId.value;
+                      final success = await controller.updateUserLocation(selectedId);
+                      if (success) {
+                        Navigator.pop(context);
+                      }
                     }
                         : null,
-                    child: Text(
-                      'Change',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isEnabled ? Colors.white : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Update',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isEnabled ? Colors.white : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 );
               }),

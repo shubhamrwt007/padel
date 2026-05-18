@@ -51,7 +51,7 @@ class BookingHistoryData {
   String? sId;
   String? userId;
   RegisterClubId? registerClubId;
-  int? totalAmount;
+  num? totalAmount;
   String? bookingDate;
   String? bookingStatus;
   String? bookingType;
@@ -64,6 +64,7 @@ class BookingHistoryData {
   String? invoiceUrl;
   int? iV;
   int? duration;
+  int? totalTime;
   dynamic customerReview;
   OpenMatchId? openMatchId;
   Scoreboard? scoreboard;
@@ -92,6 +93,7 @@ class BookingHistoryData {
     this.invoiceUrl,
     this.iV,
     this.duration,
+    this.totalTime,
     this.customerReview,
     this.openMatchId,
     this.scoreboard,
@@ -127,6 +129,7 @@ class BookingHistoryData {
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
     duration = json['duration'];
+    totalTime = json['totalTime'];
     isOpenMatch = json['isOpenMatch'];
     invoiceUrl = json['invoiceUrl'];
     customerReview = json['customerReview'];
@@ -192,6 +195,7 @@ class BookingHistoryData {
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
     data['duration'] = duration;
+    data['totalTime'] = totalTime;
     data['isOpenMatch'] = isOpenMatch;
     data['invoiceUrl'] = invoiceUrl;
     data['customerReview'] = customerReview;
@@ -423,6 +427,8 @@ class PlayerId {
   String? name;
   dynamic? xpPoints;
   String? profilePic;
+  String? gender;
+  String? level;
 
   PlayerId({
     this.sId,
@@ -431,6 +437,8 @@ class PlayerId {
     this.name,
     this.xpPoints,
     this.profilePic,
+    this.gender,
+    this.level
   });
 
   PlayerId.fromJson(Map<String, dynamic> json) {
@@ -440,6 +448,8 @@ class PlayerId {
     xpPoints = json['xpPoints'];
     name = json['name']?.toString();
     profilePic = json['profilePic']?.toString();
+    gender = json['gender']?.toString();
+    level = json['level']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -450,6 +460,8 @@ class PlayerId {
     data['xpPoints'] = xpPoints;
     data['name'] = name;
     data['profilePic'] = profilePic;
+    data['gender'] = gender;
+    data['level'] = level;
     return data;
   }
 }
@@ -628,6 +640,8 @@ class RegisterClubId {
   String? updatedAt;
   String? zipCode;
   String? description;
+  List<BookingLocation>? locations;
+  String? logo;
 
   RegisterClubId({
     this.sId,
@@ -651,6 +665,8 @@ class RegisterClubId {
     this.updatedAt,
     this.zipCode,
     this.description,
+    this.locations,
+    this.logo,
   });
 
   RegisterClubId.fromJson(Map<String, dynamic> json) {
@@ -701,6 +717,14 @@ class RegisterClubId {
     updatedAt = json['updatedAt']?.toString();
     zipCode = json['zipCode']?.toString();
     description = json['description']?.toString();
+    logo = json['logo']?.toString();
+    
+    if (json['locations'] != null) {
+      locations = <BookingLocation>[];
+      json['locations'].forEach((v) {
+        locations!.add(BookingLocation.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -730,6 +754,7 @@ class RegisterClubId {
     data['updatedAt'] = updatedAt;
     data['zipCode'] = zipCode;
     data['description'] = description;
+    data['logo'] = logo;
     return data;
   }
 }
@@ -837,7 +862,7 @@ class Slot {
 
 class SlotTimes {
   String? time;
-  int? amount;
+  num? amount;
   String? status;
   String? availabilityStatus;
 
@@ -884,5 +909,33 @@ class BookingTeamPlayer {
     data['_id'] = sId;
     data['amountPaid'] = amountPaid;
     return data;
+  }
+}
+
+class BookingLocation {
+  String? sId;
+  String? city;
+  String? address;
+  String? zipCode;
+  String? state;
+
+  BookingLocation({this.sId, this.city, this.address, this.zipCode, this.state});
+
+  BookingLocation.fromJson(Map<String, dynamic> json) {
+    sId = json['_id']?.toString();
+    city = json['city']?.toString();
+    address = json['address']?.toString();
+    zipCode = json['zipCode']?.toString();
+    state = json['state']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': sId,
+      'city': city,
+      'address': address,
+      'zipCode': zipCode,
+      'state': state,
+    };
   }
 }

@@ -52,6 +52,19 @@ class BottomNavigationController extends GetxController {
   // Function to update selected index
   void updateIndex(int index) {
     selectedIndex.value = index;
+    
+    // Refresh APIs when user comes back to home tab (index 0)
+    if (index == 0) {
+      _refreshHomeApis();
+    }
+  }
+
+  Future<void> _refreshHomeApis() async {
+    await Future.wait([
+      mainHomeController.fetchPollResults(),
+      mainHomeController.fetchScheduleMatches(),
+      mainHomeController.fetchActiveLeagues(),
+    ]);
   }
 
   // Get current page based on selected index

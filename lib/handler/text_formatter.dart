@@ -1,6 +1,19 @@
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+class PhoneNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isNotEmpty && RegExp(r'^[1-5]').hasMatch(newValue.text)) {
+      return oldValue;
+    }
+    return newValue;
+  }
+}
+
 class EmojiFilteringTextInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -54,25 +67,29 @@ extension StringExtension on String {
       // Normalize input (e.g., remove extra spaces, lowercase)
       final normalized = raw.trim().toLowerCase();
 
-      // Handle formats like "10:00 pm" or "10 pm"
+      // Handle formats like "10:00 pm", "10:30 pm" or "10 pm"
       final parts = normalized.split(" ");
       if (parts.isEmpty) return raw;
       
       final timePart = parts[0];
       final periodPart = normalized.contains("pm") ? "PM" : "AM";
 
-      // Extract hour from time part (handle both "10" and "10:00" formats)
+      // Extract hour and minute from time part
       int hour;
+      int minute = 0;
       if (timePart.contains(":")) {
-        hour = int.tryParse(timePart.split(":")[0]) ?? 0;
+        final timePieces = timePart.split(":");
+        hour = int.tryParse(timePieces[0]) ?? 0;
+        minute = int.tryParse(timePieces[1]) ?? 0;
       } else {
         hour = int.tryParse(timePart) ?? 0;
       }
 
       if (hour == 0) return raw; // Invalid hour
 
-      // Return formatted time with :00
-      return "$hour:00 $periodPart";
+      // Return formatted time with minutes
+      final minuteStr = minute.toString().padLeft(2, '0');
+      return "$hour:$minuteStr $periodPart";
     } catch (_) {
       return raw; // fallback if parsing fails
     }

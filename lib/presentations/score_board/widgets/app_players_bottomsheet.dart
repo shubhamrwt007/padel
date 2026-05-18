@@ -11,6 +11,7 @@ import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_pl
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 
 import '../../../repositories/openmatches/open_match_repository.dart';
+import '../../widgets/coming_soon_fireworks.dart';
 
 class AppPlayersController extends GetxController {
   RxList<Map<String, dynamic>> nearbyPlayers = <Map<String, dynamic>>[].obs;
@@ -19,23 +20,45 @@ class AppPlayersController extends GetxController {
   RxList<String> requestedPlayerIds = <String>[].obs;
   final OpenMatchRepository repository = OpenMatchRepository();
   RxString bookingType = ''.obs;
+  RxBool invitationSent = false.obs;
+  RxBool isSendingInvitation = false.obs;
 
-  Future<void> fetchNearByPlayers({String search = ''}) async {
+  Future<void> sendBookingInvitation(String bookingId) async {
+    try {
+      isSendingInvitation.value = true;
+      print("OBJEDOIJF________________$bookingId,,,,,");
+      final response = await repository.sendBookingInvitation(bookingId: bookingId, sendNotifications: true);
+      if (response.status == 200) {
+        invitationSent.value = true;
+        await fetchNearByPlayers(bookingId: bookingId);
+      }
+    } catch (e) {
+      // handle silently
+    } finally {
+      isSendingInvitation.value = false;
+    }
+  }
+
+  Future<void> fetchNearByPlayers({String search = '',required String bookingId}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
       
-      final response = await repository.findNearByPlayer(search: search);
+      final response = await repository.findNearByPlayer(search: search,bookingId: bookingId);
       if(response.status == 200 && response.players != null){
-        nearbyPlayers.value = response.players!.map((player) => {
-          'id': player.id ?? '',
-          'name': player.name ?? '',
-          'profilePic': player.profilePic ?? '',
-          'city': player.city ?? '',
-          'level': player.level ?? '',
-          'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
-          'xpPoints': player.xpPoints ?? '',
-          // 'preferredTeam': player.preferredTeam ?? 'teamA',
+        nearbyPlayers.value = response.players!.map((player) {
+          print('Player: ${player.name}, Level: ${player.level}');
+          return {
+            'id': player.id ?? '',
+            'name': player.name ?? '',
+            'profilePic': player.profilePic ?? '',
+            'city': player.city ?? '',
+            'cityName': player.cityName ?? '',
+            'level': player.level ?? '',
+            'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+            'xpPoints': player.xpPoints ?? '',
+            "hasPendingRequest":player.hasPendingRequest??false
+          };
         }).toList();
       }
     } catch (e) {
@@ -43,17 +66,6 @@ class AppPlayersController extends GetxController {
     } finally {
       isLoadingNearbyPlayers.value = false;
     }
-  }
-}
-String getInitials(String? fullName) {
-  if (fullName == null || fullName.trim().isEmpty) return '';
-
-  final parts = fullName.trim().split(RegExp(r'\s+'));
-
-  if (parts.length == 1) {
-    return parts[0][0].toUpperCase();
-  } else {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 }
 
@@ -65,21 +77,20 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   final String? bookingType;
   final List<String>? currentPlayerIds;
   final bool showAddGuestButton;
-  
-  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds, this.showAddGuestButton = true});
+
+  AppPlayersBottomSheetScore({super.key, required this.matchId, required this.teamName, this.openMatchId, this.bookingId, this.bookingType, this.currentPlayerIds, this.showAddGuestButton = true,});
   
   final AppPlayersController controller = Get.put(AppPlayersController());
 
   @override
   Widget build(BuildContext context) {
-    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType");
+    print("AppPlayersBottomSheetScore - matchId: $matchId, openMatchId: $openMatchId, bookingId: $bookingId, bookingType: $bookingType,");
     controller.bookingType.value = bookingType ?? '';
-    controller.fetchNearByPlayers();
+    controller.fetchNearByPlayers(bookingId: bookingId??"");
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
+    final maxHeight = screenHeight - topPadding - 60;
     
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -106,7 +117,8 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               SizedBox(
                 height: 45,
                 child: PrimaryTextField(contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                  maxLength: 10,
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
                   hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                   suffixIcon: Icon(Icons.search, color: AppColors.textColor),
                   hintText: 'Search by Name / Phone number',
@@ -117,6 +129,47 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
               //   'Nearby & match your level',
               //   style: Get.textTheme.labelLarge,
               // ),
+              Obx(() => controller.invitationSent.value
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: controller.isSendingInvitation.value
+                          ? null
+                          : () => controller.sendBookingInvitation(bookingId ?? ''),
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffEEF1FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: controller.isSendingInvitation.value
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      'Send Request',
+                                      style: Get.textTheme.bodyLarge!.copyWith(
+                                        color: AppColors.primaryColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).paddingOnly(top: 5)),
               const SizedBox(height: 12),
               _playersList(bookingId??""),
               const SizedBox(height: 12),
@@ -135,9 +188,12 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'App Players',
+          'Find a player',
           style: Get.textTheme.headlineMedium,
         ),
+        ComingSoonFireworks(
+          textStyle: Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor),
+        ).paddingOnly(left: Get.width*.18),
         Transform.translate(
           offset: Offset(8, 0),
           child: IconButton(
@@ -145,6 +201,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             onPressed: () => Get.back(),
           ),
         ),
+
       ],
     );
   }
@@ -152,18 +209,18 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
   Widget _playersList(String bookingId) {
     return Obx(() {
       if (controller.isLoadingNearbyPlayers.value) {
-        return const SizedBox(
-          height: 100,
+        return  SizedBox(
+          height: Get.height*.3,
           child: Center(child: CircularProgressIndicator()),
         );
       }
       
       if (controller.nearbyPlayers.isEmpty) {
         return SizedBox(
-          height: 100,
+          height: Get.height*.3,
           child: Center(
             child: Text(
-              'No nearby players found',
+              'No  player found',
               style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
             ),
           ),
@@ -173,8 +230,8 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
       final itemCount = controller.nearbyPlayers.length;
       final displayCount = itemCount > 5 ? 5 : itemCount;
       final itemHeight = 60.0;
-      final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
-      
+      // final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
+      final  listHeight =  Get.height*.3;
       return SizedBox(
         height: listHeight,
         child: ListView.separated(
@@ -185,8 +242,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           ),
           itemBuilder: (_, i) {
             final player = controller.nearbyPlayers[i];
-            final isRequested = false;
-            final isAlreadyInMatch = currentPlayerIds?.contains(player['id']) ?? false;
+            final isRequested = player['hasPendingRequest'] ?? false;
             final initials = getInitials(player['name']);
 
             return Padding(
@@ -234,20 +290,13 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       children: [
                         Text(
                           '${(player['name'] ?? '').toString().capitalizeFirstChar()} ',
-                          style: Get.textTheme.labelLarge!
+                          style: Get.textTheme.headlineMedium!
                               .copyWith(fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Text(
-                              '${player['level'] ?? 'Beginner'} • ',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
-                            ),
                             Container(
-                              // height: 25,
-                              // width: 55,
                               padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
@@ -264,10 +313,15 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0} Played',
+                              ' • ${player['level'] ?? 'Beginner'}',
                               style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, color: Colors.grey),
+                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primaryColor),
                             ),
+                            // Text(
+                            //   ' • ${player['totalMatchesPlayed'] ?? 0}Games Played',
+                            //   style: Get.textTheme.bodySmall!
+                            //       .copyWith(fontSize: 12, color: Colors.grey),
+                            // ),
                           ],
                         ),
                         Row(
@@ -275,7 +329,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                             Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
                             const SizedBox(width: 4),
                             Text(
-                              player['city'] ?? '',
+                              player['cityName'] ?? '',
                               style: Get.textTheme.bodyLarge!
                                   .copyWith(fontSize: 11),
                             ),
@@ -284,7 +338,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId, isAlreadyInMatch),
+                  _requestButton(player['hasPendingRequest'] ?? false, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',bookingId),
                 ],
               ),
             );
@@ -294,13 +348,13 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     });
   }
 
-  Widget _requestButton(bool sent, String playerId, String team, String bookingId, bool isAlreadyInMatch) {
+  Widget _requestButton(bool hasPendingRequest, String playerId, String team, String bookingId) {
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
+      final isRequested = hasPendingRequest || controller.requestedPlayerIds.contains(playerId);
       
       return GestureDetector(
-        onTap: (isRequested || isRequesting || isAlreadyInMatch) ? null : () async {
+        onTap: (isRequested || isRequesting) ? null : () async {
           controller.requestingPlayerId.value = playerId;
           
           // Normalize team name: "Team A" -> "teamA", "Team B" -> "teamB"
@@ -308,7 +362,7 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           
           print("=== REQUEST BUTTON TAPPED ===");
           print("bookingType: ${controller.bookingType.value}");
-          print("bookingId: $bookingId");
+          print("bookingId:-- $bookingId");
           print("playerId: $playerId");
           print("original teamName: $teamName");
           print("normalized team: $normalizedTeam");
@@ -333,12 +387,10 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
             try {
               final response = await controller.repository.requestToJoinBookingModel(body: body);
               if (response != null) {
-                // SnackBarUtils.showSuccessSnackBar("Player request sent successfully");
                 success = true;
               }
             } catch (e) {
               print("Error calling API: $e");
-              // SnackBarUtils.showErrorSnackBar("Failed to send request");
             }
           }
           
@@ -349,9 +401,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           controller.requestingPlayerId.value = '';
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: isAlreadyInMatch ? const Color(0xffE9ECF5) : (isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF)),
+            color: isRequested ? const Color(0xffE9ECF5) : const Color(0xffEEF1FF),
             borderRadius: BorderRadius.circular(8),
           ),
           child: isRequesting
@@ -364,9 +416,9 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
                   ),
                 )
               : Text(
-                  isAlreadyInMatch ? 'Already Added' : (isRequested ? 'Request Sent' : 'Send Request'),
+                  isRequested ? 'Request Sent' : 'Send Request',
                   style: Get.textTheme.bodyLarge!.copyWith(
-                    color: (isAlreadyInMatch || isRequested) ? Colors.grey : AppColors.primaryColor,
+                    color: isRequested ? Colors.grey : AppColors.primaryColor,fontSize: 10,fontWeight: FontWeight.w800
                   ),
                 ),
         ),
@@ -378,20 +430,20 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
     final style = Get.textTheme.labelLarge!.copyWith(color: Colors.white);
     return Column(
       children: [
-        OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(45),
-            side: const BorderSide(color: Colors.green),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: Text(
-            'Invite Player',
-            style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
-          ),
-        ),
+        // OutlinedButton(
+        //   onPressed: () {},
+        //   style: OutlinedButton.styleFrom(
+        //     minimumSize: const Size.fromHeight(45),
+        //     side: const BorderSide(color: Colors.green),
+        //     shape: RoundedRectangleBorder(
+        //       borderRadius: BorderRadius.circular(5),
+        //     ),
+        //   ),
+        //   child: Text(
+        //     'Invite Player',
+        //     style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
+        //   ),
+        // ),
         const SizedBox(height: 4),
         // ElevatedButton(
         //   onPressed: () {},
@@ -441,5 +493,16 @@ class AppPlayersBottomSheetScore extends StatelessWidget {
           ),
       ],
     );
+  }
+  String getInitials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '';
+
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
   }
 }

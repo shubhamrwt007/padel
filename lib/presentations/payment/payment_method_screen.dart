@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/components/app_bar.dart';
-import 'package:padel_mobile/configs/components/custom_button.dart';
-import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/generated/assets.dart';
+import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 import 'package:padel_mobile/presentations/cart/cart_controller.dart';
-import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
+import 'package:padel_mobile/presentations/booking/booking_controller.dart';
 
 class PaymentMethodScreen extends GetView<PaymentMethodController> {
   const PaymentMethodScreen({super.key});
@@ -19,7 +18,17 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     final CartController? cartController =
         Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
 
-    return Scaffold(
+    return PopScope(
+      onPopInvoked: (didPop) {
+        print("object-------------------");
+        if (didPop && Get.isRegistered<BookingController>()) {
+          Get.find<BookingController>().onPageResumed();
+        }else if (didPop && Get.isRegistered<BookACourtController>()){
+          print("objectobject--------------");
+          Get.find<BookACourtController>().onResumed();
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.whiteColor,
       appBar: primaryAppBar(
         centerTitle: true,
@@ -44,6 +53,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           children: [
             // Payment Summary Section
             _buildPaymentSummary(context, cartController),
+            Image.asset(Assets.imagesIcRackets,).paddingOnly(left: 20,right: 20),
 
             // UPI Section
             Text(
@@ -51,37 +61,22 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
               style: Theme.of(context).textTheme.headlineLarge!.copyWith(
                 fontWeight: FontWeight.w600,
               ),
-            ).paddingSymmetric(horizontal: Get.width * 0.05),
+            ).paddingSymmetric(horizontal: Get.width * 0.05,vertical: 10),
 
             _buildUPIOptions(context),
 
             SizedBox(height: Get.height * 0.03),
-            //
-            // // Credit & Debit Cards Section
-            // Text(
-            //   "Credit & Debit Cards",
-            //   style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-            //     fontWeight: FontWeight.w600,
-            //   ),
-            // ).paddingSymmetric(horizontal: Get.width * 0.05),
-            //
-            // SizedBox(height: Get.height * 0.02),
-            //
-            // _buildCardOptions(context),
-            //
-            // SizedBox(height: Get.height * 0.03),
           ],
         ),
       ),
-      // bottomNavigationBar: _buildPaymentButton(context, cartController),
-    );
+    ));
   }
 
   Widget _buildPaymentSummary(BuildContext context, CartController? cartController) {
-    final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>() 
-        ? Get.find<BookACourtController>() 
-        : null;
-    final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
+    // final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>()
+    //     ? Get.find<BookACourtController>()
+    //     : null;
+    // final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
     
     return Obx(() {
       final walletBalance = controller.walletAmountUsed.value;
@@ -162,29 +157,29 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
   Widget _buildUPIOptions(BuildContext context) {
     final upiOptions = [
       {
-        "name": "Google Pay",
-        "icon": Assets.imagesImgGooglePay,
-        "value": "google_pay",
+        "name": "Razor Pay",
+        "icon": Assets.imagesRazorPay,
+        "value": "razor_pay",
         "hasButton": true,
       },
-      {
-        "name": "Paytm",
-        "icon": Assets.imagesImgPaytm, // Add this asset
-        "value": "paytm",
-        "hasButton": true,
-      },
-      {
-        "name": "PhonePe",
-        "icon": Assets.imagesImgPhonePay, // Add this asset
-        "value": "phonepe",
-        "hasButton": true,
-      },
-      {
-        "name": "Other Ways",
-        "icon": Assets.imagesImgOtherUpi, // Add this asset
-        "value": "other_ways",
-        "hasButton": true,
-      },
+      // {
+      //   "name": "Paytm",
+      //   "icon": Assets.imagesImgPaytm, // Add this asset
+      //   "value": "paytm",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "PhonePe",
+      //   "icon": Assets.imagesImgPhonePay, // Add this asset
+      //   "value": "phonepe",
+      //   "hasButton": true,
+      // },
+      // {
+      //   "name": "Other Ways",
+      //   "icon": Assets.imagesImgOtherUpi, // Add this asset
+      //   "value": "other_ways",
+      //   "hasButton": true,
+      // },
     ];
 
     return Column(
@@ -200,45 +195,6 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     );
   }
 
-  Widget _buildCardOptions(BuildContext context) {
-    return Column(
-      children: [
-        _buildPaymentOption(
-          context,
-          "", // Add this asset
-          "Visa",
-          "visa_1324",
-          subtitle: "**1324 | Vikram Kumar",
-        ),
-        SizedBox(height: Get.height * 0.015),
-        GestureDetector(
-          onTap: () {
-            // Navigate to add card screen
-          },
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  color: AppColors.primaryColor,
-                  size: 24,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  "Add a new credit or debit card",
-                  style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildPaymentOption(
       BuildContext context,
@@ -251,7 +207,6 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     return GestureDetector(
       onTap: () {
         if (value.startsWith('visa') || value.contains('card')) {
-          // SnackBarUtils.showInfoSnackBar("Coming Soon");
         } else {
           controller.option.value = value;
         }
@@ -342,7 +297,8 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                           child: ElevatedButton(
                             onPressed: () async {
                               // if (controller.razorpayAmountUsed.value <= 0) {
-                              //   SnackBarUtils.showWarningSnackBar("Amount cannot be zero");
+                              CustomLogger.logMessage(msg:"Amount cannot be zero", level: LogLevel.error);
+
                               //   return;
                               // }
                               await controller.startPayment();
@@ -355,7 +311,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                               ),
                             ),
                             child: Text(
-                              "Pay using ${title}",
+                              "Pay using $title",
                               style: TextStyle(
                                 color: AppColors.whiteColor,
                                 fontSize: 16,
@@ -371,83 +327,5 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           );
         }),
     ));
-  }
-
-  Widget _buildPaymentButton(BuildContext context, CartController? cartController) {
-    final BookACourtController? bookACourtController = Get.isRegistered<BookACourtController>() 
-        ? Get.find<BookACourtController>() 
-        : null;
-    final bool isFromBookACourt = bookACourtController != null && bookACourtController.realCourtSelections.isNotEmpty;
-    final bool isFromBookSession = controller.isFromBookSession;
-    
-    return Container(
-      padding: EdgeInsets.all(Get.width * 0.05),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Obx(() {
-        final int totalAmount = isFromBookACourt
-            ? (bookACourtController?.totalAmount.value ?? 0)
-            : isFromBookSession
-                ? (controller.walletAmountUsed.value + controller.razorpayAmountUsed.value).toInt()
-                : (cartController?.totalPrice.value ?? 0);
-        
-        return CustomButton(
-          width: Get.width,
-          onTap: () async {
-            if (controller.option.value.isEmpty) {
-              SnackBarUtils.showWarningSnackBar("Please select payment method");
-              return;
-            }
-
-            if (!isFromBookACourt && !isFromBookSession && (cartController?.cartItems.isEmpty ?? true)) {
-              return;
-            }
-
-            await controller.startPayment();
-          },
-          child: controller.isProcessing.value || (cartController?.isBooking.value ?? false)
-              ? LoadingAnimationWidget.waveDots(
-            color: AppColors.whiteColor,
-            size: 45,
-          )
-              : Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "₹",
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: AppColors.whiteColor,
-                  fontFamily: "Roboto",
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(width: 5),
-              Text(
-                formatAmount(totalAmount.toString()),
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: AppColors.whiteColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(width: 20),
-              Text(
-                "Book Now",
-                style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                  color: AppColors.whiteColor,
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
   }
 }

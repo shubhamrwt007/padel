@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
@@ -11,7 +12,7 @@ import '../notification/notification_controller.dart';
 import 'open_match_for_all_court_controller.dart';
 class OpenMatchForAllCourtScreen extends StatefulWidget {
   const OpenMatchForAllCourtScreen({super.key});
-
+/////
   @override
   State<OpenMatchForAllCourtScreen> createState() => _OpenMatchForAllCourtScreenState();
 }
@@ -29,7 +30,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     return Scaffold(
       bottomNavigationBar: _bottomButton(context),
       appBar: primaryAppBar(
-          title: Text("Find a Game"), context: context,centerTitle: true,
+        title: Text("Find a Game"), context: context,centerTitle: true,
         action: [
           GestureDetector(
             onTap: () {
@@ -160,6 +161,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     }
 
                     return Column(
+
                       children: matches.data!.asMap().entries.map((entry) =>
                           _buildMatchCardFromData(context, entry.value, entry.key)).toList(),
                     );
@@ -195,8 +197,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: AppColors.whiteColor),
         ).paddingOnly(right: Get.width * 0.14),
         onTap: () {
-          Get.toNamed(RoutesName.createOpenMatchForAllCourts,);
-          // SnackBarUtils.showInfoSnackBar("Create an Open Match Coming Soon!");
+          Get.toNamed(RoutesName.createOpenMatchForAllCourts, arguments: {
+            'selectedDate': controller.selectedDate.value,
+          });
         },
       ).paddingOnly(bottom: 0),
     );
@@ -421,8 +424,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
       final tabs = [
         {"label": "Morning", "icon": Icons.wb_twilight_sharp, "value": "morning"},
-        {"label": "Noon", "icon": Icons.wb_sunny, "value": "noon"},
-        {"label": "Evening", "icon": Icons.nightlight_round, "value": "night"},
+        {"label": "Noon", "icon": Icons.wb_sunny, "value": "afternoon"},
+        {"label": "Evening", "icon": Icons.nightlight_round, "value": "evening"},
       ];
 
       return Theme(
@@ -447,8 +450,10 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () =>
-                      controller.selectedTimeFilter.value = value,
+                      onTap: () {
+                        controller.selectedTimeFilter.value = value;
+                        controller.fetchMatchesForSelection();
+                      },
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
@@ -456,6 +461,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.white : Colors.white,
                           borderRadius: BorderRadius.circular(5),
+                          border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
                           boxShadow: isSelected
                               ? [
                             BoxShadow(
@@ -521,11 +527,20 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     slot.slotTimes?.map((st) => st.time ?? '') ?? <String>[]
     ).where((time) => time.isNotEmpty).toList() ?? [];
     // final timeStr = controller.formatTimeRange(data.matchTime ?? []);
-    final timeStr =data.openMatchStatus== "pending"?"${data.startTime?.split(' ').first??""}-${data.endTime??""}": "${data.bookingId?.startTime?.split(' ').first??""}-${data.bookingId?.endTime??""}";
-
+    final timeStr ="${data.bookingId?.startTime?.split(' ').first ?? data.startTime?.split(' ').first??""}-${data.bookingId?.endTime ?? data.endTime??""}";
     final clubName = data.clubId?.clubName ?? '-';
-    final address = "${data.clubId?.city ?? ""} ${data.clubId?.zipCode??""}";
-    final price = "${data.bookingId?.totalAmount??0}";
+
+    final locationName = (data.clubId?.locations?.isNotEmpty ?? false)
+        ? data.clubId!.locations![0].city?.capitalizeFirstChar() ?? ""
+        : "";
+
+
+    final address = locationName.isNotEmpty ? locationName : "${data.clubId?.city ?? ""} ${data.clubId?.zipCode ?? ""}";
+
+    // Show yourShare if openMatchStatus is pending, otherwise show totalAmount
+    final price = data.openMatchStatus == "pending"
+        ? "${data.yourShare ?? 0}"
+        : "${data.totalAmount ?? 0}";
     // final price = (data.slot?.isNotEmpty == true &&
     //     data.slot!.first.slotTimes?.isNotEmpty == true)
     //     ? '${data.slot!.first.slotTimes!.first.amount ?? ''}'
@@ -657,34 +672,34 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     children: [
                       if (_isLoginUserInMatch(data) && controller.getTotalPlayersCount(data) > 1)
                         GestureDetector(
-                          onTap: (){
-                            final teamAData = (data.teamA ?? []).map((p) => {
-                              'userId': p.userId?.sId ?? '',
-                              'name': p.userId?.name ?? '',
-                              'lastName': p.userId?.lastName ?? '',
-                            }).toList();
-                            final teamBData = (data.teamB ?? []).map((p) => {
-                              'userId': p.userId?.sId ?? '',
-                              'name': p.userId?.name ?? '',
-                              'lastName': p.userId?.lastName ?? '',
-                            }).toList();
+                            onTap: (){
+                              final teamAData = (data.teamA ?? []).map((p) => {
+                                'userId': p.userId?.sId ?? '',
+                                'name': p.userId?.name ?? '',
+                                'lastName': p.userId?.lastName ?? '',
+                              }).toList();
+                              final teamBData = (data.teamB ?? []).map((p) => {
+                                'userId': p.userId?.sId ?? '',
+                                'name': p.userId?.name ?? '',
+                                'lastName': p.userId?.lastName ?? '',
+                              }).toList();
 
-                            Get.toNamed(RoutesName.chat, arguments: {
-                              "matchID": data.sId ?? "",
-                              "teamA": teamAData,
-                              "teamB": teamBData,
-                            });
-                          },
-                          child:Container(
-                              height: 36,
-                              width: 36,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                // borderRadius: BorderRadius.circular(10),
-                                color:AppColors.primaryColor,
-                              ),
-                              child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
-                          )
+                              Get.toNamed(RoutesName.chat, arguments: {
+                                "matchID": data.sId ?? "",
+                                "teamA": teamAData,
+                                "teamB": teamBData,
+                              });
+                            },
+                            child:Container(
+                                height: 36,
+                                width: 36,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  // borderRadius: BorderRadius.circular(10),
+                                  color:AppColors.primaryColor,
+                                ),
+                                child:Icon(Icons.chat_outlined, color: Colors.white, size: 18)
+                            )
                         ).paddingOnly(right: 10),
                       Container(
                         decoration: BoxDecoration(
@@ -740,47 +755,54 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         ? '${name.trim()[0].toUpperCase()}${lastName.trim().isNotEmpty ? lastName.trim()[0].toUpperCase() : ''}'
         : '?';
 
-    return CircleAvatar(
-      radius: 22,
-      backgroundColor: Colors.white,
+    return GestureDetector(
+      onTap: (){
+        if (matchData != null && (_isLoginUserInMatch(matchData) || _isMatchCreator(matchData))) {
+          _showPlayerDetailsDialog(matchData);
+        }
+      },
       child: CircleAvatar(
-        radius: 20,
-        backgroundColor:const Color(0xffeaf0ff),
-        child: ClipOval(
-          child: (imageUrl != null && imageUrl.isNotEmpty)
-              ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            placeholder: (context, url) => Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.primaryColor.withOpacity(0.5),
-                  fontWeight: FontWeight.bold,
+        radius: 22,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor:const Color(0xffeaf0ff),
+          child: ClipOval(
+            child: (imageUrl != null && imageUrl.isNotEmpty)
+                ? CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              placeholder: (context, url) => Center(
+                child: Text(
+                  firstLetter,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.primaryColor.withOpacity(0.5),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            errorWidget: (context, url, error) => Center(
+              errorWidget: (context, url, error) => Center(
+                child: Text(
+                  firstLetter,
+                  style:  TextStyle(
+                    fontSize: 18,
+                    color:  AppColors.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
+                : Center(
               child: Text(
                 firstLetter,
                 style:  TextStyle(
                   fontSize: 18,
-                  color:  AppColors.primaryColor,
+                  color: AppColors.primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-            ),
-          )
-              : Center(
-            child: Text(
-              firstLetter,
-              style:  TextStyle(
-                fontSize: 18,
-                color: AppColors.primaryColor,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -794,14 +816,22 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
     final hasActiveRequest = match?.isRequest == true;
+    final isAdminMatch = match?.adminStatus == true;
 
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
-        if (isMatchCreator) {
+        if (isAdminMatch && !isLoginUserInMatch) {
+          // Admin match - direct join flow
+          print("Match from Admin----------------------");
+          await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
+        } else if(match?.openMatchStatus == "pending" && !isLoginUserInMatch){
+          print("Match from User Per Share----------------------");
+          await controller.directJoinAdminMatch(match: match, prefferedTeam: team);
+        } else if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: match?.sId??"", selectedTeam: team,bookingId: match?.bookingId?.sId??"",price: match?.bookingId?.totalAmount/4,), isScrollControlled: true);
-        } else {
+        } else if (!isLoginUserInMatch) {
           // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.bookingId?.totalAmount/4);
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',match?.totalAmount/4);
         }
       },
       child: CircleAvatar(
@@ -811,8 +841,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           radius: 20,
           backgroundColor: hasActiveRequest ? Colors.grey.withOpacity(0.3) : const Color(0xffeaf0ff),
           child: Icon(
-            Icons.add, 
-            color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
+              Icons.add,
+              color: hasActiveRequest ? Colors.grey : AppColors.primaryColor
           ),
         ),
       ),
@@ -853,7 +883,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     // Find the match data to check isRequest
     final matchData = controller.matchesBySelection.value?.data?.firstWhere(
-      (match) => match.sId == matchId,
+          (match) => match.sId == matchId,
       orElse: () => OpenMatchBookingData(),
     );
 
@@ -907,21 +937,20 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
       );
       return;
     }
-
     try {
       final addPlayerController = Get.put(AddPlayerController());
-      
+
       // Set required values
       addPlayerController.matchId.value = matchId;
       addPlayerController.selectedTeam.value = team;
       addPlayerController.playerId.value = userId;
       addPlayerController.openMatchForAllCourtController = controller;
-      
+
       // Call the request API directly
       final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId,price: price);
       if (success) {
-    
-        
+
+
         Get.dialog(
           Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -967,9 +996,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
               ),
             ),
           ),
-          
+
         );
-            // Refresh matches without showing loader
+        // Refresh matches without showing loader
         final currentLoading = controller.isLoading.value;
         controller.isLoading.value = false;
         await controller.fetchMatchesForSelection();
@@ -993,6 +1022,12 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   }
 
   void _showPlayerDetailsDialog(OpenMatchBookingData matchData) {
+    final userId = storage.read('userId');
+    final hasPlayers = (matchData.teamA ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false)) ||
+        (matchData.teamB ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false));
+
+    if (!hasPlayers) return;
+
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1037,9 +1072,9 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
           .where((e) => e != null && e!.isNotEmpty)
           .map((e) => e![0].toUpperCase() + e.substring(1).toLowerCase())
           .join(' ');
-      final countryCode = p.userId?.countryCode;
-      final phoneNumber = p.userId?.phoneNumber;
       final xpPoints = p.userId?.xpPoints;
+      final gender = p.userId?.gender ??"";
+      final level = p.userId?.level ?? "";
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 14),
@@ -1095,6 +1130,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      Text("⭐ ", style: Get.textTheme.bodySmall
+                          ?.copyWith(fontWeight: FontWeight.w500),),
                       Container(
                         // height: 25,
                         // width: 55,
@@ -1105,7 +1142,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
-                          '⭐${formatAmount(xpPoints??"")} XP',
+                          '${formatAmount(xpPoints??"")} XP',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -1114,7 +1151,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         ),
                       ),
                       Text(
-                        ' | $countryCode-$phoneNumber',
+                        ' | $gender | $level',
                         style: Get.textTheme.bodySmall
                             ?.copyWith(fontWeight: FontWeight.w500),
                       ),
@@ -1140,17 +1177,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   //   ),
                   // ),
                 ],
-              ),
-            ),
-
-            /// Call button
-            GestureDetector(
-              onTap: () => _makeCall('$countryCode$phoneNumber'),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.primaryColor,
-                child: const Icon(Icons.call,
-                    color: Colors.white, size: 20),
               ),
             ),
           ],
@@ -1628,7 +1654,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
             //             onTap: () {
             //               // Only allow if user is in the match
             //               if (!_isLoginUserInMatch(data)) {
-            //                 SnackBarUtils.showInfoSnackBar("You must be part of the match to play");
             //                 return;
             //               }
             //
@@ -1845,13 +1870,14 @@ class AppPlayersBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<OpenMatchForAllCourtController>();
-    controller.fetchNearByPlayers();
-    
+    log("BookingID___> $bookingId");
+    controller.fetchNearByPlayers(bookingId: bookingId??"");
+
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
-    
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Container(
@@ -1878,7 +1904,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 height: 45,
                 child: PrimaryTextField(
                     contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                    onChanged: (value) => controller.fetchNearByPlayers(search: value),
+                    onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
                     hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                     suffixIcon: Icon(Icons.search,color: AppColors.textColor),
                     hintText: 'Search by Name / Phone number'),
@@ -1906,7 +1932,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'App Players',
+          'Find a player',
           style: Get.textTheme.headlineMedium,
         ),
         Transform.translate(
@@ -2039,7 +2065,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                             Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
                             const SizedBox(width: 4),
                             Text(
-                              player['city'] ?? '',
+                              player['cityName'] ?? '',
                               style: Get.textTheme.bodyLarge!
                                   .copyWith(fontSize: 11),
                             ),
@@ -2050,7 +2076,7 @@ class AppPlayersBottomSheet extends StatelessWidget {
                   ),
 
                   /// Button
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA'),
+                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',player['hasPendingRequest']),
                 ],
               ),
             );
@@ -2061,11 +2087,11 @@ class AppPlayersBottomSheet extends StatelessWidget {
   }
 
 
-  Widget _requestButton(bool sent, String playerId, String team) {
+  Widget _requestButton(bool sent, String playerId, String team,bool hasPendingRequest) {
     final controller = Get.find<OpenMatchForAllCourtController>();
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
-      final isRequested = sent || controller.requestedPlayerIds.contains(playerId);
+      final isRequested =hasPendingRequest || sent || controller.requestedPlayerIds.contains(playerId);
 
       return GestureDetector(
         onTap: (isRequested || isRequesting) ? null : () async {

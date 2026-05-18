@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
@@ -14,8 +15,12 @@ import '../../../../configs/routes/routes_name.dart';
 import '../../../booking/details_page/details_page_controller.dart';
 import '../questions_bottomsheet/questions_bottomsheet_controller.dart';
 import '../questions_bottomsheet/questions_bottomsheet_screen.dart';
+import '../../../../services/socket_service.dart';
+import '../../../../services/slot_wise_service.dart';
 
 class CreateOpenMatchesController extends GetxController {
+  final SlotWiseService _slotWiseService = SlotWiseService();
+  RxBool isSocketDataReceived = false.obs;
 
   ///Date Picker----------------------------------------------------------------
   Future<void> openDatePicker(BuildContext context) async {
@@ -68,7 +73,8 @@ class CreateOpenMatchesController extends GetxController {
   }
   final EasyDatePickerController dateTimelineController = EasyDatePickerController();
   // Booking limits
-  static const int maxSlots = 3; // Limit for open matches
+  static const int maxSlots = 3; // Limit for open matches (60-min slots)
+  static const int maxSlots90Min = 2; // Limit for 90-minute slots (1.5 + 1.5 = 3 hours)
   static const int maxDays = 1; // Single day for open matches
   final focusedMonth = DateTime.now().obs;
   
@@ -144,14 +150,38 @@ class CreateOpenMatchesController extends GetxController {
   
   // Track if slot history API was called
   RxBool hasCalledSlotHistoryAPI = false.obs;
+  
+  // Store selections for cleanup (in case they get cleared before cleanup)
+  List<Map<String, dynamic>> selectionsForCleanup = [];
+  
+  // Track if we're currently locking slots (to ignore socket updates temporarily)
+  RxBool isLockingSlots = false.obs;
+  
+  // Store timestamp when slots were locked by current user
+  DateTime? _lastLockTimestamp;
+  
+  // Payment option selection
+  final selectedIndex = 0.obs; // 0 = Pay All, 1 = Pay Share
+  void selectPaymentOption(int index) {
+    selectedIndex.value = index;
+  }
+  var categoryId = "".obs;
+  var locationID = "".obs;
+  var locationsId = "".obs;
+   var sId = "".obs;
+
   @override
   void onInit() {
     super.onInit();
     argument = Get.arguments['id'];
+    sId.value = Get.arguments['sID']??"";
+    categoryId.value = Get.arguments['categoryId'];
+    locationID.value = Get.arguments['location'];
+    locationsId.value = Get.arguments['locationsId'];
     selectedDate.value = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchAllSlotPrices();
-      await getAvailableCourtsById(argument.id!, showUnavailable: true);
+      _subscribeToSlotUpdates();
     });
   }
 
@@ -162,6 +192,7 @@ class CreateOpenMatchesController extends GetxController {
     multiDateSelections.clear();
     totalAmount.value = 0;
     pageController.dispose();
+    _unsubscribeFromSlotUpdates();
     super.onClose();
   }
 
@@ -176,37 +207,23 @@ class CreateOpenMatchesController extends GetxController {
   }
 
   Future<void> cleanupSlotHistory() async {
-    if (multiDateSelections.isEmpty || !hasCalledSlotHistoryAPI.value) return;
+    log('🧹 cleanupSlotHistory called');
+    log('selectionsForCleanup.length: ${selectionsForCleanup.length}');
+    log('hasCalledSlotHistoryAPI.value: ${hasCalledSlotHistoryAPI.value}');
+    
+    if (selectionsForCleanup.isEmpty || !hasCalledSlotHistoryAPI.value) {
+      log('⚠️ Cleanup skipped: selections empty=${selectionsForCleanup.isEmpty}, apiCalled=${hasCalledSlotHistoryAPI.value}');
+      return;
+    }
     
     try {
-      final slots = <Map<String, dynamic>>[];
-      
-      for (var entry in multiDateSelections.entries) {
-        final selection = entry.value;
-        final slot = selection['slot'] as Slots;
-        final slotId = slot.sId ?? '';
-        final courtId = selection['courtId'] as String;
-        final dateString = selection['date'] as String;
-        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
-        final isLeftHalf = selection['isLeftHalf'] as bool?;
-        final supports30Min = slotSupports30Min(slot);
-        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
-        
-        slots.add({
-          "slotId": slotId,
-          "courtId": courtId,
-          "bookingDate": dateString,
-          "time": bookingTime,
-          "bookingTime": bookingTime,
-          "duration": duration,
-        });
-      }
-      
-      await deleteSlotHistory(slots: slots);
-      log('Cleanup slot history: $slots');
+      log('🗑️ Calling deleteSlotHistory with ${selectionsForCleanup.length} slots');
+      await deleteSlotHistory(slots: selectionsForCleanup);
+      log('✅ Cleanup slot history completed: $selectionsForCleanup');
       hasCalledSlotHistoryAPI.value = false;
+      selectionsForCleanup.clear();
     } catch (e) {
-      log('Error in cleanup slot history: $e');
+      log('❌ Error in cleanup slot history: $e');
     }
   }
 
@@ -230,7 +247,8 @@ class CreateOpenMatchesController extends GetxController {
         final isLeftHalf = selection['isLeftHalf'] as bool?;
         final supports30Min = slotSupports30Min(slot);
         final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
-        
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
+        final userId = storage.read("userId")??"";
         slots.add({
           "slotId": slotId,
           "courtId": courtId,
@@ -238,14 +256,20 @@ class CreateOpenMatchesController extends GetxController {
           "bookingDate": dateString,
           "time": bookingTime,
           "bookingTime": bookingTime,
-          "duration": duration,
-          "totalTime": duration,
+          "duration": finalDuration,
+          "totalTime": finalDuration,
+          "userId":userId
         });
       }
       
       final success = await createAndGetSlotHistory(slots);
       if (success) {
         hasCalledSlotHistoryAPI.value = true;
+        // Store selections for cleanup
+        selectionsForCleanup = List.from(slots);
+        log('✅ Slot history API called successfully, stored ${selectionsForCleanup.length} slots for cleanup');
+      } else {
+        log('❌ Slot history API failed');
       }
       return success;
     } catch (e) {
@@ -254,11 +278,196 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
+  void onNextPressed() {
+    if (selectedIndex.value == 0) {
+      // Pay for All Players
+      Get.back();
+      onNext();
+    } else if (selectedIndex.value == 1) {
+      // Pay your share only
+      Get.back();
+      onNextPayShareOnly();
+    }
+  }
+  
+  void onNextPayShareOnly() async {
+    log("Pay Share Only - Slots -> $selectedSlots");
+
+    if (multiDateSelections.isEmpty) {
+      return;
+    }
+
+    try {
+      final success = await processSlotHistoryForPayment();
+      if (!success) {
+        return;
+      }
+    } catch (e) {
+      return;
+    }
+
+    // Collect all unique court IDs and names from selections
+    Map<String, String> courtsMap = {};
+    multiDateSelections.forEach((key, selection) {
+      final courtId = selection['courtId'] as String?;
+      final courtName = selection['courtName'] as String?;
+      if (courtId != null && courtId.isNotEmpty) {
+        courtsMap[courtId] = courtName ?? '';
+      }
+    });
+
+    List<String> courtIds = courtsMap.keys.toList();
+    List<String> courtNames = courtsMap.values.toList();
+    String primaryCourtId = courtIds.first;
+    String primaryCourtName = courtNames.first;
+
+    if (Get.isRegistered<DetailsController>()) {
+      Get.delete<DetailsController>();
+    }
+    final detailsController = Get.put(DetailsController());
+    detailsController.isFromOpenMatch = true;
+
+    detailsController.localMatchData.update("clubName", (value) => slots.value!.data![0].clubName ?? "");
+    detailsController.localMatchData.update("address", (value) => slots.value!.data![0].registerClubId?.address ?? "");
+    detailsController.localMatchData.update("clubId", (v) => slots.value!.data![0].registerClubId!.sId ?? "");
+    detailsController.localMatchData["ownerId"] = slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
+    detailsController.localMatchData["categoryId"] = categoryId.value;
+    detailsController.localMatchData["location"] = locationID.value;
+    detailsController.localMatchData["stateId"] = locationsId.value;
+    detailsController.localMatchData["paymentOption"] = "payShareOnly";
+    
+    detailsController.localMatchData.update("matchDate", (v) => selectedDate.value ?? "");
+    detailsController.localMatchData.update("clubImage", (v)=> slots.value!.data![0].registerClubId?.courtImage ??[]);
+    detailsController.localMatchData.update("matchTime", (v) => selectedSlots.map((s) => s.time).toList());
+    detailsController.localMatchData.update("price", (v) => totalAmount.toString());
+
+    
+    final courtTypes = slots.value!.data![0].registerClubId!.courtType ?? [];
+    final courts = slots.value?.data ?? [];
+    List<String> selectedCourtTypes = [];
+    
+    for (String courtId in courtIds) {
+      int courtIndex = -1;
+      for (int i = 0; i < courts.length; i++) {
+        if (courts[i].sId == courtId) {
+          courtIndex = i;
+          break;
+        }
+      }
+      
+      if (courtIndex >= 0 && courtIndex < courtTypes.length) {
+        selectedCourtTypes.add(courtTypes[courtIndex]);
+      } else if (courtTypes.isNotEmpty) {
+        selectedCourtTypes.add(courtTypes.first);
+      }
+    }
+    
+    final courtTypeValue = selectedCourtTypes.length == 1 ? selectedCourtTypes.first : selectedCourtTypes;
+    detailsController.localMatchData.update("courtType", (v) => courtTypeValue);
+    
+    List<Slots> updatedSlots = [];
+    Map<String, Slots> consolidatedSlots = {};
+    
+    for (Slots slot in selectedSlots) {
+      Map<String, dynamic>? leftHalfSelection;
+      Map<String, dynamic>? rightHalfSelection;
+      
+      multiDateSelections.forEach((key, selection) {
+        final selectionSlot = selection['slot'] as Slots;
+        if (selectionSlot.sId == slot.sId) {
+          if (key.endsWith('_L')) {
+            leftHalfSelection = selection;
+          } else if (key.endsWith('_R')) {
+            rightHalfSelection = selection;
+          } else {
+            leftHalfSelection = selection;
+          }
+        }
+      });
+      
+      final supports30Min = slotSupports30Min(slot);
+      
+      if (supports30Min && leftHalfSelection != null && rightHalfSelection != null) {
+        if (!consolidatedSlots.containsKey(slot.sId)) {
+          consolidatedSlots[slot.sId!] = Slots(
+            sId: slot.sId,
+            time: slot.time,
+            amount: slot.amount,
+            businessHours: slot.businessHours,
+            status: slot.status,
+            availabilityStatus: slot.availabilityStatus,
+            duration: 60,
+            bookingTime: slot.time ?? '',
+          );
+        }
+      } else {
+        final selectionData = leftHalfSelection ?? rightHalfSelection;
+        final adjustedAmount = selectionData?['adjustedAmount'] as int? ?? slot.amount ?? 0;
+        final duration = supports30Min && (leftHalfSelection != null || rightHalfSelection != null) ? 30 : 60;
+        
+        Slots updatedSlot = Slots(
+          sId: slot.sId,
+          time: slot.time,
+          amount: adjustedAmount,
+          businessHours: slot.businessHours,
+          status: slot.status,
+          availabilityStatus: slot.availabilityStatus,
+          duration: duration,
+          bookingTime: selectionData?['bookingTime'] ?? slot.time ?? '',
+        );
+        updatedSlots.add(updatedSlot);
+      }
+    }
+    
+    updatedSlots.addAll(consolidatedSlots.values);
+    
+    final slotsAsMap = updatedSlots.map((slot) {
+      final businessHoursList = (slot.businessHours ?? []).map((bh) => {
+        "time": bh.time ?? '',
+        "day": bh.day ?? '',
+      }).toList();
+      
+      return {
+        "slotId": slot.sId ?? '',
+        "businessHours": businessHoursList,
+        "slotTimes": [{
+          "time": slot.bookingTime ?? slot.time ?? '',
+          "amount": slot.amount ?? 0,
+        }],
+        "duration": slot.duration ?? 60,
+        "bookingTime": slot.bookingTime ?? slot.time ?? '',
+      };
+    }).toList();
+    
+    detailsController.localMatchData.update("slot", (v) => slotsAsMap);
+    detailsController.localMatchData["courtId"] = primaryCourtId;
+    detailsController.localMatchData["courtName"] = primaryCourtName;
+    detailsController.localMatchData["courtIds"] = courtIds;
+    detailsController.localMatchData["courtNames"] = courtNames;
+    detailsController.localMatchData["courtsDetails"] = courtsMap;
+
+    Get.put(QuestionsBottomsheetController(), tag: 'questions');
+    Get.find<QuestionsBottomsheetController>(tag: 'questions').localMatchData = detailsController.localMatchData;
+    
+    Get.bottomSheet(
+      QuestionsBottomsheetScreen(),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+    ).then((_) {
+      log('📱 Bottom sheet closed (Pay Share) - calling cleanup');
+      cleanupSlotHistory();
+      Get.delete<QuestionsBottomsheetController>(tag: 'questions');
+    });
+  }
+
   void onNext() async {
     log("Slots -> $selectedSlots");
 
     if (multiDateSelections.isEmpty) {
-      // SnackBarUtils.showInfoSnackBar("Please select at least one slot to continue.");
+      CustomLogger.logMessage(msg: "Please select at least one slot to continue.", level: LogLevel.error);
       return;
     }
 
@@ -300,9 +509,12 @@ class CreateOpenMatchesController extends GetxController {
     detailsController.localMatchData.update("clubName", (value) => slots.value!.data![0].clubName ?? "");
     detailsController.localMatchData.update("address", (value) => slots.value!.data![0].registerClubId?.address ?? "");
     detailsController.localMatchData.update("clubId", (v) => slots.value!.data![0].registerClubId!.sId ?? "");
-    // ✅ Store ownerId from registerClubId for booking payload (use direct assignment to avoid missing-key issues)
-    detailsController.localMatchData["ownerId"] =
-        slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
+    detailsController.localMatchData["ownerId"] = slots.value!.data![0].registerClubId?.ownerId?.sId ?? "";
+    detailsController.localMatchData["categoryId"] = categoryId.value;
+    detailsController.localMatchData["location"] = locationsId.value;
+    detailsController.localMatchData["stateId"] = locationID.value;
+    detailsController.localMatchData["paymentOption"] = "payForAll";
+    log("CategoryId: ${categoryId.value}, Location: ${locationID.value}, StateId: ${locationsId.value}");
     detailsController.localMatchData.update("matchDate", (v) => selectedDate.value ?? "");
     detailsController.localMatchData.update("clubImage", (v)=> slots.value!.data![0].registerClubId?.courtImage ??[]);
     detailsController.localMatchData.update(
@@ -399,7 +611,26 @@ class CreateOpenMatchesController extends GetxController {
     // Add consolidated full slots
     updatedSlots.addAll(consolidatedSlots.values);
     
-    detailsController.localMatchData.update("slot", (v) => updatedSlots);
+    // Convert Slots objects to Map format for questions controller
+    final slotsAsMap = updatedSlots.map((slot) {
+      final businessHoursList = (slot.businessHours ?? []).map((bh) => {
+        "time": bh.time ?? '',
+        "day": bh.day ?? '',
+      }).toList();
+      
+      return {
+        "slotId": slot.sId ?? '',
+        "businessHours": businessHoursList,
+        "slotTimes": [{
+          "time": slot.bookingTime ?? slot.time ?? '',
+          "amount": slot.amount ?? 0,
+        }],
+        "duration": slot.duration ?? 60,
+        "bookingTime": slot.bookingTime ?? slot.time ?? '',
+      };
+    }).toList();
+    
+    detailsController.localMatchData.update("slot", (v) => slotsAsMap);
     
     // Use direct assignment for new keys instead of update
     detailsController.localMatchData["courtId"] = primaryCourtId;
@@ -423,6 +654,7 @@ class CreateOpenMatchesController extends GetxController {
         ),
         isScrollControlled: true,
       ).then((_) {
+        log('📱 Bottom sheet closed (Pay All) - calling cleanup');
         // Cleanup when bottomsheet is closed
         cleanupSlotHistory();
         Get.delete<QuestionsBottomsheetController>(tag: 'questions');
@@ -463,6 +695,9 @@ class CreateOpenMatchesController extends GetxController {
       final courtId = court.sId ?? '';
       final baseList = _originalSlotsCache[courtId] ?? List<Slots>.from(court.slots ?? []);
       court.slots = baseList.where((s) {
+        // Only filter out past slots, keep booked future slots
+        if (_isPastSlot(s)) return false;
+        
         final hour = _parseHour24(s.time);
         if (hour == null) return false;
         if (tab == 0) return hour >= 6 && hour <= 11; // Morning 6-11 am
@@ -479,6 +714,9 @@ class CreateOpenMatchesController extends GetxController {
     nightCount.value = 0;
     _originalSlotsCache.forEach((_, list) {
       for (final s in list) {
+        // Skip past slots in count, but include booked future slots
+        if (_isPastSlot(s)) continue;
+        
         final hour = _parseHour24(s.time);
         if (hour == null) continue;
         if (hour >= 6 && hour <= 11) {
@@ -518,13 +756,408 @@ class CreateOpenMatchesController extends GetxController {
       }
     }
   }
+  void _emitSlotEvent(Slots slot, String courtId, String courtName, String dateString, bool isDeselection) {
+    try {
+      final socketService = SocketService.instance;
+      final eventData = {
+        'slotId': slot.sId ?? '',
+        'courtId': courtId,
+        'courtName': courtName,
+        'time': slot.time ?? '',
+        'date': dateString,
+        'amount': slot.amount ?? 0,
+        'userId': socketService.userId,
+        'clubId': argument.id ?? '',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      if (isDeselection) {
+        socketService.emitSlotDeselection(eventData);
+      } else {
+        socketService.emitSlotSelection(eventData);
+      }
+    } catch (e) {
+      log('Error emitting slot event: \$e');
+    }
+  }
+
+  void _subscribeToSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDay = _getWeekday(date.weekday);
+      final formattedDate = _dateFormatter.format(date);
+
+      _slotWiseService.subscribeToSlotWise(
+        clubId: argument.id ?? '',
+        date: formattedDate,
+        locationId: locationID.value,
+        categoryId: categoryId.value,
+        sId: sId.value,
+        locId: locationsId.value,
+        day: formattedDay,
+        onInitialData: (data) {
+          log('📡 SlotWise acknowledgment received');
+          isSocketDataReceived.value = true;
+          _handleInitialSlotData(data);
+        },
+        onSlotUpdate: (data) {
+          log('🔄 SlotWise real-time update received in CreateOpenMatchesController');
+          _handleRealTimeSlotUpdate(data);_checkAndUnselectLockedSlots(data);
+        },
+      );
+
+      log('Subscribed to slot-wise updates for club: \${argument.id}, date: \$formattedDate');
+
+      Timer(const Duration(seconds: 3), () {
+        if (!isSocketDataReceived.value) {
+          log('⚠️ No socket data received, falling back to API');
+          getAvailableCourtsById(argument.id!, showUnavailable: true);
+        }
+      });
+    } catch (e) {
+      log('Error subscribing to slot updates: \$e');
+      getAvailableCourtsById(argument.id!, showUnavailable: true);
+    }
+  }
+
+  void _unsubscribeFromSlotUpdates() {
+    try {
+      final date = selectedDate.value ?? DateTime.now();
+      final formattedDate = _dateFormatter.format(date);
+      _slotWiseService.unsubscribe(argument.id ?? '', formattedDate);
+      log('Unsubscribed from slot-wise updates');
+    } catch (e) {
+      log('Error unsubscribing from slot updates: \$e');
+    }
+  }
+
+  void resubscribeToSlotUpdates() {
+    isSocketDataReceived.value = false;
+    _unsubscribeFromSlotUpdates();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      _subscribeToSlotUpdates();
+    });
+  }
+
+  void _handleInitialSlotData(dynamic initialData) {
+    try {
+      if (initialData != null) {
+        Map<String, dynamic> dataMap;
+        if (initialData is List) {
+          dataMap = {'data': initialData};
+        } else if (initialData is Map<String, dynamic>) {
+          dataMap = initialData;
+        } else {
+          log('❌ Unexpected initial data format: \${initialData.runtimeType}');
+          getAvailableCourtsById(argument.id!, showUnavailable: true);
+          return;
+        }
+        final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+        _updateSocketSlotData(parsedData);
+        log('✅ Socket initial data displayed in UI');
+      }
+    } catch (e) {
+      log('❌ Error handling initial slot data: \$e');
+      getAvailableCourtsById(argument.id!, showUnavailable: true);
+    }
+  }
+
+  void _handleRealTimeSlotUpdate(dynamic socketResponse) {
+    try {
+      if (socketResponse == null) return;
+
+      final responseClubId = socketResponse['clubId']?.toString() ?? '';
+      final responseDate = socketResponse['date']?.toString() ?? '';
+      final slotData = socketResponse['data'] ?? socketResponse;
+
+      final currentClubId = argument.id ?? '';
+      final currentDate = selectedDate.value ?? DateTime.now();
+      final currentDateString = _dateFormatter.format(currentDate);
+
+      if (responseClubId.isNotEmpty && responseClubId != currentClubId) {
+        log('⚠️ Ignoring socket update: clubId mismatch (got $responseClubId, current $currentClubId)');
+        return;
+      }
+
+      if (responseDate.isNotEmpty && responseDate != currentDateString) {
+        log('⚠️ Ignoring socket update: date mismatch (got $responseDate, current $currentDateString)');
+        return;
+      }
+
+      Map<String, dynamic> dataMap;
+      if (slotData is List) {
+        dataMap = {'data': slotData};
+      } else if (slotData is Map<String, dynamic>) {
+        dataMap = slotData;
+      } else {
+        log('❌ Unexpected data format: ${slotData.runtimeType}');
+        return;
+      }
+      final parsedData = GetAllActiveCourtsForSlotWiseModel.fromJson(dataMap);
+      _updateSocketSlotData(parsedData);
+      log('✅ Real-time slot data updated in UI');
+    } catch (e) {
+      log('❌ Error handling real-time slot update: $e');
+    }
+  }
+
+  void _checkAndUnselectLockedSlots(dynamic socketResponse) {
+    try {
+      // Ignore socket updates if we're currently locking slots
+      if (isLockingSlots.value) {
+        log('⏸️ Ignoring socket update - currently locking slots');
+        return;
+      }
+      
+      // Ignore socket updates for 3 seconds after locking
+      if (_lastLockTimestamp != null) {
+        final timeSinceLock = DateTime.now().difference(_lastLockTimestamp!);
+        if (timeSinceLock.inSeconds < 3) {
+          log('⏸️ Ignoring socket update - ${3 - timeSinceLock.inSeconds}s remaining after lock');
+          return;
+        }
+      }
+      
+      if (socketResponse == null) return;
+
+      final slotData = socketResponse['data'] ?? socketResponse;
+      List<dynamic> courts;
+
+      if (slotData is List) {
+        courts = slotData;
+      } else if (slotData is Map<String, dynamic> && slotData['data'] is List) {
+        courts = slotData['data'];
+      } else {
+        return;
+      }
+
+      final currentDate = selectedDate.value ?? DateTime.now();
+      final dateString = _dateFormatter.format(currentDate);
+      final currentUserId = storage.read("userId") ?? "";
+      final keysToRemove = <String>[];
+
+      for (final court in courts) {
+        final courtId = court['_id'] as String?;
+        if (courtId == null) continue;
+
+        final slotsList = court['slots'] as List<dynamic>?;
+        if (slotsList == null) continue;
+
+        for (final slotData in slotsList) {
+          final slotId = slotData['_id'] as String?;
+          final status = slotData['status'] as String?;
+          final userId = slotData['userId'] as String?;
+
+          if (slotId == null || status == null) continue;
+
+          if (status.toLowerCase() == 'lock') {
+            // Only deselect if locked by a DIFFERENT user
+            if (userId != null && userId == currentUserId) {
+              log('✅ Slot $slotId locked by current user - keeping selection');
+              continue;
+            }
+            
+            final fullKey = '${dateString}_${courtId}_${slotId}';
+            final leftKey = '${dateString}_${courtId}_${slotId}_L';
+            final rightKey = '${dateString}_${courtId}_${slotId}_R';
+
+            if (multiDateSelections.containsKey(fullKey)) {
+              keysToRemove.add(fullKey);
+              log('Auto-unselecting locked slot: $slotId (locked by different user)');
+            }
+
+            if (multiDateSelections.containsKey(leftKey)) {
+              keysToRemove.add(leftKey);
+              log('Auto-unselecting locked left half: $slotId (locked by different user)');
+            }
+            if (multiDateSelections.containsKey(rightKey)) {
+              keysToRemove.add(rightKey);
+              log('Auto-unselecting locked right half: $slotId (locked by different user)');
+            }
+          }
+        }
+      }
+
+      if (keysToRemove.isNotEmpty) {
+        for (final key in keysToRemove) {
+          final selection = multiDateSelections[key];
+          if (selection != null) {
+            final slot = selection['slot'] as Slots;
+            final courtId = selection['courtId'] as String;
+            selectedSlots.removeWhere((s) => s.sId == slot.sId);
+            selectedSlotsWithCourtInfo.remove('${courtId}_${slot.sId}');
+          }
+          multiDateSelections.remove(key);
+        }
+        _recalculateTotalAmount();
+        AppToast.error('Some selected slots were locked by another user');
+      }
+    } catch (e) {
+      log('Error checking locked slots: $e');
+    }
+  }
+
+  void _updateSocketSlotData(GetAllActiveCourtsForSlotWiseModel socketData) {
+    try {
+      _deSelectAndCleanupConflictingSlots(socketData);
+      _allSlotsCache.clear();
+      for (var court in socketData.data ?? []) {
+        _allSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+      for (var court in socketData.data ?? []) {
+        final base = _allSlotsCache[court.sId ?? ''] ?? [];
+        court.slots = List<Slots>.from(base);
+      }
+      slots.value = socketData;
+      _originalSlotsCache.clear();
+      for (final court in slots.value?.data ?? []) {
+        _originalSlotsCache[court.sId ?? ''] = List<Slots>.from(court.slots ?? []);
+      }
+      _recalculateTimeOfDayCounts();
+      filterSlotsByTimeOfDay();
+      _autoSelectTab();
+      log('✅ Socket slot data processed and displayed');
+    } catch (e) {
+      log('❌ Error updating socket slot data: $e');
+    }
+  }
+
+  void _deSelectAndCleanupConflictingSlots(GetAllActiveCourtsForSlotWiseModel socketData) {
+    if (multiDateSelections.isEmpty) return;
+
+    final Map<String, Slots> updatedSlotMap = {};
+    for (final court in socketData.data ?? []) {
+      for (final slot in court.slots ?? []) {
+        if (slot.sId != null) updatedSlotMap[slot.sId!] = slot;
+      }
+    }
+
+    final keysToRemove = <String>[];
+    final slotsToDelete = <Map<String, dynamic>>[];
+
+    multiDateSelections.forEach((key, selection) {
+      final slot = selection['slot'] as Slots;
+      final slotId = slot.sId ?? '';
+      final updatedSlot = updatedSlotMap[slotId];
+      if (updatedSlot == null) return;
+
+      final status = updatedSlot.status?.toLowerCase() ?? '';
+      if (status == 'booked' || status == 'lock') {
+        keysToRemove.add(key);
+        final courtId = selection['courtId'] as String;
+        final dateString = selection['date'] as String;
+        final bookingTime = selection['bookingTime'] as String? ?? slot.time ?? '';
+        final isLeftHalf = selection['isLeftHalf'] as bool?;
+        final supports30Min = slotSupports30Min(slot);
+        final duration = (supports30Min && isLeftHalf != null) ? 30 : 60;
+        final finalDuration = (slot.duration == 90) ? 90 : duration;
+        final userId = storage.read('userId') ?? '';
+        slotsToDelete.add({
+          'slotId': slotId,
+          'courtId': courtId,
+          'bookingDate': dateString,
+          'time': bookingTime,
+          'bookingTime': bookingTime,
+          'duration': finalDuration,
+          'userId': userId,
+        });
+      }
+    });
+
+    if (keysToRemove.isEmpty) return;
+
+    final slotIdsToClean = <String>{};
+    final courtIdsToClean = <String, String>{};
+    for (final key in keysToRemove) {
+      final selection = multiDateSelections[key];
+      if (selection != null) {
+        final slot = selection['slot'] as Slots;
+        final courtId = selection['courtId'] as String;
+        slotIdsToClean.add(slot.sId ?? '');
+        courtIdsToClean[slot.sId ?? ''] = courtId;
+      }
+    }
+
+    for (final key in keysToRemove) {
+      multiDateSelections.remove(key);
+    }
+
+    for (final slotId in slotIdsToClean) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      final courtId = courtIdsToClean[slotId] ?? '';
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+
+    _recalculateTotalAmount();
+    log('⚠️ Deselected ${keysToRemove.length} slots that became booked/locked');
+
+    if (slotsToDelete.isNotEmpty) {
+      deleteSlotHistory(slots: slotsToDelete);
+    }
+  }
+
   Future<bool> createAndGetSlotHistory(List<Map<String, dynamic>> slots) async {
     try {
-      log('createAndGetSlotHistory called with slots: $slots');
-      final response = await repository.createAndGetSlotHistory(data: {"slots": slots});
-      return true;
+      log('createAndGetSlotHistory called with body: $slots');
+      
+      // Set flag to ignore socket updates temporarily
+      isLockingSlots.value = true;
+      _lastLockTimestamp = DateTime.now();
+      
+      final response = await repository.createAndGetSlotHistory(data: slots);
+
+      if (response.data.isEmpty) {
+        CustomLogger.logMessage(msg: "No slot data returned", level: LogLevel.error);
+        isLockingSlots.value = false;
+        return false;
+      }
+
+      final createdSlots = response.data.where((e) => e.created).toList();
+      final lockedSlots = response.data.where((e) => !e.created).toList();
+      final currentUserId = storage.read("userId") ?? "";
+
+      if (createdSlots.isNotEmpty) {
+        // Delay resetting the flag to ignore socket updates for 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          isLockingSlots.value = false;
+        });
+        return true;
+      }
+
+      if (lockedSlots.isNotEmpty) {
+        // Check if locked slots match with our request (same user trying to lock again)
+        bool allMatchOurRequest = lockedSlots.every((lockedSlot) {
+          final lockedData = lockedSlot.data;
+          if (lockedData == null) return false;
+          
+          // Check if this locked slot matches any slot in our request
+          return slots.any((requestSlot) => 
+            requestSlot['slotId'] == lockedData.slotId &&
+            requestSlot['courtId'] == lockedData.courtId &&
+            requestSlot['bookingDate'] == lockedData.bookingDate &&
+            requestSlot['bookingTime'] == lockedData.bookingTime &&
+            requestSlot['userId'] == currentUserId
+          );
+        });
+        
+        if (allMatchOurRequest) {
+          log('✅ All slots already locked by same user, allowing navigation');
+          // Delay resetting the flag to ignore socket updates for 2 seconds
+          Future.delayed(const Duration(seconds: 2), () {
+            isLockingSlots.value = false;
+          });
+          return true;
+        }
+        
+        isLockingSlots.value = false;
+        AppToast.error(lockedSlots.first.message ?? "This slot is currently locked. Please try again.");
+        CustomLogger.logMessage(msg: lockedSlots.first.message ?? "This slot is currently locked. Please try again.", level: LogLevel.error);
+      }
+
+      isLockingSlots.value = false;
+      return false;
     } catch (e) {
       log('Error in createAndGetSlotHistory: $e');
+      isLockingSlots.value = false;
       return false;
     }
   }
@@ -554,33 +1187,112 @@ class CreateOpenMatchesController extends GetxController {
     final dateString = _dateFormatter.format(currentDate);
     
     final supports30Min = slotSupports30Min(slot);
+    final is90MinSlot = slot.duration == 90;
     
-    final multiDateKey = supports30Min && isLeftHalf != null 
+    // Check if this is the first slot being selected
+    final isFirstSlot = multiDateSelections.isEmpty;
+    
+    // Check for duration mismatch if not the first slot
+    if (!isFirstSlot) {
+      bool has90MinSlot = false;
+      bool hasNon90MinSlot = false;
+      
+      multiDateSelections.forEach((key, selection) {
+        final existingSlot = selection['slot'] as Slots;
+        if (existingSlot.duration == 90) {
+          has90MinSlot = true;
+        } else {
+          hasNon90MinSlot = true;
+        }
+      });
+      
+      if (is90MinSlot && hasNon90MinSlot) {
+        AppToast.error("Cannot mix 90-minute slots with 30/60-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 90-minute slots with 30/60-minute slots", level: LogLevel.error);
+        return;
+      }
+      
+      if (!is90MinSlot && has90MinSlot) {
+        AppToast.error("Cannot mix 30/60-minute slots with 90-minute slots");
+        CustomLogger.logMessage(msg: "Cannot mix 30/60-minute slots with 90-minute slots", level: LogLevel.error);
+        return;
+      }
+    }
+    
+    // If it's the first slot and supports 30min, force full selection (ignore isLeftHalf)
+    final forceFullSelection = isFirstSlot && supports30Min;
+    
+    final multiDateKey = supports30Min && isLeftHalf != null && !forceFullSelection
         ? '${dateString}_${resolvedCourtId}_${slotId}_${isLeftHalf ? 'L' : 'R'}'
         : '${dateString}_${resolvedCourtId}_${slotId}';
 
-    if (multiDateSelections.containsKey(multiDateKey)) {
-      multiDateSelections.remove(multiDateKey);
-      selectedSlots.removeWhere((s) => s.sId == slotId);
-      selectedSlotsWithCourtInfo.remove('${resolvedCourtId}_$slotId');
+    // Check if slot is already selected (check both full key and half keys for 30min slots)
+    bool isAlreadySelected = multiDateSelections.containsKey(multiDateKey);
+    
+    // For 30min slots, also check if full slot is selected (without L/R suffix)
+    if (supports30Min && !isAlreadySelected) {
+      final fullKey = '${dateString}_${resolvedCourtId}_${slotId}';
+      isAlreadySelected = multiDateSelections.containsKey(fullKey);
+      if (isAlreadySelected) {
+        // Remove full slot and all slots after it
+        _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
+        _recalculateTotalAmount();
+        _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
+        log("Unselected full slot and all after it, remaining: ${multiDateSelections.length}");
+        return;
+      }
+    }
+    
+    if (isAlreadySelected) {
+      // Remove this slot and all slots after it to maintain continuity
+      _removeSlotAndAllAfter(slot, resolvedCourtId, dateString);
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, true);
     } else {
-      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, isLeftHalf);
+      _addSlotGroup(slot, resolvedCourtId, resolvedCourtName, dateString, currentDate, forceFullSelection ? null : isLeftHalf);
+      _emitSlotEvent(slot, resolvedCourtId, resolvedCourtName, dateString, false);
     }
 
     _recalculateTotalAmount();
     log("Selected ${multiDateSelections.length} slots across multiple dates, Total: ₹${totalAmount.value}");
   }
-  /// Check if adding a new slot would violate limits
-  bool _canAddSlot() {
-    final currentCount = getTotalSelectionsCount(); // Use the consolidated count
-    if (currentCount >= maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
-      return false;
+
+  /// Remove a slot and all slots that come after it (to maintain continuous selection)
+  void _removeSlotAndAllAfter(Slots slot, String courtId, String dateString) {
+    final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+    if (slotTimeMinutes == null) return;
+
+    // Find all selections to remove (current slot and all after it)
+    final keysToRemove = <String>[];
+    final slotIdsToRemove = <String>{};
+
+    multiDateSelections.forEach((key, selection) {
+      if (key.startsWith(dateString)) {
+        final selectionSlot = selection['slot'] as Slots;
+        final selectionCourtId = selection['courtId'] as String;
+        final selectionTimeMinutes = _convertTimeToMinutes(selectionSlot.time ?? '');
+
+        // Remove if same court and time >= current slot time
+        if (selectionCourtId == courtId && 
+            selectionTimeMinutes != null && 
+            selectionTimeMinutes >= slotTimeMinutes) {
+          keysToRemove.add(key);
+          slotIdsToRemove.add(selectionSlot.sId ?? '');
+        }
+      }
+    });
+
+    // Remove all identified keys
+    for (final key in keysToRemove) {
+      multiDateSelections.remove(key);
     }
 
-    // For open matches, we only allow single day selection, so skip the day limit check
-    // since we already enforce single date selection in toggleSlotSelection
-    return true;
+    // Clean up selectedSlots and selectedSlotsWithCourtInfo
+    for (final slotId in slotIdsToRemove) {
+      selectedSlots.removeWhere((s) => s.sId == slotId);
+      selectedSlotsWithCourtInfo.remove('${courtId}_$slotId');
+    }
+
+    log('Removed ${keysToRemove.length} slots to maintain continuity');
   }
 
   /// Get unique dates from selections
@@ -614,8 +1326,6 @@ class CreateOpenMatchesController extends GetxController {
     }
     
     // Check limits before adding - but only if this would be a new slot
-    final currentDate = selectedDate.value ?? DateTime.now();
-    final dateString = _dateFormatter.format(currentDate);
     final slotId = primarySlot.sId ?? '';
     
     // Check if this slot is already partially selected
@@ -627,16 +1337,26 @@ class CreateOpenMatchesController extends GetxController {
                                   multiDateSelections.containsKey(rightKey) || 
                                   multiDateSelections.containsKey(fullKey);
     
-    if (!isSlotAlreadySelected && getTotalSelectionsCount() >= maxSlots) {
-      // SnackBarUtils.showErrorSnackBar("Booking Limit Reached\nYou can select a maximum of $maxSlots slots.");
+    // Check slot limit based on duration
+    final is90MinSlot = primarySlot.duration == 90;
+    final currentLimit = is90MinSlot ? maxSlots90Min : maxSlots;
+    
+    if (!isSlotAlreadySelected && getTotalSelectionsCount() >= currentLimit) {
+      final limitMessage = is90MinSlot 
+          ? "Booking Limit Reached\nYou can select a maximum of $maxSlots90Min slots (90 minutes each)."
+          : "Booking Limit Reached\nYou can select a maximum of $maxSlots slots.";
+      CustomLogger.logMessage(msg: limitMessage, level: LogLevel.error);
       return;
     }
     
     // Check if this selection maintains consecutive slots
     if (!isSlotAlreadySelected && !_isConsecutiveSelectionAllowed(courtId, slotId, dateString)) {
-      // SnackBarUtils.showErrorSnackBar("Please select consecutive time slots only.");
+      CustomLogger.logMessage(msg: "Please select consecutive time slots only.", level: LogLevel.error);
       return;
     }
+    
+    // Fill any gaps before adding the new selection
+    _fillGapsBeforeSlot(primarySlot, courtId, courtName, dateString, currentDate, isLeftHalf, allSlots);
     
     for (int i = 0; i < slotsToSelect.length; i++) {
       final slotToAdd = slotsToSelect[i];
@@ -686,6 +1406,154 @@ class CreateOpenMatchesController extends GetxController {
         'adjustedAmount': adjustedAmount,
       };
     }
+  }
+  
+  /// Fill any gaps between existing selections and the new slot being added
+  void _fillGapsBeforeSlot(Slots targetSlot, String courtId, String courtName, String dateString, DateTime currentDate, bool? isLeftHalf, List<Slots> allSlots) {
+    if (multiDateSelections.isEmpty) return; // No gaps if nothing is selected
+    
+    final targetTimeMinutes = _convertTimeToMinutes(targetSlot.time ?? '');
+    if (targetTimeMinutes == null) return;
+    
+    final supports30Min = slotSupports30Min(targetSlot);
+    final targetSlotId = targetSlot.sId ?? '';
+    
+    // Special case: If selecting right half of a 30-min slot, also select left half
+    if (supports30Min && isLeftHalf == false) {
+      final leftKey = '${dateString}_${courtId}_${targetSlotId}_L';
+      if (!multiDateSelections.containsKey(leftKey)) {
+        final bookingTime = targetSlot.time ?? '';
+        final adjustedAmount = (targetSlot.amount ?? 0) ~/ 2;
+        
+        multiDateSelections[leftKey] = {
+          'slot': targetSlot,
+          'courtId': courtId,
+          'courtName': courtName,
+          'date': dateString,
+          'dateTime': currentDate,
+          'bookingTime': bookingTime,
+          'isLeftHalf': true,
+          'adjustedAmount': adjustedAmount,
+        };
+        
+        if (!selectedSlots.any((s) => s.sId == targetSlotId)) {
+          selectedSlots.add(targetSlot);
+        }
+        
+        log('Auto-selected left half of ${targetSlot.time} to maintain continuity');
+      }
+    }
+    
+    // Find the latest selected slot time for this court
+    int? latestSelectedTimeMinutes;
+    Slots? latestSelectedSlot;
+    
+    multiDateSelections.forEach((key, selection) {
+      if (key.startsWith(dateString)) {
+        final selectionSlot = selection['slot'] as Slots;
+        final selectionCourtId = selection['courtId'] as String;
+        
+        if (selectionCourtId == courtId) {
+          final timeMinutes = _convertTimeToMinutes(selectionSlot.time ?? '');
+          if (timeMinutes != null && (latestSelectedTimeMinutes == null || timeMinutes > latestSelectedTimeMinutes!)) {
+            latestSelectedTimeMinutes = timeMinutes;
+            latestSelectedSlot = selectionSlot;
+          }
+        }
+      }
+    });
+    
+    if (latestSelectedTimeMinutes == null || latestSelectedSlot == null) return;
+    
+    // If target slot is before or equal to latest selected, no need to fill gaps
+    if (targetTimeMinutes <= latestSelectedTimeMinutes!) return;
+    
+    // Find all slots between latest selected and target slot
+    final slotsToFill = <Slots>[];
+    for (final slot in allSlots) {
+      final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+      if (slotTimeMinutes != null && 
+          slotTimeMinutes > latestSelectedTimeMinutes! && 
+          slotTimeMinutes < targetTimeMinutes) {
+        slotsToFill.add(slot);
+      }
+    }
+    
+    // Fill the gaps
+    for (final gapSlot in slotsToFill) {
+      final supports30Min = slotSupports30Min(gapSlot);
+      final gapSlotId = gapSlot.sId ?? '';
+      
+      // Check if left half of latest selected slot needs to be filled
+      if (supports30Min) {
+        final leftKey = '${dateString}_${courtId}_${gapSlotId}_L';
+        final rightKey = '${dateString}_${courtId}_${gapSlotId}_R';
+        
+        // Fill left half if not already selected
+        if (!multiDateSelections.containsKey(leftKey)) {
+          final bookingTime = gapSlot.time ?? '';
+          final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
+          
+          multiDateSelections[leftKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': bookingTime,
+            'isLeftHalf': true,
+            'adjustedAmount': adjustedAmount,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+        
+        // Fill right half if not already selected
+        if (!multiDateSelections.containsKey(rightKey)) {
+          final originalTime = gapSlot.time ?? '';
+          final bookingTime = _addMinutesToTime(originalTime, 30);
+          final adjustedAmount = (gapSlot.amount ?? 0) ~/ 2;
+          
+          multiDateSelections[rightKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': bookingTime,
+            'isLeftHalf': false,
+            'adjustedAmount': adjustedAmount,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+      } else {
+        // For non-30min slots, fill the full slot
+        final fullKey = '${dateString}_${courtId}_${gapSlotId}';
+        if (!multiDateSelections.containsKey(fullKey)) {
+          multiDateSelections[fullKey] = {
+            'slot': gapSlot,
+            'courtId': courtId,
+            'courtName': courtName,
+            'date': dateString,
+            'dateTime': currentDate,
+            'bookingTime': gapSlot.time ?? '',
+            'isLeftHalf': null,
+            'adjustedAmount': gapSlot.amount ?? 0,
+          };
+          
+          if (!selectedSlots.any((s) => s.sId == gapSlotId)) {
+            selectedSlots.add(gapSlot);
+          }
+        }
+      }
+    }
+    
+    log('Filled ${slotsToFill.length} gap slots to maintain continuity');
   }
   
   void _removeSlotGroup(Slots primarySlot, String courtId, String dateString) {
@@ -759,24 +1627,53 @@ class CreateOpenMatchesController extends GetxController {
     if (candidateSlot == null) return false;
     if (candidateSlot.time == null) return false;
 
-    // Create a list of all slot times (existing + candidate)
-    final allTimes = existingSlotTimes.toList()..add(candidateSlot.time!);
-
-    // Convert times to comparable format and sort
-    final List<int> timeMinutes = [];
-    for (final timeStr in allTimes) {
+    // Find latest selected slot time
+    int? latestSelectedTimeMinutes;
+    for (final timeStr in existingSlotTimes) {
       final minutes = _convertTimeToMinutes(timeStr);
-      if (minutes != null) timeMinutes.add(minutes);
+      if (minutes != null && (latestSelectedTimeMinutes == null || minutes > latestSelectedTimeMinutes)) {
+        latestSelectedTimeMinutes = minutes;
+      }
     }
     
-    if (timeMinutes.length != allTimes.length) return false; // Some times couldn't be parsed
+    if (latestSelectedTimeMinutes == null) return false;
     
-    timeMinutes.sort();
-
-    // Check if all times are consecutive (60-minute intervals)
-    for (int i = 1; i < timeMinutes.length; i++) {
-      if (timeMinutes[i] - timeMinutes[i - 1] != 60) {
-        return false; // Gap found
+    final candidateTimeMinutes = _convertTimeToMinutes(candidateSlot.time ?? '');
+    if (candidateTimeMinutes == null) return false;
+    
+    // If candidate is before latest, allow (filling gaps)
+    if (candidateTimeMinutes < latestSelectedTimeMinutes) return true;
+    
+    // Candidate is after latest selected, check all slots between them
+    final allSlots = _originalSlotsCache[courtId] ?? [];
+    
+    // Check every slot from latest+60 to candidate (inclusive)
+    for (int checkTime = latestSelectedTimeMinutes + 60; checkTime <= candidateTimeMinutes; checkTime += 60) {
+      for (final slot in allSlots) {
+        final slotTimeMinutes = _convertTimeToMinutes(slot.time ?? '');
+        if (slotTimeMinutes == checkTime) {
+          // If left half is booked, cannot select this or any slot after it
+          if (isLeftHalfBooked(slot)) {
+            CustomLogger.logMessage(
+              msg: "Cannot select further slots. Next slot's left half is already booked.",
+              level: LogLevel.error,
+            );
+            return false;
+          }
+          
+          // If only right half is booked, can select this slot but nothing beyond
+          if (isRightHalfBooked(slot) && !isLeftHalfBooked(slot)) {
+            // Allow if candidate is this exact slot, block if beyond
+            if (candidateTimeMinutes > checkTime) {
+              CustomLogger.logMessage(
+                msg: "Cannot select slots beyond a slot with right half booked.",
+                level: LogLevel.error,
+              );
+              return false;
+            }
+          }
+          break;
+        }
       }
     }
     
@@ -934,6 +1831,10 @@ class CreateOpenMatchesController extends GetxController {
         day: formattedDay,
         registerClubId: clubId,
         date: formattedDate,
+        sID: sId.value,
+        categoryId: categoryId.value,
+        // location: locationID.value,
+        locId: locationsId.value
       );
 
       // Debug: Log booking times from API
@@ -953,7 +1854,7 @@ class CreateOpenMatchesController extends GetxController {
       }
 
       // Update slot prices from fetchAllSlotPrices API
-      _updateSlotPrices(result, formattedDay);
+      // _updateSlotPrices(result, formattedDay); // Commented out - use prices from getAllActiveCourtsForSlotWise API
 
       // Store ALL slots (both available and unavailable)
       _allSlotsCache.clear();
@@ -991,13 +1892,6 @@ class CreateOpenMatchesController extends GetxController {
       log("Stack trace: $stackTrace");
       slots.value = null;
 
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to load courts. Please try again.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       isLoadingCourts.value = false;
     }
@@ -1059,13 +1953,8 @@ class CreateOpenMatchesController extends GetxController {
     }
   }
 
-  bool isPastAndUnavailable(Slots slot) {
-    // Treat booked or explicitly unavailable statuses as unavailable
-    final status = _normalizeStatus(slot.status);
-    if (status == 'booked') return true;
-    if (status.isNotEmpty && status != 'available') return true;
-
-    // If time is missing or malformed, don't mark as past (avoid crashes)
+  // Check if slot is in the past (for filtering)
+  bool _isPastSlot(Slots slot) {
     final rawTime = slot.time;
     if (rawTime == null || rawTime.trim().isEmpty) {
       return false;
@@ -1077,7 +1966,6 @@ class CreateOpenMatchesController extends GetxController {
     try {
       final timeString = rawTime.toLowerCase().trim();
 
-      // Try common formats first
       DateTime? parsed;
       for (final pattern in const ['h:mm a', 'h a', 'HH:mm', 'H:mm', 'HH']) {
         try {
@@ -1092,7 +1980,6 @@ class CreateOpenMatchesController extends GetxController {
         hour = parsed.hour;
         minute = parsed.minute;
       } else {
-        // Fallback manual parse: supports "10", "10:30", with optional am/pm
         String t = timeString;
         String meridiem = '';
         final parts = t.split(' ');
@@ -1123,11 +2010,25 @@ class CreateOpenMatchesController extends GetxController {
         return true;
       }
     } catch (_) {
-
-      // On any parsing error, consider it not past to be safe
-
       return false;
     }
+    return false;
+  }
+
+  bool isPastAndUnavailable(Slots slot) {
+    // Check if slot is in the past
+    if (_isPastSlot(slot)) return true;
+    
+    // Check for maintenance/weather/staff unavailability
+    final availability = _normalizeStatus(slot.availabilityStatus);
+    if (availability == "maintenance" ||
+        availability == "weather conditions" ||
+        availability == "staff unavailability"||
+        availability == "tournament"
+    ) {
+      return true;
+    }
+    
     return false;
   }
 
@@ -1136,7 +2037,9 @@ class CreateOpenMatchesController extends GetxController {
     final availability = _normalizeStatus(slot.availabilityStatus);
     final isBlocked = availability == "maintenance" ||
         availability == "weather conditions" ||
-        availability == "staff unavailability";
+        availability == "staff unavailability"||
+        availability == "tournament";
+
     final isBooked = (_normalizeStatus(slot.status) == 'booked');
     final isPast = isPastAndUnavailable(slot);
     return isPast || isBlocked || isBooked;
@@ -1161,13 +2064,6 @@ class CreateOpenMatchesController extends GetxController {
       cartLoader.value = true;
 
       if (multiDateSelections.isEmpty) {
-        // Get.snackbar(
-        //   "No Slots Selected",
-        //   "Please select at least one slot before adding to cart.",
-        //   backgroundColor: Colors.redAccent,
-        //   colorText: Colors.white,
-        //   snackPosition: SnackPosition.TOP,
-        // );
         return;
       }
 
@@ -1233,8 +2129,8 @@ class CreateOpenMatchesController extends GetxController {
       log("Multi-Date Cart Payload: $cartPayload");
 
       await cartRepository.addCartItems(data: cartPayload).then((v) async {
-        final CartController controller = Get.find<CartController>();
-        await controller.getCartItems();
+        // final CartController controller = Get.find<CartController>();
+        // await controller.getCartItems();
 
         Get.to(() => CartScreen(buttonType: "true"))?.then((_) async {
           // Clear all selections
@@ -1251,22 +2147,8 @@ class CreateOpenMatchesController extends GetxController {
       (data is Map && data['message'] is String) ? data['message'] as String : null;
       final detailed = serverMessage ?? e.message ?? 'Something went wrong.';
       log("Add to cart failed (Dio): status=${e.response?.statusCode}, data=${e.response?.data}");
-      // Get.snackbar(
-      //   "Error",
-      //   detailed,
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } catch (e) {
       log("Error adding to cart: $e");
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to add slots to cart. Please try again.",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      //   snackPosition: SnackPosition.TOP,
-      // );
     } finally {
       cartLoader.value = false;
     }
@@ -1282,7 +2164,11 @@ class CreateOpenMatchesController extends GetxController {
     final supports30Min = slotSupports30Min(slot);
     
     if (supports30Min) {
-      // For slots that support 30min pricing, only return true if BOTH halves are selected
+      // Check if full slot is selected (without L/R suffix - for first slot)
+      final fullKey = '${dateString}_${courtId}_${slot.sId}';
+      if (multiDateSelections.containsKey(fullKey)) return true;
+      
+      // Check if BOTH halves are selected
       final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
       final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
       return multiDateSelections.containsKey(leftKey) && multiDateSelections.containsKey(rightKey);
@@ -1388,52 +2274,61 @@ class CreateOpenMatchesController extends GetxController {
 
   /// Check if left half of a 30-minute slot is booked
   bool isLeftHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
+    
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
-    // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
     
-    // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
-      // If booking time equals original time (e.g., both are "5:00 PM"), left half is booked
-      return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedOriginal = _normalizeTime(originalTime);
+      return normalizedBooking == normalizedOriginal;
     }
     
-    // Fallback to original logic
     return _normalizeTime(bookingTime) == _normalizeTime(originalTime);
   }
 
   /// Check if right half of a 30-minute slot is booked
   bool isRightHalfBooked(Slots slot) {
-    if (slot.bookingTime == null || slot.bookingTime!.isEmpty) return false;
+    if (slot.status?.toLowerCase() == 'booked') return true;
+    if (slot.status?.toLowerCase() == 'lock') return true;
+    
+    final bookingTime = slot.bookingTime?.trim();
+    if (bookingTime == null || bookingTime.isEmpty) return false;
     
     final originalTime = slot.time ?? '';
-    final bookingTime = slot.bookingTime!;
     
-    // Check duration from API - if 60, whole slot is booked
     if (slot.duration == 60) return true;
     
-    // If duration is 30, check booking time to determine which half
     if (slot.duration == 30) {
-      // If booking time is 30 minutes after original time (e.g., "5:30 PM" vs "5:00 PM"), right half is booked
       final expectedRightTime = _addMinutesToTime(originalTime, 30);
-      return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
+      final normalizedBooking = _normalizeTime(bookingTime);
+      final normalizedExpected = _normalizeTime(expectedRightTime);
+      return normalizedBooking == normalizedExpected;
     }
     
-    // Fallback to original logic
     final expectedRightTime = _addMinutesToTime(originalTime, 30);
     return _normalizeTime(bookingTime) == _normalizeTime(expectedRightTime);
   }
 
   /// Check if both halves of a slot are selected (only for slots that support 30-minute pricing)
+  /// Also returns true if the full slot is selected (without L/R suffix - for first slot)
   bool isBothHalvesSelected(Slots slot, String courtId) {
     if (!slotSupports30Min(slot)) return false;
     
     final currentDate = selectedDate.value ?? DateTime.now();
     final dateString = _dateFormatter.format(currentDate);
+    
+    // Check if full slot is selected (without L/R suffix - for first slot)
+    final fullKey = '${dateString}_${courtId}_${slot.sId}';
+    if (multiDateSelections.containsKey(fullKey)) return true;
+    
+    // Check if both halves are selected separately
     final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
     final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
     return multiDateSelections.containsKey(leftKey) && multiDateSelections.containsKey(rightKey);
@@ -1441,59 +2336,67 @@ class CreateOpenMatchesController extends GetxController {
 
   /// Normalize time format for comparison (convert to consistent format)
   String _normalizeTime(String timeString) {
+    if (timeString.isEmpty) return '';
+    
+    final trimmed = timeString.trim().toLowerCase();
+    
     try {
-      // Try parsing and reformatting to ensure consistent format
-      final upperTime = timeString.trim().toUpperCase();
-      final time = DateFormat('h a').parseStrict(upperTime);
-      return DateFormat('h:mm a').format(time);
+      // Try parsing with minutes first (e.g., "5:00 pm")
+      final time = DateFormat('h:mm a').parse(trimmed);
+      return DateFormat('h:mm a').format(time).toUpperCase();
     } catch (_) {
       try {
-        final time = DateFormat('h:mm a').parseStrict(timeString.trim());
-        return DateFormat('h:mm a').format(time);
+        // Try parsing without minutes (e.g., "5 pm")
+        final time = DateFormat('h a').parse(trimmed);
+        return DateFormat('h:mm a').format(time).toUpperCase();
       } catch (_) {
-        return timeString.trim().toUpperCase();
+        // Return uppercase trimmed string as fallback
+        return trimmed.toUpperCase();
       }
     }
   }
 
   /// Add minutes to a time string (e.g., "3:00 PM" + 30 minutes = "3:30 PM")
   String _addMinutesToTime(String timeString, int minutesToAdd) {
-    log('_addMinutesToTime: input="$timeString", adding $minutesToAdd minutes');
+    if (timeString.isEmpty) return timeString;
+    
     try {
-      final cleanTime = timeString.trim();
-      DateTime? parsedTime;
+      // Manual parsing for formats like "1 pm", "12 pm", "1:30 pm"
+      final trimmed = timeString.trim().toLowerCase();
+      final parts = trimmed.split(' ');
       
-      // Try different parsing formats
-      final formats = ['h:mm a', 'h a', 'H:mm', 'HH:mm'];
+      if (parts.length != 2) return timeString;
       
-      for (final format in formats) {
-        try {
-          parsedTime = DateFormat(format).parseStrict(cleanTime);
-          log('_addMinutesToTime: successfully parsed with format "$format"');
-          break;
-        } catch (_) {
-          // Try with case-insensitive parsing
-          try {
-            parsedTime = DateFormat(format).parseStrict(cleanTime.toUpperCase());
-            log('_addMinutesToTime: successfully parsed with uppercase format "$format"');
-            break;
-          } catch (_) {
-            continue;
-          }
-        }
+      final timePart = parts[0];
+      final meridiem = parts[1]; // "am" or "pm"
+      
+      int hour;
+      int minute = 0;
+      
+      if (timePart.contains(':')) {
+        final timePieces = timePart.split(':');
+        hour = int.parse(timePieces[0]);
+        minute = int.parse(timePieces[1]);
+      } else {
+        hour = int.parse(timePart);
       }
       
-      if (parsedTime != null) {
-        final newTime = parsedTime.add(Duration(minutes: minutesToAdd));
-        final result = DateFormat('h:mm a').format(newTime);
-        log('_addMinutesToTime: final result="$result"');
-        return result;
+      // Convert to 24-hour format
+      if (meridiem == 'pm' && hour != 12) {
+        hour += 12;
+      } else if (meridiem == 'am' && hour == 12) {
+        hour = 0;
       }
       
-      log('_addMinutesToTime: all parsing failed, returning original');
-      return timeString;
+      // Create DateTime and add minutes
+      final now = DateTime.now();
+      final time = DateTime(now.year, now.month, now.day, hour, minute);
+      final newTime = time.add(Duration(minutes: minutesToAdd));
+      
+      // Format back to "h:mm a"
+      return DateFormat('h:mm a').format(newTime);
     } catch (e) {
-      log('_addMinutesToTime: error occurred: $e, returning original');
+      log('ERROR: Failed to parse "$timeString": $e');
       return timeString;
     }
   }
@@ -1514,6 +2417,9 @@ class CreateOpenMatchesController extends GetxController {
         duration: '', // Get all durations
         day: '', // Get all days
         timePeriod: '', // Get all time periods
+        categoryId: categoryId.value,
+        locationId: locationID.value,
+        lockId: locationsId.value
       );
 
       allSlotPricesResponse.value = result;

@@ -1,7 +1,8 @@
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeContent extends StatelessWidget {
   HomeContent({super.key});
@@ -59,13 +60,14 @@ class HomeContent extends StatelessWidget {
                   }
 
                   final reviewData = controller.registerClubResponse.value?.reviewData;
-                  final avgRating = reviewData?.averageRating?.toDouble() ?? 0.0;
+                  final averageRating = reviewData?.averageRating?.toDouble() ==0 ?4.5 : 4.0;
+                  // final totalReviews = reviewData?.totalReviews ?? 0;
 
                   return Row(
                     children: [
                       RatingBar.builder(
                         itemSize: 16,
-                        initialRating: avgRating,
+                        initialRating: averageRating,
                         minRating: 0,
                         unratedColor: AppColors.starUnselectedColor,
                         direction: Axis.horizontal,
@@ -85,13 +87,20 @@ class HomeContent extends StatelessWidget {
                         onRatingUpdate: (rating) {},
                       ).paddingOnly(right: Get.width * 0.02),
                       Text(
-                        avgRating.toStringAsFixed(1),
+                        averageRating.toStringAsFixed(1),
                         style: Theme.of(context).textTheme.headlineMedium!
                             .copyWith(
                               fontWeight: FontWeight.w500,
                               color: AppColors.labelBlackColor,
                             ),
                       ),
+                      // Text(
+                      //   " ($totalReviews)",
+                      //   style: Theme.of(context).textTheme.bodyMedium!
+                      //       .copyWith(
+                      //         color: AppColors.textColor,
+                      //       ),
+                      // ),
                     ],
                   );
                 }),
@@ -103,8 +112,8 @@ class HomeContent extends StatelessWidget {
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
                   child: Container(
-                    width: 120,
-                    height: 16,
+                    width: double.infinity,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(8),
@@ -113,14 +122,22 @@ class HomeContent extends StatelessWidget {
                 ).paddingOnly(bottom: Get.height * 0.02);
               }
 
-              final clubData = controller.registerClubResponse.value?.data;
-              final courtCount = clubData?.courtCount ?? 0;
+              // Get description from courts array
+              final courtDetails = controller.argument.courts?.isNotEmpty == true 
+                  ? controller.argument.courts!.first 
+                  : null;
+              final description = courtDetails?.description;
+              
+              if (description == null || description.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
               return Text(
-                "$courtCount Available courts",
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge!.copyWith(color: AppColors.textColor),
+                description,
+                style: Theme.of(context).textTheme.displayMedium!.copyWith(
+                  color: AppColors.textColor,
+                  fontSize: 13,
+                ),
               ).paddingOnly(bottom: Get.height * 0.02);
             }),
             Text(
@@ -154,8 +171,11 @@ class HomeContent extends StatelessWidget {
                 ).paddingOnly(bottom: Get.height * 0.02);
               }
 
-              final clubData = controller.registerClubResponse.value?.data;
-              final features = clubData?.features ?? [];
+              // Get features from courts array
+              final courtDetails = controller.argument.courts?.isNotEmpty == true 
+                  ? controller.argument.courts!.first 
+                  : null;
+              final features = courtDetails?.features ?? [];
 
               return Wrap(
                 spacing: 8,
@@ -199,7 +219,13 @@ class HomeContent extends StatelessWidget {
 
                       return GestureDetector(
                         onTap: () {
-                          if (index != 1) {
+                          if (index == 0) {
+                            // Direction - Show direction view
+                            controller.selectedIndex.value = index;
+                          } else if (index == 1) {
+                            // Call - Make phone call
+                            controller.makePhoneCall();
+                          } else {
                             controller.selectedIndex.value = index;
                             if (index != 2) controller.isShowAllReviews.value = false;
                             if (index != 3) controller.isShowAllPhotos.value = false;
@@ -283,19 +309,26 @@ class HomeContent extends StatelessWidget {
 
               return const SizedBox.shrink();
             }).paddingOnly(top: Get.height * 0.01),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Opening Hours",
-                  style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                    color: AppColors.labelBlackColor,
-                    fontWeight: FontWeight.w700
-                  ),
-                ).paddingOnly(bottom: 5),
-                Obx(() {
-                  if (controller.isLoading.value) {
-                    return Row(
+            Obx(() {
+              final clubData = controller.registerClubResponse.value?.data;
+              final businessHours = clubData?.businessHours ?? [];
+              
+              if (businessHours.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Opening Hours",
+                    style: Theme.of(context).textTheme.headlineLarge!.copyWith(
+                      color: AppColors.labelBlackColor,
+                      fontWeight: FontWeight.w700
+                    ),
+                  ).paddingOnly(bottom: 5),
+                  if (controller.isLoading.value)
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Shimmer.fromColors(
@@ -323,79 +356,36 @@ class HomeContent extends StatelessWidget {
                           ),
                         ),
                       ],
-                    );
-                  }
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: businessHours.map((hour) {
+                        final day = hour.day ?? "";
+                        final time = hour.time ?? "";
 
-                  final clubData = controller.registerClubResponse.value?.data;
-                  final businessHours = clubData?.businessHours ?? [];
-
-                  if (businessHours.isEmpty) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Monday-Sunday",
-                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                            color: AppColors.textColor,
-                          ),
-                        ),
-                        Text(
-                          "6:00am to 10:00pm",
-                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                            color: AppColors.textColor,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-
-                  // Group days by time
-                  Map<String, List<String>> timeGroups = {};
-                  for (var hour in businessHours) {
-                    final time = hour.time ?? "6:00am to 10:00pm";
-                    final day = hour.day ?? "";
-                    if (!timeGroups.containsKey(time)) {
-                      timeGroups[time] = [];
-                    }
-                    timeGroups[time]!.add(day);
-                  }
-
-                  return Column(
-                    children: timeGroups.entries.map((entry) {
-                      final time = entry.key;
-                      final days = entry.value;
-
-                      String dayDisplay;
-                      if (days.length == 7) {
-                        dayDisplay = "Monday-Sunday";
-                      } else if (days.length > 1) {
-                        dayDisplay = "${days.first}-${days.last}";
-                      } else {
-                        dayDisplay = days.first;
-                      }
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            dayDisplay,
-                            style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                              color: AppColors.textColor,
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              day,
+                              style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                                color: AppColors.textColor,fontWeight: FontWeight.w500
+                              ),
                             ),
-                          ),
-                          Text(
-                            time,
-                            style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                              color: AppColors.textColor,
+                            Text(
+                              time,
+                              style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                                color: AppColors.textColor,fontWeight: FontWeight.w500
+                              ),
                             ),
-                          ),
-                        ],
-                      ).paddingOnly(bottom: 2);
-                    }).toList(),
-                  );
-                }),
-              ],
-            ),
+                          ],
+                        ).paddingOnly(bottom: 4);
+                      }).toList(),
+                    ),
+                ],
+              );
+            }),
           ],
         ).paddingOnly(left: Get.width * 0.05, right: Get.width * 0.05),
       ),
@@ -741,22 +731,33 @@ class HomeContent extends StatelessWidget {
         );
       }
       
-      final clubData = controller.registerClubResponse.value?.data;
-      final courtImages = clubData?.courtImage ?? [];
+      // Get court images from nested courts array
+      final List<String> imageUrls = [];
+      if (controller.argument.courts != null && controller.argument.courts!.isNotEmpty) {
+        for (var courtDetail in controller.argument.courts!) {
+          if (courtDetail.courtImage != null) {
+            imageUrls.addAll(courtDetail.courtImage!);
+          }
+        }
+      }
       
-      // Fallback to dummy images if no court images available
-      final List<String> imageUrls = courtImages.isNotEmpty ? courtImages : [
-        Assets.imagesImgDummy1,
-        Assets.imagesImgDummy2,
-        Assets.imagesImgDummy3,
-        Assets.imagesImgDummy4,
-        Assets.imagesImgDummy5,
-      ];
+      // Debug: Print court images
+      print('Court Images Count: ${imageUrls.length}');
+      print('Court Images: $imageUrls');
 
       final bool isExpanded = controller.isShowAllPhotos.value;
       
       if (imageUrls.isEmpty) {
-        return const Center(child: Text("No images available"));
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+              SizedBox(height: 10),
+              Text("No images available"),
+            ],
+          ),
+        );
       }
 
       return SizedBox(
@@ -768,10 +769,10 @@ class HomeContent extends StatelessWidget {
               flex: 2,
               child: Row(
                 children: [
-                  Expanded(flex: 2, child: _buildImage(imageUrls[0], courtImages.isNotEmpty)),
+                  Expanded(flex: 2, child: _buildImage(imageUrls[0], true)),
                   SizedBox(width: 10),
                   if (imageUrls.length > 1)
-                    Expanded(flex: 1, child: _buildImage(imageUrls[1], courtImages.isNotEmpty)),
+                    Expanded(flex: 1, child: _buildImage(imageUrls[1], true)),
                 ],
               ),
             ),
@@ -784,14 +785,14 @@ class HomeContent extends StatelessWidget {
                 child: Row(
                   children: [
                     if (imageUrls.length > 2)
-                      Expanded(child: _buildImage(imageUrls[2], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[2], true)),
                     if (imageUrls.length > 3) ...[
                       SizedBox(width: 10),
-                      Expanded(child: _buildImage(imageUrls[3], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[3], true)),
                     ],
                     if (imageUrls.length > 4) ...[
                       SizedBox(width: 10),
-                      Expanded(child: _buildImage(imageUrls[4], courtImages.isNotEmpty)),
+                      Expanded(child: _buildImage(imageUrls[4], true)),
                     ],
                   ],
                 ),
@@ -804,9 +805,9 @@ class HomeContent extends StatelessWidget {
                 flex: 2,
                 child: Row(
                   children: [
-                    Expanded(flex: 2, child: _buildImage(imageUrls[0], courtImages.isNotEmpty)),
+                    Expanded(flex: 2, child: _buildImage(imageUrls[0], true)),
                     SizedBox(width: 10),
-                    Expanded(flex: 1, child: _buildImage(imageUrls[1], courtImages.isNotEmpty)),
+                    Expanded(flex: 1, child: _buildImage(imageUrls[1], true)),
                   ],
                 ),
               ),
@@ -815,11 +816,11 @@ class HomeContent extends StatelessWidget {
                 flex: 1,
                 child: Row(
                   children: [
-                    Expanded(child: _buildImage(imageUrls[2], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[2], true)),
                     SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[3], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[3], true)),
                     SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[4], courtImages.isNotEmpty)),
+                    Expanded(child: _buildImage(imageUrls[4], true)),
                   ],
                 ),
               ),
@@ -861,35 +862,111 @@ class HomeContent extends StatelessWidget {
 
   Widget directionGoogleMaps() {
     return Obx(() {
-      final lat = controller.mapLatitude.value;
-      final lng = controller.mapLongitude.value;
-
-      return FlutterMap(
-        mapController: MapController(),
-        options: MapOptions(
-          initialCenter: LatLng(lat, lng),
-          initialZoom: 13,
+      if (controller.isLoading.value) {
+        return const Center(
+          child: LoadingWidget(color: AppColors.primaryColor),
+        );
+      }
+      
+      if (controller.isIframeUrl.value && controller.iframeUrl.value.isNotEmpty) {
+        // Create HTML with iframe and JavaScript to handle clicks
+        final htmlContent = '''
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body, html {
+                  margin: 0;
+                  padding: 0;
+                  height: 100%;
+                  overflow: hidden;
+                }
+                iframe {
+                  width: 100%;
+                  height: 100%;
+                  border: 0;
+                  pointer-events: auto;
+                }
+              </style>
+            </head>
+            <body>
+              <iframe 
+                src="${controller.iframeUrl.value}" 
+                allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
+            </body>
+          </html>
+        ''';
+        
+        // Create WebViewController
+        final webViewController = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(Colors.white)
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onNavigationRequest: (NavigationRequest request) {
+                final url = request.url;
+                print('🗺️ Navigation: $url');
+                
+                // Allow data URLs and about:blank
+                if (url.startsWith('data:') || url.startsWith('about:')) {
+                  return NavigationDecision.navigate;
+                }
+                
+                // Allow embed URLs
+                if (url.contains('/maps/embed/') || url.contains('maps/api/js')) {
+                  return NavigationDecision.navigate;
+                }
+                
+                // Intercept any other Google Maps URLs
+                if (url.contains('google.com/maps') || url.contains('maps.google.com')) {
+                  print('🚀 Opening external: $url');
+                  launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                  return NavigationDecision.prevent;
+                }
+                
+                // Block all other navigation
+                return NavigationDecision.prevent;
+              },
+            ),
+          )
+          ..loadHtmlString(htmlContent);
+        
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: WebViewWidget(controller: webViewController),
+        );
+      }
+      
+      // Fallback: Show address text if no map available
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: ['a', 'b', 'c'],
-          ),
-          MarkerLayer(
-            markers: [
-              Marker(
-                point: LatLng(lat, lng),
-                width: 40,
-                height: 40,
-                child: Icon(
-                  Icons.location_pin,
-                  color: AppColors.primaryColor,
-                  size: 40,
-                ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.location_on,
+                size: 40,
+                color: AppColors.primaryColor,
               ),
+              const SizedBox(height: 8),
+              Text(
+                controller.address.value,
+                textAlign: TextAlign.center,
+                style: Theme.of(Get.context!).textTheme.bodyMedium,
+              ).paddingSymmetric(horizontal: 16),
             ],
           ),
-        ],
+        ),
       );
     });
   }

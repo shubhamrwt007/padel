@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/request_models/create_review_model.dart';
 import 'package:padel_mobile/data/response_models/get_location_maps_model.dart';
 import 'package:padel_mobile/data/response_models/get_register_club_model.dart';
@@ -6,6 +7,7 @@ import 'package:padel_mobile/data/response_models/get_review_model.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
 import 'package:padel_mobile/repositories/review_repo/review_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../data/request_models/home_models/get_club_name_model.dart' hide Data;
 
 class HomeContentController extends GetxController{
@@ -84,13 +86,13 @@ class HomeContentController extends GetxController{
   ///Get Register Club Find ById------------------------------------------------
   var registerClubResponse = Rxn<GetRegisterClubModel>();
   HomeRepository homeRepository = Get.put(HomeRepository());
-  Future<void> fetchRegisterClub(String clubId) async {
+  Future<void> fetchRegisterClub(String clubId, {String? courtId}) async {
     try {
       isLoading.value = true;
 
-      final response = await homeRepository.getRegisterClub(clubId: clubId);
+      final response = await homeRepository.getRegisterClub(clubId: clubId, courtId: courtId);
       registerClubResponse.value = response;
-      address.value = "${response.data?.address??""}${response.data?.city}";
+      address.value = response.data?.location?.address??"";
       if (response.success == true) {
         CustomLogger.logMessage(msg: "Fetching Register Club Successfully", level: LogLevel.info);
         // Call fetchLocationUrl after address is set
@@ -121,19 +123,56 @@ class HomeContentController extends GetxController{
 
       if (response.status == 200) {
         final mapUrl = response.data?.mapUrl ?? '';
-        if (mapUrl.contains('iframe') || mapUrl.contains('embed')) {
+        final directLink = response.data?.directLink ?? '';
+        
+        // Convert search URL to embed URL
+        String embedUrl = '';
+        
+        if (directLink.isNotEmpty) {
+          embedUrl = _convertToEmbedUrl(directLink, address);
+        } else if (mapUrl.isNotEmpty) {
+          embedUrl = _convertToEmbedUrl(mapUrl, address);
+        }
+        
+        if (embedUrl.isNotEmpty) {
           isIframeUrl.value = true;
-          iframeUrl.value = _extractIframeUrl(mapUrl);
+          iframeUrl.value = embedUrl;
+          CustomLogger.logMessage(msg: "Using embed URL: $embedUrl", level: LogLevel.info);
         } else {
           isIframeUrl.value = false;
-          _extractCoordinatesFromUrl(mapUrl);
+          CustomLogger.logMessage(msg: "No valid map URL found", level: LogLevel.warning);
         }
+        
         CustomLogger.logMessage(msg: "Fetching Maps Location Successfully", level: LogLevel.info);
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR-> $e", level: LogLevel.error);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  String _convertToEmbedUrl(String url, String address) {
+    try {
+      // If already an embed URL, return as is
+      if (url.contains('/embed')) {
+        return url;
+      }
+      
+      // Extract query from search URL
+      String query = '';
+      if (url.contains('query=')) {
+        final uri = Uri.parse(url);
+        query = uri.queryParameters['query'] ?? address;
+      } else {
+        query = Uri.encodeComponent(address);
+      }
+      
+      // Create embed URL
+      return 'https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=$query';
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error converting to embed URL: $e", level: LogLevel.error);
+      return '';
     }
   }
 
@@ -200,13 +239,41 @@ class HomeContentController extends GetxController{
     }
   }
 
+  // Future<void> openGoogleMaps() async {
+  //   final encodedAddress = Uri.encodeComponent(address.value);
+  //   final url = 'https://www.google.com/maps/search/?api=1&query=$encodedAddress';
+  //
+  //   if (await canLaunchUrl(Uri.parse(url))) {
+  //     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  //   } else {
+  //     CustomLogger.logMessage(msg: "Could not launch Google Maps", level: LogLevel.error);
+  //   }
+  // }
+
+  Future<void> makePhoneCall() async {
+    final phoneNumber = registerClubResponse.value?.data?.ownerPhoneNumber;
+    if (phoneNumber == null) {
+      AppToast.error("Phone number not available");
+      CustomLogger.logMessage(msg: "Phone number not available", level: LogLevel.error);
+      return;
+    }
+    
+    final url = 'tel:$phoneNumber';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      CustomLogger.logMessage(msg: "Could not launch phone dialer", level: LogLevel.error);
+    }
+  }
+
   @override
   void onInit()async {
     argument = Get.arguments['data'];
     log("Register club id = >${argument.id!}");
    final clubId = Get.arguments['clubId'];
+   final courtId = argument.courts?.isNotEmpty == true ? argument.courts!.first.id : null;
    await fetchReview();
-   await fetchRegisterClub(clubId);
+   await fetchRegisterClub(clubId, courtId: courtId);
     super.onInit();
   }
 }

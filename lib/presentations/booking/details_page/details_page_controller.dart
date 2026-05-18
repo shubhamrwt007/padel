@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/response_models/detail_page/details_model.dart';
 import 'package:padel_mobile/presentations/booking/details_page/details_page.dart';
@@ -96,9 +97,6 @@ class DetailsController extends GetxController {
     log("Payment successful - ID: $paymentId, Order: $orderId, Signature: $signature");
 
     try {
-      // Show payment success message first
-      // SnackBarUtils.showSuccessSnackBar("Payment successful! Creating match...");
-
       // Keep processing true while creating match
       isProcessing.value = true;
       Get.generalDialog(
@@ -139,7 +137,6 @@ class DetailsController extends GetxController {
 
     } catch (e) {
       log("Error after payment success: $e");
-      // SnackBarUtils.showErrorSnackBar("Payment successful but match creation failed: $e");
     } finally {
       isProcessing.value = false;
     }
@@ -149,7 +146,6 @@ class DetailsController extends GetxController {
   void onPaymentError(String error) {
     log("Payment failed: $error");
     isProcessing.value = false;
-    // SnackBarUtils.showErrorSnackBar("Payment failed: $error");
   }
 
   // Separate method for creating match after payment success
@@ -255,7 +251,6 @@ class DetailsController extends GetxController {
       // ✅ Call API
       final response = await repository.createMatch(data: cleanedBody);
       log("🎯 Match Created -> ${response.toJson()}");
-      // SnackBarUtils.showSuccessSnackBar("Match created successfully!");
 
       // ✅ Call createBooking after successful match creation
       await createBooking();
@@ -269,7 +264,6 @@ class DetailsController extends GetxController {
       log("❌ Match creation error: $e\n$st");
       Get.close(2);
       showBookingErrorDialog();
-      // SnackBarUtils.showErrorSnackBar("Failed to create match: $e");
     }
   }
 
@@ -368,30 +362,30 @@ class DetailsController extends GetxController {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Your payment has been received successfully, "
-                        "but we couldn't confirm your booking at this moment.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Please contact support for assistance or a refund.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                    ),
-                  ),
+                  //
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Your payment has been received successfully, "
+                  //       "but we couldn't confirm your booking at this moment.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //     height: 1.4,
+                  //   ),
+                  // ),
+                  //
+                  // const SizedBox(height: 8),
+                  //
+                  // const Text(
+                  //   "Please contact support for assistance or a refund.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     color: Colors.black54,
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 40),
 
@@ -454,7 +448,8 @@ class DetailsController extends GetxController {
   Future<void> initiatePaymentAndCreateMatch() async {
     // Validate that teams have at least minimum required players
     if (!validateTeams()) {
-      SnackBarUtils.showWarningSnackBar("Please add required players to both teams");
+      CustomLogger.logMessage(msg: "Please add required players to both teams", level: LogLevel.error);
+
       return;
     }
 
@@ -467,7 +462,8 @@ class DetailsController extends GetxController {
       final price = double.tryParse(priceString.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 
       if (price <= 0) {
-        SnackBarUtils.showErrorSnackBar("Invalid price amount");
+        CustomLogger.logMessage(msg: "Invalid price amount", level: LogLevel.error);
+
         isProcessing.value = false;
         return;
       }
@@ -481,8 +477,8 @@ class DetailsController extends GetxController {
         name: 'Swoot',
         description: 'Payment for court booking and match creation',
         orderId: '', // You can generate order ID from your backend if needed
-        userEmail: profileController.profileModel.value?.response?.email ?? 'test@example.com',
-        userContact: '9999999999',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
         notes: {
           'user_id': profileController.profileModel.value?.response?.sId ?? '123',
           'club_id': localMatchData['clubId'],
@@ -495,7 +491,6 @@ class DetailsController extends GetxController {
     } catch (e) {
       isProcessing.value = false;
       log("Payment initiation error: $e");
-      // SnackBarUtils.showErrorSnackBar("Failed to initiate payment: $e");
     }
     // Note: isProcessing will be set to false in success/failure callbacks
   }
@@ -617,20 +612,20 @@ class DetailsController extends GetxController {
 
   /// Enhanced create user method with team assignment
   Future<void> createUserAndAddToTeam({required int index, required String team}) async {
-    if (isLoading.value || Get.isSnackbarOpen) return;
+    if (isLoading.value) return;
     // Validation
     if (fullNameController.text.isEmpty) {
-      return SnackBarUtils.showWarningSnackBar("Please Enter Full Name");
+      return AppToast.error("Please Enter Full Name");
     } else if (emailController.text.isEmpty) {
-      return SnackBarUtils.showWarningSnackBar("Please Enter Email Address");
+      return AppToast.error("Please Enter Email Address");
     } else if (!GetUtils.isEmail(emailController.text.trim())) {
-      return SnackBarUtils.showWarningSnackBar("Please Enter a Valid Email Address");
+      return AppToast.error("Please Enter a Valid Email Address");
     } else if (phoneController.text.isEmpty) {
-      return SnackBarUtils.showWarningSnackBar("Please Enter Phone Number");
+      return AppToast.error("Please Enter Phone Number");
     } else if (gender.value.isEmpty) {
-      return SnackBarUtils.showWarningSnackBar("Please Select the Gender");
+      return AppToast.error("Please Select the Gender");
     } else if (playerLevel.value.isEmpty) {
-      return SnackBarUtils.showWarningSnackBar("Please Select the Player Level");
+      return AppToast.error("Please Select the Player Level");
     }
 
     isLoading.value = true;
@@ -669,11 +664,11 @@ class DetailsController extends GetxController {
         // Close dialog
         Get.back();
       } else {
-        // SnackBarUtils.showInfoSnackBar(response?.message ?? "Failed to create user");
+        CustomLogger.logMessage(msg: response?.message ?? "Failed to create user", level: LogLevel.error);
+
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error :-> $e", level: LogLevel.error);
-      // SnackBarUtils.showErrorSnackBar("An error occurred while creating user");
     } finally {
       isLoading.value = false;
     }

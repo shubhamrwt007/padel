@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:padel_mobile/data/request_models/createAndGetSlotHistoryModel.dart';
 import 'package:padel_mobile/data/request_models/deleteSlotHistoryModel.dart';
+import 'package:padel_mobile/data/request_models/home_models/get_category_model.dart';
 import 'package:padel_mobile/data/request_models/slot_history_models/delete_bulk_slot_history_model.dart';
 import 'package:padel_mobile/data/response_models/get_all_slot_prices_of_court_model.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
@@ -20,9 +21,24 @@ import '../../presentations/auth/forgot_password/widgets/forgot_password_exports
 
 class HomeRepository {
   final DioClient dioClient = DioClient();
-  Future<CourtsModel> fetchClubData({String limit = "10", required String page, String search = ""}) async {
+  Future<CourtsModel> fetchClubData({
+    String limit = "10",
+    required String page,
+    String search = "",
+    String? categoryId,
+    // String? locationId
+  }) async {
      try {
-      final url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
+      String url = "${AppEndpoints.getClub}$limit&page=$page&search=$search";
+      
+      if (categoryId != null && categoryId.isNotEmpty) {
+        url += "&categoryId=$categoryId";
+      }
+      
+      // if (locationId != null && locationId.isNotEmpty) {
+      //   url += "&location=$locationId";
+      // }
+      
       final response = await dioClient.get(url);
       if (response.statusCode == 200) {
         log("Response Data: ${response.data}");
@@ -47,9 +63,13 @@ class HomeRepository {
     required String registerClubId,       // club id
     required String day,
      String? date,
+    String? sID,
+    // String? location,
+    String? categoryId,
+    String? locId
     // String? duration
   }) async {
-    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date";
+    String url = "${AppEndpoints.getAllActiveCourtsForSlotWise}register_club_id=$registerClubId&day=$day&date=$date&_id=$sID&categoryId=$categoryId&locId=$locId";
 
     try {
       final response = await dioClient.get(url);
@@ -72,9 +92,12 @@ class HomeRepository {
   }
 
   ///Get Register Club Data-----------------------------------------------------
-  Future<GetRegisterClubModel> getRegisterClub({required String clubId}) async {
+  Future<GetRegisterClubModel> getRegisterClub({required String clubId, String? courtId}) async {
     try {
-      final url = "${AppEndpoints.getRegisterClub}clubId=$clubId";
+      String url = "${AppEndpoints.getRegisterClub}clubId=$clubId";
+      if (courtId != null && courtId.isNotEmpty) {
+        url += "&courtId=$courtId";
+      }
 
       final response = await dioClient.get(url);
 
@@ -118,9 +141,9 @@ class HomeRepository {
   }
 
   ///Get All Slot Prices Of Court------------------------------------------------
-  Future<GetAllSlotPricesOfCourtModel> getAllSlotPricesOfCourt({required registerClubId,required duration,required day,required timePeriod}) async {
+  Future<GetAllSlotPricesOfCourtModel> getAllSlotPricesOfCourt({required registerClubId,required duration,required day,required timePeriod,String? categoryId,String? locationId,String? lockId}) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getAllSlotPricesOfCourt}register_club_id=$registerClubId&duration=$duration&day=$day&timePeriod=$timePeriod",);
+      final response = await dioClient.get("${AppEndpoints.getAllSlotPricesOfCourt}register_club_id=$registerClubId&duration=$duration&day=$day&timePeriod=$timePeriod&categoryId=$categoryId&location=$locationId&lockId=$lockId",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get All Slot Prices Of Court Data: ${response.data}",
@@ -144,10 +167,14 @@ class HomeRepository {
   Future<GetCourtsByDurationModel> getCourtsByDuration({
     required String duration,
     required String date,
-    required String time
+    required String time,
+    // String? locationId,
+    String? categoryId,
+    int? page=1,
+    int? limit=15,
   }) async {
     try {
-      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time",);
+      final response = await dioClient.get("${AppEndpoints.getCourtsByDuration}duration=$duration&date=$date&time=$time&categoryId=$categoryId&page=$page&limit=$limit",);
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
           msg: "Get Courts By Durationt Data: ${response.data}",
@@ -308,6 +335,28 @@ class HomeRepository {
         return GetPendingRequestCountModel.fromJson(response.data);
       } else {
         throw Exception("Failed to load Get Pending Request Count - status code: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint("Dio Error: ${e.response?.statusMessage}");
+        throw Exception("Server error: ${e.response?.statusCode}");
+      } else {
+        debugPrint("Dio Error: ${e.message}");
+        throw Exception("Network error: ${e.message}");
+      }
+    }
+  }
+
+  ///Get Category---------------------------------------------------------------
+  Future<GetCategoryModel> getCategory() async {
+    try {
+      final url = AppEndpoints.getCategory;
+      final response = await dioClient.get(url);
+      if (response.statusCode == 200) {
+        log("Get Category: ${response.data}");
+        return GetCategoryModel.fromJson(response.data);
+      } else {
+        throw Exception("Failed to load Get Category - status code: ${response.statusCode}");
       }
     } on DioException catch (e) {
       if (e.response != null) {

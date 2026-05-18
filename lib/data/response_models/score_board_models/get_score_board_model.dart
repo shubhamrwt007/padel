@@ -44,6 +44,7 @@ class Data {
   bool? matchStatus;
   int? iV;
   bool? isCompleted;
+  List<SwapHistory>? swapHistory;
 
   Data({
     this.sId,
@@ -66,6 +67,7 @@ class Data {
     this.matchStatus,
     this.startTime,
     this.endTime,
+    this.swapHistory,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -92,6 +94,7 @@ class Data {
     matchStatus = json['matchStatus'];
     startTime = json['startTime'];
     endTime = json['endTime'];
+    swapHistory = (json['swapHistory'] as List?)?.map((e) => SwapHistory.fromJson(e)).toList();
   }
 
   Map<String, dynamic> toJson() => {
@@ -115,6 +118,7 @@ class Data {
         'matchStatus': matchStatus,
         'startTime': startTime,
         'endTime': endTime,
+        'swapHistory': swapHistory?.map((e) => e.toJson()).toList(),
       };
 }
 
@@ -320,6 +324,35 @@ class Sets {
         'teamAScore': teamAScore,
         'teamBScore': teamBScore,
         'winner': winner,
+        '_id': sId,
+      };
+}
+
+class SwapHistory {
+  String? swappedAt;
+  String? winner;
+  TotalScore? totalScore;
+  List<Teams>? teams;
+  List<Sets>? sets;
+  String? sId;
+
+  SwapHistory({this.swappedAt, this.winner, this.totalScore, this.teams, this.sets, this.sId});
+
+  SwapHistory.fromJson(Map<String, dynamic> json) {
+    swappedAt = json['swappedAt'];
+    winner = json['winner'];
+    totalScore = json['totalScore'] != null ? TotalScore.fromJson(json['totalScore']) : null;
+    teams = (json['teams'] as List?)?.map((e) => Teams.fromJson(e)).toList();
+    sets = (json['sets'] as List?)?.map((e) => Sets.fromJson(e)).toList();
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() => {
+        'swappedAt': swappedAt,
+        'winner': winner,
+        'totalScore': totalScore?.toJson(),
+        'teams': teams?.map((e) => e.toJson()).toList(),
+        'sets': sets?.map((e) => e.toJson()).toList(),
         '_id': sId,
       };
 }

@@ -15,20 +15,23 @@ class NotificationScreen extends StatelessWidget {
     controller.fetchNotifications();
     return Scaffold(
       appBar: primaryAppBar(title: Text("Notification"), context: context,centerTitle: true,
-          // action: [
-          //   Obx(() {
-          //     final hasUnread = controller.notifications
-          //         .any((n) => n['isRead'] == false);
-          //     return hasUnread
-          //         ? IconButton(
-          //       icon: const Icon(Icons.mark_email_read),
-          //       tooltip: "Mark all as read",
-          //       // onPressed: controller.markAllNotificationsAsRead,
-          //       onPressed: (){},
-          //     )
-          //         : const SizedBox.shrink();
-          //   }),
-          // ]
+          action: [
+            Obx(() {
+              final hasUnread = controller.notifications
+                  .any((n) => n['isRead'] == false);
+              return hasUnread
+                  ? IconButton(
+                icon: const Icon(Icons.mark_email_read),
+                tooltip: "Mark all as read",
+                onPressed: controller.markAllNotificationsAsRead,
+                // onPressed: (){},
+              )
+                  : const SizedBox.shrink();
+            }),
+            // IconButton(onPressed: (){
+            //   Get.toNamed(RoutesName.tutorial);
+            // }, icon: Icon(Icons.eighteen_mp))
+          ]
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -85,14 +88,21 @@ class NotificationScreen extends StatelessWidget {
                   time: n['time'],
                   icon: n['icon'],
                   payload: n['payload'],
+                  redirect: n['redirect'] ?? '',
                   bookingId: n['bookingId'],
-                  isRead: n['isRead'] ?? false, 
+                  matchId: n['matchId'],
+                  isRead: n['isRead'] ?? false,
                   bookingStatus: n['bookingStatus'],
                   notificationType: n['notificationType'] ?? '',
                   profileImage: n['profileImage'] ?? '',
                   userName: n['userName'] ?? '',
                 )),
                 const SizedBox(height: 16),
+
+
+
+
+
               ],
             );
           },
@@ -132,8 +142,10 @@ class _NotificationTile extends StatelessWidget {
   final DateTime time;
   final IconData icon;
   final String payload;
+  final String redirect;
   final String bookingStatus;
   final String bookingId;
+  final String matchId;
   final bool isRead;
   final String notificationType;
   final String profileImage;
@@ -145,7 +157,9 @@ class _NotificationTile extends StatelessWidget {
     required this.time,
     required this.icon,
     required this.payload,
+    required this.redirect,
     required this.bookingId,
+    required this.matchId,
     required this.isRead,
     required this.bookingStatus,
     required this.notificationType,
@@ -161,7 +175,7 @@ class _NotificationTile extends StatelessWidget {
       onTap: () {
         controller.markNotificationAsRead(id);
         if (payload.isNotEmpty) {
-          controller.handleNotificationRoute(payload);
+          controller.handleNotificationRoute(payload, redirect: redirect,matchId: matchId);
         }
       },
       child: Container(

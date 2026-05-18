@@ -251,20 +251,53 @@ class NotificationController extends GetxController {
   }
 
   /// Handle notification URL routing
-  void handleNotificationRoute(String notificationUrl) {
+  void handleNotificationRoute(String notificationUrl, {String? redirect, String? matchId}) {
     if (kDebugMode) {
-      print('🔔 Handling notification URL: $notificationUrl');
+      print('🔔 Handling notification URL: $notificationUrl, redirect: $redirect, matchId: $matchId');
     }
 
     try {
+      if (notificationUrl == 'true') {
+        if (redirect != null && redirect.isNotEmpty) {
+          if (redirect == '/openmatchrequest') {
+            Get.toNamed(RoutesName.requests);
+          } else {
+            Get.toNamed(redirect);
+          }
+        }
+        return;
+      }
+
+      if (notificationUrl.startsWith('/league/')) {
+        final leagueId = notificationUrl.split('/league/').last;
+        Get.toNamed(RoutesName.league, arguments: {
+          'leagueId': leagueId,
+        });
+        return;
+      }
+
       switch (notificationUrl) {
         case '/yourMatchRequest':
-          Get.toNamed(RoutesName.yourMatchRequest);
+          Get.toNamed(RoutesName.requests);
           break;
         case "/bookingRequests":
-          Get.toNamed(RoutesName.yourMatchRequest);
+          Get.toNamed(RoutesName.requests);
           break;
         case '/matches':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
+          break;
+        case '/matchmessage':
+          Get.toNamed(RoutesName.chat, arguments: {
+            "matchID": matchId ?? "",
+          });
+          break;
+        case '/simpleBooking':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
+          break;
+        case '/Scoreboard':
+          Get.to(BookingHistoryUi(buttonType: "drawer",));
+          break;
+        case '/user/bookings':
           Get.to(BookingHistoryUi(buttonType: "drawer",));
           break;
         default:
@@ -295,12 +328,10 @@ class NotificationController extends GetxController {
       await fetchUnreadNotificationCount();
       await fetchNotifications();
       await profileController.fetCustomerLeaderBoardRank();
-      // Get.snackbar(
-      //   message.notification!.title ?? 'New Message',
-      //   message.notification!.body ?? '',
-      //   snackPosition: SnackPosition.TOP,
-      //   duration: const Duration(seconds: 4),
-      // );
+      CustomLogger.logMessage(
+          msg: "${message.notification!.title ?? 'New Message'}\n"
+          "${message.notification!.body ?? ''}",
+          level: LogLevel.info);
     }
   }
 
@@ -553,7 +584,9 @@ class NotificationController extends GetxController {
               'time': createdAt,
               'icon': icon,
               'payload': notif.notificationUrl ?? '',
+              'redirect': notif.redirect ?? '',
               'bookingId': notif.bookingId?.id ?? '',
+              'matchId': notif.matchId ?? '',
               'isRead': notif.isRead ?? false,
               'bookingStatus': notif.bookingId?.bookingStatus ?? '',
               'notificationType': notif.notificationType ?? '',

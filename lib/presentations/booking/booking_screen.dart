@@ -11,7 +11,7 @@ class BookingScreen extends GetView<BookingController> {
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       body: DefaultTabController(
-        length: 4,
+        length: 3,
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
@@ -70,8 +70,11 @@ class BookingScreen extends GetView<BookingController> {
                       /// Background image (only when expanded)
                       if (!isCollapsed)
                         Obx(() {
-                          final imageUrl = controller.courtsData.value.courtImage?.isNotEmpty == true
-                              ? controller.courtsData.value.courtImage!.first
+                          final courtDetails = controller.courtsData.value.courts?.isNotEmpty == true 
+                              ? controller.courtsData.value.courts![0] 
+                              : null;
+                          final imageUrl = courtDetails?.courtImage?.isNotEmpty == true
+                              ? courtDetails!.courtImage![0]
                               : '';
                           return imageUrl.isNotEmpty
                               ? CachedNetworkImage(
@@ -150,11 +153,18 @@ class BookingScreen extends GetView<BookingController> {
                               }),
                               const SizedBox(height: 8),
                               Obx(() {
-                                final address =
-                                    controller.courtsData.value.address ?? 'Address not available';
-                                final city = controller.courtsData.value.city ?? '';
-                                final fullAddress =
-                                city.isNotEmpty ? "$address, $city" : address;
+                                final locationDetails = controller.courtsData.value.locations?.isNotEmpty == true
+                                    ? controller.courtsData.value.locations![0]
+                                    : null;
+                                final address = locationDetails?.address ?? controller.courtsData.value.address ?? '';
+                                final city = locationDetails?.city ?? controller.courtsData.value.city ?? '';
+                                final fullAddress = address.isNotEmpty && city.isNotEmpty 
+                                    ? "$address, $city" 
+                                    : address.isNotEmpty 
+                                        ? address 
+                                        : city.isNotEmpty 
+                                            ? city 
+                                            : 'Address not available';
                                 return Text(
                                   fullAddress,
                                   style: const TextStyle(
@@ -224,6 +234,7 @@ class BookingScreen extends GetView<BookingController> {
                                               ? []
                                               : [
                                             BoxShadow(
+
                                               color: Colors.black.withValues(alpha: 0.1),
                                               blurRadius: 4,
                                               offset: const Offset(0, 2),
@@ -331,7 +342,7 @@ class BookingScreen extends GetView<BookingController> {
               HomeContent(),
               BookSession(),
               OpenMatchesScreen(),
-              AmericanoScreen(),
+              // AmericanoScreen(),
             ],
           ),
         ),
@@ -381,13 +392,13 @@ PreferredSizeWidget myTabBar(
     ),
     dividerHeight: 0.5,
     dividerColor: AppColors.textColor.withValues(alpha: 0.1),
-    labelPadding: const EdgeInsets.only(left: 0, right: 30),
+    labelPadding: const EdgeInsets.only(left: 20, right: 40),
     automaticIndicatorColorAdjustment: true,
     indicatorWeight: 1,
     tabs: const [
       Tab(child: Text("Home")),
       Tab(child: Text("Book")),
       Tab(child: Text("Open Matches")),
-      Tab(child: Text("Americano")),
+      // Tab(child: Text("Americano")),
     ],
   );}

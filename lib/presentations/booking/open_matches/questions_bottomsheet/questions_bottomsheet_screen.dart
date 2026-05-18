@@ -46,6 +46,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
             _buildDropdown('Select game type'),
             const SizedBox(height: 6),
             _buildRadioButtons('Select match type'),
+            Row(
+              children: [
+                Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
+                Text("You will not be given XP points upon selections of friendly match",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
+              ],
+            ),
             const SizedBox(height: 20),
             // ---------- PAYMENT PANEL ----------
             Stack(
@@ -122,7 +128,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         //   subtitle: 'Current Balance: ₹0',
                         //   trailingColor: Colors.blue,
                         //   onTap: () {
-                        //     Get.snackbar('Info', 'Wallet payment coming soon!');
                         //   },
                         // ),
                         //   CustomButton(
@@ -131,11 +136,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         //     circleColor: AppColors.primaryColor,
                         //     gradientColors: [Colors.white,Colors.white,Colors.white],
                         //       onTap: () {
-                        //       if(Get.isSnackbarOpen)return;
-                        //         if (!controller.validateSelections()) {
-                        //           return;
-                        //         }
-                        //         SnackBarUtils.showInfoSnackBar("Wallet payment coming soon!");
                         //       },
                         //     child:Column(
                         //       mainAxisAlignment: MainAxisAlignment.center,
@@ -159,11 +159,10 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         // )),
                         // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
                         CustomButton(
-                          width: Get.width * 0.9,
+                          width: Get.width * 0.81,
                           height: 55,
                           gradientColors: [Colors.white, Colors.white, Colors.white],
                           onTap: controller.isProcessing.value ? null : () {
-                            if (Get.isSnackbarOpen) return;
                             controller.onDirectPaymentTap();
                           },
                           child: controller.isProcessing.value == true
@@ -174,7 +173,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                               : Obx(() => Text(
                             controller.requiresPayment.value
                                 ? "Pay Now"
-                                : "Confirm Match",
+                                : "Pay with Wallet",
                             style: Get.textTheme.headlineLarge!.copyWith(
                               color: AppColors.secondaryColor,
                               fontSize: 16,
@@ -298,7 +297,6 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
           label,
           style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor),
         ),
-        const SizedBox(height: 8),
         Obx(() => Row(
           children: items.map((item) {
             final isSelected = selectedValue.value == item;
@@ -373,28 +371,37 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
-                      children: [
-                        TextSpan(
-                          text: '$formattedDate ${group['timeRange']} ',
-                          style: Get.textTheme.labelSmall!.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$formattedDate ${group['timeRange']}",
+                        style: Get.textTheme.labelSmall!.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                        TextSpan(
-                          text: controller.localMatchData["courtName"]?.toString() ?? 'Court',
-                          style: Get.textTheme.labelSmall!.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                      ),
+                      // const SizedBox(height: 2),
+                      // Text(
+                      //   ,
+                      //   style: Get.textTheme.labelSmall!.copyWith(
+                      //     color: Colors.white.withValues(alpha: 0.9),
+                      //     fontWeight: FontWeight.w500,
+                      //     fontSize: 12,
+                      //   ),
+                      // ),
+                      const SizedBox(height: 2),
+                      Text(
+                        controller.localMatchData["courtName"]?.toString() ?? 'Court',
+                        style: Get.textTheme.labelSmall!.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Text(
@@ -404,12 +411,12 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                // const SizedBox(width: 8),
+                // const Icon(
+                //   Icons.delete_outline,
+                //   color: Colors.white,
+                //   size: 18,
+                // ),
               ],
             ),
           );

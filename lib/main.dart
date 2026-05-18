@@ -9,6 +9,8 @@ import 'package:padel_mobile/firebase_options.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/notification/notification_controller.dart';
 import 'package:padel_mobile/services/notification_service/firebase_notification.dart';
+import 'package:padel_mobile/services/fcm_token_service.dart';
+import 'package:padel_mobile/services/socket_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'configs/routes/routes.dart';
 import 'configs/themes/app_themes.dart';
@@ -80,8 +82,15 @@ Future<void> main() async {
     // Initialize core services
     Get.put(DioClient());
 
+    // Initialize socket service
+    Get.put(SocketService());
+
     // Initialize notification controller (will initialize NotificationService)
     Get.put(NotificationController());
+    
+    // Initialize FCM token service
+    // Initialize FCM token service
+    Get.put(FCMTokenService());
     if (kDebugMode) {
       print('✅ Controllers initialized');
     }
@@ -199,6 +208,10 @@ class _NotificationWrapperState extends State<NotificationWrapper> with WidgetsB
         try {
           final controller = NotificationController.instance;
           controller.refreshToken();
+          
+          // Also refresh FCM token
+          final fcmService = FCMTokenService.instance;
+          fcmService.refreshToken();
         } catch (e) {
           CustomLogger.logMessage(msg: '❌ Error refreshing on resume: $e',level: LogLevel.debug);
         }

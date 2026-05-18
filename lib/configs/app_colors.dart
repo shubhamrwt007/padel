@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class AppColors {
   ///////
   static const Color primaryColor = Color(0xFF1F41BB);
+  static const Color lightred = Color(0xFFf9ecec);
+  static const Color circleColor = Color(0xFFd3d3d3);
   static const Color tabTextColor = Color(0xFF252525);
   static const Color creamColor = Color(0xFFfdfdff);
   static const Color secondaryColor = Color(0xFF3DBE64);
@@ -39,4 +41,5 @@ class AppColors {
   static const Color cartColor = Color(0XFFe0e7ff);
   static const Color slotColor = Color(0XFFe9e9ea);
   static const Color lightGrace = Color(0XFFe1e2e6);
+  static const Color liveMatchRed = Color(0XFFCD3529);
 }

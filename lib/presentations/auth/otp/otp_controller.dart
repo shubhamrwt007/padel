@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
+import 'package:otp_autofill/otp_autofill.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_controller.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/reset_password_screen.dart';
 import 'package:padel_mobile/presentations/auth/login/login_controller.dart';
@@ -25,6 +27,9 @@ class OtpController extends GetxController {
   final FocusNode pinFocusNode = FocusNode();
   final arguments = Get.arguments;
   RxBool isLoading = false.obs;
+  late OTPTextEditController otpController;
+  late OTPInteractor otpInteractor;
+  bool _otpToastShown = false;
 
   String getMaskedPhoneNumber() {
     final phoneNumber = arguments['phoneNumber'] ?? '';
@@ -55,15 +60,7 @@ class OtpController extends GetxController {
       if (result.status == "200") {
         getPurpose();
       } else if (result.status == "400") {
-        Fluttertoast.showToast(
-          msg: result.message!,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-          timeInSecForIosWeb: 3,
-        );
+        AppToast.error(result.message!);
       }
     } finally {
       isLoading.value = false;
@@ -116,16 +113,46 @@ class OtpController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    startTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      pinFocusNode.requestFocus();
+    otpInteractor = OTPInteractor();
+    otpController = OTPTextEditController(
+      codeLength: 4,
+      onCodeReceive: (code) {
+        valueController.text = code;
+        onOtpChanged(code);
+      },
+    )..startListenUserConsent((code) {
+      final exp = RegExp(r'(\d{4})');
+      return exp.stringMatch(code ?? '') ?? '';
     });
+    startTimer();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   // Show OTP at top of screen only once
+    //   if (arguments['otp'] != null && !_otpToastShown) {
+    //     _otpToastShown = true;
+    //     Future.delayed(const Duration(milliseconds: 500), () {
+    //       Get.rawSnackbar(
+    //         message: "OTP: ${arguments['otp']}",
+    //         backgroundColor: Colors.green,
+    //         snackPosition: SnackPosition.TOP,
+    //         duration: const Duration(seconds: 5),
+    //         margin: EdgeInsets.zero,
+    //         borderRadius: 0,
+    //         padding: EdgeInsets.only(
+    //           top: Get.mediaQuery.padding.top + 10,
+    //           bottom: 15,
+    //           left: 20,
+    //           right: 20,
+    //         ),
+    //       );
+    //     });
+    //   }
+    // });
   }
 
   @override
   void onClose() {
     _timer?.cancel();
-    // pinFocusNode.dispose();
+    otpController.stopListen();
     super.onClose();
   }
 }

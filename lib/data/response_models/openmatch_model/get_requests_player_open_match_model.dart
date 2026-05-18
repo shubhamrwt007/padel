@@ -2,18 +2,15 @@ class GetRequestPlayersOpenMatchModel {
   final String? message;
   final List<Requests>? requests;
 
-  GetRequestPlayersOpenMatchModel({
-    this.message,
-    this.requests,
-  });
+  GetRequestPlayersOpenMatchModel({this.message, this.requests});
 
   factory GetRequestPlayersOpenMatchModel.fromJson(Map<String, dynamic> json) {
     return GetRequestPlayersOpenMatchModel(
       message: json['message']?.toString(),
       requests: json['requests'] != null
           ? List<Requests>.from(
-        json['requests'].map((x) => Requests.fromJson(x)),
-      )
+              json['requests'].map((x) => Requests.fromJson(x)),
+            )
           : null,
     );
   }
@@ -38,8 +35,12 @@ class Requests {
   final String? createdAt;
   final String? updatedAt;
   final int? totalAmount;
-  final dynamic? perShare;
+  final dynamic perShare;
   final int? v;
+  final String? startTime;
+  final String? endTime;
+  final int? viewCount;
+  final int? courtCount;
 
   Requests({
     this.id,
@@ -57,6 +58,10 @@ class Requests {
     this.totalAmount,
     this.perShare,
     this.v,
+    this.startTime,
+    this.endTime,
+    this.viewCount,
+    this.courtCount,
   });
 
   factory Requests.fromJson(Map<String, dynamic> json) {
@@ -65,7 +70,7 @@ class Requests {
       type: json['type']?.toString(),
       status: json['status']?.toString(),
       preferredTeam: json['preferredTeam']?.toString(),
-      bookingId: json['bookingId']?.toString(),
+      bookingId: _parseId(json['bookingId']),
 
       // matchId can be String or Object
       matchIdString: json['matchId'] is String ? json['matchId'] : null,
@@ -86,8 +91,21 @@ class Requests {
       updatedAt: json['updatedAt']?.toString(),
       totalAmount: json['totalAmount'],
       perShare: json['perShare'],
+      viewCount: json['viewCount'],
       v: json['__v'],
+      startTime: json['startTime'],
+      endTime: json['endTime'],
+      courtCount: json['courtCount'],
     );
+  }
+
+  static String? _parseId(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is Map<String, dynamic>) {
+      return value['_id']?.toString() ?? value['id']?.toString();
+    }
+    return value.toString();
   }
 }
 
@@ -159,11 +177,7 @@ class TeamA {
   final String? joinedAt;
   final String? id;
 
-  TeamA({
-    this.user,
-    this.joinedAt,
-    this.id,
-  });
+  TeamA({this.user, this.joinedAt, this.id});
 
   factory TeamA.fromJson(Map<String, dynamic> json) {
     return TeamA(
@@ -183,11 +197,7 @@ class TeamB {
   final String? joinedAt;
   final String? id;
 
-  TeamB({
-    this.user,
-    this.joinedAt,
-    this.id,
-  });
+  TeamB({this.user, this.joinedAt, this.id});
 
   factory TeamB.fromJson(Map<String, dynamic> json) {
     return TeamB(
@@ -225,8 +235,8 @@ class Slot {
       bookingDate: json['bookingDate']?.toString(),
       slotTimes: json['slotTimes'] != null
           ? List<SlotTime>.from(
-        json['slotTimes'].map((x) => SlotTime.fromJson(x)),
-      )
+              json['slotTimes'].map((x) => SlotTime.fromJson(x)),
+            )
           : null,
     );
   }
@@ -240,12 +250,7 @@ class SlotTime {
   final String? status;
   final String? availabilityStatus;
 
-  SlotTime({
-    this.time,
-    this.amount,
-    this.status,
-    this.availabilityStatus,
-  });
+  SlotTime({this.time, this.amount, this.status, this.availabilityStatus});
 
   factory SlotTime.fromJson(Map<String, dynamic> json) {
     return SlotTime(
@@ -268,7 +273,7 @@ class RequesterId {
   final String? profilePic;
   final String? level;
   final String? gender;
-  final dynamic? xpPoints;
+  final dynamic xpPoints;
 
   RequesterId({
     this.id,
@@ -294,9 +299,7 @@ class RequesterId {
       level: json['level']?.toString(),
       lastName: json['lastName']?.toString(),
       gender: json['gender']?.toString(),
-      xpPoints: json['xpPoints'] is int
-          ? json['xpPoints']
-          : int.tryParse(json['xpPoints']?.toString() ?? ''),
+      xpPoints: json['xpPoints'],
     );
   }
 }
@@ -324,6 +327,8 @@ class ClubId {
 
   final String? createdAt;
   final String? updatedAt;
+  final List<ClubLocation>? locations;
+  final BillingAddress? billingAddress;
 
   ClubId({
     this.id,
@@ -344,6 +349,8 @@ class ClubId {
     this.isDeleted,
     this.createdAt,
     this.updatedAt,
+    this.locations,
+    this.billingAddress,
   });
 
   factory ClubId.fromJson(Map<String, dynamic> json) {
@@ -368,6 +375,14 @@ class ClubId {
       location: json['location'] is Map<String, dynamic>
           ? Location.fromJson(json['location'])
           : null,
+      locations: json['locations'] != null
+          ? List<ClubLocation>.from(
+              json['locations'].map((x) => ClubLocation.fromJson(x)),
+            )
+          : null,
+      billingAddress: json['billingAddress'] != null
+          ? BillingAddress.fromJson(json['billingAddress'])
+          : null,
       isActive: json['isActive'],
       isVerified: json['isVerified'],
       isFeatured: json['isFeatured'],
@@ -379,24 +394,76 @@ class ClubId {
 }
 
 /* -------------------------------------------------------------------------- */
+class ClubLocation {
+  final String? id;
+  final String? city;
+  final String? address;
+  final String? zipCode;
+  final String? state;
+  final List<String>? courtType;
+  final List<String>? categories;
+
+  ClubLocation({
+    this.id,
+    this.city,
+    this.address,
+    this.zipCode,
+    this.state,
+    this.courtType,
+    this.categories,
+  });
+
+  factory ClubLocation.fromJson(Map<String, dynamic> json) {
+    return ClubLocation(
+      id: json['_id']?.toString(),
+      city: json['city']?.toString(),
+      address: json['address']?.toString(),
+      zipCode: json['zipCode']?.toString(),
+      state: json['state']?.toString(),
+      courtType: json['courtType'] != null
+          ? List<String>.from(json['courtType'].map((x) => x.toString()))
+          : null,
+      categories: json['categories'] != null
+          ? List<String>.from(json['categories'].map((x) => x.toString()))
+          : null,
+    );
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 
 class Location {
   final String? type;
   final List<double>? coordinates;
 
-  Location({
-    this.type,
-    this.coordinates,
-  });
+  Location({this.type, this.coordinates});
 
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
       type: json['type']?.toString(),
       coordinates: json['coordinates'] != null
           ? List<double>.from(
-        json['coordinates'].map((x) => (x as num).toDouble()),
-      )
+              json['coordinates'].map((x) => (x as num).toDouble()),
+            )
           : null,
+    );
+  }
+}
+
+class BillingAddress {
+  final String? city;
+  final String? address;
+  final String? zipCode;
+  final String? state;
+
+  BillingAddress({this.city, this.address, this.zipCode, this.state});
+
+  factory BillingAddress.fromJson(Map<String, dynamic> json) {
+    return BillingAddress(
+      city: json['city']?.toString(),
+      address: json['address']?.toString(),
+      zipCode: json['zipCode']?.toString(),
+      state: json['state']?.toString(),
     );
   }
 }

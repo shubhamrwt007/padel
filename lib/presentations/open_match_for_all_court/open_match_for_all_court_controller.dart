@@ -2,25 +2,28 @@ import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
-import 'package:padel_mobile/data/request_models/home_models/get_club_name_model.dart';
-import 'package:padel_mobile/data/response_models/openmatch_model/all_open_matches.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
+import 'package:padel_mobile/services/payment_services/razorpay.dart';
+import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 
 class OpenMatchForAllCourtController extends GetxController {
   final isMyBooking = false.obs;
   Rx<bool> viewUnavailableSlots = false.obs;
   RxList<String> selectedSlots = <String>[].obs;
-  RxString selectedTimeFilter = 'morning'.obs; // New: for tab selection
-  RxString selectedGameLevel = 'Game Level'.obs; // New: for game level selection
-  RxBool isGameLevelSelected = false.obs; // Track if game level is selected
-  RxInt expandedIndex = (-1).obs; // Add expanded index for card expansion
+  RxString selectedTimeFilter = 'morning'.obs;
+  RxString selectedGameLevel = 'Game Level'.obs;
+  RxBool isGameLevelSelected = false.obs;
+  RxInt expandedIndex = (-1).obs;
 
   String? selectedTime;
   Rx<DateTime> selectedDate = DateTime.now().obs;
@@ -46,6 +49,20 @@ class OpenMatchForAllCourtController extends GetxController {
   final GetStorage storage = GetStorage();
   RxBool isCheckingScoreboard = false.obs;
   RxString loadingMatchId = ''.obs;
+  
+  // Category and Location IDs
+  RxString categoryId = ''.obs;
+  RxString locationId = ''.obs;
+
+  // Payment
+  RazorpayPaymentService? _paymentService;
+  ProfileController profileController = Get.put(ProfileController());
+  RxBool isAddingBalance = false.obs;
+  
+  // Store payment context
+  OpenMatchBookingData? _pendingMatch;
+  String? _pendingPrefferedTeam;
+  String? _pendingOrderId;
 
   final List<String> timeSlots = [
     "6:00 am",
@@ -93,6 +110,37 @@ class OpenMatchForAllCourtController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    // Set default tab based on current time
+    final now = DateTime.now();
+    final hour = now.hour;
+    if (hour >= 6 && hour < 12) {
+      selectedTimeFilter.value = 'morning';
+    } else if (hour >= 12 && hour < 18) {
+      selectedTimeFilter.value = 'afternoon';
+    } else {
+      selectedTimeFilter.value = 'evening';
+    }
+    
+    // Initialize payment service
+    _paymentService = RazorpayPaymentService();
+    _paymentService!.onPaymentSuccess = (response) {
+      _onPaymentSuccess(response.paymentId ?? '', response.orderId ?? '', response.signature ?? '');
+    };
+    _paymentService!.onPaymentFailure = (response) {
+      _onPaymentError(response.message ?? 'Payment failed');
+    };
+    _paymentService!.onExternalWallet = (response) {
+      CustomLogger.logMessage(msg: 'External wallet: ${response.walletName}', level: LogLevel.debug);
+    };
+    
+    // Get categoryId and locationId from arguments
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args != null) {
+      categoryId.value = args['categoryId']?.toString() ?? '';
+      locationId.value = args['location']?.toString() ?? '';
+    }
+    
     focusedDate.value = selectedDate.value;
     if (timeSlots.isNotEmpty) {
       final firstAvail = firstAvailableSlot();
@@ -115,7 +163,7 @@ class OpenMatchForAllCourtController extends GetxController {
     final DateTime today = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate.value ?? today,
+      initialDate: selectedDate.value,
       firstDate: today,
       lastDate: today.add(const Duration(days: 365)),
       builder: (context, child) {
@@ -185,9 +233,9 @@ class OpenMatchForAllCourtController extends GetxController {
       if (hour >= 6 && hour < 12) {
         return 'morning'; // 6 AM - 11:59 AM
       } else if (hour >= 12 && hour < 18) {
-        return 'noon'; // 12 PM - 5:59 PM
+        return 'afternoon'; // 12 PM - 5:59 PM
       } else {
-        return 'night'; // 6 PM - 5:59 AM
+        return 'evening'; // 6 PM - 5:59 AM
       }
     } catch (_) {
       return 'morning';
@@ -216,7 +264,7 @@ class OpenMatchForAllCourtController extends GetxController {
       isLoading.value = true;
 
       if (selectedTime == null) {
-        Get.snackbar("Error", "Please select a time slot");
+        CustomLogger.logMessage(msg: "Please select a time slot", level: LogLevel.debug);
         return;
       }
 
@@ -231,10 +279,11 @@ class OpenMatchForAllCourtController extends GetxController {
       final response = await repository.createMatch(data: data);
 
       createdMatch.value = response;
+      CustomLogger.logMessage(msg: "Match created successfully!", level: LogLevel.debug);
 
-      Get.snackbar("Success", "Match created successfully!");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      CustomLogger.logMessage(msg: e, level: LogLevel.debug);
+
     } finally {
       isLoading.value = false;
     }
@@ -260,7 +309,10 @@ class OpenMatchForAllCourtController extends GetxController {
         userid: userId,
         filter: filter,
         type: '',
-        matchDate: matchDate
+        matchDate: matchDate,
+        locationId: locationId.value.isNotEmpty ? locationId.value : null,
+        categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+        dayfilter: selectedTimeFilter.value,
       );
       matchesBySelection.value = response;
     } catch (e) {
@@ -269,28 +321,6 @@ class OpenMatchForAllCourtController extends GetxController {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  String _formatTimeForApi(String raw) {
-    final cleaned = raw.replaceAll(' ', '').toUpperCase();
-    DateTime? parsed;
-    try {
-      parsed = DateFormat('h:mma').parse(cleaned);
-    } catch (_) {
-      try {
-        parsed = DateFormat('hha').parse(cleaned);
-      } catch (_) {
-        try {
-          parsed = DateFormat('ha').parse(cleaned);
-        } catch (_) {
-          parsed = null;
-        }
-      }
-    }
-    if (parsed == null) {
-      return raw;
-    }
-    return DateFormat('h a').format(parsed).toLowerCase();
   }
 
   /// Format time range from list of times
@@ -375,7 +405,6 @@ class OpenMatchForAllCourtController extends GetxController {
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "Error fetching join requests: $e", level: LogLevel.error);
-      Get.snackbar("Error", "Failed to fetch join requests");
     } finally {
       isLoadingRequests.value = false;
     }
@@ -394,8 +423,6 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-
-      // SnackBarUtils.showSuccessSnackBar("Request accepted successfully");
 
       // Refresh matches
       await fetchMatchesForSelection();
@@ -419,7 +446,6 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Remove from requests list
       joinRequests.removeWhere((request) => request['id'] == requestId);
-      // SnackBarUtils.showSuccessSnackBar("Request rejected");
     } catch (e) {
       CustomLogger.logMessage(msg: "Error rejecting request: $e", level: LogLevel.error);
     } finally {
@@ -427,12 +453,12 @@ class OpenMatchForAllCourtController extends GetxController {
     }
   }
   /// Find Near By Players Api--------------------------------------------------
-  Future<void> fetchNearByPlayers({String search = ''}) async {
+  Future<void> fetchNearByPlayers({String search = '',required String bookingId}) async {
     try {
       isLoadingNearbyPlayers.value = true;
       nearbyPlayers.clear();
 
-      final response = await repository.findNearByPlayer(search: search);
+      final response = await repository.findNearByPlayer(search: search,bookingId: bookingId);
       if(response.status == 200 && response.players != null){
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
@@ -440,9 +466,11 @@ class OpenMatchForAllCourtController extends GetxController {
           // 'lastName': player.lastName ?? '',
           'profilePic': player.profilePic ?? '',
           'city': player.city ?? '',
+          'cityName' : player.cityName ?? '',
           'level': player.level ?? '',
           'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
           'xpPoints': player.xpPoints ?? '',
+          "hasPendingRequest":player.hasPendingRequest??false
         }).toList();
       }
     } catch (e) {
@@ -465,14 +493,14 @@ class OpenMatchForAllCourtController extends GetxController {
     try {
       final matchId = matchData.sId ?? '';
       if (matchId.isEmpty) {
-        SnackBarUtils.showErrorSnackBar("Match ID not available");
+        AppToast.error("Match ID not available");
         return;
       }
 
       // Check if logged-in user is part of the match (in teamA or teamB)
       final userId = storage.read('userId');
       if (userId == null) {
-        SnackBarUtils.showErrorSnackBar("User not logged in");
+        AppToast.error("User not logged in");
         return;
       }
 
@@ -498,7 +526,7 @@ class OpenMatchForAllCourtController extends GetxController {
 
       // Only proceed if user is part of the match
       if (!isUserInMatch) {
-        SnackBarUtils.showErrorSnackBar("You must be part of the match to create a scoreboard");
+        CustomLogger.logMessage(msg: "You must be part of the match to create a scoreboard", level: LogLevel.debug);
         return;
       }
 
@@ -600,9 +628,122 @@ class OpenMatchForAllCourtController extends GetxController {
     } catch (e) {
       isCheckingScoreboard.value = false;
       CustomLogger.logMessage(msg: "Error creating scoreboard: $e", level: LogLevel.error);
-      SnackBarUtils.showErrorSnackBar("Failed to load or create scoreboard");
     } finally {
       loadingMatchId.value = '';
     }
+  }
+
+  /// Direct Join Admin Match---------------------------------------------------
+  Future<void> directJoinAdminMatch({
+    required OpenMatchBookingData? match,
+    required String prefferedTeam,
+    String? razorpayOrderId,
+    String? razorpaySignature,
+    String? razorpayPaymentId
+  }) async {
+    try {
+      final matchId = match?.sId ?? '';
+
+      final isPendingMatch = match?.openMatchStatus == "pending";
+      final body = {
+        "matchId": matchId,
+        "prefferedTeam": prefferedTeam,
+        if (razorpayOrderId != null) "razorpay_order_id": razorpayOrderId,
+        if (razorpaySignature != null) "razorpay_signature": razorpaySignature,
+        if (razorpayPaymentId != null) "razorpay_payment_id":razorpayPaymentId
+      };
+
+      CustomLogger.logMessage(msg: "directJoinAdminMatch body: $body", level: LogLevel.info);
+      final response = await repository.directJoinAdminMatch(body: body, isPendingMatch: isPendingMatch);
+      CustomLogger.logMessage(msg: "directJoinAdminMatch response: $response", level: LogLevel.info);
+
+      if (razorpayOrderId == null) {
+        // First call - store order ID and navigate to payment
+        final orderId = response['orderId'];
+        final amount = response['perShare'] ?? response['amount'] ?? 0.0;
+        
+        CustomLogger.logMessage(msg: "Order ID: $orderId, Amount: $amount", level: LogLevel.info);
+        
+        if (orderId != null) {
+          // Store context for payment callback
+          _pendingMatch = match;
+          _pendingPrefferedTeam = prefferedTeam;
+          _pendingOrderId = orderId;
+          //
+          final result = await Get.to(
+            () => PaymentForWallet(),
+            arguments: {
+              'match': match,
+              'prefferedTeam': prefferedTeam,
+              'razorpay_order_id': orderId,
+              'totalAmount': amount,
+              'controller': this,
+            },
+          );
+          
+          CustomLogger.logMessage(msg: "Payment result: $result", level: LogLevel.info);
+        } else {
+          CustomLogger.logMessage(msg: "Failed to get order ID", level: LogLevel.info);
+
+        }
+      } else {
+        // Second call - join completed
+        CustomLogger.logMessage(msg: "Successfully joined the match!", level: LogLevel.info);
+
+        await fetchMatchesForSelection();
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error in directJoinAdminMatch: $e", level: LogLevel.error);
+    }
+  }
+
+  /// Initiate Admin Match Payment
+  Future<void> initiateAdminMatchPayment(String orderId, double amount, String matchId, String prefferedTeam) async {
+    try {
+      isAddingBalance.value = true;
+      await _paymentService!.initiatePayment(
+        keyId: PaymentConfig.keyId,
+        orderId: orderId,
+        amount: amount.toDouble(),
+        currency: 'INR',
+        name: 'Swoot',
+        description: 'Paying for court booking',
+        image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
+        userEmail: profileController.profileModel.value?.response?.email??"",
+        userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
+      );
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Payment initiation error: $e", level: LogLevel.error);
+      isAddingBalance.value = false;
+    }
+  }
+
+  void _onPaymentSuccess(String paymentId, String orderId, String signature) {
+    CustomLogger.logMessage(msg: "Payment success - PaymentId: $paymentId, OrderId: $orderId, Signature: $signature", level: LogLevel.info);
+    isAddingBalance.value = false;
+    
+    // Call directJoinAdminMatch with payment details
+    if (_pendingMatch != null && _pendingPrefferedTeam != null && _pendingOrderId != null) {
+      directJoinAdminMatch(
+        match: _pendingMatch,
+        prefferedTeam: _pendingPrefferedTeam!,
+        razorpayOrderId: _pendingOrderId,
+        razorpaySignature: signature,
+        razorpayPaymentId: paymentId
+      );
+    }
+    
+    Get.back(result: true);
+  }
+
+  void _onPaymentError(String error) {
+    CustomLogger.logMessage(msg: "Payment failed: $error", level: LogLevel.error);
+    isAddingBalance.value = false;
+  }
+
+  @override
+  void onClose() {
+    _paymentService?.dispose();
+    super.onClose();
   }
 }

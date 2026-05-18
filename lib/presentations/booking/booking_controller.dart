@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:padel_mobile/data/request_models/home_models/get_club_name_model.dart';
+import 'package:padel_mobile/presentations/book_a_court/book_a_court_controller.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/booking/home_content/home_content_controller.dart';
@@ -25,12 +26,24 @@ class BookingController extends GetxController with GetSingleTickerProviderState
     super.onInit();
 
     tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
       initialIndex: 1,
     );
 
     _loadBookingData();
+  }
+
+  // Call this method when returning from payment or any other page
+  Future<void> onPageResumed() async {
+    // Get selected slots from BookSessionController if available
+    if (Get.isRegistered<BookSessionController>()) {
+      final bookSessionController = Get.find<BookSessionController>();
+      await bookSessionController.cleanupOnBack();
+    } else{
+      // Fallback: call with empty slots
+      // await _callDeleteSlotHistoryAPI();
+    }
   }
 
   Future<void> _callDeleteSlotHistoryAPI() async {
@@ -55,9 +68,6 @@ class BookingController extends GetxController with GetSingleTickerProviderState
       log("Data Fetch Successfully -> ${courtsData.value}");
       profileController.fetchUserProfile();
       _refreshChildControllers();
-      
-      // Call delete slot history API when page loads
-      _callDeleteSlotHistoryAPI();
     }
   }
 
