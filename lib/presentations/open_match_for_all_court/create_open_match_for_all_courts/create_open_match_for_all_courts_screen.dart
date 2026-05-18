@@ -725,11 +725,11 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               time: current.time ?? '',
               amount: (current.amount ?? 0) + (next.amount ?? 0),
               duration: 60,
-              status: current.status,
+              status: current.status, // Left half status
               bookingTime: current.bookingTime,
               has30MinPrice: true,
               rightHalfSlotId: next.id,
-              rightHalfStatus: next.status,
+              rightHalfStatus: next.status, // Right half status (separate)
               rightHalfBookingTime: next.bookingTime,
             ),
           );
@@ -1425,10 +1425,16 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
 
     final isLeftHalfBooked =
         supports30Min &&
-        (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+        (slot.status?.toLowerCase() == 'booked' ||
+            slot.status?.toLowerCase() == 'unavailable' ||
+            slot.status?.toLowerCase() == 'lock' ||
+            controller.isLeftHalfBooked(slot, resolvedCourtId));
     final isRightHalfBooked =
         supports30Min &&
-        (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+        (slot.rightHalfStatus?.toLowerCase() == 'booked' ||
+            slot.rightHalfStatus?.toLowerCase() == 'unavailable' ||
+            slot.rightHalfStatus?.toLowerCase() == 'lock' ||
+            controller.isRightHalfBooked(slot, resolvedCourtId));
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
 
@@ -1696,7 +1702,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                           topLeft: Radius.circular(radius),
                           bottomLeft: Radius.circular(radius),
                         ),
-                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                        color: AppColors.lightred,
                       ),
                     ),
                   ),
@@ -1718,7 +1724,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                           topRight: Radius.circular(radius),
                           bottomRight: Radius.circular(radius),
                         ),
-                        color: Colors.grey.shade300.withValues(alpha: 0.8),
+                        color: AppColors.lightred,
                       ),
                     ),
                   ),

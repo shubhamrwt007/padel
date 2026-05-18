@@ -922,9 +922,9 @@ class _BookSessionState extends State<BookSession>
   Widget _buildSlotTile(dynamic slot, String courtId, BuildContext context) {
     final isSelected = controller.isSlotSelected(slot, courtId);
     final isPartOfGroup = _isPartOfSelectedGroup(slot, courtId);
-    final selectedDuration = controller.selectedDuration.value;
     final supports30Min = controller.slotSupports30Min(slot);
     final isHalfSlot = supports30Min;
+    final isDurationIncompatible = controller.isDurationIncompatibleSlot(slot);
 
     final isUnavailable =
         controller.isPastAndUnavailable(slot) ||
@@ -999,27 +999,28 @@ class _BookSessionState extends State<BookSession>
               );
             }
           },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius),
-                color:
-                    (isUnavailable ||
-                        (isBothHalvesBooked && supports30Min) ||
-                        isSlotBookedForFullSlot)
-                    ? Colors.grey.shade100
-                    : Colors.white,
-                border: Border.all(
-                  color: (isUnavailable || isAnyHalfBooked)
-                      ? Colors.transparent
-                      : (isSelected || isPartOfGroup)
-                      ? Colors.transparent
-                      : Colors.grey.shade300,
-                  width: (isSelected || isPartOfGroup) ? 2 : 1,
-                ),
-              ),
+child: ClipRRect(
+             borderRadius: BorderRadius.circular(radius),
+             child: AnimatedContainer(
+               duration: const Duration(milliseconds: 200),
+               decoration: BoxDecoration(
+                 borderRadius: BorderRadius.circular(radius),
+                 color:
+                     (isUnavailable ||
+                         (isBothHalvesBooked && supports30Min) ||
+                         isSlotBookedForFullSlot ||
+                         isDurationIncompatible)
+                     ? Colors.grey.shade100
+                     : Colors.white,
+                 border: Border.all(
+                   color: (isUnavailable || isAnyHalfBooked || isDurationIncompatible)
+                       ? Colors.transparent
+                       : (isSelected || isPartOfGroup)
+                       ? Colors.transparent
+                       : Colors.grey.shade300,
+                   width: (isSelected || isPartOfGroup) ? 2 : 1,
+                 ),
+               ),
               child: Stack(
                 children: [
                   /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN with 30min support)
@@ -1130,21 +1131,36 @@ class _BookSessionState extends State<BookSession>
                       ),
                     ),
 
-                  /// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
-                  if (isUnavailable &&
-                      !isAnyHalfBooked &&
-                      !isSelected &&
-                      !isPartOfGroup)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(radius),
-                          color: AppColors.lightred,
-                        ),
-                      ),
-                    ),
+/// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
+                   if (isUnavailable &&
+                       !isAnyHalfBooked &&
+                       !isSelected &&
+                       !isPartOfGroup)
+                     Positioned.fill(
+                       child: Container(
+                         decoration: BoxDecoration(
+                           borderRadius: BorderRadius.circular(radius),
+                           color: AppColors.lightred,
+                         ),
+                       ),
+                     ),
 
-                  /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
+                   /// DURATION INCOMPATIBLE OVERLAY (60min vs 90min conflict)
+                   if (isDurationIncompatible &&
+                       !isUnavailable &&
+                       !isAnyHalfBooked &&
+                       !isSelected &&
+                       !isPartOfGroup)
+                     Positioned.fill(
+                       child: Container(
+                         decoration: BoxDecoration(
+                           borderRadius: BorderRadius.circular(radius),
+                           color: AppColors.lightred,
+                         ),
+                       ),
+                     ),
+
+                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
                   if (isHalfSlot &&
                       isLeftHalfBooked &&
                       !isRightHalfBooked &&
@@ -1212,26 +1228,26 @@ class _BookSessionState extends State<BookSession>
                       ),
                     ),
 
-                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE)
-                  if (!isSelected && !isPartOfGroup)
-                    Positioned.fill(
-                      left: 0,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: 4,
-                          decoration: BoxDecoration(
-                            color: (isAnyHalfBooked || isUnavailable)
-                                ? Colors.red
-                                : blueColor,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(radius),
-                              bottomLeft: Radius.circular(radius),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+/// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE/DURATION CONFLICT)
+                   if (!isSelected && !isPartOfGroup)
+                     Positioned.fill(
+                       left: 0,
+                       child: Align(
+                         alignment: Alignment.centerLeft,
+                         child: Container(
+                           width: 4,
+                           decoration: BoxDecoration(
+                             color: (isAnyHalfBooked || isUnavailable || isDurationIncompatible)
+                                 ? Colors.red
+                                 : blueColor,
+                             borderRadius: BorderRadius.only(
+                               topLeft: Radius.circular(radius),
+                               bottomLeft: Radius.circular(radius),
+                             ),
+                           ),
+                         ),
+                       ),
+                     ),
 
                   /// TIME AND PRICE - WHITE TEXT FOR FULL SLOT SELECTIONS (NON-30MIN SLOTS)
                   if (!supports30Min && (isSelected || isPartOfGroup))
@@ -1406,44 +1422,44 @@ class _BookSessionState extends State<BookSession>
                       ),
                     ),
 
-                  /// TIME AND PRICE - NORMAL FOR UNSELECTED SLOTS
-                  if ((!supports30Min && !isSelected && !isPartOfGroup) ||
-                      (supports30Min &&
-                          !_isLeftHalfSelected(slot, courtId) &&
-                          !_isRightHalfSelected(slot, courtId) &&
-                          !controller.isBothHalvesSelected(slot, courtId)))
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            formatTimeSlot(slot.time ?? ""),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: (isUnavailable || isAnyHalfBooked)
-                                  ? Colors.grey.shade500
-                                  : (isSelected || isPartOfGroup)
-                                  ? Colors.white
-                                  : Colors.black87,
-                            ),
-                          ),
-                          if (price > 0)
-                            Text(
-                              "₹$price",
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: (isUnavailable || isAnyHalfBooked)
-                                    ? Colors.grey.shade400
-                                    : (isSelected || isPartOfGroup)
-                                    ? Colors.white70
-                                    : AppColors.primaryColor,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+/// TIME AND PRICE - NORMAL FOR UNSELECTED SLOTS
+                   if ((!supports30Min && !isSelected && !isPartOfGroup) ||
+                       (supports30Min &&
+                           !_isLeftHalfSelected(slot, courtId) &&
+                           !_isRightHalfSelected(slot, courtId) &&
+                           !controller.isBothHalvesSelected(slot, courtId)))
+                     Center(
+                       child: Column(
+                         mainAxisAlignment: MainAxisAlignment.center,
+                         children: [
+                           Text(
+                             formatTimeSlot(slot.time ?? ""),
+                             style: TextStyle(
+                               fontSize: 12,
+                               fontWeight: FontWeight.w500,
+                               color: (isUnavailable || isAnyHalfBooked || isDurationIncompatible)
+                                   ? Colors.grey.shade500
+                                   : (isSelected || isPartOfGroup)
+                                   ? Colors.white
+                                   : Colors.black87,
+                             ),
+                           ),
+                           if (price > 0)
+                             Text(
+                               "₹$price",
+                               style: TextStyle(
+                                 fontSize: 10,
+                                 fontWeight: FontWeight.w600,
+                                 color: (isUnavailable || isAnyHalfBooked || isDurationIncompatible)
+                                     ? Colors.grey.shade400
+                                     : (isSelected || isPartOfGroup)
+                                     ? Colors.white70
+                                     : AppColors.primaryColor,
+                               ),
+                             ),
+                         ],
+                       ),
+                     ),
                 ],
               ),
             ),

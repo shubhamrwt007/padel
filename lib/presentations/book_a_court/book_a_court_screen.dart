@@ -626,10 +626,23 @@ class BookACourtScreen extends StatelessWidget {
                                 child: _courtRow(
                                   context: context,
                                   courtName:
-                                  (court.courtName ?? 'Court ${courtIndex + 1}')
-                                      .replaceAll(RegExp(r'pickle\s*ball\s*', caseSensitive: false), '')
-                                      .replaceAll(RegExp(r'padel\s*', caseSensitive: false), '')
-                                      .trim(),
+                                      (court.courtName ??
+                                              'Court ${courtIndex + 1}')
+                                          .replaceAll(
+                                            RegExp(
+                                              r'pickle\s*ball\s*',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          )
+                                          .replaceAll(
+                                            RegExp(
+                                              r'padel\s*',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          )
+                                          .trim(),
                                   slotDuration: court.slotDuration,
                                   selectedIndex: courtIndex,
                                   availableSlots: court.slots,
@@ -703,6 +716,7 @@ class BookACourtScreen extends StatelessWidget {
           // Merge this pair: first slot = left half, second slot = right half.
           // Combined into one tile showing "6:00 AM" with left/right half selection.
           final next = raw[i + 1];
+          // Keep individual half statuses separate - don't merge them
           displaySlots.add(
             Slots(
               sId: current.id ?? 'slot_${selectedIndex}_${current.time}',
@@ -710,11 +724,11 @@ class BookACourtScreen extends StatelessWidget {
               amount: (current.amount ?? 0) + (next.amount ?? 0),
               duration: 60, // merged = 60 min total
               has30MinPrice: true,
-              status: current.status,
+              status: current.status, // Left half status
               bookingTime: current.bookingTime,
               // Right-half metadata for booked-state detection
               rightHalfSlotId: next.id,
-              rightHalfStatus: next.status,
+              rightHalfStatus: next.status, // Right half status (separate)
               rightHalfBookingTime: next.bookingTime,
             ),
           );
@@ -1502,12 +1516,10 @@ class BookACourtScreen extends StatelessWidget {
     final isLeftHalfBooked =
         supports30Min &&
         (controller.isLeftHalfBooked(slot, resolvedCourtId) ||
-            isSlotBooked ||
             isLeftHalfDirectBooked);
     final isRightHalfBooked =
         supports30Min &&
         (controller.isRightHalfBooked(slot, resolvedCourtId) ||
-            isSlotBooked ||
             isRightHalfDirectBooked);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;

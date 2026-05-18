@@ -257,7 +257,7 @@ class CreateOpenMatchesController extends GetxController {
     log('🔴 CreateOpenMatchesController onClose called');
     log('🔴 hasCalledSlotHistoryAPI: ${hasCalledSlotHistoryAPI.value}');
     log('🔴 selectionsForCleanup: ${selectionsForCleanup.length}');
-    
+
     // Don't cleanup here - let bottom sheet .then() handle it
     // Only cleanup if user navigates away without opening bottom sheet
     if (hasCalledSlotHistoryAPI.value && selectionsForCleanup.isNotEmpty) {
@@ -1329,7 +1329,9 @@ class CreateOpenMatchesController extends GetxController {
     log('⚠️ Deselected ${keysToRemove.length} slots that became booked/locked');
 
     if (slotsToDelete.isNotEmpty) {
-      log('⚠️ Auto-deleting ${slotsToDelete.length} conflicting slots from socket update');
+      log(
+        '⚠️ Auto-deleting ${slotsToDelete.length} conflicting slots from socket update',
+      );
       // DON'T delete here - these are user's own selections that got locked
       // Only delete when bottom sheet closes or user navigates away
       // deleteSlotHistory(slots: slotsToDelete);
@@ -2649,6 +2651,31 @@ class CreateOpenMatchesController extends GetxController {
 
     // If 3 slots are already selected, disable all other slots
     return multiDateSelections.length >= 3;
+  }
+
+  /// Returns true if the slot's duration is incompatible with already-selected slots.
+  /// e.g. if a 90-min slot is selected, all 30/60-min slots are incompatible, and vice versa.
+  bool isIncompatibleDuration(Slots slot) {
+    if (multiDateSelections.isEmpty) return false;
+
+    final is90MinSlot = slot.duration == 90;
+
+    bool has90MinSlot = false;
+    bool hasNon90MinSlot = false;
+
+    multiDateSelections.forEach((key, selection) {
+      final existingSlot = selection['slot'] as Slots;
+      if (existingSlot.duration == 90) {
+        has90MinSlot = true;
+      } else {
+        hasNon90MinSlot = true;
+      }
+    });
+
+    if (is90MinSlot && hasNon90MinSlot) return true;
+    if (!is90MinSlot && has90MinSlot) return true;
+
+    return false;
   }
 
   int getSelectedSlotsCountForCourt(String courtId) {

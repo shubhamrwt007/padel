@@ -750,15 +750,111 @@ class BookACourtController extends GetxController {
       final blocks = _getRealCourtSelectedBlocks(resolvedCourtId, dateString);
 
       if (blocks.isEmpty) {
-        // Nothing selected yet → always select FULL slot
-        realCourtSelections[fullKey] = {
-          'slot': slot,
-          'courtId': resolvedCourtId,
-          'courtName': courtName ?? '',
-          'date': dateString,
-          'dateTime': currentDate,
-          'amount': slot.amount ?? 0,
-        };
+        // Nothing selected yet
+        // Check if this is a merged 30-min slot with different half statuses
+        final leftStatus = slot.status?.toLowerCase();
+        final rightStatus = slot.rightHalfStatus?.toLowerCase();
+        final isLeftUnavailable = leftStatus == 'booked' || 
+            leftStatus == 'unavailable' || 
+            leftStatus == 'lock';
+        final isRightUnavailable = rightStatus == 'booked' || 
+            rightStatus == 'unavailable' || 
+            rightStatus == 'lock';
+        
+        // RULE: Minimum 60 min selection required
+        // If one half is unavailable, we need to select the available half + next/prev half
+        if (slot.has30MinPrice == true && (isLeftUnavailable || isRightUnavailable)) {
+          if (tappingFirstHalf && !isLeftUnavailable && isRightUnavailable) {
+            // Left available, right unavailable → need to extend left (find prev slot's right half)
+            // For now, don't allow selection as we need consecutive 60min
+            AppToast.error("Minimum 60 minutes booking required");
+            return;
+          } else if (!tappingFirstHalf && !isRightUnavailable && isLeftUnavailable) {
+            // Right available (9:30pm), left unavailable (9pm)
+            // Need to select right half + next slot's left half (10pm left)
+            // Find next slot in availableSlots
+            if (availableSlots != null) {
+              final currentIndex = availableSlots.indexWhere((s) => s.sId == slotId);
+              if (currentIndex != -1 && currentIndex + 1 < availableSlots.length) {
+                final nextSlot = availableSlots[currentIndex + 1];
+                final nextLeftStatus = nextSlot.status?.toLowerCase();
+                final isNextLeftUnavailable = nextLeftStatus == 'booked' || 
+                    nextLeftStatus == 'unavailable' || 
+                    nextLeftStatus == 'lock';
+                
+                if (!isNextLeftUnavailable) {
+                  // Next slot's left half is available → select both (60 min total)
+                  // Select current slot's right half (9:30pm)
+                  final halfSlot1 = Slots(
+                    sId: slotId,
+                    time: slot.time,
+                    amount: (slot.amount ?? 0) ~/ 2,
+                  );
+                  realCourtSelections[secondKey] = {
+                    'slot': halfSlot1,
+                    'courtId': resolvedCourtId,
+                    'courtName': courtName ?? '',
+                    'date': dateString,
+                    'dateTime': currentDate,
+                    'amount': (slot.amount ?? 0) ~/ 2,
+                    'isHalfSlot': true,
+                    'isFirstHalf': false,
+                  };
+                  
+                  // Select next slot's left half (10pm left)
+                  final nextSlotId = nextSlot.sId ?? '';
+                  final nextFirstKey = '${dateString}_${resolvedCourtId}_${nextSlotId}_first_half';
+                  final halfSlot2 = Slots(
+                    sId: nextSlotId,
+                    time: nextSlot.time,
+                    amount: (nextSlot.amount ?? 0) ~/ 2,
+                  );
+                  realCourtSelections[nextFirstKey] = {
+                    'slot': halfSlot2,
+                    'courtId': resolvedCourtId,
+                    'courtName': courtName ?? '',
+                    'date': dateString,
+                    'dateTime': currentDate,
+                    'amount': (nextSlot.amount ?? 0) ~/ 2,
+                    'isHalfSlot': true,
+                    'isFirstHalf': true,
+                  };
+                  
+                  recalculateRealCourtTotalAmount();
+                  realCourtSelections.refresh();
+                  return;
+                } else {
+                  // Next slot's left half is also unavailable → can't make 60 min
+                  AppToast.error("Minimum 60 minutes booking required");
+                  return;
+                }
+              } else {
+                // No next slot available → can't make 60 min
+                AppToast.error("Minimum 60 minutes booking required");
+                return;
+              }
+            } else {
+              AppToast.error("Minimum 60 minutes booking required");
+              return;
+            }
+          } else if (tappingFirstHalf && isLeftUnavailable) {
+            // Trying to tap unavailable left half
+            return;
+          } else if (!tappingFirstHalf && isRightUnavailable) {
+            // Trying to tap unavailable right half
+            return;
+          }
+        } else {
+          // Both halves available → select full slot
+          realCourtSelections[fullKey] = {
+            'slot': slot,
+            'courtId': resolvedCourtId,
+            'courtName': courtName ?? '',
+            'date': dateString,
+            'dateTime': currentDate,
+            'amount': slot.amount ?? 0,
+          };
+        }
         recalculateRealCourtTotalAmount();
         realCourtSelections.refresh();
         return;
