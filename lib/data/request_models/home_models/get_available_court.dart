@@ -233,6 +233,11 @@ class Slots {
   String? rightHalfUserId;
   String? rightHalfBookingTime;
 
+  /// Availability status for each half (populated during merge).
+  /// Left half uses the original [availabilityStatus] field.
+  /// Right half availability is stored here separately.
+  String? rightHalfAvailabilityStatus;
+
   Slots({
     this.sId,
     this.time,
@@ -248,6 +253,7 @@ class Slots {
     this.rightHalfStatus,
     this.rightHalfUserId,
     this.rightHalfBookingTime,
+    this.rightHalfAvailabilityStatus,
   });
 
   Slots.fromJson(Map<String, dynamic> json) {

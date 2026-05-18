@@ -144,6 +144,7 @@ class CreateOpenMatchesController extends GetxController {
               rightHalfStatus: next.status,
               rightHalfUserId: next.userId,
               rightHalfBookingTime: next.bookingTime,
+              rightHalfAvailabilityStatus: next.availabilityStatus,
             );
 
             log(
@@ -1249,6 +1250,7 @@ class CreateOpenMatchesController extends GetxController {
             rightHalfStatus: rhRaw.status,
             rightHalfUserId: rhRaw.userId,
             rightHalfBookingTime: rhRaw.bookingTime,
+            rightHalfAvailabilityStatus: rhRaw.availabilityStatus,
           );
         }
       }
@@ -1481,25 +1483,52 @@ class CreateOpenMatchesController extends GetxController {
     }
 
     // If it's the first slot and supports 30min, force full selection (ignore isLeftHalf)
-    // BUT only if both halves are actually available
+    // BUT only if both halves are actually available AND not unavailable
+    final _unavailStatuses = {
+      'maintenance',
+      'weather conditions',
+      'staff unavailability',
+      'tournament',
+    };
+    final isLeftHalfUnavail = _unavailStatuses.contains(
+      (slot.availabilityStatus ?? '').toLowerCase(),
+    );
+    // For right half: use ONLY rightHalfAvailabilityStatus, never fall back to left half's status
+    final isRightHalfUnavail = slot.rightHalfSlotId != null
+        ? _unavailStatuses.contains(
+            (slot.rightHalfAvailabilityStatus ?? '').toLowerCase(),
+          )
+        : false;
+
+    // Block selection entirely if ANY half is unavailable (maintenance, weather, etc.)
+    // Open matches require a clean consecutive block — partial slots are not allowed
+    if (supports30Min && (isLeftHalfUnavail || isRightHalfUnavail)) {
+      return;
+    }
+
     final forceFullSelection =
         isFirstSlot &&
         supports30Min &&
         !isLeftHalfBooked(slot) &&
-        !isRightHalfBooked(slot);
+        !isRightHalfBooked(slot) &&
+        !isLeftHalfUnavail &&
+        !isRightHalfUnavail;
 
-    // For a partially-booked 30-min slot on first selection, derive which half to select
+    // For a partially-booked or partially-unavailable 30-min slot on first selection,
+    // derive which half to select
     bool? effectiveIsLeftHalf = isLeftHalf;
     if (isFirstSlot && supports30Min && !forceFullSelection) {
-      // One half is booked — only allow selecting the free half
-      if (!isLeftHalfBooked(slot) && isRightHalfBooked(slot)) {
+      // One half is booked or unavailable — only allow selecting the free half
+      final leftBlocked = isLeftHalfBooked(slot) || isLeftHalfUnavail;
+      final rightBlocked = isRightHalfBooked(slot) || isRightHalfUnavail;
+      if (!leftBlocked && rightBlocked) {
         // Only left is free → force left half selection
         effectiveIsLeftHalf = true;
-      } else if (isLeftHalfBooked(slot) && !isRightHalfBooked(slot)) {
+      } else if (leftBlocked && !rightBlocked) {
         // Only right is free → force right half selection
         effectiveIsLeftHalf = false;
       } else {
-        // Both booked → block entirely
+        // Both blocked → block entirely
         return;
       }
     }
@@ -1541,11 +1570,14 @@ class CreateOpenMatchesController extends GetxController {
           : '${dateString}_${resolvedCourtId}_${slotId}_L';
       // If the opposite half is already selected, tapping this half upgrades to full
       if (multiDateSelections.containsKey(oppositeKey)) {
-        // Check the tapped half is not booked
+        // Check the tapped half is not booked or unavailable
         final tappedHalfBooked = effectiveIsLeftHalf
             ? isLeftHalfBooked(slot)
             : isRightHalfBooked(slot);
-        if (tappedHalfBooked) return;
+        final tappedHalfUnavail = effectiveIsLeftHalf
+            ? isLeftHalfUnavail
+            : isRightHalfUnavail;
+        if (tappedHalfBooked || tappedHalfUnavail) return;
         _addSlotGroup(
           slot,
           resolvedCourtId,

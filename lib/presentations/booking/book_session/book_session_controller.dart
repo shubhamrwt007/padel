@@ -1036,6 +1036,17 @@ class BookSessionController extends GetxController {
       // Upgrade case: other half already selected -> select full (both halves)
       if (hasLeft && !hasRight && !tappingLeft) {
         if (isRightHalfBooked(slot)) return;
+        // Also block if right half is unavailable (maintenance etc.)
+        final _unavail = {
+          'maintenance',
+          'weather conditions',
+          'staff unavailability',
+          'tournament',
+        };
+        if (_unavail.contains(
+          (slot.rightHalfAvailabilityStatus ?? '').toLowerCase(),
+        ))
+          return;
         _upsertHalfSelection(
           slot: slot,
           courtId: resolvedCourtId,
@@ -1049,6 +1060,15 @@ class BookSessionController extends GetxController {
       }
       if (hasRight && !hasLeft && tappingLeft) {
         if (isLeftHalfBooked(slot)) return;
+        // Also block if left half is unavailable (maintenance etc.)
+        final _unavail = {
+          'maintenance',
+          'weather conditions',
+          'staff unavailability',
+          'tournament',
+        };
+        if (_unavail.contains((slot.availabilityStatus ?? '').toLowerCase()))
+          return;
         _upsertHalfSelection(
           slot: slot,
           courtId: resolvedCourtId,
@@ -1070,7 +1090,20 @@ class BookSessionController extends GetxController {
       if (!isSelected) {
         if (blocks.isEmpty) {
           // Nothing selected yet -> always select FULL slot (both halves)
+          final _unavail = {
+            'maintenance',
+            'weather conditions',
+            'staff unavailability',
+            'tournament',
+          };
+          final leftUnavail = _unavail.contains(
+            (slot.availabilityStatus ?? '').toLowerCase(),
+          );
+          final rightUnavail = _unavail.contains(
+            (slot.rightHalfAvailabilityStatus ?? '').toLowerCase(),
+          );
           if (isLeftHalfBooked(slot) || isRightHalfBooked(slot)) return;
+          if (leftUnavail || rightUnavail) return;
           if (!_ensureMaxSlotsCapacity(addCount: 2)) return;
           _upsertHalfSelection(
             slot: slot,
@@ -1099,6 +1132,16 @@ class BookSessionController extends GetxController {
         if (slotEnd == rangeStart) {
           // Slot directly BEFORE range -> add RIGHT half only
           if (isRightHalfBooked(slot)) return;
+          final _unavail = {
+            'maintenance',
+            'weather conditions',
+            'staff unavailability',
+            'tournament',
+          };
+          if (_unavail.contains(
+            (slot.rightHalfAvailabilityStatus ?? '').toLowerCase(),
+          ))
+            return;
           if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
           _upsertHalfSelection(
             slot: slot,
@@ -1111,6 +1154,14 @@ class BookSessionController extends GetxController {
         } else if (slotBase == rangeEnd + 30) {
           // Slot directly AFTER range -> add LEFT half only
           if (isLeftHalfBooked(slot)) return;
+          final _unavail = {
+            'maintenance',
+            'weather conditions',
+            'staff unavailability',
+            'tournament',
+          };
+          if (_unavail.contains((slot.availabilityStatus ?? '').toLowerCase()))
+            return;
           if (!_ensureMaxSlotsCapacity(addCount: 1)) return;
           _upsertHalfSelection(
             slot: slot,
@@ -1123,6 +1174,19 @@ class BookSessionController extends GetxController {
         } else {
           // Not consecutive -> select FULL slot (both halves)
           if (isLeftHalfBooked(slot) || isRightHalfBooked(slot)) return;
+          final _unavail = {
+            'maintenance',
+            'weather conditions',
+            'staff unavailability',
+            'tournament',
+          };
+          if (_unavail.contains(
+                (slot.availabilityStatus ?? '').toLowerCase(),
+              ) ||
+              _unavail.contains(
+                (slot.rightHalfAvailabilityStatus ?? '').toLowerCase(),
+              ))
+            return;
           if (!_ensureMaxSlotsCapacity(addCount: 2)) return;
           _upsertHalfSelection(
             slot: slot,
@@ -1950,6 +2014,7 @@ class BookSessionController extends GetxController {
               rightHalfStatus: next.status,
               rightHalfUserId: next.userId,
               rightHalfBookingTime: next.bookingTime,
+              rightHalfAvailabilityStatus: next.availabilityStatus,
             );
             log(
               '✅ Merged: "${current.time}" (${current.sId}) + "${next.time}" (${next.sId})',

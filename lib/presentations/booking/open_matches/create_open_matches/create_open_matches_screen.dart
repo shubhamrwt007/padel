@@ -890,6 +890,32 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
         (slot.availabilityStatus?.toLowerCase() == 'staff unavailability') ||
         (slot.availabilityStatus?.toLowerCase() == 'tournament');
 
+    // For merged 30-min slots, check each half's availability independently
+    final _unavailableStatuses = {
+      'maintenance',
+      'weather conditions',
+      'staff unavailability',
+      'tournament',
+    };
+    final isLeftHalfUnavailable = supports30Min
+        ? (controller.isPastAndUnavailable(slot) ||
+              _unavailableStatuses.contains(
+                slot.availabilityStatus?.toLowerCase(),
+              ))
+        : isUnavailable;
+    // For the right half: only use the right half's OWN availabilityStatus.
+    // Do NOT use isPastAndUnavailable(slot) here — that checks the merged slot's
+    // availabilityStatus which belongs to the LEFT half only.
+    final isRightHalfUnavailable = supports30Min
+        ? _unavailableStatuses.contains(
+            (slot.rightHalfAvailabilityStatus)?.toLowerCase(),
+          )
+        : isUnavailable;
+    // Whole tile is unavailable only when BOTH halves are unavailable (for 30-min slots)
+    final isWholeSlotUnavailable = supports30Min
+        ? (isLeftHalfUnavailable && isRightHalfUnavailable)
+        : isUnavailable;
+
     // Check for booked slots (for all durations) - these should be shown in light red
     final isLeftHalfBooked = controller.isLeftHalfBooked(slot);
     final isRightHalfBooked = controller.isRightHalfBooked(slot);
@@ -913,7 +939,9 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
       builder: (BuildContext slotContext) {
         return GestureDetector(
           onTapDown:
-              (isUnavailable ||
+              (isWholeSlotUnavailable ||
+                  (supports30Min &&
+                      (isLeftHalfUnavailable || isRightHalfUnavailable)) ||
                   isBothHalvesBooked ||
                   isSlotBookedForFullSlot ||
                   isDurationIncompatible)
@@ -928,9 +956,11 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     );
                     final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-                    // Check if the tapped half is already booked
-                    if ((isLeftHalf && isLeftHalfBooked) ||
-                        (!isLeftHalf && isRightHalfBooked)) {
+                    // Check if the tapped half is already booked or unavailable
+                    if ((isLeftHalf &&
+                            (isLeftHalfBooked || isLeftHalfUnavailable)) ||
+                        (!isLeftHalf &&
+                            (isRightHalfBooked || isRightHalfUnavailable))) {
                       CustomLogger.logMessage(
                         msg:
                             "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
@@ -969,7 +999,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
                 color:
-                    (isUnavailable ||
+                    (isWholeSlotUnavailable ||
+                        (supports30Min &&
+                            (isLeftHalfUnavailable ||
+                                isRightHalfUnavailable)) ||
                         isBothHalvesBooked ||
                         isSlotBookedForFullSlot ||
                         isDurationIncompatible)
@@ -977,7 +1010,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     : Colors.white,
                 border: Border.all(
                   color:
-                      (isUnavailable ||
+                      (isWholeSlotUnavailable ||
                           isAnyHalfBooked ||
                           isDurationIncompatible)
                       ? Colors.transparent
@@ -1098,7 +1131,8 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
-                  if (isUnavailable &&
+                  /// Only shown when the WHOLE slot is unavailable (both halves for 30-min slots)
+                  if (isWholeSlotUnavailable &&
                       !isAnyHalfBooked &&
                       !isSelected &&
                       !isPartOfGroup)
@@ -1106,6 +1140,50 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(radius),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
+                  /// LEFT HALF UNAVAILABLE OVERLAY (30MIN ONLY - WHEN ONLY LEFT HALF IS UNAVAILABLE)
+                  if (supports30Min &&
+                      isLeftHalfUnavailable &&
+                      !isRightHalfUnavailable &&
+                      !isLeftHalfBooked &&
+                      !_isLeftHalfSelected(slot, courtId))
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(radius),
+                            bottomLeft: Radius.circular(radius),
+                          ),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
+                  /// RIGHT HALF UNAVAILABLE OVERLAY (30MIN ONLY - WHEN ONLY RIGHT HALF IS UNAVAILABLE)
+                  if (supports30Min &&
+                      isRightHalfUnavailable &&
+                      !isLeftHalfUnavailable &&
+                      !isRightHalfBooked &&
+                      !_isRightHalfSelected(slot, courtId))
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(radius),
+                            bottomRight: Radius.circular(radius),
+                          ),
                           color: AppColors.lightred,
                         ),
                       ),
@@ -1180,7 +1258,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
 
                   /// VERTICAL DIVIDER FOR 30MIN SLOTS THAT SUPPORT IT
                   if (supports30Min &&
-                      !isUnavailable &&
+                      !isWholeSlotUnavailable &&
                       !isBothHalvesBooked &&
                       !isSlotBookedForFullSlot)
                     Positioned(
@@ -1204,7 +1282,8 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                           decoration: BoxDecoration(
                             color:
                                 (isAnyHalfBooked ||
-                                    isUnavailable ||
+                                    isWholeSlotUnavailable ||
+                                    isLeftHalfUnavailable ||
                                     isDurationIncompatible)
                                 ? Colors.red
                                 : blueColor,
@@ -1408,7 +1487,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color:
-                                  (isUnavailable ||
+                                  (isWholeSlotUnavailable ||
                                       isAnyHalfBooked ||
                                       isDurationIncompatible)
                                   ? Colors.grey.shade500
@@ -1424,7 +1503,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color:
-                                    (isUnavailable ||
+                                    (isWholeSlotUnavailable ||
                                         isAnyHalfBooked ||
                                         isDurationIncompatible)
                                     ? Colors.grey.shade400
