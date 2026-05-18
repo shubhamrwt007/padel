@@ -498,6 +498,8 @@ class OpenMatchId {
   String? createdBy;
   String? gender;
   String? openMatchStatus;
+  String? refundStatus;
+  String? cancellationReason;
   bool? status;
   bool? adminStatus;
   bool? isActive;
@@ -524,6 +526,8 @@ class OpenMatchId {
     this.isActive,
     this.isDeleted,
     this.openMatchStatus,
+    this.refundStatus,
+    this.cancellationReason,
     this.createdAt,
     this.updatedAt,
     this.iV,
@@ -565,6 +569,8 @@ class OpenMatchId {
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     openMatchStatus = json['openMatchStatus'];
+    refundStatus = json['refundStatus'];
+    cancellationReason = json['cancellationReason'];
     createdAt = json['createdAt']?.toString();
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
@@ -589,6 +595,8 @@ class OpenMatchId {
     data['isActive'] = isActive;
     data['isDeleted'] = isDeleted;
     data['openMatchStatus'] = openMatchStatus;
+    data['refundStatus'] = refundStatus;
+    data['cancellationReason'] = cancellationReason;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;

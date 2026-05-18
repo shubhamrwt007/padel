@@ -124,10 +124,20 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
       }
 
       if (bookings.isEmpty) {
-        return const Center(
-          child: Text(
-            "No bookings found",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+        return RefreshIndicator(
+          color: AppColors.whiteColor,
+          onRefresh: () async => controller.refreshBookings(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: Get.height * 0.7,
+              child: const Center(
+                child: Text(
+                  "No bookings found",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+            ),
           ),
         );
       }
@@ -177,6 +187,12 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
               return GestureDetector(
                 onTap: (){
                   final openMatchStatus= booking.openMatchId?.openMatchStatus =="cancelled";
+                  final refundStatus = booking.openMatchId?.refundStatus == "refunded";
+                  
+                  if(openMatchStatus && refundStatus) {
+                    return;
+                  }
+                  
                   if(openMatchStatus){
                     final createdBy = booking.openMatchId?.createdBy;
                     final currentUserId = storage.read('userId');
@@ -228,6 +244,9 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final score = _getMatchScore(booking);
     final bookingType = booking.bookingType ?? "";
     final isBlueTheme = bookingType.toLowerCase() == "regular";
+    final openMatchStatus =  booking?.openMatchId?.openMatchStatus =="cancelled";
+    final cancellationReason =  booking?.openMatchId?.cancellationReason ??"";
+
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -254,100 +273,97 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              formatDate(booking.bookingDate).split(',')[0],
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff1c46a0),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              formatDate(booking.bookingDate).split(',').length > 1
-                                  ? formatDate(booking.bookingDate).split(',')[1].trim()
-                                  : '',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              " | ${booking.startTime?.split(" ").first ?? ""}-${booking.endTime ?? ""}",
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        formatDate(booking.bookingDate).split(',')[0],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xff1c46a0),
                         ),
-                        if (_shouldShowSkillGenderRow(booking))
-                          Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 18),
-                              const SizedBox(width: 4),
-                              Text(
-                                booking.openMatchId?.skillLevel ?? "Professional",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                "|",
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(width: 8),
-                              genderIcon(booking.openMatchId?.gender),
-                              const SizedBox(width: 4),
-                              Text(
-                                booking.openMatchId?.gender ?? "Mixed",
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        formatDate(booking.bookingDate).split(',').length > 1
+                            ? formatDate(booking.bookingDate).split(',')[1].trim()
+                            : '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        " | ${booking.startTime?.split(" ").first ?? ""}-${booking.endTime ?? ""}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_shouldShowSkillGenderRow(booking))
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          booking.openMatchId?.skillLevel ?? "Professional",
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "|",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(width: 8),
+                        genderIcon(booking.openMatchId?.gender),
+                        const SizedBox(width: 4),
+                        Text(
+                          booking.openMatchId?.gender ?? "Mixed",
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ],
                     ),
-
-                    // Row(
-                    //   children: [
-                    //     Icon(
-                    //       Icons.share,
-                    //       size: 16,
-                    //       color: Color(0xff1c46a0),
-                    //     ),
-                    //     Container(
-                    //       height: 36,
-                    //       width: 36,
-                    //       decoration: BoxDecoration(
-                    //         color: Colors.transparent,
-                    //         shape: BoxShape.circle
-                    //         // borderRadius: BorderRadius.circular(8),
-                    //       ),
-                    //       // padding: const EdgeInsets.all(6),
-                    //       child: const Icon(
-                    //         Icons.chat_outlined,
-                    //         color:AppColors.primaryColor,
-                    //         size: 18,
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-
+                ],
+              ).paddingOnly(bottom: 5),
+              if(openMatchStatus)
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 4,horizontal: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                      ),
+                      child: Text("Cancelled", style: Get.textTheme.labelMedium!.copyWith(color: Colors.red),),
+                    ).paddingOnly(right: 5),
+                    Tooltip(
+                        textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                        ),
+                        message: cancellationReason,
+                        waitDuration: Duration(milliseconds: 200),
+                        showDuration: Duration(seconds: 3),
+                        triggerMode: TooltipTriggerMode.tap,
+                        child: Icon(Icons.info_outline,size: 20,color: AppColors.primaryColor,)),
                   ],
-                ).paddingOnly(bottom: 5),
-              ),
+                ),
             ],
           ),
 
@@ -485,7 +501,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    // const SizedBox(height: 8),
                     // Invoice download button - only show for booking owner
                     // if (booking.userId == storage.read('userId'))
                     //   GestureDetector(
