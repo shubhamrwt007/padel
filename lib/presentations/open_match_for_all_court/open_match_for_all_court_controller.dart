@@ -43,6 +43,16 @@ class OpenMatchForAllCourtController extends GetxController {
   RxBool isLoadingNearbyPlayers = false.obs;
   RxString requestingPlayerId = ''.obs; // Track which player request is in progress
   RxList<String> requestedPlayerIds = <String>[].obs; // Track requested players
+  RxBool invitationSent = false.obs;
+  RxBool isSendingInvitation = false.obs;
+  
+  // Pagination for nearby players
+  RxInt currentPage = 1.obs;
+  RxInt totalPages = 1.obs;
+  RxBool hasMore = true.obs;
+  RxBool isLoadingMore = false.obs;
+  RxString currentBookingId = ''.obs;
+  final ScrollController nearbyPlayersScrollController = ScrollController();
 
   // Scoreboard
   final ScoreBoardRepository scoreBoardRepository = Get.put(ScoreBoardRepository());
@@ -154,6 +164,17 @@ class OpenMatchForAllCourtController extends GetxController {
         selectedTime = null;
       }
       fetchMatchesForSelection();
+    }
+    
+    // Setup scroll listener for pagination
+    nearbyPlayersScrollController.addListener(_nearbyPlayersScrollListener);
+  }
+
+  void _nearbyPlayersScrollListener() {
+    if (nearbyPlayersScrollController.position.pixels >= nearbyPlayersScrollController.position.maxScrollExtent - 200) {
+      if (!isLoadingMore.value && hasMore.value) {
+        loadMoreNearbyPlayers();
+      }
     }
   }
 
@@ -453,13 +474,41 @@ class OpenMatchForAllCourtController extends GetxController {
     }
   }
   /// Find Near By Players Api--------------------------------------------------
+  Future<void> sendBookingInvitation(String bookingId) async {
+    try {
+      isSendingInvitation.value = true;
+      print("Sending booking invitation for: $bookingId");
+      final response = await repository.sendBookingInvitation(bookingId: bookingId, sendNotifications: true);
+      if (response.status == 200) {
+        invitationSent.value = true;
+        await fetchNearByPlayers(bookingId: bookingId);
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: "Error sending invitation: $e", level: LogLevel.error);
+    } finally {
+      isSendingInvitation.value = false;
+    }
+  }
+
+  /// Find Near By Players Api--------------------------------------------------
   Future<void> fetchNearByPlayers({String search = '',required String bookingId}) async {
     try {
       isLoadingNearbyPlayers.value = true;
+      currentPage.value = 1;
+      currentBookingId.value = bookingId;
       nearbyPlayers.clear();
 
-      final response = await repository.findNearByPlayer(search: search,bookingId: bookingId);
+      final response = await repository.findNearByPlayer(
+        search: search,
+        bookingId: bookingId,
+        page: currentPage.value,
+        limit: 10,
+      );
+      
       if(response.status == 200 && response.players != null){
+        totalPages.value = response.totalPages ?? 1;
+        hasMore.value = currentPage.value < totalPages.value;
+        
         nearbyPlayers.value = response.players!.map((player) => {
           'id': player.id ?? '',
           'name': player.name ?? '',
@@ -477,6 +526,46 @@ class OpenMatchForAllCourtController extends GetxController {
       CustomLogger.logMessage(msg: "Error fetching nearby players: $e", level: LogLevel.error);
     } finally {
       isLoadingNearbyPlayers.value = false;
+    }
+  }
+
+  Future<void> loadMoreNearbyPlayers() async {
+    print("LOAD MORE PLAYERSS------");
+    if (isLoadingMore.value || !hasMore.value || currentBookingId.value.isEmpty) return;
+    
+    try {
+      isLoadingMore.value = true;
+      currentPage.value++;
+      
+      final response = await repository.findNearByPlayer(
+        bookingId: currentBookingId.value,
+        page: currentPage.value,
+        limit: 10,
+      );
+      
+      if(response.status == 200 && response.players != null){
+        totalPages.value = response.totalPages ?? 1;
+        hasMore.value = currentPage.value < totalPages.value;
+        
+        final newPlayers = response.players!.map((player) => {
+          'id': player.id ?? '',
+          'name': player.name ?? '',
+          'profilePic': player.profilePic ?? '',
+          'city': player.city ?? '',
+          'cityName' : player.cityName ?? '',
+          'level': player.level ?? '',
+          'totalMatchesPlayed': player.totalMatchesPlayed ?? '',
+          'xpPoints': player.xpPoints ?? '',
+          "hasPendingRequest":player.hasPendingRequest??false
+        }).toList();
+        
+        nearbyPlayers.addAll(newPlayers);
+      }
+    } catch (e) {
+      currentPage.value--;
+      CustomLogger.logMessage(msg: "Error loading more players: $e", level: LogLevel.error);
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 
@@ -744,6 +833,7 @@ class OpenMatchForAllCourtController extends GetxController {
   @override
   void onClose() {
     _paymentService?.dispose();
+    nearbyPlayersScrollController.dispose();
     super.onClose();
   }
 }

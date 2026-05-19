@@ -147,17 +147,21 @@ class OpenMatchRepository {
   Future<FindNearByPlayerModel> findNearByPlayer({
     String? search,
     String? bookingId,
+    int page = 1,
+    int limit = 10,
   }) async {
     try {
       final queryParams = {
         if (search != null && search.isNotEmpty) "search": search,
         if (bookingId != null && bookingId.isNotEmpty) "bookingId": bookingId,
+        'page': page,
+        'limit': limit,
       };
 
       /// 🔹 Build full URL for logging
       final uri = Uri.parse(
         AppEndpoints.findNearByPlayer,
-      ).replace(queryParameters: queryParams);
+      ).replace(queryParameters: queryParams.map((key, value) => MapEntry(key, value.toString())));
 
       CustomLogger.logMessage(
         msg: "REQUEST → GET ${uri.toString()}",
@@ -175,14 +179,27 @@ class OpenMatchRepository {
           level: LogLevel.info,
         );
 
-        return FindNearByPlayerModel.fromJson(response.data);
+        try {
+          return FindNearByPlayerModel.fromJson(response.data);
+        } catch (parseError, st) {
+          CustomLogger.logMessage(
+            msg: "JSON Parse Error → $parseError\nResponse Data: ${response.data}",
+            level: LogLevel.error,
+            st: st,
+          );
+          rethrow;
+        }
       } else {
         throw Exception(
           "Failed to fetch Near By Players: ${response.statusCode}",
         );
       }
-    } catch (e) {
-      CustomLogger.logMessage(msg: "ERROR → $e", level: LogLevel.error);
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "ERROR → $e",
+        level: LogLevel.error,
+        st: st,
+      );
       rethrow;
     }
   }

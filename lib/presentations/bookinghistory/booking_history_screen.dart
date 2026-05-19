@@ -492,7 +492,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            address,
+                            address.capitalizeFirstChar(),
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.black87,
@@ -1265,7 +1265,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
-                          address,
+                          address.capitalizeFirstChar(),
                           overflow: TextOverflow.ellipsis,
                           style:  TextStyle(
                             fontSize: 12,
@@ -1466,7 +1466,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
-                            address,
+                            address.capitalizeFirstChar(),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                                 fontSize: 12,

@@ -1860,19 +1860,37 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   }
 
 }
-class AppPlayersBottomSheet extends StatelessWidget {
+class AppPlayersBottomSheet extends StatefulWidget {
   final String matchId;
   final String bookingId;
   final String? selectedTeam;
   final dynamic price;
-  const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam,required this.bookingId,required this.price});
+  
+  const AppPlayersBottomSheet({
+    super.key, 
+    required this.matchId, 
+    this.selectedTeam,
+    required this.bookingId,
+    required this.price
+  });
+
+  @override
+  State<AppPlayersBottomSheet> createState() => _AppPlayersBottomSheetState();
+}
+
+class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
+  late final OpenMatchForAllCourtController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<OpenMatchForAllCourtController>();
+    log("BookingID___> ${widget.bookingId}");
+    controller.fetchNearByPlayers(bookingId: widget.bookingId ?? "");
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OpenMatchForAllCourtController>();
-    log("BookingID___> $bookingId");
-    controller.fetchNearByPlayers(bookingId: bookingId??"");
-
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
@@ -1894,34 +1912,71 @@ class AppPlayersBottomSheet extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
-              SizedBox(
-                height: 45,
-                child: PrimaryTextField(
-                    contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                    onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId??""),
-                    hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                    suffixIcon: Icon(Icons.search,color: AppColors.textColor),
-                    hintText: 'Search by Name / Phone number'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(),
+            SizedBox(
+              height: 45,
+              child: PrimaryTextField(
+                contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                onChanged: (value) => controller.fetchNearByPlayers(search: value, bookingId: widget.bookingId ?? ""),
+                hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                suffixIcon: Icon(Icons.search,color: AppColors.textColor),
+                hintText: 'Search by Name / Phone number'
               ),
-              // const SizedBox(height: 8),
-              // Text(
-              //   'Nearby & match your level',
-              //   style: Get.textTheme.labelLarge,
-              // ),
-              const SizedBox(height: 12),
-              _playersList(),
-              const SizedBox(height: 12),
-              _actionButtons(context),
-              const SizedBox(height: 20),
-
-            ],
-          ),
+            ),
+            Obx(() => controller.invitationSent.value
+                ? const SizedBox.shrink()
+                : GestureDetector(
+                    onTap: controller.isSendingInvitation.value
+                        ? null
+                        : () => controller.sendBookingInvitation(widget.bookingId ?? ''),
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffEEF1FF),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: controller.isSendingInvitation.value
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Text(
+                                    'Send Request',
+                                    style: Get.textTheme.bodyLarge!.copyWith(
+                                      color: AppColors.primaryColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).paddingOnly(top: 5)),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: Get.height * 0.3,
+              child: _playersList(),
+            ),
+            const SizedBox(height: 12),
+            _actionButtons(context),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -1947,148 +2002,141 @@ class AppPlayersBottomSheet extends StatelessWidget {
   }
 
   Widget _playersList() {
-    final controller = Get.find<OpenMatchForAllCourtController>();
     return Obx(() {
       if (controller.isLoadingNearbyPlayers.value) {
-        return const SizedBox(
-          height: 100,
-          child: Center(child: CircularProgressIndicator()),
-        );
+        return Center(child: CircularProgressIndicator());
       }
 
       if (controller.nearbyPlayers.isEmpty) {
-        return SizedBox(
-          height: 100,
-          child: Center(
-            child: Text(
-              'No nearby players found',
-              style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
-            ),
+        return Center(
+          child: Text(
+            'No nearby players found',
+            style: Get.textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
           ),
         );
       }
 
       final itemCount = controller.nearbyPlayers.length;
-      final displayCount = itemCount > 5 ? 5 : itemCount;
-      final itemHeight = 60.0;
-      final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
 
-      return SizedBox(
-        height: listHeight,
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: itemCount,
-          separatorBuilder: (_, __) => Divider(
-            color: AppColors.primaryColor.withValues(alpha: 0.1),
-          ),
-          itemBuilder: (_, i) {
-            final player = controller.nearbyPlayers[i];
-            final isRequested = false;
-            final initials = getInitials(player['name']);
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-                    child: (player['profilePic']?.isNotEmpty == true)
-                        ? ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl: player['profilePic'],
-                        fit: BoxFit.cover,
-                        width: 44,
-                        height: 44,
-                        placeholder: (context, url) => Text(
-                          initials,
-                          style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
-                        ),
-                        errorWidget: (context, url, error) => Text(
-                          initials,
-                          style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
-                        ),
-                      ),
-                    )
-                        : Text(
-                      initials,
-                      style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  /// Name + Level + XP + Matches + City
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          (player['name'] ?? '').toString().capitalizeFirstChar(),
-                          style: Get.textTheme.labelLarge!
-                              .copyWith(fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              '${player['level'] ?? 'Beginner'} • ',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
-                            ),
-                            Container(
-                              // height: 25,
-                              // width: 55,
-                              padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: AppColors.secondaryColor,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                '${formatAmount(player['xpPoints'] ?? 0)} XP',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              ' • ${player['totalMatchesPlayed'] ?? 0} Played',
-                              style: Get.textTheme.bodySmall!
-                                  .copyWith(fontSize: 10, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
-                            const SizedBox(width: 4),
-                            Text(
-                              player['cityName'] ?? '',
-                              style: Get.textTheme.bodyLarge!
-                                  .copyWith(fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  /// Button
-                  _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',player['hasPendingRequest']),
-                ],
-              ),
-            );
-          },
+      return ListView.separated(
+        controller: controller.nearbyPlayersScrollController,
+        itemCount: itemCount + (controller.hasMore.value ? 1 : 0),
+        separatorBuilder: (_, __) => Divider(
+          color: AppColors.primaryColor.withValues(alpha: 0.1),
         ),
+        itemBuilder: (_, i) {
+          if (i == itemCount) {
+            return Obx(() => controller.isLoadingMore.value
+                ? Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : SizedBox.shrink());
+          }
+          
+          final player = controller.nearbyPlayers[i];
+          final isRequested = false;
+          final initials = getInitials(player['name']);
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.primaryColor.withOpacity(0.1),
+                  child: (player['profilePic']?.isNotEmpty == true)
+                      ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: player['profilePic'],
+                      fit: BoxFit.cover,
+                      width: 44,
+                      height: 44,
+                      placeholder: (context, url) => Text(
+                        initials,
+                        style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
+                      ),
+                      errorWidget: (context, url, error) => Text(
+                        initials,
+                        style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
+                      ),
+                    ),
+                  )
+                      : Text(
+                    initials,
+                    style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.primaryColor),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                /// Name + Level + XP + Matches + City
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (player['name'] ?? '').toString().capitalizeFirstChar(),
+                        style: Get.textTheme.labelLarge!
+                            .copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            '${player['level'] ?? 'Beginner'} • ',
+                            style: Get.textTheme.bodySmall!
+                                .copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.primaryColor),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              '${formatAmount(player['xpPoints'] ?? 0)} XP',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            ' • ${player['totalMatchesPlayed'] ?? 0} Played',
+                            style: Get.textTheme.bodySmall!
+                                .copyWith(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            player['cityName'] ?? '',
+                            style: Get.textTheme.bodyLarge!
+                                .copyWith(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// Button
+                _requestButton(isRequested, player['id'] ?? '', player['preferredTeam'] ?? 'teamA',player['hasPendingRequest']),
+              ],
+            ),
+          );
+        },
       );
     });
   }
 
 
   Widget _requestButton(bool sent, String playerId, String team,bool hasPendingRequest) {
-    final controller = Get.find<OpenMatchForAllCourtController>();
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
       final isRequested =hasPendingRequest || sent || controller.requestedPlayerIds.contains(playerId);
@@ -2098,12 +2146,12 @@ class AppPlayersBottomSheet extends StatelessWidget {
           controller.requestingPlayerId.value = playerId;
 
           final addPlayerController = Get.put(AddPlayerController());
-          addPlayerController.matchId.value = matchId;
+          addPlayerController.matchId.value = widget.matchId;
           addPlayerController.playerId.value = playerId;
           addPlayerController.selectedTeam.value = team;
           addPlayerController.openMatchForAllCourtController = controller;
 
-          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: bookingId);
+          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: widget.bookingId);
 
           if (success) {
             controller.requestedPlayerIds.add(playerId);
@@ -2153,61 +2201,35 @@ class AppPlayersBottomSheet extends StatelessWidget {
     final style =  Get.textTheme.labelLarge!.copyWith(color: Colors.white);
     return Column(
       children: [
-        OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(45), // ↓ height
-            side: const BorderSide(color: Colors.green),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: Text(
-            'Invite Player',
-            style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
-          ),
-        ),
-        const SizedBox(height: 4),
-        // ElevatedButton(
+        // OutlinedButton(
         //   onPressed: () {},
-        //   style: ElevatedButton.styleFrom(
-        //     minimumSize: const Size.fromHeight(40),
-        //     backgroundColor: Colors.green,
+        //   style: OutlinedButton.styleFrom(
+        //     minimumSize: const Size.fromHeight(45), // ↓ height
+        //     side: const BorderSide(color: Colors.green),
         //     shape: RoundedRectangleBorder(
-        //       borderRadius: BorderRadius.circular(12),
+        //       borderRadius: BorderRadius.circular(5),
         //     ),
         //   ),
-        //   child:  Text('Invite Player through whatsapp',style: style,),
-        // ),
-        // const SizedBox(height: 4),
+        //   child: Text(
+        //     'Invite Player',
+        //     style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
+        //   ),
+        // ).paddingOnly(bottom: 4),
         ElevatedButton(
           onPressed: () {
             AddPlayerBottomSheet.show(
               context,
               arguments: {
-                "bookingId": bookingId,
-                "team": selectedTeam ?? "teamA",
-                "matchId": bookingId,
+                "bookingId": widget.bookingId,
+                "team": widget.selectedTeam ?? "teamA",
+                "matchId": widget.bookingId,
                 "needOpenMatchesForAllCourts": true,
                 "matchLevel": "",
                 "isLoginUser": false,
                 "isMatchCreator": true,
-                "matchPrice": price
-
+                "matchPrice": widget.price
               },
             );
-
-            // Get.toNamed(
-            //   RoutesName.addPlayer,
-            //   arguments: {
-            //     "team": "teamA",
-            //     "matchId": matchId,
-            //     "needOpenMatchesForAllCourts": true,
-            //     "matchLevel": "",
-            //     "isLoginUser": false,
-            //     "isMatchCreator": true,
-            //   },
-            // );
           },
           style: ElevatedButton.styleFrom(
             minimumSize: const Size.fromHeight(45),

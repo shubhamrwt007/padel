@@ -4,9 +4,11 @@ import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/get_requests_player_open_match_model.dart';
 import 'package:dio/dio.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dart';
 import 'package:padel_mobile/repositories/openmatches/open_match_repository.dart';
+import 'package:padel_mobile/configs/routes/routes_name.dart';
 
 class RequestsController extends GetxController {
   ProfileController profileController = Get.put(ProfileController());
@@ -153,6 +155,9 @@ class RequestsController extends GetxController {
       // Refresh data
       await fetchJoinRequests();
       await profileController.fetCustomerLeaderBoardRank();
+      // Close current page and navigate to booking history
+      Get.back();
+      Get.to(BookingHistoryUi(buttonType: "drawer",));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         Get.to(
