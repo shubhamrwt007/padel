@@ -331,7 +331,7 @@ class OpenMatchForAllCourtController extends GetxController {
         filter: filter,
         type: '',
         matchDate: matchDate,
-        locationId: locationId.value.isNotEmpty ? locationId.value : null,
+        // locationId: locationId.value.isNotEmpty ? locationId.value : null,
         categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
         dayfilter: selectedTimeFilter.value,
       );

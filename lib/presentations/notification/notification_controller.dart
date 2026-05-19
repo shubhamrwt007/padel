@@ -1,6 +1,7 @@
 // controllers/notification_controller.dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
@@ -39,6 +40,27 @@ class NotificationController extends GetxController {
    await fetchUnreadNotificationCount();
     _loadStoredData();
     _initializeNotifications();
+    _setupIOSNotificationChannel();
+  }
+
+  /// Setup iOS notification channel listener
+  void _setupIOSNotificationChannel() {
+    if (GetPlatform.isIOS) {
+      const platform = MethodChannel('notification_tap_channel');
+      platform.setMethodCallHandler((call) async {
+        if (call.method == 'onNotificationTap') {
+          final String payload = call.arguments as String? ?? '';
+          if (kDebugMode) {
+            print('🍎 iOS Notification tap received via method channel');
+            print('🍎 Payload: $payload');
+          }
+          _handleNotificationTapped(payload);
+        }
+      });
+      if (kDebugMode) {
+        print('✅ iOS notification channel listener setup complete');
+      }
+    }
   }
 
   /// Load stored data
@@ -234,19 +256,110 @@ class NotificationController extends GetxController {
     }
 
     try {
-      if (payload.isNotEmpty) {
-        if (payload.contains('creatematch')) {
-          Get.toNamed('/creatematch-details');
-        } else if (payload.contains('booking')) {
-          Get.toNamed('/booking-details');
-        } else {
-          Get.toNamed('/notifications');
+      if (payload.isEmpty) {
+        Get.toNamed(RoutesName.notification);
+        return;
+      }
+
+      // Parse payload format: key1=value1|key2=value2
+      final Map<String, String> data = {};
+      if (payload.contains('|')) {
+        final parts = payload.split('|');
+        for (var part in parts) {
+          if (part.contains('=')) {
+            final kv = part.split('=');
+            if (kv.length == 2) {
+              // Skip aps object (iOS specific)
+              if (!kv[0].startsWith('aps')) {
+                data[kv[0]] = kv[1];
+              }
+            }
+          }
         }
       }
-    } catch (e) {
+
+      if (kDebugMode) {
+        print('🔔 Parsed data: $data');
+      }
+
+      // Extract routing info
+      final notificationUrl = data['notificationUrl'] ?? data['route'] ?? '';
+      final redirect = data['redirect'] ?? '';
+      final matchId = data['matchId'] ?? '';
+      final type = data['type'] ?? '';
+      final bookingId = data['bookingId'] ?? '';
+
+      // Priority 1: Use notificationUrl if present
+      if (notificationUrl.isNotEmpty) {
+        handleNotificationRoute(notificationUrl, redirect: redirect, matchId: matchId);
+        return;
+      }
+
+      // Priority 2: Use redirect if present
+      if (redirect.isNotEmpty) {
+        handleNotificationRoute('true', redirect: redirect, matchId: matchId);
+        return;
+      }
+
+      // Priority 3: Use type-based routing
+      if (type.isNotEmpty) {
+        _handleNotificationByType(type, bookingId: bookingId, matchId: matchId);
+        return;
+      }
+
+      // Fallback: Go to notification list
+      Get.toNamed(RoutesName.notification);
+    } catch (e, stackTrace) {
       if (kDebugMode) {
         print('❌ Error handling notification tap: $e');
+        print('Stack trace: $stackTrace');
       }
+      Get.toNamed(RoutesName.notification);
+    }
+  }
+
+  /// Handle notification by type
+  void _handleNotificationByType(String type, {String? bookingId, String? matchId}) {
+    if (kDebugMode) {
+      print('🔔 Handling notification by type: $type, bookingId: $bookingId, matchId: $matchId');
+    }
+
+    switch (type.toLowerCase()) {
+      case 'booking_invitation':
+      case 'booking_confirmation':
+      case 'booking_accepted':
+      case 'booking_rejected':
+      case 'booking_cancelled':
+        Get.to(() => BookingHistoryUi(buttonType: "drawer"));
+        break;
+      
+      case 'match_invitation':
+      case 'match_request':
+      case 'match_accepted':
+      case 'match_rejected':
+        Get.toNamed(RoutesName.requests);
+        break;
+      
+      case 'match_message':
+      case 'chat_message':
+        if (matchId != null && matchId.isNotEmpty) {
+          Get.toNamed(RoutesName.chat, arguments: {"matchID": matchId});
+        } else {
+          Get.toNamed(RoutesName.notification);
+        }
+        break;
+      
+      case 'league_invitation':
+      case 'league_update':
+        Get.toNamed(RoutesName.notification);
+        break;
+      
+      default:
+        if (kDebugMode) {
+          print('⚠️ Unknown notification type: $type');
+        }
+        Get.toNamed(RoutesName.notification);
+        break;
     }
   }
 
@@ -321,7 +434,6 @@ class NotificationController extends GetxController {
       print('🔔 Foreground message: ${message.notification?.title}');
     }
 
-    // Add to history
     _addToHistory(message);
 
     if (message.notification != null) {
