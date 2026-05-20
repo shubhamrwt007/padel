@@ -25,6 +25,7 @@ import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
+
 class BookACourtScreen extends StatelessWidget {
   final BookACourtController controller = Get.put(BookACourtController());
   final WalletController walletController = Get.put(WalletController());
@@ -40,10 +41,12 @@ class BookACourtScreen extends StatelessWidget {
   }
 
   void _onScroll() {
-    if (mainScrollController.position.pixels >= mainScrollController.position.maxScrollExtent - 200) {
+    if (mainScrollController.position.pixels >=
+        mainScrollController.position.maxScrollExtent - 200) {
       _loadMoreCourts();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     // Fetch wallet balance after build completes
@@ -72,23 +75,26 @@ class BookACourtScreen extends StatelessWidget {
           children: [
             Text("Find a Court").paddingOnly(right: 5),
             Tooltip(
-                textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                ),
-                message: "You can choose your\nprefer date & slot",
-                waitDuration: Duration(milliseconds: 200),
-                showDuration: Duration(seconds: 3),
-                triggerMode: TooltipTriggerMode.tap,
-                child: Icon(Icons.info_outline,size: 15,).paddingOnly(top: 3))
+              textStyle: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              message: "You can choose your\nprefer date & slot",
+              waitDuration: Duration(milliseconds: 200),
+              showDuration: Duration(seconds: 3),
+              triggerMode: TooltipTriggerMode.tap,
+              child: Icon(Icons.info_outline, size: 15).paddingOnly(top: 3),
+            ),
           ],
         ),
         centerTitle: true,
@@ -97,30 +103,38 @@ class BookACourtScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
-              onTap: ()=>Get.toNamed(RoutesName.wallet),
+              onTap: () => Get.toNamed(RoutesName.wallet),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 7,vertical: 3),
+                padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppColors.textFieldColor
+                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.textFieldColor,
+
                   // border: Border.all(
                   //   color: AppColors.primaryColor,
                   //   style: BorderStyle.solid, // dotted simulated below
                   //   width: 1.2,
                   // ),
-
                 ),
                 child: Row(
                   children: [
-                    SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
-                    Obx(() => Text(
-                      formatWalletAmount(walletController.walletBalance.value ?? 0),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.primaryColor,
+                    SvgPicture.asset(
+                      Assets.imagesIcWallet,
+                      height: 20,
+                      width: 20,
+                    ).paddingOnly(right: 4),
+                    Obx(
+                      () => Text(
+                        formatWalletAmount(
+                          walletController.walletBalance.value ?? 0,
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.primaryColor,
+                        ),
                       ),
-                    ))
+                    ),
                   ],
                 ),
               ),
@@ -138,134 +152,164 @@ class BookACourtScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _buildDatePicker(context),
               fadeDivider().paddingOnly(bottom: 10),
-              Obx(() => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                      controller.showMainGrid.value ? 'Prefered Slots' : 'Selected Slots',
-                      style: Get.textTheme.labelLarge
-                  ),
-                  if (!controller.showMainGrid.value && controller.courtsByDuration.value != null)
-                    GestureDetector(
-                      onTap: () {
-                        controller.showMainGrid.value = true;
-                      },
-                      child: Text(
-                        '+ Add more slots',
-                        style: Get.textTheme.labelMedium!.copyWith(
-                          color: AppColors.primaryColor,
-                          fontWeight: FontWeight.w600,
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      controller.showMainGrid.value
+                          ? 'Prefered Slots'
+                          : 'Selected Slots',
+                      style: Get.textTheme.labelLarge,
+                    ),
+                    if (!controller.showMainGrid.value &&
+                        controller.courtsByDuration.value != null)
+                      GestureDetector(
+                        onTap: () {
+                          controller.showMainGrid.value = true;
+                        },
+                        child: Text(
+                          '+ Add more slots',
+                          style: Get.textTheme.labelMedium!.copyWith(
+                            color: AppColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  if (controller.showMainGrid.value)
-                    Row(
-                      children: [
-                        Obx(() {
-                          final is30 = controller.is30Slots.value;
+                    if (controller.showMainGrid.value)
+                      Row(
+                        children: [
+                          Obx(() {
+                            final is30 = controller.is30Slots.value;
 
-                          return Transform.scale(
-                            scale: 0.7,
-                            child: ToggleButtons(
-                              isSelected: [is30, !is30],
-                              borderRadius: BorderRadius.circular(25),
-                              constraints: const BoxConstraints(minHeight: 15, minWidth: 60),
-                              fillColor: Colors.transparent, // important
-                              selectedColor: Colors.white,
-                              color: Colors.black,
-                              textStyle: const TextStyle(fontSize: 12),
-                              onPressed: (index) {
-                                controller.is30Slots.value = index == 0;
-                                controller.updateDurationFromToggle();
-                              },
-                              children: [
-                                _buildGradientToggleChild(
-                                  text: "Half",
-                                  isSelected: is30,
+                            return Transform.scale(
+                              scale: 0.7,
+                              child: ToggleButtons(
+                                isSelected: [is30, !is30],
+                                borderRadius: BorderRadius.circular(25),
+                                constraints: const BoxConstraints(
+                                  minHeight: 15,
+                                  minWidth: 60,
                                 ),
-                                _buildGradientToggleChild(
-                                  text: "Full",
-                                  isSelected: !is30,
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                        GestureDetector(
-                          onTap: () {
-                            controller.toggleSlotsCollapse();
-                          },
-                          child: AnimatedRotation(
-                            turns: controller.isSlotsCollapsed.value ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 250),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: AppColors.primaryColor,
-                                  shape: BoxShape.circle
+                                fillColor: Colors.transparent, // important
+                                selectedColor: Colors.white,
+                                color: Colors.black,
+                                textStyle: const TextStyle(fontSize: 12),
+                                onPressed: (index) {
+                                  controller.is30Slots.value = index == 0;
+                                  controller.updateDurationFromToggle();
+                                },
+                                children: [
+                                  _buildGradientToggleChild(
+                                    text: "Half",
+                                    isSelected: is30,
+                                  ),
+                                  _buildGradientToggleChild(
+                                    text: "Full",
+                                    isSelected: !is30,
+                                  ),
+                                ],
                               ),
-                              child: Icon(
-                                Icons.keyboard_arrow_up,
-                                size: 22,
-                                color: AppColors.whiteColor,
+                            );
+                          }),
+                          GestureDetector(
+                            onTap: () {
+                              controller.toggleSlotsCollapse();
+                            },
+                            child: AnimatedRotation(
+                              turns: controller.isSlotsCollapsed.value
+                                  ? 0.5
+                                  : 0,
+                              duration: const Duration(milliseconds: 250),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.keyboard_arrow_up,
+                                  size: 22,
+                                  color: AppColors.whiteColor,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                ],
-              )).paddingOnly(bottom: 0),
-              Obx(() => AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeInOut,
-                    )),
-                    child: FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    ),
-                  );
-                },
-                child: controller.showMainGrid.value
-                    ? _buildAllCourtsWithSlots()
-                    : _buildSelectedSlotsList().paddingOnly(top: 10),
-              )),
+                        ],
+                      ),
+                  ],
+                ),
+              ).paddingOnly(bottom: 0),
+              Obx(
+                () => AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                        return SlideTransition(
+                          position:
+                              Tween<Offset>(
+                                begin: const Offset(1.0, 0.0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeInOut,
+                                ),
+                              ),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                  child: controller.showMainGrid.value
+                      ? _buildAllCourtsWithSlots()
+                      : _buildSelectedSlotsList().paddingOnly(top: 10),
+                ),
+              ),
               Align(
                 alignment: AlignmentGeometry.centerRight,
-                child: Obx(() => controller.showMainGrid.value
-                    ? GestureDetector(
-                  onTap: () {
-                    displayedCourtsCount.value = 10; // Reset to initial count
-                    controller.fetchClubs();
-                    // Scroll to available courts section after a short delay
-                    Future.delayed(Duration(milliseconds: 300), () {
-                      _scrollToAvailableCourts();
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                    ),
-                    child: Text("Fetch Clubs",style: Get.textTheme.labelMedium!.copyWith(color: Colors.white,fontSize: 11),),
-                  ),
-                )
-                    : SizedBox.shrink()),
-              ).paddingOnly(bottom: 10,top: 10),
-              Obx(() => !controller.showMainGrid.value
-                  ? availableCourts()
-                  : SizedBox.shrink()),
+                child: Obx(
+                  () => controller.showMainGrid.value
+                      ? GestureDetector(
+                          onTap: () {
+                            displayedCourtsCount.value =
+                                10; // Reset to initial count
+                            controller.fetchClubs();
+                            // Scroll to available courts section after a short delay
+                            Future.delayed(Duration(milliseconds: 300), () {
+                              _scrollToAvailableCourts();
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                            ),
+                            child: Text(
+                              "Fetch Clubs",
+                              style: Get.textTheme.labelMedium!.copyWith(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                ),
+              ).paddingOnly(bottom: 10, top: 10),
+              Obx(
+                () => !controller.showMainGrid.value
+                    ? availableCourts()
+                    : SizedBox.shrink(),
+              ),
               const SizedBox(height: 20),
             ],
           ),
@@ -273,6 +317,7 @@ class BookACourtScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildGradientToggleChild({
     required String text,
     required bool isSelected,
@@ -284,17 +329,14 @@ class BookACourtScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: isSelected
             ? const LinearGradient(
-          colors: [
-            Color(0xff1F41BB), Color(0xff0E1E55)
-          ],
-        )
+                colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+              )
             : null,
         borderRadius: BorderRadius.circular(5),
       ),
-      child: Text(text,style: TextStyle(fontSize: 18),),
+      child: Text(text, style: TextStyle(fontSize: 18)),
     );
   }
-
 
   Widget _typeButton(String title, bool selected, VoidCallback onTap) {
     return GestureDetector(
@@ -330,23 +372,27 @@ class BookACourtScreen extends StatelessWidget {
             Text('Available Courts', style: Get.textTheme.labelLarge),
             const Spacer(),
             Tooltip(
-                textStyle: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                ),
-                message: "You will not be given XP points\nupon selections of friendly match",
-                waitDuration: Duration(milliseconds: 200),
-                showDuration: Duration(seconds: 3),
-                triggerMode: TooltipTriggerMode.tap,
-                child: Icon(Icons.info_outline,size: 15,)).paddingOnly(right: 5),
+              textStyle: Get.textTheme.labelMedium!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              message:
+                  "You will not be given XP points\nupon selections of friendly match",
+              waitDuration: Duration(milliseconds: 200),
+              showDuration: Duration(seconds: 3),
+              triggerMode: TooltipTriggerMode.tap,
+              child: Icon(Icons.info_outline, size: 15),
+            ).paddingOnly(right: 5),
 
             Obx(() {
               final isFriendly = controller.matchType.value == "friendly";
@@ -370,14 +416,11 @@ class BookACourtScreen extends StatelessWidget {
                 ),
               );
             }),
-
           ],
         ),
         const SizedBox(height: 16),
         // Conditional content based on selection state
-        Builder(
-          builder: (context) => _buildAvailableCourtsContent(context),
-        ),
+        Builder(builder: (context) => _buildAvailableCourtsContent(context)),
       ],
     );
   }
@@ -417,7 +460,7 @@ class BookACourtScreen extends StatelessWidget {
       if (courtsByDuration == null ||
           courtsByDuration.data == null ||
           courtsByDuration.data!.isEmpty) {
-        return  Center(
+        return Center(
           child: Padding(
             padding: EdgeInsets.all(20.0),
             child: Text(
@@ -425,11 +468,14 @@ class BookACourtScreen extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
           ),
-        ).paddingOnly(top: Get.height*.2);
+        ).paddingOnly(top: Get.height * .2);
       }
 
       final clubsData = courtsByDuration.data!;
-      final displayCount = displayedCourtsCount.value.clamp(0, clubsData.length);
+      final displayCount = displayedCourtsCount.value.clamp(
+        0,
+        clubsData.length,
+      );
       final displayedClubs = clubsData.take(displayCount).toList();
       final hasMore = displayCount < clubsData.length;
 
@@ -452,10 +498,13 @@ class BookACourtScreen extends StatelessWidget {
               children: [
                 /// CLUB HEADER
                 GestureDetector(
-                  onTap: ()=>controller.toggle(clubIndex * 100),
+                  onTap: () => controller.toggle(clubIndex * 100),
                   child: Container(
                     color: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -466,13 +515,17 @@ class BookACourtScreen extends StatelessWidget {
                             color: Colors.grey.shade200,
                           ),
                           child: ClipOval(
-                            child: clubData.registerClub?.logo != null && clubData.registerClub!.logo!.isNotEmpty
+                            child:
+                                clubData.registerClub?.logo != null &&
+                                    clubData.registerClub!.logo!.isNotEmpty
                                 ? CachedNetworkImage(
-                              imageUrl: clubData.registerClub!.logo!,
-                              fit: BoxFit.contain,
-                              placeholder: (context, url) => const Icon(Icons.sports_tennis),
-                              errorWidget: (context, url, error) => const Icon(Icons.sports_tennis),
-                            )
+                                    imageUrl: clubData.registerClub!.logo!,
+                                    fit: BoxFit.contain,
+                                    placeholder: (context, url) =>
+                                        const Icon(Icons.sports_tennis),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.sports_tennis),
+                                  )
                                 : const Icon(Icons.sports_tennis),
                           ),
                         ),
@@ -483,16 +536,25 @@ class BookACourtScreen extends StatelessWidget {
                             children: [
                               Text(
                                 clubData.clubName ?? 'Club',
-                                style: Get.textTheme.headlineMedium!
-                                    .copyWith(fontWeight: FontWeight.w500),
+                                style: Get.textTheme.headlineMedium!.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Image.asset(Assets.imagesIcLocation,color: AppColors.textColor,scale: 2.2,),
+                                  Image.asset(
+                                    Assets.imagesIcLocation,
+                                    color: AppColors.textColor,
+                                    scale: 2.2,
+                                  ),
                                   Text(
-                                      controller.getLocationNameFromClub(clubData),
-                                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)
+                                    controller.getLocationNameFromClub(
+                                      clubData,
+                                    ),
+                                    style: Get.textTheme.labelMedium!.copyWith(
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -501,10 +563,23 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                         Column(
                           children: [
-                            Text("UP  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey,fontSize: 10),),
+                            Text(
+                              "UP  ",
+                              style: Get.textTheme.headlineLarge!.copyWith(
+                                color: Colors.grey,
+                                fontSize: 10,
+                              ),
+                            ),
                             Transform.translate(
-                                offset: Offset(0, -2),
-                                child: Text("TO  ",style: Get.textTheme.headlineLarge!.copyWith(color: Colors.grey,fontSize: 10),)),
+                              offset: Offset(0, -2),
+                              child: Text(
+                                "TO  ",
+                                style: Get.textTheme.headlineLarge!.copyWith(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         Text(
@@ -515,7 +590,9 @@ class BookACourtScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Obx(() {
-                          final isExpanded = controller.expandedIndex.value == (clubIndex * 100);
+                          final isExpanded =
+                              controller.expandedIndex.value ==
+                              (clubIndex * 100);
                           return AnimatedRotation(
                             turns: isExpanded ? 0.5 : 0,
                             duration: const Duration(milliseconds: 250),
@@ -531,33 +608,56 @@ class BookACourtScreen extends StatelessWidget {
                     final court = clubData.courts![courtIndex];
 
                     return Obx(() {
-                      final isExpanded = controller.expandedIndex.value == (clubIndex * 100);
+                      final isExpanded =
+                          controller.expandedIndex.value == (clubIndex * 100);
 
                       return AnimatedSize(
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeInOut,
-                        child: isExpanded && court.slots != null && court.slots!.isNotEmpty
+                        child:
+                            isExpanded &&
+                                court.slots != null &&
+                                court.slots!.isNotEmpty
                             ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          child: _courtRow(
-                            context: context,
-                            courtName: court.courtName ?? 'Court ${courtIndex + 1}',
-                            slotDuration: court.slotDuration,
-                            selectedIndex: courtIndex,
-                            availableSlots: court.slots,
-                            courtId: court.id ?? '',
-                            isRequestedTime: clubIndex == 0, // First club gets auto-scroll
-                            clubIndex: clubIndex,
-                          ),
-                        )
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                child: _courtRow(
+                                  context: context,
+                                  courtName:
+                                      (court.courtName ??
+                                              'Court ${courtIndex + 1}')
+                                          .replaceAll(
+                                            RegExp(
+                                              r'pickle\s*ball\s*',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          )
+                                          .replaceAll(
+                                            RegExp(
+                                              r'padel\s*',
+                                              caseSensitive: false,
+                                            ),
+                                            '',
+                                          )
+                                          .trim(),
+                                  slotDuration: court.slotDuration,
+                                  selectedIndex: courtIndex,
+                                  availableSlots: court.slots,
+                                  courtId: court.id ?? '',
+                                  isRequestedTime:
+                                      clubIndex ==
+                                      0, // First club gets auto-scroll
+                                  clubIndex: clubIndex,
+                                ),
+                              )
                             : const SizedBox.shrink(),
                       );
                     });
                   }),
-                if (!isLastItem) ...[
-                  const SizedBox(height: 8),
-                  fadeDivider(),
-                ],
+                if (!isLastItem) ...[const SizedBox(height: 8), fadeDivider()],
               ],
             );
           }),
@@ -569,7 +669,9 @@ class BookACourtScreen extends StatelessWidget {
                   onPressed: _loadMoreCourts,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
+                    backgroundColor: AppColors.primaryColor.withValues(
+                      alpha: 0.1,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -598,17 +700,55 @@ class BookACourtScreen extends StatelessWidget {
     String? courtId,
     bool isRequestedTime = false,
     required int clubIndex,
-  })
-  {
-    // Show all slots from API
-    final displaySlots = availableSlots?.isNotEmpty == true
-        ? availableSlots!.map((slot) => Slots(
-      sId: slot.id ?? 'slot_${selectedIndex}_${slot.time}',
-      time: slot.time ?? '',
-      amount: slot.amount ?? 0,
-      duration: slot.duration,
-    )).toList()
-        : <Slots>[];
+  }) {
+    // Build display slots: merge consecutive 30-min (has30MinPrice) pairs into one tile.
+    // e.g. "6:00 AM" (30min) + "6:30 AM" (30min) → single "6:00 AM" tile with half-slot UI.
+    // Non-30min slots are kept as-is.
+    final displaySlots = <Slots>[];
+    if (availableSlots?.isNotEmpty == true) {
+      final raw = availableSlots!;
+      int i = 0;
+      while (i < raw.length) {
+        final current = raw[i];
+        final is30Min = current.has30MinPrice == true;
+
+        if (is30Min && i + 1 < raw.length && raw[i + 1].has30MinPrice == true) {
+          // Merge this pair: first slot = left half, second slot = right half.
+          // Combined into one tile showing "6:00 AM" with left/right half selection.
+          final next = raw[i + 1];
+          // Keep individual half statuses separate - don't merge them
+          displaySlots.add(
+            Slots(
+              sId: current.id ?? 'slot_${selectedIndex}_${current.time}',
+              time: current.time ?? '',
+              amount: (current.amount ?? 0) + (next.amount ?? 0),
+              duration: 60, // merged = 60 min total
+              has30MinPrice: true,
+              status: current.status, // Left half status
+              bookingTime: current.bookingTime,
+              // Right-half metadata for booked-state detection
+              rightHalfSlotId: next.id,
+              rightHalfStatus: next.status, // Right half status (separate)
+              rightHalfBookingTime: next.bookingTime,
+            ),
+          );
+          i += 2; // skip both
+        } else {
+          displaySlots.add(
+            Slots(
+              sId: current.id ?? 'slot_${selectedIndex}_${current.time}',
+              time: current.time ?? '',
+              amount: current.amount ?? 0,
+              duration: current.duration,
+              has30MinPrice: current.has30MinPrice,
+              status: current.status,
+              bookingTime: current.bookingTime,
+            ),
+          );
+          i += 1;
+        }
+      }
+    }
 
     final scrollController = ScrollController();
 
@@ -623,13 +763,18 @@ class BookACourtScreen extends StatelessWidget {
               for (int i = 0; i < availableSlots.length; i++) {
                 if (availableSlots[i].isRequestedTime == true) {
                   foundIndex = i;
-                  log('✅ Found requested slot at index $foundIndex: ${availableSlots[i].time}');
+                  log(
+                    '✅ Found requested slot at index $foundIndex: ${availableSlots[i].time}',
+                  );
                   break;
                 }
               }
-              
+
               if (foundIndex != -1) {
-                final offset = (foundIndex * 98.0).clamp(0.0, scrollController.position.maxScrollExtent);
+                final offset = (foundIndex * 98.0).clamp(
+                  0.0,
+                  scrollController.position.maxScrollExtent,
+                );
                 scrollController.animateTo(
                   offset,
                   duration: Duration(milliseconds: 400),
@@ -658,13 +803,16 @@ class BookACourtScreen extends StatelessWidget {
                 children: [
                   Text(
                     courtName,
-                    style: Get.textTheme.headlineLarge!.copyWith(fontSize: 13,fontWeight: FontWeight.w500),
+                    style: Get.textTheme.headlineLarge!.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (slotDuration != null && slotDuration.isNotEmpty)
                     Text(
-                      "(${slotDuration.map((d) => '${d}min').join(', ')})",
+                      "(${slotDuration.join('/')} min)",
                       style: Get.textTheme.labelSmall!.copyWith(
                         color: Colors.grey.shade600,
                         fontSize: 11,
@@ -685,18 +833,22 @@ class BookACourtScreen extends StatelessWidget {
                     children: displaySlots.map((slot) {
                       final index = displaySlots.indexOf(slot);
                       return Padding(
-                        padding: EdgeInsets.only(right: index < displaySlots.length - 1 ? 10 : 0),
+                        padding: EdgeInsets.only(
+                          right: index < displaySlots.length - 1 ? 10 : 0,
+                        ),
                         child: SizedBox(
                           width: 88,
-                          child: Obx(() => _buildCourtSlotTile(
-                            context,
-                            slot,
-                            courtName,
-                            selectedIndex,
-                            index,
-                            courtId: courtId ?? 'court$selectedIndex',
-                            availableSlots: displaySlots,
-                          )),
+                          child: Obx(
+                            () => _buildCourtSlotTile(
+                              context,
+                              slot,
+                              courtName,
+                              selectedIndex,
+                              index,
+                              courtId: courtId ?? 'court$selectedIndex',
+                              availableSlots: displaySlots,
+                            ),
+                          ),
                         ),
                       );
                     }).toList(),
@@ -737,7 +889,7 @@ class BookACourtScreen extends StatelessWidget {
             left: 0,
             right: 0,
             child: Obx(
-                  () => Transform.translate(
+              () => Transform.translate(
                 offset: Offset(0, -13),
                 child: Row(
                   children: [
@@ -763,15 +915,15 @@ class BookACourtScreen extends StatelessWidget {
                               .split('')
                               .map(
                                 (char) => Text(
-                              char,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                height: 1.0,
-                                color: Colors.black,
-                              ),
-                            ),
-                          )
+                                  char,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.0,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       ).paddingOnly(right: 5),
@@ -780,7 +932,8 @@ class BookACourtScreen extends StatelessWidget {
                       child: NotificationListener<ScrollNotification>(
                         onNotification: (scrollNotification) {
                           if (scrollNotification is ScrollUpdateNotification) {
-                            final scrollOffset = scrollNotification.metrics.pixels;
+                            final scrollOffset =
+                                scrollNotification.metrics.pixels;
                             final itemExtent = 46.0;
                             final itemsScrolled = (scrollOffset / itemExtent)
                                 .round();
@@ -795,7 +948,7 @@ class BookACourtScreen extends StatelessWidget {
                               1,
                             );
                             if (controller.focusedMonth.value.month !=
-                                newMonth.month ||
+                                    newMonth.month ||
                                 controller.focusedMonth.value.year !=
                                     newMonth.year) {
                               controller.focusedMonth.value = newMonth;
@@ -807,7 +960,7 @@ class BookACourtScreen extends StatelessWidget {
                           controller: controller.dateTimelineController,
                           headerOptions: HeaderOptions(
                             headerBuilder: (_, context, date) =>
-                            const SizedBox.shrink(),
+                                const SizedBox.shrink(),
                           ),
                           selectionMode: SelectionMode.alwaysFirst(),
                           firstDate: DateTime.now(),
@@ -816,7 +969,11 @@ class BookACourtScreen extends StatelessWidget {
                           itemExtent: 43,
                           itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
                             final now = DateTime.now();
-                            final today = DateTime(now.year, now.month, now.day);
+                            final today = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                            );
                             final currentDate = DateTime(
                               date.year,
                               date.month,
@@ -840,12 +997,17 @@ class BookACourtScreen extends StatelessWidget {
                             return GestureDetector(
                               onTap: onTap,
                               child: Obx(() {
-                                final realCourtSelections =
-                                controller.realCourtSelections.entries
-                                    .where((entry) => entry.value['date'] == dateString)
+                                final realCourtSelections = controller
+                                    .realCourtSelections
+                                    .entries
+                                    .where(
+                                      (entry) =>
+                                          entry.value['date'] == dateString,
+                                    )
                                     .map((entry) => entry.value)
                                     .toList();
-                                final totalSelections = realCourtSelections.length;
+                                final totalSelections =
+                                    realCourtSelections.length;
 
                                 return AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 500),
@@ -859,18 +1021,22 @@ class BookACourtScreen extends StatelessWidget {
                                           width: Get.width * 0.11,
                                           alignment: Alignment.center,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(5),
+                                            borderRadius: BorderRadius.circular(
+                                              5,
+                                            ),
                                             gradient: isSelected
                                                 ? LinearGradient(
-                                              colors: [
-                                                Color(0xff1F41BB),
-                                                Color(0xff0E1E55),
-                                              ],
-                                              begin: Alignment.topCenter,
-                                              end: Alignment.bottomCenter,
-                                            )
+                                                    colors: [
+                                                      Color(0xff1F41BB),
+                                                      Color(0xff0E1E55),
+                                                    ],
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                  )
                                                 : null,
-                                            color: isSelected ? null : Colors.white,
+                                            color: isSelected
+                                                ? null
+                                                : Colors.white,
                                             // color: isSelected
                                             //     ? Colors.black
                                             //     : dateSelections.isNotEmpty
@@ -881,41 +1047,48 @@ class BookACourtScreen extends StatelessWidget {
                                                   ? Colors.transparent
                                                   : totalSelections > 0
                                                   ? AppColors.primaryColor
-                                                  : AppColors.blackColor.withAlpha(
-                                                20,
-                                              ),
+                                                  : AppColors.blackColor
+                                                        .withAlpha(20),
                                             ),
                                           ),
                                           child: Column(
                                             mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                             children: [
                                               Text(
                                                 "${date.day}",
-                                                style: Get.textTheme.titleMedium!
+                                                style: Get
+                                                    .textTheme
+                                                    .titleMedium!
                                                     .copyWith(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                      : totalSelections > 0
-                                                      ? AppColors.primaryColor
-                                                      : AppColors.textColor,
-                                                ),
+                                                      fontSize: 18,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: isSelected
+                                                          ? Colors.white
+                                                          : totalSelections > 0
+                                                          ? AppColors
+                                                                .primaryColor
+                                                          : AppColors.textColor,
+                                                    ),
                                               ),
                                               Transform.translate(
                                                 offset: Offset(0, -2),
                                                 child: Text(
                                                   dayName,
-                                                  style: Get.textTheme.bodySmall!
+                                                  style: Get
+                                                      .textTheme
+                                                      .bodySmall!
                                                       .copyWith(
-                                                    fontSize: 11,
-                                                    color: isSelected
-                                                        ? Colors.white
-                                                        : totalSelections > 0
-                                                        ? AppColors.primaryColor
-                                                        : Colors.black,
-                                                  ),
+                                                        fontSize: 11,
+                                                        color: isSelected
+                                                            ? Colors.white
+                                                            : totalSelections >
+                                                                  0
+                                                            ? AppColors
+                                                                  .primaryColor
+                                                            : Colors.black,
+                                                      ),
                                                 ),
                                               ),
                                             ],
@@ -963,7 +1136,7 @@ class BookACourtScreen extends StatelessWidget {
                             controller.isLoadingCourts.value = true;
                             controller.refreshSlots(
                               showUnavailable:
-                              controller.showUnavailableSlots.value,
+                                  controller.showUnavailableSlots.value,
                             );
                             controller.slots.refresh();
                             // Show main grid when date changes
@@ -979,6 +1152,7 @@ class BookACourtScreen extends StatelessWidget {
               ),
             ),
           ),
+
           /// Top Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1035,20 +1209,21 @@ class BookACourtScreen extends StatelessWidget {
                         color: AppColors.primaryColor,
                         size: 17,
                       ),
-                      Obx(() => Text(
-                        controller.getSelectedLocationName(),
-                        style: Get.textTheme.labelLarge!.copyWith(
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.primaryColor,
+                      Obx(
+                        () => Text(
+                          controller.getSelectedLocationName(),
+                          style: Get.textTheme.labelLarge!.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.primaryColor,
+                          ),
                         ),
-                      )),
+                      ),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-
         ],
       ),
     );
@@ -1074,7 +1249,8 @@ class BookACourtScreen extends StatelessWidget {
       // Filter out past time slots if selected date is today
       final now = DateTime.now();
       final selectedDate = controller.selectedDate.value;
-      final isToday = selectedDate?.year == now.year &&
+      final isToday =
+          selectedDate?.year == now.year &&
           selectedDate?.month == now.month &&
           selectedDate?.day == now.day;
 
@@ -1090,16 +1266,22 @@ class BookACourtScreen extends StatelessWidget {
       }
 
       // Filter to show only the row containing selected slot when collapsed
-      if (controller.isSlotsCollapsed.value && controller.selectedSearchSlotId.value != null) {
+      if (controller.isSlotsCollapsed.value &&
+          controller.selectedSearchSlotId.value != null) {
         final selectedSlotId = controller.selectedSearchSlotId.value!;
-        final selectedIndex = slotTimes.indexWhere((slot) => slot.sId == selectedSlotId);
+        final selectedIndex = slotTimes.indexWhere(
+          (slot) => slot.sId == selectedSlotId,
+        );
 
         if (selectedIndex != -1) {
           // Grid has 4 columns per row
           const columnsPerRow = 4;
           final rowIndex = selectedIndex ~/ columnsPerRow;
           final startIndex = rowIndex * columnsPerRow;
-          final endIndex = (startIndex + columnsPerRow).clamp(0, slotTimes.length);
+          final endIndex = (startIndex + columnsPerRow).clamp(
+            0,
+            slotTimes.length,
+          );
 
           // Get all slots in the same row
           slotTimes = slotTimes.sublist(startIndex, endIndex);
@@ -1150,24 +1332,28 @@ class BookACourtScreen extends StatelessWidget {
         final is30Min = controller.is30Slots.value;
 
         // Check if both halves are selected
-        final hasFirstHalf = selections.any((s) =>
-        s['isHalfSlot'] == true && s['isFirstHalf'] == true);
-        final hasSecondHalf = selections.any((s) =>
-        s['isHalfSlot'] == true && s['isFirstHalf'] == false);
+        final hasFirstHalf = selections.any(
+          (s) => s['isHalfSlot'] == true && s['isFirstHalf'] == true,
+        );
+        final hasSecondHalf = selections.any(
+          (s) => s['isHalfSlot'] == true && s['isFirstHalf'] == false,
+        );
         final hasBothHalves = is30Min && hasFirstHalf && hasSecondHalf;
 
         if (hasBothHalves) {
           // Both halves selected - show as one slot (use the slot from first half)
-          final firstHalfSelection = selections.firstWhere((s) =>
-          s['isHalfSlot'] == true && s['isFirstHalf'] == true);
+          final firstHalfSelection = selections.firstWhere(
+            (s) => s['isHalfSlot'] == true && s['isFirstHalf'] == true,
+          );
           consolidatedSlots.add(firstHalfSelection['slot'] as Slots);
         } else {
           // Single selection (full slot or single half) - add unique slots
           for (var selection in selections) {
             final slot = selection['slot'] as Slots;
             // Only add if not already added (avoid duplicates)
-            if (!consolidatedSlots.any((s) => s.sId == slot.sId &&
-                s.time == slot.time)) {
+            if (!consolidatedSlots.any(
+              (s) => s.sId == slot.sId && s.time == slot.time,
+            )) {
               consolidatedSlots.add(slot);
             }
           }
@@ -1193,7 +1379,6 @@ class BookACourtScreen extends StatelessWidget {
               return _buildSelectedSlotTile(slot);
             },
           ),
-
         ],
       );
     });
@@ -1206,8 +1391,8 @@ class BookACourtScreen extends StatelessWidget {
       borderRadius: BorderRadius.circular(radius),
       child: Container(
         decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            color: AppColors.secondaryColor
+          borderRadius: BorderRadius.circular(radius),
+          color: AppColors.secondaryColor,
           // gradient: const LinearGradient(
           //   colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
           //   begin: Alignment.topCenter,
@@ -1233,6 +1418,7 @@ class BookACourtScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildSlotsGrid(List<dynamic> slotTimes, String courtId) {
     if (slotTimes.isEmpty) {
       return const Center(
@@ -1269,7 +1455,7 @@ class BookACourtScreen extends StatelessWidget {
   CourtSlot? _findCorrespondingApiSlot(dynamic slot, String courtId) {
     final courtsByDuration = controller.courtsByDuration.value;
     if (courtsByDuration?.data == null) return null;
-    
+
     for (var clubData in courtsByDuration!.data!) {
       if (clubData.courts != null) {
         for (var court in clubData.courts!) {
@@ -1288,25 +1474,53 @@ class BookACourtScreen extends StatelessWidget {
   }
 
   Widget _buildCourtSlotTile(
-      BuildContext context,
-      dynamic slot,
-      String courtName,
-      int courtIndex,
-      int slotIndex, {
-        String? courtId,
-        List<Slots>? availableSlots,
-      })
-  {
+    BuildContext context,
+    dynamic slot,
+    String courtName,
+    int courtIndex,
+    int slotIndex, {
+    String? courtId,
+    List<Slots>? availableSlots,
+  }) {
     final resolvedCourtId = courtId ?? 'court${courtIndex + 1}';
     final supports30Min = controller.clubSupports30MinSlots(resolvedCourtId);
-    final isSelected = controller.isRealCourtSlotSelected(slot, resolvedCourtId);
+    final isSelected = controller.isRealCourtSlotSelected(
+      slot,
+      resolvedCourtId,
+    );
     // Check for booked slots from API response
-    final correspondingApiSlot = _findCorrespondingApiSlot(slot, resolvedCourtId);
+    final correspondingApiSlot = _findCorrespondingApiSlot(
+      slot,
+      resolvedCourtId,
+    );
     final _status = correspondingApiSlot?.status?.toLowerCase();
-    final isSlotBooked = _status == 'booked' || _status == 'unavailable' || _status == "lock";
-    
-    final isLeftHalfBooked = supports30Min && (controller.isLeftHalfBooked(slot, resolvedCourtId) || isSlotBooked);
-    final isRightHalfBooked = supports30Min && (controller.isRightHalfBooked(slot, resolvedCourtId) || isSlotBooked);
+    final isSlotBooked =
+        _status == 'booked' || _status == 'unavailable' || _status == "lock";
+
+    // For merged 30-min slots, use the stored right-half status directly
+    final _leftStatus = slot.status?.toLowerCase();
+    final _rightStatus = slot.rightHalfStatus?.toLowerCase();
+    final isLeftHalfDirectBooked =
+        supports30Min &&
+        slot.has30MinPrice == true &&
+        (_leftStatus == 'booked' ||
+            _leftStatus == 'unavailable' ||
+            _leftStatus == 'lock');
+    final isRightHalfDirectBooked =
+        supports30Min &&
+        slot.has30MinPrice == true &&
+        (_rightStatus == 'booked' ||
+            _rightStatus == 'unavailable' ||
+            _rightStatus == 'lock');
+
+    final isLeftHalfBooked =
+        supports30Min &&
+        (controller.isLeftHalfBooked(slot, resolvedCourtId) ||
+            isLeftHalfDirectBooked);
+    final isRightHalfBooked =
+        supports30Min &&
+        (controller.isRightHalfBooked(slot, resolvedCourtId) ||
+            isRightHalfDirectBooked);
     final isBothHalvesBooked = isLeftHalfBooked && isRightHalfBooked;
     final isAnyHalfBooked = isLeftHalfBooked || isRightHalfBooked;
     const blueColor = Color(0xff053CFF);
@@ -1315,44 +1529,51 @@ class BookACourtScreen extends StatelessWidget {
     return Builder(
       builder: (BuildContext builderContext) {
         return GestureDetector(
-          onTapDown: supports30Min ? (details) {
-            // For 30-minute support, detect left/right half tap
-            final RenderBox? box = builderContext.findRenderObject() as RenderBox?;
-            if (box != null) {
-              final localPosition = box.globalToLocal(details.globalPosition);
-              final isLeftHalf = localPosition.dx < box.size.width / 2;
+          onTapDown: supports30Min
+              ? (details) {
+                  // For 30-minute support, detect left/right half tap
+                  final RenderBox? box =
+                      builderContext.findRenderObject() as RenderBox?;
+                  if (box != null) {
+                    final localPosition = box.globalToLocal(
+                      details.globalPosition,
+                    );
+                    final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Prevent selection of left half if it's booked
-              if (isLeftHalf && isLeftHalfBooked) {
-                return;
-              }
-              // Prevent selection of right half if it's booked
-              if (!isLeftHalf && isRightHalfBooked) {
-                return;
-              }
+                    // Prevent selection of left half if it's booked
+                    if (isLeftHalf && isLeftHalfBooked) {
+                      return;
+                    }
+                    // Prevent selection of right half if it's booked
+                    if (!isLeftHalf && isRightHalfBooked) {
+                      return;
+                    }
 
-              controller.toggleCourtRowSlotSelection(
-                slot,
-                courtId: resolvedCourtId,
-                courtName: courtName,
-                isHalfSlot: true,
-                isFirstHalf: isLeftHalf,
-                availableSlots: availableSlots,
-              );
-            }
-          } : null,
-          onTap: !supports30Min ? () {
-            // Prevent selection if slot is booked
-            if (isSlotBooked || isAnyHalfBooked) {
-              return;
-            }
+                    controller.toggleCourtRowSlotSelection(
+                      slot,
+                      courtId: resolvedCourtId,
+                      courtName: courtName,
+                      isHalfSlot: true,
+                      isFirstHalf: isLeftHalf,
+                      availableSlots: availableSlots,
+                    );
+                  }
+                }
+              : null,
+          onTap: !supports30Min
+              ? () {
+                  // Prevent selection if slot is booked
+                  if (isSlotBooked || isAnyHalfBooked) {
+                    return;
+                  }
 
-            controller.toggleCourtRowSlotSelection(
-              slot,
-              courtId: resolvedCourtId,
-              courtName: courtName,
-            );
-          } : null,
+                  controller.toggleCourtRowSlotSelection(
+                    slot,
+                    courtId: resolvedCourtId,
+                    courtName: courtName,
+                  );
+                }
+              : null,
           child: Container(
             height: 34,
             decoration: BoxDecoration(
@@ -1363,7 +1584,11 @@ class BookACourtScreen extends StatelessWidget {
             child: Stack(
               children: [
                 /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN)
-                if (supports30Min && controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    controller.isBothHalvesSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(radius),
@@ -1389,7 +1614,15 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// LEFT HALF GRADIENT FOR 30MIN LEFT SELECTION
-                if (supports30Min && controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId) && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    controller.isLeftHalfSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ) &&
+                    !controller.isBothHalvesSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
@@ -1410,7 +1643,15 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION
-                if (supports30Min && controller.isRightHalfSelectedInCourt(slot, resolvedCourtId) && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    controller.isRightHalfSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ) &&
+                    !controller.isBothHalvesSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
@@ -1431,7 +1672,12 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// LEFT HALF BOOKED OVERLAY (RED)
-                if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    isLeftHalfBooked &&
+                    !controller.isLeftHalfSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
@@ -1448,7 +1694,12 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// RIGHT HALF BOOKED OVERLAY (RED)
-                if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    isRightHalfBooked &&
+                    !controller.isRightHalfSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Align(
                     alignment: Alignment.centerRight,
                     child: Container(
@@ -1465,7 +1716,13 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// FULL SLOT BOOKED OVERLAY (RED) - for non-30min slots or both halves booked
-                if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                if ((!supports30Min && isSlotBooked && !isSelected) ||
+                    (supports30Min &&
+                        isBothHalvesBooked &&
+                        !controller.isBothHalvesSelectedInCourt(
+                          slot,
+                          resolvedCourtId,
+                        )))
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(radius),
@@ -1474,7 +1731,11 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// VERTICAL DIVIDER FOR 30MIN SLOTS
-                if (supports30Min && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId))
+                if (supports30Min &&
+                    !controller.isBothHalvesSelectedInCourt(
+                      slot,
+                      resolvedCourtId,
+                    ))
                   Center(
                     child: Container(
                       width: 2,
@@ -1484,14 +1745,15 @@ class BookACourtScreen extends StatelessWidget {
                   ),
 
                 /// LEFT STRIP (ONLY WHEN NOT SELECTED) - RED FOR BOOKED, BLUE FOR AVAILABLE
-                if (!isSelected )
+                if (!isSelected)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
                       width: 4,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: (isSlotBooked || isAnyHalfBooked) ? AppColors.redColor
+                        color: (isSlotBooked || isAnyHalfBooked)
+                            ? AppColors.redColor
                             : blueColor,
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(radius),
@@ -1516,7 +1778,11 @@ class BookACourtScreen extends StatelessWidget {
                       ),
 
                       // Left half white text overlay
-                      if (supports30Min && controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min &&
+                          controller.isLeftHalfSelectedInCourt(
+                            slot,
+                            resolvedCourtId,
+                          ))
                         ClipRect(
                           clipper: LeftHalfClipper(),
                           child: Text(
@@ -1530,7 +1796,11 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Right half white text overlay
-                      if (supports30Min && controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min &&
+                          controller.isRightHalfSelectedInCourt(
+                            slot,
+                            resolvedCourtId,
+                          ))
                         ClipRect(
                           clipper: RightHalfClipper(),
                           child: Text(
@@ -1544,7 +1814,12 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Left half grayed text for booked slots
-                      if (supports30Min && isLeftHalfBooked && !controller.isLeftHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min &&
+                          isLeftHalfBooked &&
+                          !controller.isLeftHalfSelectedInCourt(
+                            slot,
+                            resolvedCourtId,
+                          ))
                         ClipRect(
                           clipper: LeftHalfClipper(),
                           child: Text(
@@ -1558,7 +1833,12 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Right half grayed text for booked slots
-                      if (supports30Min && isRightHalfBooked && !controller.isRightHalfSelectedInCourt(slot, resolvedCourtId))
+                      if (supports30Min &&
+                          isRightHalfBooked &&
+                          !controller.isRightHalfSelectedInCourt(
+                            slot,
+                            resolvedCourtId,
+                          ))
                         ClipRect(
                           clipper: RightHalfClipper(),
                           child: Text(
@@ -1572,7 +1852,13 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Full slot grayed text for booked slots
-                      if ((!supports30Min && isSlotBooked && !isSelected) || (supports30Min && isBothHalvesBooked && !controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                      if ((!supports30Min && isSlotBooked && !isSelected) ||
+                          (supports30Min &&
+                              isBothHalvesBooked &&
+                              !controller.isBothHalvesSelectedInCourt(
+                                slot,
+                                resolvedCourtId,
+                              )))
                         Text(
                           controller.formatTimeForDisplay(slot.time),
                           style: TextStyle(
@@ -1583,7 +1869,12 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                       // Full white text for non-30min selections or both halves selected
-                      if ((!supports30Min && isSelected) || (supports30Min && controller.isBothHalvesSelectedInCourt(slot, resolvedCourtId)))
+                      if ((!supports30Min && isSelected) ||
+                          (supports30Min &&
+                              controller.isBothHalvesSelectedInCourt(
+                                slot,
+                                resolvedCourtId,
+                              )))
                         Text(
                           controller.formatTimeForDisplay(slot.time),
                           style: const TextStyle(
@@ -1606,20 +1897,25 @@ class BookACourtScreen extends StatelessWidget {
   Widget _buildSlotTile(dynamic slot, String courtId) {
     final isSelected = controller.isSlotSelected(slot, courtId);
     final supports30Min = controller.is30Slots.value;
-    final isBothHalvesSelected = supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId);
-    final isFullySelected = isBothHalvesSelected || (isSelected && !supports30Min);
+    final isBothHalvesSelected =
+        supports30Min &&
+        controller.isBothHalvesSelectedInMainGrid(slot, courtId);
+    final isFullySelected =
+        isBothHalvesSelected || (isSelected && !supports30Min);
 
-    final isUnavailable = controller.isPastAndUnavailable(slot) ||
+    final isUnavailable =
+        controller.isPastAndUnavailable(slot) ||
         (slot.status?.toLowerCase() == 'booked') ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability')||
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability') ||
         (slot.availabilityStatus?.toLowerCase() == 'tournament');
 
     // Check if first half is past for today (with 15 min buffer)
     final now = DateTime.now();
     final selectedDate = controller.selectedDate.value;
-    final isToday = selectedDate?.year == now.year &&
+    final isToday =
+        selectedDate?.year == now.year &&
         selectedDate?.month == now.month &&
         selectedDate?.day == now.day;
 
@@ -1638,34 +1934,41 @@ class BookACourtScreen extends StatelessWidget {
     return Builder(
       builder: (BuildContext builderContext) {
         return GestureDetector(
-          onTapDown: supports30Min ? (details) {
-            // For 30-minute support, detect left/right half tap
-            final RenderBox? box = builderContext.findRenderObject() as RenderBox?;
-            if (box != null) {
-              final localPosition = box.globalToLocal(details.globalPosition);
-              final isLeftHalf = localPosition.dx < box.size.width / 2;
+          onTapDown: supports30Min
+              ? (details) {
+                  // For 30-minute support, detect left/right half tap
+                  final RenderBox? box =
+                      builderContext.findRenderObject() as RenderBox?;
+                  if (box != null) {
+                    final localPosition = box.globalToLocal(
+                      details.globalPosition,
+                    );
+                    final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Prevent selection of past left half
-              if (isLeftHalf && isLeftHalfPast) {
-                return;
-              }
+                    // Prevent selection of past left half
+                    if (isLeftHalf && isLeftHalfPast) {
+                      return;
+                    }
 
-              controller.toggleSlotSelection(
-                slot,
-                courtId: courtId,
-                courtName: '',
-                isHalfSlot: true,
-                isFirstHalf: isLeftHalf,
-              );
-            }
-          } : null,
-          onTap: !supports30Min && !isUnavailable ? () {
-            controller.toggleSlotSelection(
-              slot,
-              courtId: courtId,
-              courtName: '',
-            );
-          } : null,
+                    controller.toggleSlotSelection(
+                      slot,
+                      courtId: courtId,
+                      courtName: '',
+                      isHalfSlot: true,
+                      isFirstHalf: isLeftHalf,
+                    );
+                  }
+                }
+              : null,
+          onTap: !supports30Min && !isUnavailable
+              ? () {
+                  controller.toggleSlotSelection(
+                    slot,
+                    courtId: courtId,
+                    courtName: '',
+                  );
+                }
+              : null,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(radius),
             child: AnimatedContainer(
@@ -1685,7 +1988,8 @@ class BookACourtScreen extends StatelessWidget {
               child: Stack(
                 children: [
                   /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN)
-                  if (supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                  if (supports30Min &&
+                      controller.isBothHalvesSelectedInMainGrid(slot, courtId))
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -1715,8 +2019,10 @@ class BookACourtScreen extends StatelessWidget {
                     ),
 
                   /// LEFT HALF - PAST OVERLAY (grayed) OR SELECTED GRADIENT
-                  if (supports30Min && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
-                    if (isLeftHalfPast && !controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                  if (supports30Min &&
+                      !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                    if (isLeftHalfPast &&
+                        !controller.isLeftHalfSelectedInMainGrid(slot, courtId))
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
@@ -1731,7 +2037,10 @@ class BookACourtScreen extends StatelessWidget {
                           ),
                         ),
                       )
-                    else if (controller.isLeftHalfSelectedInMainGrid(slot, courtId))
+                    else if (controller.isLeftHalfSelectedInMainGrid(
+                      slot,
+                      courtId,
+                    ))
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
@@ -1752,7 +2061,9 @@ class BookACourtScreen extends StatelessWidget {
                       ),
 
                   /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION
-                  if (supports30Min && controller.isRightHalfSelectedInMainGrid(slot, courtId) && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                  if (supports30Min &&
+                      controller.isRightHalfSelectedInMainGrid(slot, courtId) &&
+                      !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
@@ -1773,7 +2084,8 @@ class BookACourtScreen extends StatelessWidget {
                     ),
 
                   /// VERTICAL DIVIDER FOR 30MIN SLOTS
-                  if (supports30Min && !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
+                  if (supports30Min &&
+                      !controller.isBothHalvesSelectedInMainGrid(slot, courtId))
                     Center(
                       child: Container(
                         width: 2,
@@ -1791,7 +2103,9 @@ class BookACourtScreen extends StatelessWidget {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: isUnavailable ? AppColors.lightred : blueColor,
+                            color: isUnavailable
+                                ? AppColors.lightred
+                                : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
@@ -1818,7 +2132,12 @@ class BookACourtScreen extends StatelessWidget {
                         ),
 
                         // Left half text overlay (white if selected, gray if past)
-                        if (supports30Min && (controller.isLeftHalfSelectedInMainGrid(slot, courtId) || isLeftHalfPast))
+                        if (supports30Min &&
+                            (controller.isLeftHalfSelectedInMainGrid(
+                                  slot,
+                                  courtId,
+                                ) ||
+                                isLeftHalfPast))
                           ClipRect(
                             clipper: LeftHalfClipper(),
                             child: Text(
@@ -1826,7 +2145,11 @@ class BookACourtScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: controller.isLeftHalfSelectedInMainGrid(slot, courtId)
+                                color:
+                                    controller.isLeftHalfSelectedInMainGrid(
+                                      slot,
+                                      courtId,
+                                    )
                                     ? Colors.white
                                     : Colors.grey.shade600,
                               ),
@@ -1834,7 +2157,11 @@ class BookACourtScreen extends StatelessWidget {
                           ),
 
                         // Right half white text overlay
-                        if (supports30Min && controller.isRightHalfSelectedInMainGrid(slot, courtId))
+                        if (supports30Min &&
+                            controller.isRightHalfSelectedInMainGrid(
+                              slot,
+                              courtId,
+                            ))
                           ClipRect(
                             clipper: RightHalfClipper(),
                             child: Text(
@@ -1848,7 +2175,12 @@ class BookACourtScreen extends StatelessWidget {
                           ),
 
                         // Full white text for non-30min selections or both halves selected
-                        if ((!supports30Min && isSelected) || (supports30Min && controller.isBothHalvesSelectedInMainGrid(slot, courtId)))
+                        if ((!supports30Min && isSelected) ||
+                            (supports30Min &&
+                                controller.isBothHalvesSelectedInMainGrid(
+                                  slot,
+                                  courtId,
+                                )))
                           Text(
                             controller.formatTimeForDisplay(slot.time),
                             style: TextStyle(
@@ -1871,14 +2203,12 @@ class BookACourtScreen extends StatelessWidget {
     );
   }
 
-
-
   void showChangeLocationBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>  ChangeLocationBottomSheet(),
+      builder: (_) => ChangeLocationBottomSheet(),
     );
   }
 
@@ -1921,7 +2251,8 @@ class BookACourtScreen extends StatelessWidget {
           if (details.primaryDelta! < -5) {
             isExpanded.value = true;
           } else if (details.primaryDelta! > 5 && isExpanded.value) {
-            if (paymentScrollController.hasClients && paymentScrollController.offset <= 0) {
+            if (paymentScrollController.hasClients &&
+                paymentScrollController.offset <= 0) {
               isExpanded.value = false;
             }
           }
@@ -1955,7 +2286,9 @@ class BookACourtScreen extends StatelessWidget {
             ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              constraints: BoxConstraints(maxHeight: isExpanded.value ? maxHeight : 200),
+              constraints: BoxConstraints(
+                maxHeight: isExpanded.value ? maxHeight : 200,
+              ),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF003AFF), Color(0xFF07289A)],
@@ -2008,7 +2341,9 @@ class BookACourtScreen extends StatelessWidget {
                                   Text(
                                     'Total Slots: ${_getGroupedSlotsCount()}',
                                     style: Get.textTheme.bodySmall!.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -2028,11 +2363,16 @@ class BookACourtScreen extends StatelessWidget {
                         CustomButton(
                           width: Get.width * 0.81,
                           height: 55,
-                          gradientColors: [Colors.white, Colors.white, Colors.white],
+                          gradientColors: [
+                            Colors.white,
+                            Colors.white,
+                            Colors.white,
+                          ],
                           onTap: () async {
                             isProcessing.value = true;
 
-                            final success = await controller.processSlotHistoryForPayment();
+                            final success = await controller
+                                .processSlotHistoryForPayment();
                             if (!success) {
                               isProcessing.value = false;
                               return;
@@ -2042,35 +2382,44 @@ class BookACourtScreen extends StatelessWidget {
                               Get.put(CartController());
                             }
                             final cartController = Get.find<CartController>();
-                            cartController.totalPrice.value = _getSelectedSlotAmount();
+                            cartController.totalPrice.value =
+                                _getSelectedSlotAmount();
 
-                            final paymentController = Get.put(PaymentMethodController(), permanent: false);
+                            final paymentController = Get.put(
+                              PaymentMethodController(),
+                              permanent: false,
+                            );
 
                             try {
                               await paymentController.createInitialBooking();
 
                               if (controller.hasCalledSlotHistoryAPI.value) {
                                 await controller.cleanupOnBack();
-                                controller.hasCalledSlotHistoryAPI.value = false;
+                                controller.hasCalledSlotHistoryAPI.value =
+                                    false;
                               }
                             } catch (e) {
-                              CustomLogger.logMessage(msg: "Failed to prepare booking. Please try again.", level: LogLevel.debug);
+                              CustomLogger.logMessage(
+                                msg:
+                                    "Failed to prepare booking. Please try again.",
+                                level: LogLevel.debug,
+                              );
                             } finally {
                               isProcessing.value = false;
                             }
                           },
                           child: isProcessing.value
                               ? LoadingAnimationWidget.waveDots(
-                            color: AppColors.blackColor,
-                            size: 45,
-                          ).paddingOnly(right: 40)
+                                  color: AppColors.blackColor,
+                                  size: 45,
+                                ).paddingOnly(right: 40)
                               : Text(
-                            "Pay Now",
-                            style: Get.textTheme.headlineLarge!.copyWith(
-                              color: AppColors.secondaryColor,
-                              fontSize: 16,
-                            ),
-                          ).paddingOnly(right: 40),
+                                  "Pay Now",
+                                  style: Get.textTheme.headlineLarge!.copyWith(
+                                    color: AppColors.secondaryColor,
+                                    fontSize: 16,
+                                  ),
+                                ).paddingOnly(right: 40),
                         ),
                       ],
                     ),
@@ -2147,14 +2496,18 @@ class BookACourtScreen extends StatelessWidget {
         if (slotSelections.length == 2) {
           // Both halves selected - create one consolidated entry with full slot info
           final firstSelection = slotSelections.first;
-          final totalAmount = slotSelections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
+          final totalAmount = slotSelections.fold<int>(
+            0,
+            (sum, sel) => sum + (sel['amount'] as int? ?? 0),
+          );
           consolidatedSelections.add({
             'slot': firstSelection['slot'],
             'amount': totalAmount,
             'dateTime': firstSelection['dateTime'],
             'courtId': firstSelection['courtId'],
             'date': firstSelection['date'],
-            'isHalfSlot': false, // Mark as full slot since both halves are selected
+            'isHalfSlot':
+                false, // Mark as full slot since both halves are selected
             'isFirstHalf': true,
           });
         } else {
@@ -2184,8 +2537,10 @@ class BookACourtScreen extends StatelessWidget {
           final currentSlot = currentSelection['slot'] as Slots;
           final nextSlot = nextSelection['slot'] as Slots;
 
-          final currentIsHalf = currentSelection['isHalfSlot'] as bool? ?? false;
-          final currentIsFirst = currentSelection['isFirstHalf'] as bool? ?? true;
+          final currentIsHalf =
+              currentSelection['isHalfSlot'] as bool? ?? false;
+          final currentIsFirst =
+              currentSelection['isFirstHalf'] as bool? ?? true;
           final nextIsHalf = nextSelection['isHalfSlot'] as bool? ?? false;
           final nextIsFirst = nextSelection['isFirstHalf'] as bool? ?? true;
 
@@ -2198,7 +2553,9 @@ class BookACourtScreen extends StatelessWidget {
           if (currentSlotDuration == 90) {
             currentEndTime += 90; // 90-minute slot
           } else if (currentIsHalf) {
-            currentEndTime += currentIsFirst ? 30 : 60; // First half ends at +30, second half ends at +60
+            currentEndTime += currentIsFirst
+                ? 30
+                : 60; // First half ends at +30, second half ends at +60
           } else {
             currentEndTime += 60; // Full slot
           }
@@ -2241,7 +2598,9 @@ class BookACourtScreen extends StatelessWidget {
                 final period = parts[1];
                 final timeParts = timePart.split(':');
                 int hour = int.tryParse(timeParts[0]) ?? 0;
-                int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+                int minute = timeParts.length > 1
+                    ? int.tryParse(timeParts[1]) ?? 0
+                    : 0;
 
                 if (period == 'pm' && hour != 12) hour += 12;
                 if (period == 'am' && hour == 12) hour = 0;
@@ -2256,13 +2615,19 @@ class BookACourtScreen extends StatelessWidget {
 
                 // Format start time
                 String startPeriod = hour >= 12 ? 'PM' : 'AM';
-                int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-                String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+                int displayStartHour = hour > 12
+                    ? hour - 12
+                    : (hour == 0 ? 12 : hour);
+                String formattedStart =
+                    '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
 
                 // Format end time
                 String endPeriod = endHour >= 12 ? 'PM' : 'AM';
-                int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
-                String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+                int displayEndHour = endHour > 12
+                    ? endHour - 12
+                    : (endHour == 0 ? 12 : endHour);
+                String formattedEnd =
+                    '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
 
                 timeRange = '$formattedStart - $formattedEnd';
               } else {
@@ -2313,7 +2678,9 @@ class BookACourtScreen extends StatelessWidget {
               final period = parts[1];
               final timeParts = timePart.split(':');
               int hour = int.tryParse(timeParts[0]) ?? 0;
-              int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
+              int minute = timeParts.length > 1
+                  ? int.tryParse(timeParts[1]) ?? 0
+                  : 0;
 
               if (period == 'pm' && hour != 12) hour += 12;
               if (period == 'am' && hour == 12) hour = 0;
@@ -2337,13 +2704,19 @@ class BookACourtScreen extends StatelessWidget {
 
               // Format start time
               String startPeriod = hour >= 12 ? 'PM' : 'AM';
-              int displayStartHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-              String formattedStart = '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
+              int displayStartHour = hour > 12
+                  ? hour - 12
+                  : (hour == 0 ? 12 : hour);
+              String formattedStart =
+                  '$displayStartHour:${minute.toString().padLeft(2, '0')} $startPeriod';
 
               // Format end time
               String endPeriod = endHour >= 12 ? 'PM' : 'AM';
-              int displayEndHour = endHour > 12 ? endHour - 12 : (endHour == 0 ? 12 : endHour);
-              String formattedEnd = '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
+              int displayEndHour = endHour > 12
+                  ? endHour - 12
+                  : (endHour == 0 ? 12 : endHour);
+              String formattedEnd =
+                  '$displayEndHour:${endMinute.toString().padLeft(2, '0')} $endPeriod';
 
               timeRange = '$formattedStart - $formattedEnd';
             } else {
@@ -2427,7 +2800,8 @@ class BookACourtScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () async {
-                    final selections = entry['selections'] as List<Map<String, dynamic>>;
+                    final selections =
+                        entry['selections'] as List<Map<String, dynamic>>;
                     final slotsToDelete = <Map<String, dynamic>>[];
 
                     for (var selection in selections) {
@@ -2435,9 +2809,10 @@ class BookACourtScreen extends StatelessWidget {
                       final slotId = slot.sId ?? '';
                       final courtId = selection['courtId'] as String;
                       final dateString = selection['date'] as String;
-                      final isHalfSlot = selection['isHalfSlot'] as bool? ?? false;
+                      final isHalfSlot =
+                          selection['isHalfSlot'] as bool? ?? false;
                       final duration = isHalfSlot ? 30 : 60;
-                      final userId = storage.read("userId")??"";
+                      final userId = storage.read("userId") ?? "";
                       slotsToDelete.add({
                         "slotId": slotId,
                         "courtId": courtId,
@@ -2445,22 +2820,35 @@ class BookACourtScreen extends StatelessWidget {
                         "time": slot.time ?? '',
                         "bookingTime": slot.time ?? '',
                         "duration": duration,
-                        "userId":userId
+                        "userId": userId,
                       });
                     }
 
-                    await controller.deleteSlotHistory(slots: {"slots": slotsToDelete});
+                    await controller.deleteSlotHistory(
+                      slots: {"slots": slotsToDelete},
+                    );
 
                     for (var selection in selections) {
                       final slot = selection['slot'] as Slots;
                       final courtId = selection['courtId'] as String;
-                      controller.realCourtSelections.removeWhere((key, value) =>
-                      (value['slot'] as Slots).sId == slot.sId && value['courtId'] == courtId);
+                      controller.realCourtSelections.removeWhere(
+                        (key, value) =>
+                            (value['slot'] as Slots).sId == slot.sId &&
+                            value['courtId'] == courtId,
+                      );
                       // Only remove from selectedSlots if no other courts have this slot selected
-                      final hasOtherCourtWithSameSlot = controller.realCourtSelections.values.any((value) =>
-                      (value['slot'] as Slots).sId == slot.sId && value['courtId'] != courtId);
+                      final hasOtherCourtWithSameSlot = controller
+                          .realCourtSelections
+                          .values
+                          .any(
+                            (value) =>
+                                (value['slot'] as Slots).sId == slot.sId &&
+                                value['courtId'] != courtId,
+                          );
                       if (!hasOtherCourtWithSameSlot) {
-                        controller.selectedSlots.removeWhere((s) => s.sId == slot.sId);
+                        controller.selectedSlots.removeWhere(
+                          (s) => s.sId == slot.sId,
+                        );
                       }
                     }
                     controller.recalculateRealCourtTotalAmount();
@@ -2536,14 +2924,18 @@ class BookACourtScreen extends StatelessWidget {
         if (slotSelections.length == 2) {
           // Both halves selected - create one consolidated entry with full slot info
           final firstSelection = slotSelections.first;
-          final totalAmount = slotSelections.fold<int>(0, (sum, sel) => sum + (sel['amount'] as int? ?? 0));
+          final totalAmount = slotSelections.fold<int>(
+            0,
+            (sum, sel) => sum + (sel['amount'] as int? ?? 0),
+          );
           consolidatedSelections.add({
             'slot': firstSelection['slot'],
             'amount': totalAmount,
             'dateTime': firstSelection['dateTime'],
             'courtId': firstSelection['courtId'],
             'date': firstSelection['date'],
-            'isHalfSlot': false, // Mark as full slot since both halves are selected
+            'isHalfSlot':
+                false, // Mark as full slot since both halves are selected
             'isFirstHalf': true,
           });
         } else {
@@ -2572,8 +2964,10 @@ class BookACourtScreen extends StatelessWidget {
           final currentSlot = currentSelection['slot'] as Slots;
           final nextSlot = nextSelection['slot'] as Slots;
 
-          final currentIsHalf = currentSelection['isHalfSlot'] as bool? ?? false;
-          final currentIsFirst = currentSelection['isFirstHalf'] as bool? ?? true;
+          final currentIsHalf =
+              currentSelection['isHalfSlot'] as bool? ?? false;
+          final currentIsFirst =
+              currentSelection['isFirstHalf'] as bool? ?? true;
           final nextIsHalf = nextSelection['isHalfSlot'] as bool? ?? false;
           final nextIsFirst = nextSelection['isFirstHalf'] as bool? ?? true;
 
@@ -2586,7 +2980,9 @@ class BookACourtScreen extends StatelessWidget {
           if (currentSlotDuration == 90) {
             currentEndTime += 90; // 90-minute slot
           } else if (currentIsHalf) {
-            currentEndTime += currentIsFirst ? 30 : 60; // First half ends at +30, second half ends at +60
+            currentEndTime += currentIsFirst
+                ? 30
+                : 60; // First half ends at +30, second half ends at +60
           } else {
             currentEndTime += 60; // Full slot
           }
@@ -2659,7 +3055,10 @@ class BookACourtScreen extends StatelessWidget {
     if (courtsByDuration?.data != null) {
       final totalCourts = courtsByDuration!.data!.length;
       if (displayedCourtsCount.value < totalCourts) {
-        displayedCourtsCount.value = (displayedCourtsCount.value + 10).clamp(0, totalCourts);
+        displayedCourtsCount.value = (displayedCourtsCount.value + 10).clamp(
+          0,
+          totalCourts,
+        );
       }
     }
   }
@@ -2674,7 +3073,6 @@ class BookACourtScreen extends StatelessWidget {
       );
     }
   }
-
 }
 
 class ChangeLocationBottomSheet extends StatelessWidget {
@@ -2747,7 +3145,9 @@ class ChangeLocationBottomSheet extends StatelessWidget {
               child: Obx(() {
                 if (controller.isLoadingLocations.value) {
                   return const Center(
-                    child: CircularProgressIndicator(color: AppColors.primaryColor),
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryColor,
+                    ),
                   );
                 }
 
@@ -2757,9 +3157,15 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   itemCount: locations.length,
-                  separatorBuilder: (_, __) =>  Divider(height: 1,color: Colors.grey.withValues(alpha: 0.3),),
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: Colors.grey.withValues(alpha: 0.3),
+                  ),
                   itemBuilder: (context, index) {
                     final location = locations[index];
 
@@ -2789,8 +3195,9 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                                 child: Text(
                                   location.name ?? '',
                                   style: Get.textTheme.bodyLarge!.copyWith(
-                                    fontWeight:
-                                    isSelected ? FontWeight.w600 : FontWeight.w400,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
                                     color: isSelected
                                         ? AppColors.primaryColor
                                         : Colors.black87,
@@ -2809,7 +3216,6 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                       );
                     });
                   },
-
                 );
               }),
             ),
@@ -2835,30 +3241,34 @@ class ChangeLocationBottomSheet extends StatelessWidget {
                     ),
                     onPressed: (isEnabled && !isLoading)
                         ? () async {
-                      final selectedId = controller.selectedCityId.value;
-                      final success = await controller.updateUserLocation(selectedId);
-                      if (success) {
-                        Navigator.pop(context);
-                      }
-                    }
+                            final selectedId = controller.selectedCityId.value;
+                            final success = await controller.updateUserLocation(
+                              selectedId,
+                            );
+                            if (success) {
+                              Navigator.pop(context);
+                            }
+                          }
                         : null,
                     child: isLoading
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : Text(
-                      'Update',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isEnabled ? Colors.white : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                            'Update',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isEnabled
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 );
               }),

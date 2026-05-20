@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
@@ -1104,6 +1106,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
           if (isMatchCreator) {
             final isOpenMatch = booking?.isOpenMatch == true;
             Get.bottomSheet(AppPlayersBottomSheetScore(bookingType: bookingType,matchId:isBlueTheme? matchId:matchId, teamName: selectedTeam, bookingId: bookingId, openMatchId: openMatchId, showAddGuestButton: !isOpenMatch), isScrollControlled: true);
+            log("message--------------------");
           } else {
             AddPlayerBottomSheet.show(
               context,

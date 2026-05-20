@@ -15,17 +15,15 @@ class GetAllActiveCourtsForSlotWiseModel {
     status = json['status'];
     success = json['success'];
     count = json['count'];
-    data = (json['data'] as List?)
-        ?.map((e) => Data.fromJson(e))
-        .toList();
+    data = (json['data'] as List?)?.map((e) => Data.fromJson(e)).toList();
   }
 
   Map<String, dynamic> toJson() => {
-        'status': status,
-        'success': success,
-        'count': count,
-        'data': data?.map((e) => e.toJson()).toList(),
-      };
+    'status': status,
+    'success': success,
+    'count': count,
+    'data': data?.map((e) => e.toJson()).toList(),
+  };
 }
 
 class Data {
@@ -33,6 +31,7 @@ class Data {
   String? clubName;
   RegisterClubId? registerClubId;
   String? courtName;
+  List<int>? slotDuration;
   List<Slots>? slots;
   List<BusinessHours>? businessHours;
 
@@ -41,6 +40,7 @@ class Data {
     this.clubName,
     this.registerClubId,
     this.courtName,
+    this.slotDuration,
     this.slots,
     this.businessHours,
   });
@@ -52,22 +52,22 @@ class Data {
         ? RegisterClubId.fromJson(json['register_club_id'])
         : null;
     courtName = json['courtName'];
-    slots = (json['slots'] as List?)
-        ?.map((e) => Slots.fromJson(e))
-        .toList();
+    slotDuration = (json['slotDuration'] as List?)?.cast<int>();
+    slots = (json['slots'] as List?)?.map((e) => Slots.fromJson(e)).toList();
     businessHours = (json['businessHours'] as List?)
         ?.map((e) => BusinessHours.fromJson(e))
         .toList();
   }
 
   Map<String, dynamic> toJson() => {
-        '_id': sId,
-        'clubName': clubName,
-        'register_club_id': registerClubId?.toJson(),
-        'courtName': courtName,
-        'slots': slots?.map((e) => e.toJson()).toList(),
-        'businessHours': businessHours?.map((e) => e.toJson()).toList(),
-      };
+    '_id': sId,
+    'clubName': clubName,
+    'register_club_id': registerClubId?.toJson(),
+    'courtName': courtName,
+    'slotDuration': slotDuration,
+    'slots': slots?.map((e) => e.toJson()).toList(),
+    'businessHours': businessHours?.map((e) => e.toJson()).toList(),
+  };
 }
 
 class RegisterClubId {
@@ -83,7 +83,6 @@ class RegisterClubId {
   String? zipCode;
   List<Location>? locations;
 
-
   RegisterClubId({
     this.sId,
     this.ownerId,
@@ -95,13 +94,14 @@ class RegisterClubId {
     this.city,
     this.state,
     this.zipCode,
-    this.locations
+    this.locations,
   });
 
   RegisterClubId.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    ownerId =
-        json['ownerId'] != null ? OwnerId.fromJson(json['ownerId']) : null;
+    ownerId = json['ownerId'] != null
+        ? OwnerId.fromJson(json['ownerId'])
+        : null;
     clubName = json['clubName'];
     businessHours = (json['businessHours'] as List?)
         ?.map((e) => BusinessHours.fromJson(e))
@@ -118,20 +118,20 @@ class RegisterClubId {
   }
 
   Map<String, dynamic> toJson() => {
-        '_id': sId,
-        'ownerId': ownerId?.toJson(),
-        'clubName': clubName,
-        'businessHours': businessHours?.map((e) => e.toJson()).toList(),
-        'courtType': courtType,
-        'courtImage': courtImage,
-        'address': address,
-        'city': city,
-        'state': state,
-        'zipCode': zipCode,
+    '_id': sId,
+    'ownerId': ownerId?.toJson(),
+    'clubName': clubName,
+    'businessHours': businessHours?.map((e) => e.toJson()).toList(),
+    'courtType': courtType,
+    'courtImage': courtImage,
+    'address': address,
+    'city': city,
+    'state': state,
+    'zipCode': zipCode,
     'locations': locations?.map((e) => e.toJson()).toList(), // 👈 ADD THIS
-
   };
 }
+
 class Location {
   String? sId;
   String? city;
@@ -193,11 +193,7 @@ class OwnerId {
     name = json['name'];
   }
 
-  Map<String, dynamic> toJson() => {
-        '_id': sId,
-        'email': email,
-        'name': name,
-      };
+  Map<String, dynamic> toJson() => {'_id': sId, 'email': email, 'name': name};
 }
 
 class BusinessHours {
@@ -213,11 +209,7 @@ class BusinessHours {
     sId = json['_id'];
   }
 
-  Map<String, dynamic> toJson() => {
-        'time': time,
-        'day': day,
-        '_id': sId,
-      };
+  Map<String, dynamic> toJson() => {'time': time, 'day': day, '_id': sId};
 }
 
 class Slots {
@@ -232,6 +224,20 @@ class Slots {
   String? userId;
   List<BusinessHours>? businessHours;
 
+  /// Set when two consecutive 30-min slots are merged into one tile.
+  /// Holds the sId of the second (right-half) slot from the API.
+  String? rightHalfSlotId;
+
+  /// Booking/status info for the right half (populated during merge).
+  String? rightHalfStatus;
+  String? rightHalfUserId;
+  String? rightHalfBookingTime;
+
+  /// Availability status for each half (populated during merge).
+  /// Left half uses the original [availabilityStatus] field.
+  /// Right half availability is stored here separately.
+  String? rightHalfAvailabilityStatus;
+
   Slots({
     this.sId,
     this.time,
@@ -243,6 +249,11 @@ class Slots {
     this.has30MinPrice,
     this.userId,
     this.businessHours,
+    this.rightHalfSlotId,
+    this.rightHalfStatus,
+    this.rightHalfUserId,
+    this.rightHalfBookingTime,
+    this.rightHalfAvailabilityStatus,
   });
 
   Slots.fromJson(Map<String, dynamic> json) {
@@ -261,15 +272,15 @@ class Slots {
   }
 
   Map<String, dynamic> toJson() => {
-        '_id': sId,
-        'time': time,
-        'amount': amount,
-        'status': status,
-        'availabilityStatus': availabilityStatus,
-        'duration': duration,
-        'bookingTime': bookingTime,
-        'has30MinPrice': has30MinPrice,
-        'userId': userId,
-        'businessHours': businessHours?.map((e) => e.toJson()).toList(),
-      };
+    '_id': sId,
+    'time': time,
+    'amount': amount,
+    'status': status,
+    'availabilityStatus': availabilityStatus,
+    'duration': duration,
+    'bookingTime': bookingTime,
+    'has30MinPrice': has30MinPrice,
+    'userId': userId,
+    'businessHours': businessHours?.map((e) => e.toJson()).toList(),
+  };
 }
