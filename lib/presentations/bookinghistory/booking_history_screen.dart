@@ -492,7 +492,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            address.capitalizeFirstChar(),
+                            address,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.black87,
@@ -1192,54 +1192,54 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
                   ),
                   child: Text(openMatchStatus ? "Slot Already Booked" : (isOpenMatch ? "Slot not Booked" : "Slot Booked"), style: Get.textTheme.labelMedium!.copyWith(color: openMatchStatus ? Colors.red : (isOpenMatch ? Colors.orange : AppColors.primaryColor)),),
                 ).paddingOnly(bottom: 10),
-                Row(
-                  children: [
-                    if (isUpcoming) ...[
-                      GestureDetector(
-                        onTap:openMatchStatus?null: () {
-                          _showPlayerRequestsBottomSheet(context, booking);
-                        },
-                        child: Container(
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.notifications, color: AppColors.primaryColor, size: 18),
-                              RichText(
-                                text: TextSpan(
-                                  text: 'Requests ',
-                                  style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
-                                  children: [
-                                    TextSpan(
-                                      text: '(',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: "0",
-                                      style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
-                                    ),
-                                    TextSpan(
-                                      text: ')',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    // if (isUpcoming)
-                    //   const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     if (isUpcoming) ...[
+                //       GestureDetector(
+                //         onTap:openMatchStatus?null: () {
+                //           _showPlayerRequestsBottomSheet(context, booking);
+                //         },
+                //         child: Container(
+                //           color: Colors.transparent,
+                //           child: Row(
+                //             children: [
+                //               const Icon(Icons.notifications, color: AppColors.primaryColor, size: 18),
+                //               RichText(
+                //                 text: TextSpan(
+                //                   text: 'Requests ',
+                //                   style: Get.textTheme.labelSmall!.copyWith(decoration: TextDecoration.underline),
+                //                   children: [
+                //                     TextSpan(
+                //                       text: '(',
+                //                       style: TextStyle(
+                //                         color: Colors.black,
+                //                         decoration: TextDecoration.none,
+                //                       ),
+                //                     ),
+                //                     TextSpan(
+                //                       text: "0",
+                //                       style: Get.textTheme.labelSmall!.copyWith(color: AppColors.primaryColor),
+                //                     ),
+                //                     TextSpan(
+                //                       text: ')',
+                //                       style: TextStyle(
+                //                         color: Colors.black,
+                //                         decoration: TextDecoration.none,
+                //                       ),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               )
+                //             ],
+                //           ),
+                //         ),
+                //       ),
+                //       const SizedBox(width: 10),
+                //     ],
+                //     // if (isUpcoming)
+                //     //   const Icon(Icons.share, size: 20, color: AppColors.darkGreyColor),
+                //   ],
+                // ),
               ],
             ),
           ],

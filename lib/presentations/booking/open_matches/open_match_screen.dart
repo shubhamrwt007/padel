@@ -1611,10 +1611,10 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  // const SizedBox(width: 10),
                 ],
-                if (_isLoginUserInMatch(data))
-                  const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
+                // if (_isLoginUserInMatch(data))
+                //   const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
               ],
             ),
           ],

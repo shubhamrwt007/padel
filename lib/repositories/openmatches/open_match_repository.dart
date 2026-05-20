@@ -635,6 +635,36 @@ class OpenMatchRepository {
     }
   }
 
+  ///Search User By Name--------------------------------------------------------
+  Future<GetCustomerDataByPhoneNumberModel> searchUserByName({
+    required String searchKey,
+  }) async {
+    try {
+      final response = await dioClient.get(
+        "${AppEndpoints.getCustomerNameByPhoneNumber}search=$searchKey",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Search User By Name Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetCustomerDataByPhoneNumberModel.fromJson(response.data);
+      } else {
+        throw Exception(
+          "Search User By Name failed: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Search User By Name failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
   ///WithDraw Request-----------------------------------------------------------
   Future<WithdrawRequestModel> withdrawRequest({required id}) async {
     try {
