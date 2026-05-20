@@ -1611,10 +1611,10 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  // const SizedBox(width: 10),
                 ],
-                if (_isLoginUserInMatch(data))
-                  const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
+                // if (_isLoginUserInMatch(data))
+                //   const Icon(Icons.share, size: 20,color: AppColors.darkGreyColor,),
               ],
             ),
           ],
@@ -1788,17 +1788,29 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   }
 
 }
-class AppPlayersBottomSheet extends StatelessWidget {
+class AppPlayersBottomSheet extends StatefulWidget {
   final String matchId;
   final String? selectedTeam;
   final String? bookingId;
   const AppPlayersBottomSheet({super.key, required this.matchId, this.selectedTeam,this.bookingId});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<OpenMatchesController>();
+  State<AppPlayersBottomSheet> createState() => _AppPlayersBottomSheetState();
+}
+
+class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
+  late final OpenMatchesController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<OpenMatchesController>();
     controller.nearbyPlayers.clear();
-    controller.fetchNearByPlayers(bookingId: bookingId);
+    controller.fetchNearByPlayers(bookingId: widget.bookingId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
@@ -1831,18 +1843,66 @@ class AppPlayersBottomSheet extends StatelessWidget {
                 height: 45,
                 child: PrimaryTextField(
                     contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: bookingId),
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: widget.bookingId),
                   hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
                     suffixIcon: Icon(Icons.search,color: AppColors.textColor),
                     hintText: 'Search by Name / Phone number'),
               ),
+              Obx(() => controller.invitationSent.value
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: controller.isSendingInvitation.value
+                          ? null
+                          : () {
+                              if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
+                                controller.sendBookingInvitation(widget.bookingId!);
+                              }
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffEEF1FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: controller.isSendingInvitation.value
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      'Send Request',
+                                      style: Get.textTheme.bodyLarge!.copyWith(
+                                        color: AppColors.primaryColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).paddingOnly(top: 5)),
               // const SizedBox(height: 8),
               // Text(
               //   'Nearby & match your level',
               //   style: Get.textTheme.labelLarge,
               // ),
               const SizedBox(height: 12),
-              _playersList(),
+              SizedBox(
+                height: Get.height * 0.3,
+                child: _playersList(),
+              ),
               const SizedBox(height: 12),
               _actionButtons(context),
               const SizedBox(height: 20),
@@ -1895,7 +1955,6 @@ class AppPlayersBottomSheet extends StatelessWidget {
   }
 
   Widget _playersList() {
-    final controller = Get.find<OpenMatchesController>();
     return Obx(() {
       if (controller.isLoadingNearbyPlayers.value) {
         return const SizedBox(
@@ -1916,21 +1975,25 @@ class AppPlayersBottomSheet extends StatelessWidget {
         );
       }
       
-      final itemCount = controller.nearbyPlayers.length;
-      final displayCount = itemCount > 5 ? 5 : itemCount;
-      final itemHeight = 60.0;
-      final listHeight = displayCount * itemHeight + (displayCount - 1) * 1;
-
-
       return SizedBox(
-        height: listHeight,
+        height: Get.height * 0.3,
         child: ListView.separated(
+          controller: controller.nearbyPlayersScrollController,
           shrinkWrap: true,
-          itemCount: itemCount,
+          itemCount: controller.nearbyPlayers.length + (controller.hasMore.value ? 1 : 0),
           separatorBuilder: (_, __) => Divider(
             color: AppColors.primaryColor.withValues(alpha: 0.1),
           ),
           itemBuilder: (_, i) {
+            if (i == controller.nearbyPlayers.length) {
+              return Obx(() => controller.isLoadingMore.value
+                  ? Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : SizedBox.shrink());
+            }
+            
           final player = controller.nearbyPlayers[i];
           final initials = getInitials(player['name']);
 
@@ -2037,7 +2100,6 @@ class AppPlayersBottomSheet extends StatelessWidget {
 
 
   Widget _requestButton(String playerId, String team, bool hasPendingRequest) {
-    final controller = Get.find<OpenMatchesController>();
     return Obx(() {
       final isRequesting = controller.requestingPlayerId.value == playerId;
       final isRequested = hasPendingRequest || controller.requestedPlayerIds.contains(playerId);
@@ -2047,12 +2109,12 @@ class AppPlayersBottomSheet extends StatelessWidget {
           controller.requestingPlayerId.value = playerId;
           
           final addPlayerController = Get.put(AddPlayerController());
-          addPlayerController.matchId.value = matchId;
+          addPlayerController.matchId.value = widget.matchId;
           addPlayerController.playerId.value = playerId;
           addPlayerController.selectedTeam.value = team;
           addPlayerController.openMatchesController = controller;
           
-          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: bookingId);
+          final success = await addPlayerController.requestPlayerForOpenMatch(type: 'matchCreatorRequest',bookingId: widget.bookingId);
           
           if (success) {
             controller.requestedPlayerIds.add(playerId);
@@ -2102,20 +2164,6 @@ class AppPlayersBottomSheet extends StatelessWidget {
     final style =  Get.textTheme.labelLarge!.copyWith(color: Colors.white);
     return Column(
       children: [
-        OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(45), // ↓ height
-            side: const BorderSide(color: Colors.green),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: Text(
-            'Invite Player',
-            style: Get.textTheme.labelLarge!.copyWith(color: AppColors.secondaryColor),
-          ),
-        ),
         const SizedBox(height: 4),
         // ElevatedButton(
         //   onPressed: () {},
@@ -2134,8 +2182,8 @@ class AppPlayersBottomSheet extends StatelessWidget {
             AddPlayerBottomSheet.show(
               context,
               arguments: {
-                "team": selectedTeam ?? "teamA",
-                "matchId": matchId,
+                "team": widget.selectedTeam ?? "teamA",
+                "matchId": widget.matchId,
                 "needOpenMatches": true,
                 "matchLevel": "",
                 "isLoginUser": false,

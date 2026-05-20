@@ -24,28 +24,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Log the message for debugging
   if (kDebugMode) {
-    print('📱 Background message received: ${message.messageId}');
-    print('📱 Notification title: ${message.notification?.title}');
-    print('📱 Notification body: ${message.notification?.body}');
-    print('📱 Data: ${message.data}');
+    print('📱 Background message: ${message.messageId}');
   }
-
-  // For iOS, if the message has a notification payload, it will be shown automatically
-  // by the system. We only need to show a local notification if:
-  // 1. It's a data-only message (no notification payload), OR
-  // 2. We want to ensure it's shown even if system fails
 
   try {
     await NotificationService().initialize();
 
     if (message.notification != null || message.data.isNotEmpty) {
+      final payload = message.data.entries.map((e) => '${e.key}=${e.value}').join('|');
+      
       await NotificationService().showNotification(
         id: message.hashCode.abs(),
         title: message.notification?.title ?? 'New Notification',
         body: message.notification?.body ?? 'You have a new message',
-        payload: message.data.toString(),
+        payload: payload,
         highPriority: true,
       );
     }
@@ -173,9 +166,17 @@ class _NotificationWrapperState extends State<NotificationWrapper> with WidgetsB
 
       // Wait for app to be ready, then handle navigation
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handleMessageNavigation(initialMessage);
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          _handleMessageNavigation(initialMessage);
+        });
       });
     }
+
+    // Also listen for when app is opened from background
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      CustomLogger.logMessage(msg: '🔔 App opened from background notification: ${message.messageId}',level: LogLevel.debug);
+      _handleMessageNavigation(message);
+    });
   }
 
   /// Handle navigation based on message data
@@ -183,17 +184,28 @@ class _NotificationWrapperState extends State<NotificationWrapper> with WidgetsB
     final data = message.data;
 
     try {
-      if (data['route'] != null) {
-        Get.toNamed(data['route']);
-      } else if (data['type'] == 'creatematch') {
-        Get.toNamed('/creatematch-details', arguments: data);
-      } else if (data['type'] == 'booking') {
-        Get.toNamed('/booking-details', arguments: data);
+      final notificationUrl = data['notificationUrl'] ?? data['route'] ?? '';
+      final redirect = data['redirect'] ?? '';
+      final matchId = data['matchId'] ?? '';
+
+      // Get notification controller and use its routing logic
+      if (Get.isRegistered<NotificationController>()) {
+        final controller = NotificationController.instance;
+        
+        if (notificationUrl.isNotEmpty) {
+          controller.handleNotificationRoute(notificationUrl, redirect: redirect, matchId: matchId);
+        } else if (redirect.isNotEmpty) {
+          controller.handleNotificationRoute('true', redirect: redirect, matchId: matchId);
+        } else {
+          Get.toNamed('/notifications');
+        }
       } else {
+        // Fallback if controller not ready
         Get.toNamed('/notifications');
       }
     } catch (e) {
       CustomLogger.logMessage(msg: '❌ Error navigating from notification: $e',level: LogLevel.error);
+      Get.toNamed('/notifications');
     }
   }
 

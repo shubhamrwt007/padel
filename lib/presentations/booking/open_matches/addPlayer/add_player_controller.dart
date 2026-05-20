@@ -54,7 +54,13 @@ class AddPlayerController extends GetxController {
       await addLoginUserDirectly();
       return;
     }
-    if (phoneController.text.isEmpty) {
+    
+    // Use actual phone number if available (from name search), otherwise use controller text
+    final phoneNumber = actualPhoneNumber.value.isNotEmpty 
+        ? actualPhoneNumber.value 
+        : phoneController.text.trim();
+    
+    if (phoneNumber.isEmpty) {
       AppToast.error("Please Enter Phone Number");
       return;
     }
@@ -71,11 +77,9 @@ class AddPlayerController extends GetxController {
     try {
       final body = {
         "name": nameController.text.trim(),
-        // "lastName": lastNameController.text.trim(),
         "email": emailController.text.trim(),
-        "phoneNumber": phoneController.text.trim(),
+        "phoneNumber": phoneNumber,
         "gender": gender.value,
-        // "level": playerLevel.value,
       };
 
       final response = await repository.createUserForOpenMatch(body: body);
@@ -253,6 +257,7 @@ class AddPlayerController extends GetxController {
         await openMatchesController?.fetchMatchesForSelection();
         await allOpenMatchController?.fetchOpenMatches();
         await openMatchBookingController?.fetchOpenMatchesBooking(type: "upcoming");
+        await openMatchBookingController?.fetchOpenMatchesBooking(type: "in-progress");
         await openMatchForAllCourtController?.fetchMatchesForSelection();
         await scoreBoardController?.fetchScoreBoard();
         if (bookingHistoryController != null) {
@@ -500,6 +505,12 @@ class AddPlayerController extends GetxController {
   var numberLoader = false.obs;
   var isNameFromApi = false.obs;
   var isGenderFromApi = false.obs;
+  var isPhoneFromApi = false.obs;
+  var isEmailFromApi = false.obs;
+  var nameSearchResults = <Map<String, dynamic>>[].obs;
+  var showNameDropdown = false.obs;
+  var actualPhoneNumber = ''.obs; // Store actual phone number for API
+  
   void resetNameField() {
     if (isNameFromApi.value) {
       nameController.clear();
@@ -508,6 +519,26 @@ class AddPlayerController extends GetxController {
     if (isGenderFromApi.value) {
       gender.value = '';
       isGenderFromApi.value = false;
+    }
+    if (isEmailFromApi.value) {
+      emailController.clear();
+      isEmailFromApi.value = false;
+    }
+  }
+  
+  void resetPhoneField() {
+    if (isPhoneFromApi.value) {
+      phoneController.clear();
+      actualPhoneNumber.value = '';
+      isPhoneFromApi.value = false;
+    }
+    if (isGenderFromApi.value) {
+      gender.value = '';
+      isGenderFromApi.value = false;
+    }
+    if (isEmailFromApi.value) {
+      emailController.clear();
+      isEmailFromApi.value = false;
     }
   }
 
@@ -529,9 +560,17 @@ class AddPlayerController extends GetxController {
         } else {
           isGenderFromApi.value = false;
         }
+        
+        if (result.result?.email != null && result.result!.email!.isNotEmpty) {
+          emailController.text = result.result?.email ??"";
+          isEmailFromApi.value = true;
+        } else {
+          isEmailFromApi.value = false;
+        }
       } else {
         isNameFromApi.value = false;
         isGenderFromApi.value = false;
+        isEmailFromApi.value = false;
       }
 
     } catch (e, st) {
@@ -542,9 +581,87 @@ class AddPlayerController extends GetxController {
         );
         isNameFromApi.value = false;
         isGenderFromApi.value = false;
+        isEmailFromApi.value = false;
       } finally {
     numberLoader.value = false;
     }
+  }
+  
+  Future<void> searchUserByName(String name) async {
+    if (name.length < 2) {
+      nameSearchResults.clear();
+      showNameDropdown.value = false;
+      return;
+    }
+
+    try {
+      numberLoader.value = true;
+      final result = await repository.searchUserByName(searchKey: name);
+
+      CustomLogger.logMessage(
+        msg: "Search results: ${result.results?.length ?? 0} users found",
+        level: LogLevel.info,
+      );
+
+      if (result.results != null && result.results!.isNotEmpty) {
+        nameSearchResults.value = result.results!.map((user) {
+          final phoneNumber = user.phoneNumber?.toString() ?? '';
+          final maskedPhone = _maskPhoneNumber(phoneNumber);
+          
+          return {
+            'id': user.sId ?? '',
+            'name': user.name ?? '',
+            'phoneNumber': phoneNumber,
+            'maskedPhoneNumber': maskedPhone,
+            'gender': user.gender ?? '',
+            'email': user.email ?? '',
+          };
+        }).toList();
+        showNameDropdown.value = true;
+        CustomLogger.logMessage(
+          msg: "Dropdown should show now with ${nameSearchResults.length} results",
+          level: LogLevel.info,
+        );
+      } else {
+        nameSearchResults.clear();
+        showNameDropdown.value = false;
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Failed to search user by name: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      nameSearchResults.clear();
+      showNameDropdown.value = false;
+    } finally {
+      numberLoader.value = false;
+    }
+  }
+  
+  String _maskPhoneNumber(String phoneNumber) {
+    if (phoneNumber.isEmpty) return '';
+    if (phoneNumber.length < 4) return phoneNumber;
+    
+    // Mask format: XXXXXX1234 (last 4 digits visible)
+    final visibleDigits = phoneNumber.substring(phoneNumber.length - 4);
+    final maskedPart = 'X' * (phoneNumber.length - 4);
+    return maskedPart + visibleDigits;
+  }
+  
+  void selectUserFromDropdown(Map<String, dynamic> user) {
+    nameController.text = user['name'] ?? '';
+    phoneController.text = user['maskedPhoneNumber'] ?? '';
+    actualPhoneNumber.value = user['phoneNumber'] ?? ''; // Store actual number
+    gender.value = user['gender'] ?? '';
+    emailController.text = user['email'] ?? '';
+    
+    isPhoneFromApi.value = true;
+    isGenderFromApi.value = user['gender']?.isNotEmpty ?? false;
+    isEmailFromApi.value = user['email']?.isNotEmpty ?? false;
+    
+    showNameDropdown.value = false;
+    nameSearchResults.clear();
   }
 
   ///Get Players Level Api------------------------------------------------------
@@ -625,9 +742,14 @@ class AddPlayerController extends GetxController {
     emailController.clear();
     phoneController.clear();
     gender.value = '';
+    actualPhoneNumber.value = '';
     isNameFromApi.value = false;
     isGenderFromApi.value = false;
+    isPhoneFromApi.value = false;
+    isEmailFromApi.value = false;
     isLoginUserAdding.value = false;
+    nameSearchResults.clear();
+    showNameDropdown.value = false;
   }
 
   @override

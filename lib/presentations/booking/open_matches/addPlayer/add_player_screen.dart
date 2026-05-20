@@ -28,7 +28,10 @@ class AddPlayerBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+        controller.showNameDropdown.value = false;
+      },
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
@@ -60,53 +63,140 @@ class AddPlayerBottomSheet extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SingleChildScrollView(
-                  child: Obx(() => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      textFieldWithLabel(
-                        "Enter Phone Number",
-                        labelText: "Phone Number *",
-                        controller.phoneController,
-                        context,
-                        action: TextInputAction.next,
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        readOnly: controller.isLoginUserAdding.value,
-                        onChanged: (value) {
-                          if (value.length < 10) {
-                            controller.resetNameField();
-                          }
-                          if (value.length == 10) {
-                            FocusManager.instance.primaryFocus?.unfocus();
-                            controller.getUserDataFromNumber(value);
-                          }
-                        },
+                child: Stack(
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(() => textFieldWithLabel(
+                            "Enter Phone Number",
+                            labelText: "Phone Number *",
+                            controller.phoneController,
+                            context,
+                            action: TextInputAction.next,
+                            keyboardType: TextInputType.phone,
+                            maxLength: 10,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            readOnly: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value,
+                            color: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                            onChanged: (value) {
+                              if (value.length < 10) {
+                                controller.resetNameField();
+                              }
+                              if (value.length == 10) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                controller.getUserDataFromNumber(value);
+                              }
+                            },
+                          )),
+                          Obx(() => textFieldWithLabel(
+                            "Enter Name",
+                            labelText: "Name *",
+                            textCapitalization: TextCapitalization.words,
+                            controller.nameController,
+                            context,
+                            action: TextInputAction.next,
+                            keyboardType: TextInputType.text,
+                            readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
+                            color: controller.isLoginUserAdding.value || controller.isNameFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                            onChanged: (value) {
+                              if (value.length < 2) {
+                                controller.resetPhoneField();
+                              }
+                              controller.searchUserByName(value);
+                            },
+                          )),
+                          _genderSelection(context),
+                          Obx(() => textFieldWithLabel(
+                            "Enter Email",
+                            labelText: "Email (Optional)",
+                            controller.emailController,
+                            context,
+                            action: TextInputAction.next,
+                            keyboardType: TextInputType.emailAddress,
+                            readOnly: controller.isLoginUserAdding.value || controller.isEmailFromApi.value,
+                            color: controller.isLoginUserAdding.value || controller.isEmailFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                          )),
+                        ],
                       ),
-                      textFieldWithLabel(
-                        "Enter Name",
-                          labelText: "Name *",
-                        textCapitalization: TextCapitalization.words,
-                        controller.nameController,
-                        context,
-                        action: TextInputAction.next,
-                        keyboardType: TextInputType.text,
-                        readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
-                        color:  controller.isLoginUserAdding.value || controller.isNameFromApi.value?Colors.grey.shade200:AppColors.textFieldColor
-                      ),
-                      _genderSelection(context),
-                      textFieldWithLabel(
-                        "Enter Email",
-                        labelText: "Email (Optional)",
-                        controller.emailController,
-                        context,
-                        action: TextInputAction.next,
-                        keyboardType: TextInputType.emailAddress,
-                        readOnly: controller.isLoginUserAdding.value,
-                      ),
-                    ],
-                  )),
+                    ),
+                    // Dropdown overlay
+                    Obx(() {
+                      if (controller.showNameDropdown.value && controller.nameSearchResults.isNotEmpty) {
+                        return Positioned(
+                          top: 150, // Adjusted position below name field
+                          left: 0,
+                          right: 0,
+                          child: Material(
+                            elevation: 8,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              constraints: BoxConstraints(maxHeight: 200),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey.shade300),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                physics: AlwaysScrollableScrollPhysics(),
+                                itemCount: controller.nameSearchResults.length,
+                                itemBuilder: (context, index) {
+                                  final user = controller.nameSearchResults[index];
+                                  return InkWell(
+                                    onTap: () => controller.selectUserFromDropdown(user),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: index < controller.nameSearchResults.length - 1
+                                                ? Colors.grey.shade200
+                                                : Colors.transparent,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              user['name'] ?? '',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            user['maskedPhoneNumber'] ?? '',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return SizedBox.shrink();
+                    }),
+                  ],
                 ),
               ),
             ),
@@ -202,18 +292,10 @@ class AddPlayerBottomSheet extends StatelessWidget {
         Color? color,
         String? labelText,
         List<TextInputFormatter>? inputFormatters,
-
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Text(
-        //   label,
-        //   style: Get.textTheme.headlineSmall!.copyWith(
-        //     fontWeight: FontWeight.w600,
-        //     color: AppColors.labelBlackColor,
-        //   ),
-        // ).paddingOnly(top: Get.height * .01),
         PrimaryTextField(
           hintText: label,
           labelText: labelText,

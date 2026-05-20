@@ -18,11 +18,14 @@ class CreateOpenMatchesScreen extends StatefulWidget {
   const CreateOpenMatchesScreen({super.key});
 
   @override
-  State<CreateOpenMatchesScreen> createState() => _CreateOpenMatchesScreenState();
+  State<CreateOpenMatchesScreen> createState() =>
+      _CreateOpenMatchesScreenState();
 }
 
 class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
-  final CreateOpenMatchesController controller = Get.put(CreateOpenMatchesController());
+  final CreateOpenMatchesController controller = Get.put(
+    CreateOpenMatchesController(),
+  );
   final RxMap<String, bool> courtExpandedStates = <String, bool>{}.obs;
 
   @override
@@ -47,7 +50,8 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
       final socketService = SocketService.instance;
       final clubId = controller.argument.id;
       final selectedDate = controller.selectedDate.value;
-      final dateString = "\${selectedDate?.year}-\${selectedDate?.month.toString().padLeft(2, '0')}-\${selectedDate?.day.toString().padLeft(2, '0')}";
+      final dateString =
+          "\${selectedDate?.year}-\${selectedDate?.month.toString().padLeft(2, '0')}-\${selectedDate?.day.toString().padLeft(2, '0')}";
       if (clubId != null) {
         socketService.unsubscribeFromSlotWiseUpdates(
           clubId: clubId,
@@ -65,7 +69,11 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
     return Scaffold(
       bottomNavigationBar: _bottomButton(context),
       backgroundColor: AppColors.whiteColor,
-     appBar: primaryAppBar(title: Text("Create Open Match"),centerTitle: true, context: context),
+      appBar: primaryAppBar(
+        title: Text("Create Open Match"),
+        centerTitle: true,
+        context: context,
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -76,8 +84,12 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                 _buildDatePicker(context),
                 fadeDivider().paddingOnly(bottom: 15),
                 _buildTimeOfDayTabs(),
+
                 /// Slots Section Header
-                Text("All Slots", style: Get.textTheme.labelLarge).paddingOnly(left: 5),
+                Text(
+                  "All Slots",
+                  style: Get.textTheme.labelLarge,
+                ).paddingOnly(left: 5),
                 _buildAllCourtsWithSlots(),
               ],
             ),
@@ -86,69 +98,70 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
       ),
     );
   }
+
   Widget _durationSection() {
     return Obx(() {
       // Check if any slot has 30-minute pricing available
       final hasAny30MinSlots = controller.hasAny30MinSlots();
-      final durations = hasAny30MinSlots 
-          ? ['30 min', '60 min'] 
-          : ['60 min'];
+      final durations = hasAny30MinSlots ? ['30 min', '60 min'] : ['60 min'];
 
       return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Obx(
-            () => Row(
-          children: durations.map((e) {
-            final isSelected = controller.selectedDuration.value == e;
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Obx(
+          () => Row(
+            children: durations.map((e) {
+              final isSelected = controller.selectedDuration.value == e;
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => controller.select(e),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsetsGeometry.symmetric(vertical: 6),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? const LinearGradient(
-                      colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    )
-                        : null,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: AnimatedScale(
-                    duration: const Duration(milliseconds: 200),
-                    scale: isSelected ? 1.05 : 1,
-                    child: Text(
-                      e,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => controller.select(e),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsetsGeometry.symmetric(vertical: 6),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            )
+                          : null,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: AnimatedScale(
+                      duration: const Duration(milliseconds: 200),
+                      scale: isSelected ? 1.05 : 1,
+                      child: Text(
+                        e,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.grey.shade700,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
-      ),
-    );
+      );
     });
   }
 
@@ -164,205 +177,267 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
             top: 40,
             left: 0,
             right: 0,
-            child: Obx(() => Transform.translate(
-              offset: const Offset(0, -30),
+            child: Obx(
+              () => Transform.translate(
+                offset: const Offset(0, -30),
 
-              child: Row(
-                children: [
-                  /// Month container (vertical text)
-                  Transform.translate(
-                    offset: const Offset(0, 0),
-                    child: Container(
-                      width: 25,
-                      height: 55,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: Color(0xffF3F3F5),
-                        border: Border.all(
-                          color: AppColors.blackColor.withAlpha(10),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: DateFormat('MMM')
-                            .format(controller.focusedMonth.value)
-                            .toUpperCase()
-                            .split('')
-                            .map(
-                              (char) => Text(
-                            char,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              height: 1.0,
-                              color: Colors.black,
-                            ),
+                child: Row(
+                  children: [
+                    /// Month container (vertical text)
+                    Transform.translate(
+                      offset: const Offset(0, 0),
+                      child: Container(
+                        width: 25,
+                        height: 55,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Color(0xffF3F3F5),
+                          border: Border.all(
+                            color: AppColors.blackColor.withAlpha(10),
                           ),
-                        )
-                            .toList(),
-                      ),
-                    ).paddingOnly(right: 5),
-                  ),
-
-                  /// Date timeline with scroll listener
-                  Expanded(
-                    child: NotificationListener<ScrollNotification>(
-                      onNotification: (scrollNotification) {
-                        if (scrollNotification is ScrollUpdateNotification) {
-                          final scrollOffset = scrollNotification.metrics.pixels;
-                          final itemExtent = 46.0;
-                          final itemsScrolled = (scrollOffset / itemExtent).round();
-                          final estimatedDate = DateTime.now().add(Duration(days: itemsScrolled));
-
-                          // Update focusedMonth based on scroll position
-                          final newMonth = DateTime(estimatedDate.year, estimatedDate.month, 1);
-                          if (controller.focusedMonth.value.month != newMonth.month ||
-                              controller.focusedMonth.value.year != newMonth.year) {
-                            controller.focusedMonth.value = newMonth;
-                          }
-                        }
-                        return false;
-                      },
-                      child: EasyDateTimeLinePicker.itemBuilder(
-                        controller: controller.dateTimelineController,
-                        headerOptions: HeaderOptions(
-                          headerBuilder: (_, context, date) =>
-                          const SizedBox.shrink(),
                         ),
-                        selectionMode: SelectionMode.alwaysFirst(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2030, 3, 18),
-                        focusedDate: controller.selectedDate.value,
-                        itemExtent: 46,
-                        itemBuilder: (context, date, isSelected, isDisabled, isToday, onTap) {
-                          final now = DateTime.now();
-                          final today = DateTime(now.year, now.month, now.day);
-                          final currentDate = DateTime(date.year, date.month, date.day);
-                          if (currentDate.isBefore(today)) return const SizedBox.shrink();
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: DateFormat('MMM')
+                              .format(controller.focusedMonth.value)
+                              .toUpperCase()
+                              .split('')
+                              .map(
+                                (char) => Text(
+                                  char,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.0,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ).paddingOnly(right: 5),
+                    ),
 
-                          final dayName = DateFormat('E').format(date);
-                          final dateString =
-                              "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+                    /// Date timeline with scroll listener
+                    Expanded(
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: (scrollNotification) {
+                          if (scrollNotification is ScrollUpdateNotification) {
+                            final scrollOffset =
+                                scrollNotification.metrics.pixels;
+                            final itemExtent = 46.0;
+                            final itemsScrolled = (scrollOffset / itemExtent)
+                                .round();
+                            final estimatedDate = DateTime.now().add(
+                              Duration(days: itemsScrolled),
+                            );
 
-                          return GestureDetector(
-                            onTap: () {
-                              onTap();
-                              // Update both selectedDate and focusedMonth here
-                              controller.selectedDate.value = date;
-                              controller.focusedMonth.value =
-                                  DateTime(date.year, date.month, 1);
-                            },
-                            child: Obx(() {
-                              final dateSelections =
-                                  controller.getSelectionsByDate()[dateString] ?? [];
+                            // Update focusedMonth based on scroll position
+                            final newMonth = DateTime(
+                              estimatedDate.year,
+                              estimatedDate.month,
+                              1,
+                            );
+                            if (controller.focusedMonth.value.month !=
+                                    newMonth.month ||
+                                controller.focusedMonth.value.year !=
+                                    newMonth.year) {
+                              controller.focusedMonth.value = newMonth;
+                            }
+                          }
+                          return false;
+                        },
+                        child: EasyDateTimeLinePicker.itemBuilder(
+                          controller: controller.dateTimelineController,
+                          headerOptions: HeaderOptions(
+                            headerBuilder: (_, context, date) =>
+                                const SizedBox.shrink(),
+                          ),
+                          selectionMode: SelectionMode.alwaysFirst(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2030, 3, 18),
+                          focusedDate: controller.selectedDate.value,
+                          itemExtent: 46,
+                          itemBuilder:
+                              (
+                                context,
+                                date,
+                                isSelected,
+                                isDisabled,
+                                isToday,
+                                onTap,
+                              ) {
+                                final now = DateTime.now();
+                                final today = DateTime(
+                                  now.year,
+                                  now.month,
+                                  now.day,
+                                );
+                                final currentDate = DateTime(
+                                  date.year,
+                                  date.month,
+                                  date.day,
+                                );
+                                if (currentDate.isBefore(today))
+                                  return const SizedBox.shrink();
 
-                              return AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 500),
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Container(
-                                      height: 55,
-                                      width: Get.width * 0.11,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        gradient: isSelected ? LinearGradient(
-                                          colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                        ) : null,
-                                        color: isSelected ? null : Colors.white,
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? Colors.transparent
-                                              : dateSelections.isNotEmpty
-                                              ? AppColors.primaryColor
-                                              : AppColors.blackColor.withAlpha(20),
-                                        ),
+                                final dayName = DateFormat('E').format(date);
+                                final dateString =
+                                    "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    onTap();
+                                    // Update both selectedDate and focusedMonth here
+                                    controller.selectedDate.value = date;
+                                    controller.focusedMonth.value = DateTime(
+                                      date.year,
+                                      date.month,
+                                      1,
+                                    );
+                                  },
+                                  child: Obx(() {
+                                    final dateSelections =
+                                        controller
+                                            .getSelectionsByDate()[dateString] ??
+                                        [];
+
+                                    return AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 500,
                                       ),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
                                         children: [
-                                          Text(
-                                            "${date.day}",
-                                            style: Get.textTheme.titleMedium!.copyWith(
-                                              fontSize: 18,
+                                          Container(
+                                            height: 55,
+                                            width: Get.width * 0.11,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              gradient: isSelected
+                                                  ? LinearGradient(
+                                                      colors: [
+                                                        Color(0xff1F41BB),
+                                                        Color(0xff0E1E55),
+                                                      ],
+                                                      begin:
+                                                          Alignment.topCenter,
+                                                      end: Alignment
+                                                          .bottomCenter,
+                                                    )
+                                                  : null,
                                               color: isSelected
-                                                  ? Colors.white
-                                                  : dateSelections.isNotEmpty
-                                                  ? AppColors.primaryColor
-                                                  : AppColors.textColor,
-                                            ),
-                                          ),
-                                          Transform.translate(
-                                            offset: const Offset(0, -2),
-                                            child: Text(
-                                              dayName,
-                                              style: Get.textTheme.bodySmall!.copyWith(
-                                                fontSize: 11,
+                                                  ? null
+                                                  : Colors.white,
+                                              border: Border.all(
                                                 color: isSelected
-                                                    ? Colors.white
+                                                    ? Colors.transparent
                                                     : dateSelections.isNotEmpty
                                                     ? AppColors.primaryColor
-                                                    : Colors.black,
+                                                    : AppColors.blackColor
+                                                          .withAlpha(20),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (dateSelections.isNotEmpty)
-                                      Positioned(
-                                        top: -3,
-                                        right: -2,
-                                        child: Container(
-                                          height: 16,
-                                          width: 16,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: AppColors.secondaryColor,
-                                          ),
-                                          child: Text(
-                                            "${dateSelections.length}",
-                                            style: const TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "${date.day}",
+                                                  style: Get
+                                                      .textTheme
+                                                      .titleMedium!
+                                                      .copyWith(
+                                                        fontSize: 18,
+                                                        color: isSelected
+                                                            ? Colors.white
+                                                            : dateSelections
+                                                                  .isNotEmpty
+                                                            ? AppColors
+                                                                  .primaryColor
+                                                            : AppColors
+                                                                  .textColor,
+                                                      ),
+                                                ),
+                                                Transform.translate(
+                                                  offset: const Offset(0, -2),
+                                                  child: Text(
+                                                    dayName,
+                                                    style: Get
+                                                        .textTheme
+                                                        .bodySmall!
+                                                        .copyWith(
+                                                          fontSize: 11,
+                                                          color: isSelected
+                                                              ? Colors.white
+                                                              : dateSelections
+                                                                    .isNotEmpty
+                                                              ? AppColors
+                                                                    .primaryColor
+                                                              : Colors.black,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ),
+                                          if (dateSelections.isNotEmpty)
+                                            Positioned(
+                                              top: -3,
+                                              right: -2,
+                                              child: Container(
+                                                height: 16,
+                                                width: 16,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color:
+                                                      AppColors.secondaryColor,
+                                                ),
+                                                child: Text(
+                                                  "${dateSelections.length}",
+                                                  style: const TextStyle(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
-                                  ],
-                                ),
-                              );
+                                    );
+                                  }),
+                                );
+                              },
 
-                            }),
-                          );
-                        },
-
-                        onDateChange: (date) async {
-                          controller.selectedDate.value = date;
-                          controller.focusedMonth.value =
-                              DateTime(date.year, date.month, 1);
-                          controller.isLoadingCourts.value = true;
-                          controller.resubscribeToSlotUpdates();
-                          await controller.fetchAllSlotPrices();
-                          await controller.getAvailableCourtsById(
-                            controller.argument.id!,
-                            showUnavailable: true,
-                          );
-                          controller.slots.refresh();
-                          controller.isLoadingCourts.value = false;
-                        },
+                          onDateChange: (date) async {
+                            controller.selectedDate.value = date;
+                            controller.focusedMonth.value = DateTime(
+                              date.year,
+                              date.month,
+                              1,
+                            );
+                            controller.isLoadingCourts.value = true;
+                            controller.resubscribeToSlotUpdates();
+                            await controller.fetchAllSlotPrices();
+                            await controller.getAvailableCourtsById(
+                              controller.argument.id!,
+                              showUnavailable: true,
+                            );
+                            controller.slots.refresh();
+                            controller.isLoadingCourts.value = false;
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ).paddingOnly(top: 10),
-            )),
+                  ],
+                ).paddingOnly(top: 10),
+              ),
+            ),
           ),
           Row(
             children: [
@@ -398,7 +473,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
                   ),
                 ),
-              ).paddingOnly(left: 10)
+              ).paddingOnly(left: 10),
             ],
           ).paddingOnly(top: 10),
         ],
@@ -448,18 +523,26 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                         duration: const Duration(milliseconds: 250),
                         height: 30,
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primaryColor : Colors.white,
+                          color: isSelected
+                              ? AppColors.primaryColor
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: isSelected ?Border.all(color: AppColors.primaryColor.withValues(alpha: 0.2)): Border.all(color: Colors.transparent),
+                          border: isSelected
+                              ? Border.all(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                )
+                              : Border.all(color: Colors.transparent),
 
                           boxShadow: isSelected
                               ? [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              offset: Offset(0, 0),
-                            )
-                          ]
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 0),
+                                  ),
+                                ]
                               : [],
                         ),
                         child: Center(
@@ -516,15 +599,17 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
 
       final slotsData = controller.slots.value;
 
-      if (slotsData == null || slotsData.data == null || slotsData.data!.isEmpty) {
+      if (slotsData == null ||
+          slotsData.data == null ||
+          slotsData.data!.isEmpty) {
         return const Center(child: Text("No courts available"));
       }
 
       final courts = slotsData.data!;
-      
+
       // Check if all courts have no slots (all past)
       final hasAnySlots = courts.any((court) => (court.slots ?? []).isNotEmpty);
-      
+
       if (!hasAnySlots) {
         return Center(
           child: Padding(
@@ -532,11 +617,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.schedule,
-                  size: 48,
-                  color: Colors.grey,
-                ),
+                Icon(Icons.schedule, size: 48, color: Colors.grey),
                 const SizedBox(height: 12),
                 Text(
                   "No slots available",
@@ -549,10 +630,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                 const SizedBox(height: 6),
                 Text(
                   "Try selecting a different date or time",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
               ],
             ),
@@ -598,10 +676,15 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
   }
 
   Widget _buildCourtSection(dynamic courtData, int index) {
-    final courtName = courtData.courtName ?? 'Unknown Court';
+    final courtName = (courtData.courtName ?? 'Unknown Court')
+        .replaceAll(RegExp(r'pickle\s*ball\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'padel\s*', caseSensitive: false), '')
+        .trim();
     final slotTimes = courtData.slots ?? [];
     final courtId = courtData.sId ?? '';
-    log("Building court section for: $courtName with ${slotTimes.length} slots");
+    log(
+      "Building court section for: $courtName with ${slotTimes.length} slots",
+    );
     // Initialize expanded state based on court count and index
     if (!courtExpandedStates.containsKey(courtId)) {
       final totalCourts = controller.slots.value?.data?.length ?? 0;
@@ -643,54 +726,100 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        courtName,
-                        style: Get.textTheme.titleSmall!.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryColor,
-                        ),
-                      ).paddingOnly(right: 5),
-                    ),
-                    Obx(() => GestureDetector(
-                      onTap: () {
-                        courtExpandedStates[courtId] = !courtExpandedStates[courtId]!;
-                      },
-                      child: AnimatedRotation(
-                        turns: courtExpandedStates[courtId]! ? 0.0 : 0.5,
-                        duration: const Duration(milliseconds: 300),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primaryColor
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              courtName,
+                              style: Get.textTheme.titleSmall!.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
                           ),
-                          child: Icon(
-                            Icons.keyboard_arrow_up,
-                            color: AppColors.whiteColor,
-                            size: 24,
+                          if (courtData.slotDuration != null &&
+                              courtData.slotDuration!.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primaryColor.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                courtData.slotDuration!
+                                    .map((d) => '${d}min')
+                                    .join('/'),
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Obx(
+                      () => GestureDetector(
+                        onTap: () {
+                          courtExpandedStates[courtId] =
+                              !courtExpandedStates[courtId]!;
+                        },
+                        child: AnimatedRotation(
+                          turns: courtExpandedStates[courtId]! ? 0.0 : 0.5,
+                          duration: const Duration(milliseconds: 300),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primaryColor,
+                            ),
+                            child: Icon(
+                              Icons.keyboard_arrow_up,
+                              color: AppColors.whiteColor,
+                              size: 24,
+                            ),
                           ),
                         ),
                       ),
-                    )),
+                    ),
                   ],
-                ).paddingOnly(bottom: courtExpandedStates[courtId]! ?0:10),
+                ).paddingOnly(bottom: courtExpandedStates[courtId]! ? 0 : 10),
               ],
             ),
           ),
 
           // Animated Slots Grid
-          Obx(() => AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            height: courtExpandedStates[courtId]! ? null : 0,
-            child: courtExpandedStates[courtId]!
-                ? Padding(
-                    padding: slotTimes.isNotEmpty
-                        ? const EdgeInsets.all(12)
-                        : const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    child: _buildSlotsGrid(slotTimes, courtId),
-                  )
-                : const SizedBox.shrink(),
-          )),
+          Obx(
+            () => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              height: courtExpandedStates[courtId]! ? null : 0,
+              child: courtExpandedStates[courtId]!
+                  ? Padding(
+                      padding: slotTimes.isNotEmpty
+                          ? const EdgeInsets.all(12)
+                          : const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 2,
+                            ),
+                      child: _buildSlotsGrid(slotTimes, courtId),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
         ],
       ),
     );
@@ -707,11 +836,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.schedule,
-                size: 28,
-                color: Colors.grey,
-              ),
+              Icon(Icons.schedule, size: 28, color: Colors.grey),
               const SizedBox(height: 6),
               Text(
                 "No slots available",
@@ -724,10 +849,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
               const SizedBox(height: 3),
               Text(
                 "Try selecting a different date",
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 11),
               ),
             ],
           ),
@@ -761,11 +883,38 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
     final isHalfSlot = supports30Min;
 
     // Separate past/unavailable from booked status
-    final isUnavailable = controller.isPastAndUnavailable(slot) ||
+    final isUnavailable =
+        controller.isPastAndUnavailable(slot) ||
         (slot.availabilityStatus?.toLowerCase() == 'maintenance') ||
         (slot.availabilityStatus?.toLowerCase() == 'weather conditions') ||
-        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability')||
+        (slot.availabilityStatus?.toLowerCase() == 'staff unavailability') ||
         (slot.availabilityStatus?.toLowerCase() == 'tournament');
+
+    // For merged 30-min slots, check each half's availability independently
+    final _unavailableStatuses = {
+      'maintenance',
+      'weather conditions',
+      'staff unavailability',
+      'tournament',
+    };
+    final isLeftHalfUnavailable = supports30Min
+        ? (controller.isPastAndUnavailable(slot) ||
+              _unavailableStatuses.contains(
+                slot.availabilityStatus?.toLowerCase(),
+              ))
+        : isUnavailable;
+    // For the right half: only use the right half's OWN availabilityStatus.
+    // Do NOT use isPastAndUnavailable(slot) here — that checks the merged slot's
+    // availabilityStatus which belongs to the LEFT half only.
+    final isRightHalfUnavailable = supports30Min
+        ? _unavailableStatuses.contains(
+            (slot.rightHalfAvailabilityStatus)?.toLowerCase(),
+          )
+        : isUnavailable;
+    // Whole tile is unavailable only when BOTH halves are unavailable (for 30-min slots)
+    final isWholeSlotUnavailable = supports30Min
+        ? (isLeftHalfUnavailable && isRightHalfUnavailable)
+        : isUnavailable;
 
     // Check for booked slots (for all durations) - these should be shown in light red
     final isLeftHalfBooked = controller.isLeftHalfBooked(slot);
@@ -776,59 +925,94 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
     // For slots that don't support 30min, if any half is booked, the whole slot is unavailable for selection
     final isSlotBookedForFullSlot = !supports30Min && isAnyHalfBooked;
 
+    // Duration incompatibility: slot cannot be selected because it conflicts with already-selected duration type
+    final isDurationIncompatible =
+        !isSelected &&
+        !isPartOfGroup &&
+        controller.isIncompatibleDuration(slot);
+
     const blueColor = Color(0xff053CFF);
     const radius = 5.0;
     final price = slot.amount ?? 0;
 
-
-
     return Builder(
       builder: (BuildContext slotContext) {
         return GestureDetector(
-          onTapDown: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot)
+          onTapDown:
+              (isWholeSlotUnavailable ||
+                  (supports30Min &&
+                      (isLeftHalfUnavailable || isRightHalfUnavailable)) ||
+                  isBothHalvesBooked ||
+                  isSlotBookedForFullSlot ||
+                  isDurationIncompatible)
               ? null
               : (details) {
-            if (supports30Min) {
-              // For slots that support 30-min pricing, detect left/right half tap
-              final RenderBox box = slotContext.findRenderObject() as RenderBox;
-              final localPosition = box.globalToLocal(details.globalPosition);
-              final isLeftHalf = localPosition.dx < box.size.width / 2;
+                  if (supports30Min) {
+                    // For slots that support 30-min pricing, detect left/right half tap
+                    final RenderBox box =
+                        slotContext.findRenderObject() as RenderBox;
+                    final localPosition = box.globalToLocal(
+                      details.globalPosition,
+                    );
+                    final isLeftHalf = localPosition.dx < box.size.width / 2;
 
-              // Check if the tapped half is already booked
-              if ((isLeftHalf && isLeftHalfBooked) || (!isLeftHalf && isRightHalfBooked)) {
-                CustomLogger.logMessage(msg: "This ${isLeftHalf ? 'left' : 'right'} half is already booked.", level: LogLevel.error);
-                return;
-              }
+                    // Check if the tapped half is already booked or unavailable
+                    if ((isLeftHalf &&
+                            (isLeftHalfBooked || isLeftHalfUnavailable)) ||
+                        (!isLeftHalf &&
+                            (isRightHalfBooked || isRightHalfUnavailable))) {
+                      CustomLogger.logMessage(
+                        msg:
+                            "This ${isLeftHalf ? 'left' : 'right'} half is already booked.",
+                        level: LogLevel.error,
+                      );
+                      return;
+                    }
 
-              controller.toggleSlotSelection(
-                slot,
-                courtId: courtId,
-                courtName: '',
-                isLeftHalf: isLeftHalf,
-              );
-            } else {
-              // For slots that don't support 30-min pricing or when selecting full slots
-              if (isAnyHalfBooked) {
-                CustomLogger.logMessage(msg: "This slot is already booked.d", level: LogLevel.error);
-                return;
-              }
+                    controller.toggleSlotSelection(
+                      slot,
+                      courtId: courtId,
+                      courtName: '',
+                      isLeftHalf: isLeftHalf,
+                    );
+                  } else {
+                    // For slots that don't support 30-min pricing or when selecting full slots
+                    if (isAnyHalfBooked) {
+                      CustomLogger.logMessage(
+                        msg: "This slot is already booked.d",
+                        level: LogLevel.error,
+                      );
+                      return;
+                    }
 
-              controller.toggleSlotSelection(
-                slot,
-                courtId: courtId,
-                courtName: '',
-              );
-            }
-          },
+                    controller.toggleSlotSelection(
+                      slot,
+                      courtId: courtId,
+                      courtName: '',
+                    );
+                  }
+                },
           child: ClipRRect(
             borderRadius: BorderRadius.circular(radius),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
-                color: (isUnavailable || isBothHalvesBooked || isSlotBookedForFullSlot) ? Colors.grey.shade100 : Colors.white,
+                color:
+                    (isWholeSlotUnavailable ||
+                        (supports30Min &&
+                            (isLeftHalfUnavailable ||
+                                isRightHalfUnavailable)) ||
+                        isBothHalvesBooked ||
+                        isSlotBookedForFullSlot ||
+                        isDurationIncompatible)
+                    ? Colors.grey.shade100
+                    : Colors.white,
                 border: Border.all(
-                  color: (isUnavailable || isAnyHalfBooked)
+                  color:
+                      (isWholeSlotUnavailable ||
+                          isAnyHalfBooked ||
+                          isDurationIncompatible)
                       ? Colors.transparent
                       : (isSelected || isPartOfGroup)
                       ? Colors.transparent
@@ -839,7 +1023,8 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
               child: Stack(
                 children: [
                   /// FULL GRADIENT FOR BOTH HALVES SELECTED (30MIN with 30min support)
-                  if (supports30Min && controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      controller.isBothHalvesSelected(slot, courtId))
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -868,10 +1053,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                       ),
                     ),
 
-
-
                   /// LEFT HALF GRADIENT FOR 30MIN LEFT SELECTION (ONLY WHEN RIGHT NOT SELECTED)
-                  if (supports30Min && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      _isLeftHalfSelected(slot, courtId) &&
+                      !controller.isBothHalvesSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
@@ -893,7 +1078,9 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// RIGHT HALF GRADIENT FOR 30MIN RIGHT SELECTION (ONLY WHEN LEFT NOT SELECTED)
-                  if (supports30Min && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      _isRightHalfSelected(slot, courtId) &&
+                      !controller.isBothHalvesSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
@@ -915,7 +1102,11 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// FULL BOOKED OVERLAY FOR 30MIN WHEN BOTH HALVES ARE BOOKED
-                  if (supports30Min && isHalfSlot && isBothHalvesBooked && !isSelected && !isPartOfGroup)
+                  if (supports30Min &&
+                      isHalfSlot &&
+                      isBothHalvesBooked &&
+                      !isSelected &&
+                      !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -926,7 +1117,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// FULL BOOKED OVERLAY FOR FULL SLOT SELECTIONS
-                  if ((!supports30Min || !isHalfSlot) && isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                  if ((!supports30Min || !isHalfSlot) &&
+                      isAnyHalfBooked &&
+                      !isSelected &&
+                      !isPartOfGroup)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -937,7 +1131,66 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// UNAVAILABLE OVERLAY (MAINTENANCE, WEATHER, STAFF UNAVAILABILITY)
-                  if (isUnavailable && !isAnyHalfBooked && !isSelected && !isPartOfGroup)
+                  /// Only shown when the WHOLE slot is unavailable (both halves for 30-min slots)
+                  if (isWholeSlotUnavailable &&
+                      !isAnyHalfBooked &&
+                      !isSelected &&
+                      !isPartOfGroup)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(radius),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
+                  /// LEFT HALF UNAVAILABLE OVERLAY (30MIN ONLY - WHEN ONLY LEFT HALF IS UNAVAILABLE)
+                  if (supports30Min &&
+                      isLeftHalfUnavailable &&
+                      !isRightHalfUnavailable &&
+                      !isLeftHalfBooked &&
+                      !_isLeftHalfSelected(slot, courtId))
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(radius),
+                            bottomLeft: Radius.circular(radius),
+                          ),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
+                  /// RIGHT HALF UNAVAILABLE OVERLAY (30MIN ONLY - WHEN ONLY RIGHT HALF IS UNAVAILABLE)
+                  if (supports30Min &&
+                      isRightHalfUnavailable &&
+                      !isLeftHalfUnavailable &&
+                      !isRightHalfBooked &&
+                      !_isRightHalfSelected(slot, courtId))
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 40,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(radius),
+                            bottomRight: Radius.circular(radius),
+                          ),
+                          color: AppColors.lightred,
+                        ),
+                      ),
+                    ),
+
+                  /// DURATION INCOMPATIBLE OVERLAY (90-min selected → 60/30-min slots turn red, and vice versa)
+                  if (isDurationIncompatible)
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -948,7 +1201,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// LEFT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY LEFT IS BOOKED)
-                  if (isHalfSlot && isLeftHalfBooked && !isRightHalfBooked && !_isLeftHalfSelected(slot, courtId))
+                  if (isHalfSlot &&
+                      isLeftHalfBooked &&
+                      !isRightHalfBooked &&
+                      !_isLeftHalfSelected(slot, courtId))
                     Positioned(
                       left: 0,
                       top: 0,
@@ -973,7 +1229,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// RIGHT HALF BOOKED OVERLAY (30MIN ONLY - WHEN ONLY RIGHT IS BOOKED)
-                  if (isHalfSlot && isRightHalfBooked && !isLeftHalfBooked && !_isRightHalfSelected(slot, courtId))
+                  if (isHalfSlot &&
+                      isRightHalfBooked &&
+                      !isLeftHalfBooked &&
+                      !_isRightHalfSelected(slot, courtId))
                     Positioned(
                       right: 0,
                       top: 0,
@@ -998,7 +1257,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// VERTICAL DIVIDER FOR 30MIN SLOTS THAT SUPPORT IT
-                  if (supports30Min && !isUnavailable && !isBothHalvesBooked && !isSlotBookedForFullSlot)
+                  if (supports30Min &&
+                      !isWholeSlotUnavailable &&
+                      !isBothHalvesBooked &&
+                      !isSlotBookedForFullSlot)
                     Positioned(
                       left: 40, // Center of the 80px wide slot tile
                       top: 0,
@@ -1009,7 +1271,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                       ),
                     ),
 
-                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE)
+                  /// LEFT STRIP (BLUE FOR AVAILABLE, RED FOR BOOKED/UNAVAILABLE/INCOMPATIBLE)
                   if (!isSelected && !isPartOfGroup)
                     Positioned.fill(
                       left: 0,
@@ -1018,7 +1280,13 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                         child: Container(
                           width: 4,
                           decoration: BoxDecoration(
-                            color: (isAnyHalfBooked || isUnavailable) ? Colors.red : blueColor,
+                            color:
+                                (isAnyHalfBooked ||
+                                    isWholeSlotUnavailable ||
+                                    isLeftHalfUnavailable ||
+                                    isDurationIncompatible)
+                                ? Colors.red
+                                : blueColor,
                             borderRadius: BorderRadius.only(
                               topLeft: Radius.circular(radius),
                               bottomLeft: Radius.circular(radius),
@@ -1029,7 +1297,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// SLOT CONTENT
-                  
+
                   /// TIME AND PRICE - WHITE TEXT FOR FULL SLOT SELECTIONS (NON-30MIN SLOTS)
                   if (!supports30Min && (isSelected || isPartOfGroup))
                     Center(
@@ -1058,7 +1326,8 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// TIME AND PRICE - WHITE TEXT FOR BOTH HALVES SELECTED
-                  if (supports30Min && controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1085,7 +1354,9 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// TIME AND PRICE - GRADIENT TEXT FOR LEFT HALF SELECTION
-                  if (supports30Min && _isLeftHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      _isLeftHalfSelected(slot, courtId) &&
+                      !controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1093,7 +1364,12 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                           ShaderMask(
                             shaderCallback: (bounds) {
                               return LinearGradient(
-                                colors: [Colors.white, Colors.white, Colors.black87, Colors.black87],
+                                colors: [
+                                  Colors.white,
+                                  Colors.white,
+                                  Colors.black87,
+                                  Colors.black87,
+                                ],
                                 stops: [0.0, 0.5, 0.5, 1.0],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -1112,7 +1388,12 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                             ShaderMask(
                               shaderCallback: (bounds) {
                                 return LinearGradient(
-                                  colors: [Colors.white70, Colors.white70, Colors.black54, Colors.black54],
+                                  colors: [
+                                    Colors.white70,
+                                    Colors.white70,
+                                    Colors.black54,
+                                    Colors.black54,
+                                  ],
                                   stops: [0.0, 0.5, 0.5, 1.0],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
@@ -1132,7 +1413,9 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                     ),
 
                   /// TIME AND PRICE - GRADIENT TEXT FOR RIGHT HALF SELECTION
-                  if (supports30Min && _isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId))
+                  if (supports30Min &&
+                      _isRightHalfSelected(slot, courtId) &&
+                      !controller.isBothHalvesSelected(slot, courtId))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1140,7 +1423,12 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                           ShaderMask(
                             shaderCallback: (bounds) {
                               return LinearGradient(
-                                colors: [Colors.black87, Colors.black87, Colors.white, Colors.white],
+                                colors: [
+                                  Colors.black87,
+                                  Colors.black87,
+                                  Colors.white,
+                                  Colors.white,
+                                ],
                                 stops: [0.0, 0.5, 0.5, 1.0],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -1159,7 +1447,12 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                             ShaderMask(
                               shaderCallback: (bounds) {
                                 return LinearGradient(
-                                  colors: [Colors.black54, Colors.black54, Colors.white70, Colors.white70],
+                                  colors: [
+                                    Colors.black54,
+                                    Colors.black54,
+                                    Colors.white70,
+                                    Colors.white70,
+                                  ],
                                   stops: [0.0, 0.5, 0.5, 1.0],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
@@ -1177,9 +1470,13 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                         ],
                       ),
                     ),
+
                   /// TIME AND PRICE - NORMAL FOR UNSELECTED SLOTS
                   if ((!supports30Min && !isSelected && !isPartOfGroup) ||
-                      (supports30Min && !_isLeftHalfSelected(slot, courtId) && !_isRightHalfSelected(slot, courtId) && !controller.isBothHalvesSelected(slot, courtId)))
+                      (supports30Min &&
+                          !_isLeftHalfSelected(slot, courtId) &&
+                          !_isRightHalfSelected(slot, courtId) &&
+                          !controller.isBothHalvesSelected(slot, courtId)))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1189,7 +1486,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: (isUnavailable || isAnyHalfBooked)
+                              color:
+                                  (isWholeSlotUnavailable ||
+                                      isAnyHalfBooked ||
+                                      isDurationIncompatible)
                                   ? Colors.grey.shade500
                                   : (isSelected || isPartOfGroup)
                                   ? Colors.white
@@ -1202,7 +1502,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: (isUnavailable || isAnyHalfBooked)
+                                color:
+                                    (isWholeSlotUnavailable ||
+                                        isAnyHalfBooked ||
+                                        isDurationIncompatible)
                                     ? Colors.grey.shade400
                                     : (isSelected || isPartOfGroup)
                                     ? Colors.white70
@@ -1236,7 +1539,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
               color: Colors.black12,
               blurRadius: 10,
               offset: Offset(0, -2),
-            )
+            ),
           ],
         ),
         child: CustomButton(
@@ -1253,13 +1556,10 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
             if (!hasSelections) {
               return;
             }
-            
+
             Get.bottomSheet(
               backgroundColor: Colors.transparent,
-              SizedBox(
-                height: Get.height,
-                child: PaymentOptionSheet(),
-              ),
+              SizedBox(height: Get.height, child: PaymentOptionSheet()),
               isScrollControlled: true,
             );
           },
@@ -1267,37 +1567,38 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
       );
     });
   }
-  
+
   bool _isPartOfSelectedGroup(dynamic slot, String courtId) {
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final supports30Min = controller.slotSupports30Min(slot);
-    
+
     if (supports30Min) {
       // For slots that support 30min pricing, only return true if BOTH halves are selected
       final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
       final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
-      return controller.multiDateSelections.containsKey(leftKey) && controller.multiDateSelections.containsKey(rightKey);
+      return controller.multiDateSelections.containsKey(leftKey) &&
+          controller.multiDateSelections.containsKey(rightKey);
     } else {
       final multiDateKey = '${dateString}_${courtId}_${slot.sId}';
       return controller.multiDateSelections.containsKey(multiDateKey);
     }
   }
-  
+
   /// Check if left half of a slot is selected (only for slots that support 30-minute pricing)
   bool _isLeftHalfSelected(dynamic slot, String courtId) {
     if (!controller.slotSupports30Min(slot)) return false;
-    
+
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final leftKey = '${dateString}_${courtId}_${slot.sId}_L';
     return controller.multiDateSelections.containsKey(leftKey);
   }
-  
+
   /// Check if right half of a slot is selected (only for slots that support 30-minute pricing)
   bool _isRightHalfSelected(dynamic slot, String courtId) {
     if (!controller.slotSupports30Min(slot)) return false;
-    
+
     final currentDate = controller.selectedDate.value ?? DateTime.now();
     final dateString = DateFormat('yyyy-MM-dd').format(currentDate);
     final rightKey = '${dateString}_${courtId}_${slot.sId}_R';
@@ -1305,9 +1606,9 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
   }
 }
 
-
 class PaymentOptionSheet extends StatelessWidget {
-  final CreateOpenMatchesController controller = Get.find<CreateOpenMatchesController>();
+  final CreateOpenMatchesController controller =
+      Get.find<CreateOpenMatchesController>();
   PaymentOptionSheet({super.key});
 
   @override
@@ -1319,48 +1620,48 @@ class PaymentOptionSheet extends StatelessWidget {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                color: Colors.black.withOpacity(0.35),
-              ),
+              child: Container(color: Colors.black.withOpacity(0.35)),
             ),
           ),
-      
+
           SafeArea(
             child: Column(
               children: [
                 SizedBox(height: 180),
-                Obx(() => Column(
-                  children: [
-                    _optionCard(
-                      index: 0,
-                      controller: controller,
-                      title: 'Pay for All Players',
-                      subtitle: 'INSTANT CONFIRMATION',
-                      image: Assets.imagesIcCash,
-                      optionIcon: Icons.check_circle,
-                      activeColor: Colors.green,
-                      points: const [
-                        'Confirm court booking immediately',
-                        'Instant refunds as your teammates pay their share',
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _optionCard(
-                      index: 1,
-                      controller: controller,
-                      title: 'Pay your share only',
-                      subtitle: 'FLEXIBLE BOOKING',
-                      image: Assets.imagesIcPerson,
-                      optionIcon: Icons.timelapse,
-                      activeColor: Colors.orange,
-                      points: const [
-                        'Matches remain unbooked until the 4-player minimum is reached.',
-                        "Fail to hit 4 players? You'll get an automatic refund.",
-                        "If your court is busy, we'll relocate your game or issue a full refund.",
-                      ],
-                    ),
-                  ],
-                )),
+                Obx(
+                  () => Column(
+                    children: [
+                      _optionCard(
+                        index: 0,
+                        controller: controller,
+                        title: 'Pay for All Players',
+                        subtitle: 'INSTANT CONFIRMATION',
+                        image: Assets.imagesIcCash,
+                        optionIcon: Icons.check_circle,
+                        activeColor: Colors.green,
+                        points: const [
+                          'Confirm court booking immediately',
+                          'Instant refunds as your teammates pay their share',
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _optionCard(
+                        index: 1,
+                        controller: controller,
+                        title: 'Pay your share only',
+                        subtitle: 'FLEXIBLE BOOKING',
+                        image: Assets.imagesIcPerson,
+                        optionIcon: Icons.timelapse,
+                        activeColor: Colors.orange,
+                        points: const [
+                          'Matches remain unbooked until the 4-player minimum is reached.',
+                          "Fail to hit 4 players? You'll get an automatic refund.",
+                          "If your court is busy, we'll relocate your game or issue a full refund.",
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
                 _secureInfo().paddingSymmetric(vertical: 14),
                 Row(
                   children: [
@@ -1377,8 +1678,9 @@ class PaymentOptionSheet extends StatelessWidget {
                         ),
                         child: Text(
                           "Cancel",
-                          style: Get.textTheme.labelLarge!
-                              .copyWith(color: Colors.white),
+                          style: Get.textTheme.labelLarge!.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -1396,8 +1698,9 @@ class PaymentOptionSheet extends StatelessWidget {
                         ),
                         child: Text(
                           "Next",
-                          style: Get.textTheme.labelLarge!
-                              .copyWith(color: Colors.white),
+                          style: Get.textTheme.labelLarge!.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -1420,7 +1723,11 @@ class PaymentOptionSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Image.asset(Assets.imagesIcPrivacy, scale: 4.5, color: Colors.white70),
+          Image.asset(
+            Assets.imagesIcPrivacy,
+            scale: 4.5,
+            color: Colors.white70,
+          ),
           SizedBox(width: 4),
           Expanded(
             child: Text(
@@ -1470,16 +1777,22 @@ class PaymentOptionSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600)),
-                      Text(subtitle,
-                          style: TextStyle(
-                              color: activeColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: activeColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1503,7 +1816,10 @@ class PaymentOptionSheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         e,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],

@@ -6,6 +6,8 @@ import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
+  private var notificationTapData: [AnyHashable: Any]? = nil
+  
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -32,6 +34,12 @@ import UserNotifications
 
     // Set Firebase Messaging delegate
     Messaging.messaging().delegate = self
+    
+    // Check if app was launched from notification
+    if let notification = launchOptions?[.remoteNotification] as? [AnyHashable: Any] {
+      print("📱 App launched from notification: \(notification)")
+      notificationTapData = notification
+    }
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -59,6 +67,8 @@ extension AppDelegate {
                               willPresent notification: UNNotification,
                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
     let userInfo = notification.request.content.userInfo
+    
+    print("📱 iOS Foreground notification received: \(userInfo)")
 
     // Show notification even when app is in foreground
     if #available(iOS 14.0, *) {
@@ -77,9 +87,37 @@ extension AppDelegate {
                               didReceive response: UNNotificationResponse,
                               withCompletionHandler completionHandler: @escaping () -> Void) {
     let userInfo = response.notification.request.content.userInfo
+    
+    print("📱 iOS Notification tapped!")
+    print("📱 User Info: \(userInfo)")
+    
+    // Extract notification data
+    var payloadString = ""
+    if let data = userInfo as? [String: Any] {
+      let payloadParts = data.compactMap { key, value -> String? in
+        // Skip gcm and other internal keys
+        if key.hasPrefix("gcm") || key.hasPrefix("google") {
+          return nil
+        }
+        return "\(key)=\(value)"
+      }
+      payloadString = payloadParts.joined(separator: "|")
+      print("📱 Created payload string: \(payloadString)")
+    }
+    
+    // Store for later use
+    notificationTapData = userInfo
 
-    // Forward to Flutter
+    // Forward to Flutter via Firebase Messaging
     Messaging.messaging().appDidReceiveMessage(userInfo)
+    
+    // Also try to call Flutter method channel
+    if let controller = window?.rootViewController as? FlutterViewController {
+      let channel = FlutterMethodChannel(name: "notification_tap_channel",
+                                        binaryMessenger: controller.binaryMessenger)
+      channel.invokeMethod("onNotificationTap", arguments: payloadString)
+      print("📱 Invoked Flutter method channel with payload")
+    }
 
     completionHandler()
   }

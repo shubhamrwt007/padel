@@ -34,8 +34,8 @@ class ScoreBoardScreen extends StatelessWidget {
         bool allPlayersAdded =
             teamAPlayers.length == 2 && teamBPlayers.length == 2;
 
-        // Hide button if all players added or in shuffle mode
-        if (allPlayersAdded || controller.isShuffleMode.value) {
+        // Hide button if all players added, in shuffle mode, or match time has started
+        if (allPlayersAdded || controller.isShuffleMode.value || controller.isWithinMatchTime.value) {
           return const SizedBox.shrink();
         }
 

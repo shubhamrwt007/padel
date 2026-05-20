@@ -387,7 +387,7 @@ class MainHomeController extends GetxController {
         filter: 'allMatches',
         type: 'upcoming',
         matchDate: formattedDate,
-        locationId: locationId,
+        // locationId: locationId,
         categoryId: selectedCategoryId.value.isNotEmpty ? selectedCategoryId.value : null,
       );
 

@@ -289,32 +289,52 @@ class _WalletScreenState extends State<WalletScreen> {
                     return Center(child: LoadingWidget(color: AppColors.primaryColor,));
                   }
                   if (controller.transactionList.isEmpty) {
-                    return Center(child: Text('No transactions found'));
+                    return RefreshIndicator(
+                      color: AppColors.primaryColor,
+                      onRefresh: () async {
+                        await controller.fetchTransaction();
+                        await controller.fetchWallet();
+                      },
+                      child: SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: Get.height * 0.4,
+                          child: Center(child: Text('No transactions found')),
+                        ),
+                      ),
+                    );
                   }
-                  return ListView.separated(
-                    physics: ClampingScrollPhysics(),
-                    controller: _scrollController,
-                    itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
-                    padding: EdgeInsets.zero,
-                    separatorBuilder: (_, index) => index < controller.transactionList.length ? fadeDivider(): SizedBox.shrink(),
-                    itemBuilder: (_, index) {
-                      if (index >= controller.transactionList.length) {
-                        return Obx(() => controller.isLoadingMore.value
-                          ? Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
-                            )
-                          : SizedBox.shrink());
-                      }
-                      final transaction = controller.transactionList[index];
-                      final isCredit = transaction.type == 'credit';
-                      return _transactionTile(
-                        title: transaction.description ?? 'Transaction',
-                        amount: '${formatAmount(transaction.amount ?? 0)} Cr',
-                        isCredit: isCredit,
-                        date: transaction.createdAt ?? '',
-                      );
+                  return RefreshIndicator(
+                    color: AppColors.primaryColor,
+                    onRefresh: () async {
+                      await controller.fetchTransaction();
+                      await controller.fetchWallet();
                     },
+                    child: ListView.separated(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      controller: _scrollController,
+                      itemCount: controller.transactionList.length + (controller.hasMoreTransactions.value ? 1 : 0),
+                      padding: EdgeInsets.zero,
+                      separatorBuilder: (_, index) => index < controller.transactionList.length ? fadeDivider(): SizedBox.shrink(),
+                      itemBuilder: (_, index) {
+                        if (index >= controller.transactionList.length) {
+                          return Obx(() => controller.isLoadingMore.value
+                            ? Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(child: LoadingWidget(color: AppColors.primaryColor,)),
+                              )
+                            : SizedBox.shrink());
+                        }
+                        final transaction = controller.transactionList[index];
+                        final isCredit = transaction.type == 'credit';
+                        return _transactionTile(
+                          title: transaction.description ?? 'Transaction',
+                          amount: '${formatAmount(transaction.amount ?? 0)} Cr',
+                          isCredit: isCredit,
+                          date: transaction.createdAt ?? '',
+                        );
+                      },
+                    ),
                   );
                 }),
               ),

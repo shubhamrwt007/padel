@@ -381,7 +381,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   }
 
   void refreshBookings() {
-    fetchBookings();
+    // Get current tab index and fetch data for that specific tab
+    final currentIndex = tabController.index;
+    String type = "upcoming";
+    if (currentIndex == 1) type = "in-progress";
+    if (currentIndex == 2) type = "completed";
+    
+    fetchBookings(type);
   }
 
   Future<void> updateNewCourtBooking({
