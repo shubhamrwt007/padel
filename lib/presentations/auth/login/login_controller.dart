@@ -150,7 +150,6 @@ class LoginController extends GetxController {
         Get.delete<HomeController>(force: true);
         Get.delete<MainHomeController>(force: true);
         Get.delete<ProfileController>(force: true);
-        
         Get.offAllNamed(RoutesName.bottomNav);
       }
     }on DioException catch (e) {

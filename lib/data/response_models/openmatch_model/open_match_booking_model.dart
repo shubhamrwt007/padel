@@ -401,18 +401,48 @@ class TeamA {
   UserId? userId;
   String? joinedAt;
   String? sId;
+  bool? isTemp;
+  String? name;
+  String? tempPlayerId;
+  String? addedBy;
+  dynamic? amountPaid;
+  bool? paidStatus;
+
+  TeamA({
+    this.userId,
+    this.joinedAt,
+    this.sId,
+    this.isTemp,
+    this.name,
+    this.tempPlayerId,
+    this.addedBy,
+    this.amountPaid,
+    this.paidStatus,
+  });
 
   TeamA.fromJson(Map<String, dynamic> json) {
     userId =
         json['userId'] != null ? UserId.fromJson(json['userId']) : null;
     joinedAt = json['joinedAt'];
     sId = json['_id'];
+    isTemp = json['isTemp'];
+    name = json['name'];
+    tempPlayerId = json['tempPlayerId'];
+    addedBy = json['addedBy'];
+    amountPaid = json['amountPaid'];
+    paidStatus = json['paidStatus'];
   }
 
   Map<String, dynamic> toJson() => {
         'userId': userId?.toJson(),
         'joinedAt': joinedAt,
         '_id': sId,
+        'isTemp': isTemp,
+        'name': name,
+        'tempPlayerId': tempPlayerId,
+        'addedBy': addedBy,
+        'amountPaid': amountPaid,
+        'paidStatus': paidStatus,
       };
 }
 
@@ -420,18 +450,48 @@ class TeamB {
   UserId? userId;
   String? joinedAt;
   String? sId;
+  bool? isTemp;
+  String? name;
+  String? tempPlayerId;
+  String? addedBy;
+  dynamic? amountPaid;
+  bool? paidStatus;
+
+  TeamB({
+    this.userId,
+    this.joinedAt,
+    this.sId,
+    this.isTemp,
+    this.name,
+    this.tempPlayerId,
+    this.addedBy,
+    this.amountPaid,
+    this.paidStatus,
+  });
 
   TeamB.fromJson(Map<String, dynamic> json) {
     userId =
         json['userId'] != null ? UserId.fromJson(json['userId']) : null;
     joinedAt = json['joinedAt'];
     sId = json['_id'];
+    isTemp = json['isTemp'];
+    name = json['name'];
+    tempPlayerId = json['tempPlayerId'];
+    addedBy = json['addedBy'];
+    amountPaid = json['amountPaid'];
+    paidStatus = json['paidStatus'];
   }
 
   Map<String, dynamic> toJson() => {
         'userId': userId?.toJson(),
         'joinedAt': joinedAt,
         '_id': sId,
+        'isTemp': isTemp,
+        'name': name,
+        'tempPlayerId': tempPlayerId,
+        'addedBy': addedBy,
+        'amountPaid': amountPaid,
+        'paidStatus': paidStatus,
       };
 }
 
