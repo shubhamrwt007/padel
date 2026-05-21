@@ -303,13 +303,19 @@ class TeamA {
   UserId? userId;
   String? joinedAt;
   String? sId;
+  bool? isTemp;
+  String? name;
+  String? tempPlayerId;
 
-  TeamA({this.userId, this.joinedAt, this.sId});
+  TeamA({this.userId, this.joinedAt, this.sId, this.isTemp, this.name, this.tempPlayerId});
 
   TeamA.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] != null ? UserId.fromJson(json['userId']) : null;
     joinedAt = MatchData._asJoinedString(json['joinedAt']);
     sId = json['_id'];
+    isTemp = json['isTemp'];
+    name = json['name'];
+    tempPlayerId = json['tempPlayerId'];
   }
 
   Map<String, dynamic> toJson() {
@@ -319,6 +325,9 @@ class TeamA {
     }
     map['joinedAt'] = joinedAt;
     map['_id'] = sId;
+    map['isTemp'] = isTemp;
+    map['name'] = name;
+    map['tempPlayerId'] = tempPlayerId;
     return map;
   }
 }
@@ -327,13 +336,19 @@ class TeamB {
   UserId? userId;
   String? joinedAt;
   String? sId;
+  bool? isTemp;
+  String? name;
+  String? tempPlayerId;
 
-  TeamB({this.userId, this.joinedAt, this.sId});
+  TeamB({this.userId, this.joinedAt, this.sId, this.isTemp, this.name, this.tempPlayerId});
 
   TeamB.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] != null ? UserId.fromJson(json['userId']) : null;
     joinedAt = MatchData._asJoinedString(json['joinedAt']);
     sId = json['_id'];
+    isTemp = json['isTemp'];
+    name = json['name'];
+    tempPlayerId = json['tempPlayerId'];
   }
 
   Map<String, dynamic> toJson() {
@@ -343,6 +358,9 @@ class TeamB {
     }
     map['joinedAt'] = joinedAt;
     map['_id'] = sId;
+    map['isTemp'] = isTemp;
+    map['name'] = name;
+    map['tempPlayerId'] = tempPlayerId;
     return map;
   }
 }

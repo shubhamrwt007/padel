@@ -898,14 +898,31 @@ class BookingTeamPlayer {
   dynamic amountPaid;
   String? joinedAt;
   String? sId;
+  String? name;
+  bool? isTemp;
+  String? tempPlayerId;
+  String? addedBy;
 
-  BookingTeamPlayer({this.userId, this.joinedAt, this.sId,this.amountPaid});
+  BookingTeamPlayer({
+    this.userId,
+    this.joinedAt,
+    this.sId,
+    this.amountPaid,
+    this.name,
+    this.isTemp,
+    this.tempPlayerId,
+    this.addedBy,
+  });
 
   BookingTeamPlayer.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] != null ? PlayerId.fromJson(json['userId']) : null;
     joinedAt = json['joinedAt']?.toString();
     sId = json['_id']?.toString();
     amountPaid = json['amountPaid'];
+    name = json['name']?.toString();
+    isTemp = json['isTemp'];
+    tempPlayerId = json['tempPlayerId']?.toString();
+    addedBy = json['addedBy']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -916,6 +933,10 @@ class BookingTeamPlayer {
     data['joinedAt'] = joinedAt;
     data['_id'] = sId;
     data['amountPaid'] = amountPaid;
+    data['name'] = name;
+    data['isTemp'] = isTemp;
+    data['tempPlayerId'] = tempPlayerId;
+    data['addedBy'] = addedBy;
     return data;
   }
 }

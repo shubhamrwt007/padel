@@ -549,6 +549,16 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     // TEAM A
     final teamAPlayers = (data.teamA ?? []).take(2).map((p) {
+      if (p.isTemp == true) {
+        return _buildFilledPlayer(
+          "",
+          p.name ?? "Temp Player",
+          "-",
+          index,
+          "",
+          matchData: data,
+        );
+      }
       return _buildFilledPlayer(
         p.userId?.profilePic ?? "",
         p.userId?.name ?? "",
@@ -567,6 +577,16 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
     // TEAM B
     final teamBPlayers = (data.teamB ?? []).take(2).map((p) {
+      if (p.isTemp == true) {
+        return _buildFilledPlayer(
+          "",
+          p.name ?? "Temp Player",
+          "-",
+          index,
+          "",
+          matchData: data,
+        );
+      }
       return _buildFilledPlayer(
         p.userId?.profilePic ?? "",
         p.userId?.name ?? "",
@@ -673,15 +693,33 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                       if (_isLoginUserInMatch(data) && controller.getTotalPlayersCount(data) > 1)
                         GestureDetector(
                             onTap: (){
-                              final teamAData = (data.teamA ?? []).map((p) => {
-                                'userId': p.userId?.sId ?? '',
-                                'name': p.userId?.name ?? '',
-                                'lastName': p.userId?.lastName ?? '',
+                              final teamAData = (data.teamA ?? []).map((p) {
+                                if (p.isTemp == true) {
+                                  return {
+                                    'userId': p.tempPlayerId ?? p.sId ?? '',
+                                    'name': p.name ?? 'Temp Player',
+                                    'lastName': '',
+                                  };
+                                }
+                                return {
+                                  'userId': p.userId?.sId ?? '',
+                                  'name': p.userId?.name ?? '',
+                                  'lastName': p.userId?.lastName ?? '',
+                                };
                               }).toList();
-                              final teamBData = (data.teamB ?? []).map((p) => {
-                                'userId': p.userId?.sId ?? '',
-                                'name': p.userId?.name ?? '',
-                                'lastName': p.userId?.lastName ?? '',
+                              final teamBData = (data.teamB ?? []).map((p) {
+                                if (p.isTemp == true) {
+                                  return {
+                                    'userId': p.tempPlayerId ?? p.sId ?? '',
+                                    'name': p.name ?? 'Temp Player',
+                                    'lastName': '',
+                                  };
+                                }
+                                return {
+                                  'userId': p.userId?.sId ?? '',
+                                  'name': p.userId?.name ?? '',
+                                  'lastName': p.userId?.lastName ?? '',
+                                };
                               }).toList();
 
                               Get.toNamed(RoutesName.chat, arguments: {
@@ -1023,8 +1061,8 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
   void _showPlayerDetailsDialog(OpenMatchBookingData matchData) {
     final userId = storage.read('userId');
-    final hasPlayers = (matchData.teamA ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false)) ||
-        (matchData.teamB ?? []).any((p) => p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false));
+    final hasPlayers = (matchData.teamA ?? []).any((p) => p.isTemp == true || (p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false))) ||
+        (matchData.teamB ?? []).any((p) => p.isTemp == true || (p.userId?.sId != null && p.userId?.sId != userId && (p.userId?.name?.isNotEmpty ?? false)));
 
     if (!hasPlayers) return;
 
@@ -1064,7 +1102,48 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
 
   List<Widget> _buildPlayers(List<dynamic> players) {
     final userId = storage.read('userId');
-    return players.where((p) => p.userId?.sId != userId).map((p) {
+    return players.where((p) => p.isTemp == true || p.userId?.sId != userId).map((p) {
+      if (p.isTemp == true) {
+        final name = p.name ?? 'Temporary Player';
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.secondaryColor,
+                radius: 28,
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xffeaf0ff),
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'T',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: Get.textTheme.labelLarge),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Temporary Player',
+                          style: Get.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       final name = [
         p.userId?.name,
         p.userId?.lastName,
@@ -1101,20 +1180,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                         : null,
                   ),
                 ),
-                // Positioned(
-                //   bottom: -2,
-                //   right: 0,
-                //   left: 0,
-                //   child: CircleAvatar(
-                //     radius: 10,
-                //     backgroundColor: Colors.green,
-                //     child: Text(
-                //       'A',
-                //       style: const TextStyle(
-                //           fontSize: 10, color: Colors.white),
-                //     ),
-                //   ),
-                // ),
               ],
             ),
 
@@ -1133,8 +1198,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                       Text("⭐ ", style: Get.textTheme.bodySmall
                           ?.copyWith(fontWeight: FontWeight.w500),),
                       Container(
-                        // height: 25,
-                        // width: 55,
                         padding: EdgeInsets.symmetric(vertical: 4,horizontal: 5),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
@@ -1158,24 +1221,6 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // SizedBox(
-                  //   height: 30,
-                  //   child: ElevatedButton.icon(
-                  //     onPressed: () {},
-                  //     icon: const Icon(Icons.sync, size: 16,color: Colors.white,),
-                  //     label: const Text('Replace',style: TextStyle(color: Colors.white),),
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: Colors.green,
-                  //       padding:
-                  //       const EdgeInsets.symmetric(horizontal: 12),
-                  //       textStyle:
-                  //       const TextStyle(fontSize: 12),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                 ],
               ),
             ),

@@ -557,10 +557,16 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final teamPlayers = team == "teamA" ? booking.teamA : booking.teamB;
     if (teamPlayers != null && teamPlayers.isNotEmpty) {
       for (var teamPlayer in teamPlayers) {
-        final userId = teamPlayer.userId;
-        final profilePic = userId?.profilePic ?? '';
-        final name = userId?.name ?? 'N/A';
-        avatars.add(_buildCompletedAvatar(profilePic, name));
+        if (teamPlayer.isTemp == true) {
+          final profilePic = '';
+          final name = teamPlayer.name ?? 'Temp Player';
+          avatars.add(_buildCompletedAvatar(profilePic, name));
+        } else {
+          final userId = teamPlayer.userId;
+          final profilePic = userId?.profilePic ?? '';
+          final name = userId?.name ?? 'N/A';
+          avatars.add(_buildCompletedAvatar(profilePic, name));
+        }
       }
     }
     
@@ -943,10 +949,16 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     final allTeamPlayers = [...teamAPlayers, ...teamBPlayers];
     
     for (var teamPlayer in allTeamPlayers) {
-      final userId = teamPlayer.userId;
-      final name = userId?.name ?? 'N/A';
-      final profilePic = userId?.profilePic ?? '';
-      avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', avatars.length, booking: booking));
+      if (teamPlayer.isTemp == true) {
+        final name = teamPlayer.name ?? 'Temp Player';
+        final profilePic = '';
+        avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', avatars.length, booking: booking));
+      } else {
+        final userId = teamPlayer.userId;
+        final name = userId?.name ?? 'N/A';
+        final profilePic = userId?.profilePic ?? '';
+        avatars.add(_buildFilledPlayerFromScoreboard(profilePic, name, '', booking.bookingType ?? '', avatars.length, booking: booking));
+      }
     }
     
     // Fallback to openMatchId if no players found
@@ -1512,24 +1524,42 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
 
     // Process Team A players
     for (var teamPlayer in teamAPlayers) {
-      final userId = teamPlayer.userId;
-      final playerData = {
-        'userId': userId?.sId ?? '',
-        'name': userId?.name ?? '',
-        'lastName': '',
-      };
-      teamAData.add(playerData);
+      if (teamPlayer.isTemp == true) {
+        final playerData = {
+          'userId': teamPlayer.tempPlayerId ?? '',
+          'name': teamPlayer.name ?? 'Temp Player',
+          'lastName': '',
+        };
+        teamAData.add(playerData);
+      } else {
+        final userId = teamPlayer.userId;
+        final playerData = {
+          'userId': userId?.sId ?? '',
+          'name': userId?.name ?? '',
+          'lastName': '',
+        };
+        teamAData.add(playerData);
+      }
     }
 
     // Process Team B players
     for (var teamPlayer in teamBPlayers) {
-      final userId = teamPlayer.userId;
-      final playerData = {
-        'userId': userId?.sId ?? '',
-        'name': userId?.name ?? '',
-        'lastName': '',
-      };
-      teamBData.add(playerData);
+      if (teamPlayer.isTemp == true) {
+        final playerData = {
+          'userId': teamPlayer.tempPlayerId ?? '',
+          'name': teamPlayer.name ?? 'Temp Player',
+          'lastName': '',
+        };
+        teamBData.add(playerData);
+      } else {
+        final userId = teamPlayer.userId;
+        final playerData = {
+          'userId': userId?.sId ?? '',
+          'name': userId?.name ?? '',
+          'lastName': '',
+        };
+        teamBData.add(playerData);
+      }
     }
 
     Get.toNamed(RoutesName.chat, arguments: {
@@ -1650,161 +1680,279 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
     
     // Add Team A players
     for (var teamPlayer in teamAPlayers) {
-      final userId = teamPlayer.userId;
-      final name = userId?.name ?? '';
-      // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
-      final xpPoints = userId?.xpPoints??0.0;
-      // final countryCode = '+91';
-      final profilePic = userId?.profilePic ?? '';
-      final gender = userId?.gender ??'';
-      final level = userId?.level?.split(' ').first ??'';
-      playerWidgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.secondaryColor,
-                radius: 28,
-                child: CircleAvatar(
-                  radius: 26,
-                  backgroundImage: (profilePic.isNotEmpty)
-                      ? CachedNetworkImageProvider(profilePic)
-                      : null,
-                  child: (profilePic.isEmpty)
-                      ? Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  )
-                      : null,
+      if (teamPlayer.isTemp == true) {
+        final name = teamPlayer.name ?? 'Temp Player';
+        playerWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.secondaryColor,
+                  radius: 28,
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.grey.shade200,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: Get.textTheme.labelLarge),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          '⭐ ',
-                          style: Get.textTheme.bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500),
-                        ),
-                        Container(
-                          // height: 25,
-                          // width: 55,
-                          padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: AppColors.secondaryColor,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            '${formatAmount(xpPoints)} XP',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(name, style: Get.textTheme.labelLarge),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade400,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Temp',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          ' | $gender | $level',
-                          style: Get.textTheme.bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Temporary Player',
+                        style: Get.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        final userId = teamPlayer.userId;
+        final name = userId?.name ?? '';
+        // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+        final xpPoints = userId?.xpPoints??0.0;
+        // final countryCode = '+91';
+        final profilePic = userId?.profilePic ?? '';
+        final gender = userId?.gender ??'';
+        final level = userId?.level?.split(' ').first ??'';
+        playerWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.secondaryColor,
+                  radius: 28,
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundImage: (profilePic.isNotEmpty)
+                        ? CachedNetworkImageProvider(profilePic)
+                        : null,
+                    child: (profilePic.isEmpty)
+                        ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name, style: Get.textTheme.labelLarge),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '⭐ ',
+                            style: Get.textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          Container(
+                            // height: 25,
+                            // width: 55,
+                            padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              '${formatAmount(xpPoints)} XP',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            ' | $gender | $level',
+                            style: Get.textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
     }
     
     // Add Team B players
     for (var teamPlayer in teamBPlayers) {
-      final userId = teamPlayer.userId;
-      final name = userId?.name ?? '';
-      // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
-      final xpPoints = userId?.xpPoints??0.0;
-      // final countryCode = '+91';
-      final profilePic = userId?.profilePic ?? '';
-      final gender = userId?.gender ?? "";
-      final level = userId?.level ?? "";
-
-      playerWidgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.secondaryColor,
-                radius: 28,
-                child: CircleAvatar(
-                  radius: 26,
-                  backgroundImage: (profilePic.isNotEmpty)
-                      ? CachedNetworkImageProvider(profilePic)
-                      : null,
-                  child: (profilePic.isEmpty)
-                      ? Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  )
-                      : null,
+      if (teamPlayer.isTemp == true) {
+        final name = teamPlayer.name ?? 'Temp Player';
+        playerWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.secondaryColor,
+                  radius: 28,
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.grey.shade200,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: Get.textTheme.labelLarge),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          '⭐',
-                          style: Get.textTheme.bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500),
-                        ),
-                        Container(
-                          // height: 25,
-                          // width: 55,
-                          padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: AppColors.secondaryColor,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            '${formatAmount(xpPoints)} XP',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(name, style: Get.textTheme.labelLarge),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade400,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Temp',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          ' | $gender | $level',
-                          style: Get.textTheme.bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Temporary Player',
+                        style: Get.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500, color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        final userId = teamPlayer.userId;
+        final name = userId?.name ?? '';
+        // final phoneNumber = userId?.phoneNumber?.toString() ?? '';
+        final xpPoints = userId?.xpPoints??0.0;
+        // final countryCode = '+91';
+        final profilePic = userId?.profilePic ?? '';
+        final gender = userId?.gender ?? "";
+        final level = userId?.level ?? "";
+
+        playerWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.secondaryColor,
+                  radius: 28,
+                  child: CircleAvatar(
+                    radius: 26,
+                    backgroundImage: (profilePic.isNotEmpty)
+                        ? CachedNetworkImageProvider(profilePic)
+                        : null,
+                    child: (profilePic.isEmpty)
+                        ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name, style: Get.textTheme.labelLarge),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '⭐',
+                            style: Get.textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          Container(
+                            // height: 25,
+                            // width: 55,
+                            padding: EdgeInsets.symmetric(vertical: 2,horizontal: 5),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              '${formatAmount(xpPoints)} XP',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            ' | $gender | $level',
+                            style: Get.textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
     }
     
     return playerWidgets;

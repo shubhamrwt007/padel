@@ -666,8 +666,12 @@ class OpenMatchForAllCourtController extends GetxController {
         teams.add({
           "name": "Team A",
           "players": matchData.teamA!.map((player) => {
-            "name": "${player.userId?.name ?? ''} ${player.userId?.lastName ?? ''}".trim(),
-            "playerId": player.userId?.sId ?? "",
+            "name": player.isTemp == true
+                ? (player.name ?? '')
+                : "${player.userId?.name ?? ''} ${player.userId?.lastName ?? ''}".trim(),
+            "playerId": player.isTemp == true
+                ? (player.tempPlayerId ?? player.sId ?? "")
+                : (player.userId?.sId ?? ""),
           }).toList(),
         });
       } else {
@@ -682,8 +686,12 @@ class OpenMatchForAllCourtController extends GetxController {
         teams.add({
           "name": "Team B",
           "players": matchData.teamB!.map((player) => {
-            "name": "${player.userId?.name ?? ''} ${player.userId?.lastName ?? ''}".trim(),
-            "playerId": player.userId?.sId ?? "",
+            "name": player.isTemp == true
+                ? (player.name ?? '')
+                : "${player.userId?.name ?? ''} ${player.userId?.lastName ?? ''}".trim(),
+            "playerId": player.isTemp == true
+                ? (player.tempPlayerId ?? player.sId ?? "")
+                : (player.userId?.sId ?? ""),
           }).toList(),
         });
       } else {
