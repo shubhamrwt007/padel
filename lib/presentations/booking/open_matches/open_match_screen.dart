@@ -1900,7 +1900,7 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
               // ),
               const SizedBox(height: 12),
               SizedBox(
-                height: Get.height * 0.3,
+                height: Get.height * 0.25,
                 child: _playersList(),
               ),
               const SizedBox(height: 12),

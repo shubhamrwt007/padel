@@ -300,7 +300,7 @@ class _AppPlayersBottomSheetScoreState extends State<AppPlayersBottomSheetScore>
                   ).paddingOnly(top: 5)),
             const SizedBox(height: 12),
             SizedBox(
-              height: Get.height * 0.3,
+              height: Get.height * 0.25,
               child: _playersList(widget.bookingId ?? ""),
             ),
             const SizedBox(height: 12),

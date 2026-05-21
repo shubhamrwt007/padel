@@ -1893,8 +1893,7 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
+    final maxHeight = screenHeight - topPadding - 60;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -1970,7 +1969,7 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
                   ).paddingOnly(top: 5)),
             const SizedBox(height: 12),
             SizedBox(
-              height: Get.height * 0.3,
+              height: Get.height * 0.25,
               child: _playersList(),
             ),
             const SizedBox(height: 12),
