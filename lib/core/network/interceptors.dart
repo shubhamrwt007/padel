@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
+
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/services/network/session_expired_screen.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -25,14 +25,11 @@ class LoggerInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final token = _getToken();
-    _highlightLog("🔴 ==============================");
-    _highlightLog("🔴 ERROR TOKEN: $token");
-    _highlightLog("🔴 ==============================");
+    log("🔴 ERROR TOKEN: $token", name: 'Interceptor');
 
     // Handle 401 Unauthorized (Token expired)
     if (err.response?.statusCode == 401) {
       final token = storage.read('token');
-      print("DDDDDDDDDDDDDDDDDDDDDDDDDD------------$token");
       if (token != null && token.isNotEmpty) {
         log("Token expired - redirecting to session expired page");
         await _handleTokenExpiration();
@@ -71,9 +68,7 @@ class LoggerInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     final token = _getToken();
-    _highlightLog("🟡 ==============================");
-    _highlightLog("🟡 REQUEST TOKEN: $token}");
-    _highlightLog("🟡 ==============================");
+    log("🟡 REQUEST TOKEN: $token", name: 'Interceptor');
 
     final isConnected = await _connectivityService.checkConnectivity();
     if (!isConnected) {
@@ -93,20 +88,10 @@ class LoggerInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) async {
     final token = _getToken();
-    _highlightLog("🟢 ==============================");
-    _highlightLog("🟢 RESPONSE TOKEN: $token");
-    _highlightLog("🟢 ==============================");
+    log("🟢 RESPONSE TOKEN: $token", name: 'Interceptor');
 
     _prettyLogger.onResponse(response, handler);
   }
-  void _highlightLog(String message) {
-    const yellow = '\x1B[33m';
-    const green = '\x1B[32m';
-    const red = '\x1B[31m';
-    const cyan = '\x1B[36m';
-    const reset = '\x1B[0m';
 
-    print('$cyan$message$reset');
-  }
 
 }
