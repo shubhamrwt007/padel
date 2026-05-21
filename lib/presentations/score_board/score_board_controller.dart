@@ -303,14 +303,27 @@ class ScoreBoardController extends GetxController {
             final playersList = <Map<String, dynamic>>[];
             if (t.players != null) {
               for (var p in t.players!) {
+                final bool isTemp = p.isTemp ?? false;
+                String playerName = "";
+                if (isTemp) {
+                  playerName = p.name ?? "Temporary Player";
+                } else {
+                  playerName = p.playerId?.name ?? p.name ?? "Unknown";
+                }
+
                 String fullLevel = p.playerId?.level ?? p.playerId?.playerLevel ?? "";
                 String levelCode = fullLevel.contains(' – ') ? fullLevel.split(' – ')[0] : fullLevel;
+                if (isTemp && levelCode.isEmpty) {
+                  levelCode = "Temp";
+                }
+
                 playersList.add({
-                  "playerId": p.playerId?.sId ?? "",
-                  "name": p.playerId?.name ?? "Unknown",
-                  "lastName": p.playerId?.lastName ?? "",
-                  "pic": p.playerId?.profilePic ?? "",
+                  "playerId": isTemp ? (p.tempPlayerId ?? p.sId ?? "") : (p.playerId?.sId ?? ""),
+                  "name": playerName,
+                  "lastName": isTemp ? "" : (p.playerId?.lastName ?? ""),
+                  "pic": isTemp ? "" : (p.playerId?.profilePic ?? ""),
                   "level": levelCode,
+                  "isTemp": isTemp,
                 });
               }
             }
@@ -375,10 +388,13 @@ class ScoreBoardController extends GetxController {
                 
                 if (team.players != null) {
                   for (var player in team.players!) {
+                    final bool isTemp = player.isTemp ?? false;
+                    final playerName = isTemp ? (player.name ?? "Temporary Player") : (player.playerId?.name ?? player.name ?? 'Unknown');
                     teamData['players'].add({
-                      'playerId': player.playerId?.sId ?? '',
-                      'name': player.playerId?.name ?? 'Unknown',
-                      'pic': player.playerId?.profilePic ?? '',
+                      'playerId': isTemp ? (player.tempPlayerId ?? player.sId ?? '') : (player.playerId?.sId ?? ''),
+                      'name': playerName,
+                      'pic': isTemp ? '' : (player.playerId?.profilePic ?? ''),
+                      'isTemp': isTemp,
                     });
                   }
                 }
@@ -1060,14 +1076,27 @@ class ScoreBoardController extends GetxController {
             final playersList = <Map<String, dynamic>>[];
             if (t.players != null) {
               for (var p in t.players!) {
+                final bool isTemp = p.isTemp ?? false;
+                String playerName = "";
+                if (isTemp) {
+                  playerName = p.name ?? "Temporary Player";
+                } else {
+                  playerName = p.playerId?.name ?? p.name ?? "Unknown";
+                }
+
                 String fullLevel = p.playerId?.level ?? p.playerId?.playerLevel ?? "";
                 String levelCode = fullLevel.contains(' – ') ? fullLevel.split(' – ')[0] : fullLevel;
+                if (isTemp && levelCode.isEmpty) {
+                  levelCode = "Temp";
+                }
+
                 playersList.add({
-                  "playerId": p.playerId?.sId ?? "",
-                  "name": p.playerId?.name ?? "Unknown",
-                  "lastName": p.playerId?.lastName ?? "",
-                  "pic": p.playerId?.profilePic ?? "",
+                  "playerId": isTemp ? (p.tempPlayerId ?? p.sId ?? "") : (p.playerId?.sId ?? ""),
+                  "name": playerName,
+                  "lastName": isTemp ? "" : (p.playerId?.lastName ?? ""),
+                  "pic": isTemp ? "" : (p.playerId?.profilePic ?? ""),
                   "level": levelCode,
+                  "isTemp": isTemp,
                 });
               }
             }
