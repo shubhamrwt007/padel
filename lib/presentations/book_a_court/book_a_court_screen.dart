@@ -158,7 +158,7 @@ class BookACourtScreen extends StatelessWidget {
                   children: [
                     Text(
                       controller.showMainGrid.value
-                          ? 'Prefered Slots'
+                          ? 'Prefer Slots'
                           : 'Selected Slots',
                       style: Get.textTheme.labelLarge,
                     ),
@@ -179,39 +179,39 @@ class BookACourtScreen extends StatelessWidget {
                     if (controller.showMainGrid.value)
                       Row(
                         children: [
-                          Obx(() {
-                            final is30 = controller.is30Slots.value;
-
-                            return Transform.scale(
-                              scale: 0.7,
-                              child: ToggleButtons(
-                                isSelected: [is30, !is30],
-                                borderRadius: BorderRadius.circular(25),
-                                constraints: const BoxConstraints(
-                                  minHeight: 15,
-                                  minWidth: 60,
-                                ),
-                                fillColor: Colors.transparent, // important
-                                selectedColor: Colors.white,
-                                color: Colors.black,
-                                textStyle: const TextStyle(fontSize: 12),
-                                onPressed: (index) {
-                                  controller.is30Slots.value = index == 0;
-                                  controller.updateDurationFromToggle();
-                                },
-                                children: [
-                                  _buildGradientToggleChild(
-                                    text: "Half",
-                                    isSelected: is30,
-                                  ),
-                                  _buildGradientToggleChild(
-                                    text: "Full",
-                                    isSelected: !is30,
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
+                          // Obx(() {
+                          //   final is30 = controller.is30Slots.value;
+                          //
+                          //   return Transform.scale(
+                          //     scale: 0.7,
+                          //     child: ToggleButtons(
+                          //       isSelected: [is30, !is30],
+                          //       borderRadius: BorderRadius.circular(25),
+                          //       constraints: const BoxConstraints(
+                          //         minHeight: 15,
+                          //         minWidth: 60,
+                          //       ),
+                          //       fillColor: Colors.transparent, // important
+                          //       selectedColor: Colors.white,
+                          //       color: Colors.black,
+                          //       textStyle: const TextStyle(fontSize: 12),
+                          //       onPressed: (index) {
+                          //         controller.is30Slots.value = index == 0;
+                          //         controller.updateDurationFromToggle();
+                          //       },
+                          //       children: [
+                          //         _buildGradientToggleChild(
+                          //           text: "Half",
+                          //           isSelected: is30,
+                          //         ),
+                          //         _buildGradientToggleChild(
+                          //           text: "Full",
+                          //           isSelected: !is30,
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   );
+                          // }),
                           GestureDetector(
                             onTap: () {
                               controller.toggleSlotsCollapse();
@@ -262,7 +262,7 @@ class BookACourtScreen extends StatelessWidget {
                         );
                       },
                   child: controller.showMainGrid.value
-                      ? _buildAllCourtsWithSlots()
+                      ? _buildAllCourtsWithSlots().paddingOnly(top: 10)
                       : _buildSelectedSlotsList().paddingOnly(top: 10),
                 ),
               ),
