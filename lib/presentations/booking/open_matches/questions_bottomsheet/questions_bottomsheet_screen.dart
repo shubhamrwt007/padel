@@ -158,7 +158,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                         //   isLoading: controller.isProcessing.value,
                         // )),
                         // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
-                        CustomButton(
+                        Obx(() => CustomButton(
                           width: Get.width * 0.81,
                           height: 55,
                           gradientColors: [Colors.white, Colors.white, Colors.white],
@@ -170,7 +170,7 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                             color: AppColors.blackColor,
                             size: 45,
                           ).paddingOnly(right: 40)
-                              : Obx(() => Text(
+                              : Text(
                             controller.requiresPayment.value
                                 ? "Pay Now"
                                 : "Pay with Wallet",
@@ -178,8 +178,8 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
                               color: AppColors.secondaryColor,
                               fontSize: 16,
                             ),
-                          )).paddingOnly(right: 40),
-                        )
+                          ).paddingOnly(right: 40),
+                        ))
                       ],
                     ),
                   ),

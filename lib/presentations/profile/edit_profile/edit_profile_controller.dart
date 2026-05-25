@@ -22,6 +22,7 @@ class EditProfileController extends GetxController{
   Rx<XFile?> profileImage = Rx<XFile?>(null);
   RxBool isProfileUpdated = false.obs;
     RxString profileImageUrl = ''.obs;
+  RxInt selectedStatTab = 0.obs; // 0 for Padel, 1 for Pickleball
   void setValues() {
     final model = profileController.profileModel.value;
     nameController.text = model?.response?.name ?? '';

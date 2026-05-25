@@ -62,13 +62,24 @@ class ProfileResponse {
   final int? openMatchCount;
   final int? americanMatchCount;
   final int? rank;
-  final dynamic? winRatio;
+  final dynamic winRatio;
   final int? currentWinStreak;
   final int? currentLoseStreak;
 
   final dynamic xpPoints;
   final List<String>? fcmTokens;
   final List<dynamic>? recentMatches;
+
+  // PICKLEBALL FIELDS
+  final int? pickleballCurrentLoseStreak;
+  final int? pickleballCurrentWinStreak;
+  final int? pickleballMatchesPlayed;
+  final List<dynamic>? pickleballRecentMatches;
+  final int? pickleballTier;
+  final String? pickleballTierLabel;
+  final dynamic pickleballWinRatio;
+  final int? pickleballWins;
+  final dynamic pickleballXpPoints;
 
   final bool? isActive;
   final bool? isDeleted;
@@ -103,6 +114,18 @@ class ProfileResponse {
     this.xpPoints,
     this.fcmTokens,
     this.recentMatches,
+
+    // PICKLEBALL
+    this.pickleballCurrentLoseStreak,
+    this.pickleballCurrentWinStreak,
+    this.pickleballMatchesPlayed,
+    this.pickleballRecentMatches,
+    this.pickleballTier,
+    this.pickleballTierLabel,
+    this.pickleballWinRatio,
+    this.pickleballWins,
+    this.pickleballXpPoints,
+
     this.isActive,
     this.isDeleted,
     this.createdAt,
@@ -133,26 +156,68 @@ class ProfileResponse {
         phoneNumber: _parseIntSafely(json['phoneNumber']),
         dob: json['dob']?.toString(),
         gender: json['gender']?.toString(),
+
         location: json['location'] != null
             ? Location.fromJson(json['location'] as Map<String, dynamic>)
             : null,
+
         city: json['city'] != null
             ? City.fromJson(json['city'] as Map<String, dynamic>)
             : null,
-        totalMatchesPlayed: _parseIntSafely(json['totalMatchesPlayed']),
+
+        totalMatchesPlayed:
+        _parseIntSafely(json['totalMatchesPlayed']),
         totalWins: _parseIntSafely(json['totalWins']),
-        simpleMatchCount: _parseIntSafely(json['simpleMatchCount']),
-        openMatchCount: _parseIntSafely(json['openMatchCount']),
-        americanMatchCount: _parseIntSafely(json['americanMatchCount']),
+        simpleMatchCount:
+        _parseIntSafely(json['simpleMatchCount']),
+        openMatchCount:
+        _parseIntSafely(json['openMatchCount']),
+        americanMatchCount:
+        _parseIntSafely(json['americanMatchCount']),
         rank: _parseIntSafely(json['rank']),
-        winRatio: _parseIntSafely(json['winRatio']),
-        currentWinStreak: _parseIntSafely(json['currentWinStreak']),
-        currentLoseStreak: _parseIntSafely(json['currentLoseStreak']),
+        winRatio: json['winRatio'],
+        currentWinStreak:
+        _parseIntSafely(json['currentWinStreak']),
+        currentLoseStreak:
+        _parseIntSafely(json['currentLoseStreak']),
+
         xpPoints: json['xpPoints'],
+
         fcmTokens: (json['fcmTokens'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList(),
-        recentMatches: json['recentMatches'] as List<dynamic>?,
+
+        recentMatches:
+        json['recentMatches'] as List<dynamic>?,
+
+        // PICKLEBALL
+        pickleballCurrentLoseStreak:
+        _parseIntSafely(json['pickleballCurrentLoseStreak']),
+
+        pickleballCurrentWinStreak:
+        _parseIntSafely(json['pickleballCurrentWinStreak']),
+
+        pickleballMatchesPlayed:
+        _parseIntSafely(json['pickleballMatchesPlayed']),
+
+        pickleballRecentMatches:
+        json['pickleballRecentMatches'] as List<dynamic>?,
+
+        pickleballTier:
+        _parseIntSafely(json['pickleballTier']),
+
+        pickleballTierLabel:
+        json['pickleballTierLabel']?.toString(),
+
+        pickleballWinRatio:
+        json['pickleballWinRatio'],
+
+        pickleballWins:
+        _parseIntSafely(json['pickleballWins']),
+
+        pickleballXpPoints:
+        json['pickleballXpPoints'],
+
         isActive: json['isActive'] as bool?,
         isDeleted: json['isDeleted'] as bool?,
         createdAt: json['createdAt']?.toString(),
@@ -193,6 +258,22 @@ class ProfileResponse {
     'xpPoints': xpPoints,
     'fcmTokens': fcmTokens,
     'recentMatches': recentMatches,
+
+    // PICKLEBALL
+    'pickleballCurrentLoseStreak':
+    pickleballCurrentLoseStreak,
+    'pickleballCurrentWinStreak':
+    pickleballCurrentWinStreak,
+    'pickleballMatchesPlayed':
+    pickleballMatchesPlayed,
+    'pickleballRecentMatches':
+    pickleballRecentMatches,
+    'pickleballTier': pickleballTier,
+    'pickleballTierLabel': pickleballTierLabel,
+    'pickleballWinRatio': pickleballWinRatio,
+    'pickleballWins': pickleballWins,
+    'pickleballXpPoints': pickleballXpPoints,
+
     'isActive': isActive,
     'isDeleted': isDeleted,
     'createdAt': createdAt,

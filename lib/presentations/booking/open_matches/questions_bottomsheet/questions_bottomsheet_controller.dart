@@ -431,9 +431,16 @@ class QuestionsBottomsheetController extends GetxController {
     }
 
     if (requiresPayment.value == false) {
-      // If payment is required, first create match with isCalculation: false
-      await _createInitialMatch(isCalculation: false);
-      showBookingSuccessDialog();
+      isProcessing.value = true;
+      try {
+        // If payment is not required (wallet payment), first create match with isCalculation: false
+        await _createInitialMatch(isCalculation: false);
+        showBookingSuccessDialog();
+      } catch (e) {
+        log("Error in wallet payment: $e");
+      } finally {
+        isProcessing.value = false;
+      }
     } else {
       // If no payment required, directly initiate match creation
       await initiateMatchCreation();
