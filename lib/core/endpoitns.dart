@@ -2,7 +2,7 @@ class AppEndpoints {
   AppEndpoints._();
 
   /// -----------------------Staging URL--------------------------------------------
-  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";p
+  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
   static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
   /// -----------------------New Live URL------------------------------------------
   // static const String base = "https://apimobile.swootapp.com/api/";
