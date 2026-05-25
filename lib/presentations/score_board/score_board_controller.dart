@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
@@ -740,7 +741,7 @@ class ScoreBoardController extends GetxController {
 
       repository.onMatchCompleted((data) {
         print('🏆 ========== MATCH COMPLETED EVENT RECEIVED ==========');
-        print('🏆 Full data: $data');
+        log('🏆 Full data: $data');
         print('🏆 Data type: ${data.runtimeType}');
         
         // Check if this is a swap during match scenario
@@ -778,45 +779,52 @@ class ScoreBoardController extends GetxController {
             print('   Team B Wins: ${preShuffleTeamBWins.value}');
             print('   User in Team A (before swap): ${preShuffleUserInTeamA.value}');
             print('   User in Team B (before swap): ${preShuffleUserInTeamB.value}');
+          }
+
+          // Check for xpChanges array (Runs for both swap and normal match completions)
+          if (data.containsKey('xpChanges') && data['xpChanges'] is List) {
+            final xpChanges = data['xpChanges'] as List;
+            print('💰 XP CHANGES ARRAY FOUND with ${xpChanges.length} items');
             
-            // Check for xpChanges array
-            if (data.containsKey('xpChanges') && data['xpChanges'] is List) {
-              final xpChanges = data['xpChanges'] as List;
-              print('💰 XP CHANGES ARRAY FOUND with ${xpChanges.length} items');
+            // Find current user's XP change
+            final currentUserId = profileController.profileModel.value?.response?.sId ?? '';
+            print('👤 Current User ID: $currentUserId');
+            
+            bool foundUser = false;
+            for (var change in xpChanges) {
+              final rawPlayerId = change['playerId'];
+              String playerId = '';
+              if (rawPlayerId != null) {
+                playerId = rawPlayerId.toString().replaceAll('ObjectId("', '').replaceAll('")', '').replaceAll("'", '');
+              }
+              final xpChange = (change['xpChange'] ?? 0).toDouble();
+              final result = change['result']?.toString() ?? '';
               
-              // Find current user's XP change
-              final currentUserId = profileController.profileModel.value?.response?.sId ?? '';
-              print('👤 Current User ID: $currentUserId');
+              print('💰 Player: $playerId, XP: $xpChange, Result: $result');
               
-              bool foundUser = false;
-              for (var change in xpChanges) {
-                final playerId = change['playerId']?.toString() ?? '';
-                final xpChange = (change['xpChange'] ?? 0).toDouble();
-                final result = change['result']?.toString() ?? '';
-                
-                print('💰 Player: $playerId, XP: $xpChange, Result: $result');
-                
-                if (playerId == currentUserId) {
-                  foundUser = true;
-                  print('✅ FOUND CURRENT USER XP!');
-                  if (result == 'W') {
-                    xpEarned.value = xpChange.abs().toInt();
-                    print('✅ Set xpEarned to: ${xpEarned.value}');
-                  } else if (result == 'L') {
-                    xpLost.value = xpChange.abs().toInt();
-                    print('✅ Set xpLost to: ${xpLost.value}');
-                  }
-                  break;
+              if (playerId == currentUserId) {
+                foundUser = true;
+                print('✅ FOUND CURRENT USER XP!');
+                final double currentXpValue = (change['currentXP'] ?? 0).toDouble();
+                currentXP.value = currentXpValue.toInt();
+                print('✅ Set currentXP to: ${currentXP.value}');
+                if (result == 'W') {
+                  xpEarned.value = xpChange.abs().toInt();
+                  print('✅ Set xpEarned to: ${xpEarned.value}');
+                } else if (result == 'L') {
+                  xpLost.value = xpChange.abs().toInt();
+                  print('✅ Set xpLost to: ${xpLost.value}');
                 }
+                break;
               }
-              
-              if (!foundUser) {
-                print('⚠️ CURRENT USER NOT FOUND IN XP CHANGES!');
-              }
-            } else {
-              print('⚠️ xpChanges array NOT FOUND in socket data');
-              print('⚠️ Available keys: ${data.keys.toList()}');
             }
+            
+            if (!foundUser) {
+              print('⚠️ CURRENT USER NOT FOUND IN XP CHANGES!');
+            }
+          } else {
+            print('⚠️ xpChanges array NOT FOUND in socket data');
+            print('⚠️ Available keys: ${data.keys.toList()}');
           }
         } else {
           print('⚠️ Data is null or not a Map');
@@ -1050,7 +1058,7 @@ class ScoreBoardController extends GetxController {
   }
 
   void _startPeriodicUpdates() {
-    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 20), (timer) async {
       await _fetchScoreBoardForStream();
     });
   }
@@ -1328,12 +1336,54 @@ class ScoreBoardController extends GetxController {
       if (response.success == true) {
         isCompleted.value = true;
         
-        // Capture XP values from API response
-        if (response.data != null) {
-          xpEarned.value = response.data!.xpEarned ?? 0;
-          xpLost.value = response.data!.xpLost ?? 0;
+        // Capture XP values from API response's root xpChanges list
+        if (response.xpChanges != null && response.xpChanges is List) {
+          final xpChangesList = response.xpChanges as List;
+          final currentUserId = profileController.profileModel.value?.response?.sId ?? '';
           CustomLogger.logMessage(
-            msg: 'XP values from API - Earned: ${xpEarned.value}, Lost: ${xpLost.value}',
+            msg: '💰 XP CHANGES FOUND IN API RESPONSE: ${xpChangesList.length} items',
+            level: LogLevel.info,
+          );
+          for (var change in xpChangesList) {
+            if (change is Map) {
+              final rawPlayerId = change['playerId'];
+              String playerId = '';
+              if (rawPlayerId != null) {
+                playerId = rawPlayerId.toString().replaceAll('ObjectId("', '').replaceAll('")', '').replaceAll("'", '');
+              }
+              if (playerId == currentUserId) {
+                final xpChange = (change['xpChange'] ?? 0).toDouble();
+                final result = change['result']?.toString() ?? '';
+                final double currentXpValue = (change['currentXP'] ?? 0).toDouble();
+                
+                currentXP.value = currentXpValue.toInt();
+                if (result == 'W') {
+                  xpEarned.value = xpChange.abs().toInt();
+                } else if (result == 'L') {
+                  xpLost.value = xpChange.abs().toInt();
+                }
+                CustomLogger.logMessage(
+                  msg: '✅ Set values from API - currentXP: ${currentXP.value}, xpEarned: ${xpEarned.value}, xpLost: ${xpLost.value}',
+                  level: LogLevel.info,
+                );
+                break;
+              }
+            }
+          }
+        }
+
+        // Fallback capture XP values from API response data if not already set by root changes list
+        if (response.data != null) {
+          final apiXpEarned = response.data!.xpEarned ?? 0;
+          final apiXpLost = response.data!.xpLost ?? 0;
+          if (apiXpEarned > 0 && xpEarned.value == 0) {
+            xpEarned.value = apiXpEarned;
+          }
+          if (apiXpLost > 0 && xpLost.value == 0) {
+            xpLost.value = apiXpLost;
+          }
+          CustomLogger.logMessage(
+            msg: 'XP values from API Data - Earned: $apiXpEarned, Lost: $apiXpLost (current values: ${xpEarned.value}, ${xpLost.value})',
             level: LogLevel.info,
           );
         }
@@ -2213,7 +2263,7 @@ class ScoreBoardController extends GetxController {
     }
 
     final message = '''
-🎾 *Padel Scoreboard*
+🎾 *Scoreboard*
 
 📍 *Club:* $clubNameValue
 🏟️ *Court:* $courtNameValue
@@ -2238,7 +2288,7 @@ Great game! 🏓
 
     await Share.share(
       message,
-      subject: "Check out this Padel scoreboard!",
+      subject: "Check out this scoreboard!",
       sharePositionOrigin: (shareRect.width == 0 || shareRect.height == 0)
           ? const Rect.fromLTWH(0, 0, 1, 1)
           : shareRect,

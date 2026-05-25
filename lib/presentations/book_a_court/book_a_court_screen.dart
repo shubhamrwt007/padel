@@ -443,15 +443,7 @@ class BookACourtScreen extends StatelessWidget {
 
       // Show loading state
       if (controller.isLoadingCourtsByDuration.value) {
-        return const SizedBox(
-          height: 100,
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: LoadingWidget(color: AppColors.primaryColor),
-            ),
-          ),
-        );
+        return const CourtSlotsShimmer();
       }
 
       final courtsByDuration = controller.courtsByDuration.value;

@@ -2,19 +2,22 @@ class UpdateScoreBoardModel {
   bool? success;
   String? message;
   Data? data;
+  List<dynamic>? xpChanges;
 
-  UpdateScoreBoardModel({this.success, this.message, this.data});
+  UpdateScoreBoardModel({this.success, this.message, this.data, this.xpChanges});
 
   UpdateScoreBoardModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     message = json['message'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
+    xpChanges = json['xpChanges'];
   }
 
   Map<String, dynamic> toJson() => {
         'success': success,
         'message': message,
         if (data != null) 'data': data!.toJson(),
+        if (xpChanges != null) 'xpChanges': xpChanges,
       };
 }
 

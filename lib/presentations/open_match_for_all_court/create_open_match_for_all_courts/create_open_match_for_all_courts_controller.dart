@@ -2280,6 +2280,7 @@ class CreateOpenMatchForAllCourtsController extends GetxController {
   }
 
   Future<void> fetchCourtsByDuration() async {
+    isLoadingCourtsByDuration.value = true;
     final dateString = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
     final durationValue = is30Slots.value ? '30' : '60';
 
