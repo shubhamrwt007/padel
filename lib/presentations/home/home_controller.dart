@@ -546,6 +546,7 @@ class HomeController extends GetxController {
   RxBool isCreatingScoreboard = false.obs;
   RxString loadingBookingId = ''.obs;
   Future<void> createScoreBoard({required String bookingId}) async {
+    print("Create ScoreBoard-------");
     try {
       isCheckingScoreboard.value = true;
       isCreatingScoreboard.value = true;

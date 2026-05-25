@@ -1299,9 +1299,11 @@ class MainHomeScreen extends StatelessWidget {
     final isOngoing = controller.homeController.isBookingOngoing(b);
 
     return GestureDetector(
-      onTap: controller.selectedSportTab.value == 1
-          ? null
-          : () {
+      onTap:
+      // controller.selectedSportTab.value == 1
+      //     ? (){print("Pickle ball booking clicked ");}
+      //     :
+          () {
               if (!controller.homeController.isCheckingScoreboard.value) {
                 final id = b.bookingType == "openMatch"
                     ? b.openMatchId?.sId

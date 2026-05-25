@@ -4,6 +4,7 @@ import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/repositories/leaderBoard_repo/leaderBoard_repository.dart';
 import 'package:padel_mobile/data/response_models/leaderBoard/get_leaderBoard_model.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
+import '../main_home_page/main_home_controller.dart';
 
 class Player {
   final String name;
@@ -16,6 +17,7 @@ class Player {
 
 class LeaderboardController extends GetxController {
   final LeaderboardRepository _repository = LeaderboardRepository();
+  final categoryId = ''.obs;
   
   // Loading state
   final isLoading = false.obs;
@@ -46,7 +48,7 @@ class LeaderboardController extends GetxController {
   var selectedYear = ''.obs;
   var showStateFilters = false.obs;
   var selectedCity = 'All Location'.obs;
-  var selectedGenderFilter = 'all'.obs;
+  var selectedGenderFilter = 'Male'.obs;
 
   final List<String> indianCities = [
     'All Location',
@@ -94,9 +96,15 @@ class LeaderboardController extends GetxController {
       
       final userId = storage.read("userId");
       final type = selectedGenderFilter.value;
-      print('🔍 Fetching leaderboard for userId: $userId, page: $currentPage, type: $type');
+      print('🔍 Fetching leaderboard for userId: $userId, page: $currentPage, type: $type, categoryId: ${categoryId.value}');
       
-      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10, type: type);
+      final response = await _repository.getLeaderBoard(
+        id: userId,
+        page: currentPage,
+        limit: 10,
+        type: type,
+        categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+      );
       print('🔍 API Response success: ${response.success}');
       
       if (response.success == true && response.data != null) {
@@ -123,7 +131,13 @@ class LeaderboardController extends GetxController {
       
       final userId = storage.read("userId");
       final type = selectedGenderFilter.value;
-      final response = await _repository.getLeaderBoard(id: userId, page: currentPage, limit: 10, type: type);
+      final response = await _repository.getLeaderBoard(
+        id: userId,
+        page: currentPage,
+        limit: 10,
+        type: type,
+        categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
+      );
       
       if (response.success == true && response.data != null) {
         _convertApiDataToFormat(response.data!, isLoadMore: true);
@@ -207,20 +221,62 @@ class LeaderboardController extends GetxController {
   }
 
   String? get userGender {
-    final profileCtrl = Get.find<ProfileController>();
-    return profileCtrl.profileModel.value?.response?.gender;
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      return mainHomeController.profileController.profileModel.value?.response?.gender;
+    } catch (e) {
+      try {
+        final profileCtrl = Get.find<ProfileController>();
+        return profileCtrl.profileModel.value?.response?.gender;
+      } catch (_) {
+        return null;
+      }
+    }
   }
 
   List<String> get genderFilterOptions {
-    if (userGender?.toLowerCase() == 'other') {
-      return ['all', 'Male', 'Female', 'Other'];
-    }
-    return ['all', 'Male', 'Female'];
+    return ['Male', 'Female'];
   }
 
   @override
   void onInit() {
     super.onInit();
+    
+    // Get categoryId and default gender from MainHomeController
+    try {
+      final mainHomeController = Get.find<MainHomeController>();
+      categoryId.value = mainHomeController.selectedCategoryId.value;
+
+      // Helper function to update gender filter based on profile
+      void updateGenderFromProfile() {
+        final gender = mainHomeController.profileController.profileModel.value?.response?.gender?.toLowerCase();
+        print("USER GENDER ------$gender");
+        if (gender == 'female') {
+          selectedGenderFilter.value = 'Female';
+        } else if (gender == 'male') {
+          selectedGenderFilter.value = 'Male';
+        }
+      }
+
+      // Set default gender filter based on user's gender initially
+      updateGenderFromProfile();
+
+      // Listen to profile updates (in case it was null initially on login)
+      ever(mainHomeController.profileController.profileModel, (_) {
+        updateGenderFromProfile();
+      });
+
+      // Listen to category changes
+      ever(mainHomeController.selectedCategoryId, (String newCategoryId) {
+        if (categoryId.value != newCategoryId) {
+          categoryId.value = newCategoryId;
+          fetchLeaderboardData(isRefresh: true);
+        }
+      });
+    } catch (e) {
+      print("Error getting MainHomeController or setting initial values: $e");
+    }
+
     fetchLeaderboardData();
     
     // Listen to gender filter changes

@@ -335,13 +335,8 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Available Courts', style: Get.textTheme.labelLarge),
-            const SizedBox(height: 100),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: LoadingWidget(color: AppColors.primaryColor),
-              ),
-            ),
+            const SizedBox(height: 16),
+            const CourtSlotsShimmer(),
           ],
         );
       }
