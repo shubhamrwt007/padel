@@ -1058,7 +1058,7 @@ class ScoreBoardController extends GetxController {
   }
 
   void _startPeriodicUpdates() {
-    _periodicTimer = Timer.periodic(const Duration(seconds: 20), (timer) async {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       await _fetchScoreBoardForStream();
     });
   }
