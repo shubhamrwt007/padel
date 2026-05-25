@@ -869,77 +869,9 @@ class HomeContent extends StatelessWidget {
       }
       
       if (controller.isIframeUrl.value && controller.iframeUrl.value.isNotEmpty) {
-        // Create HTML with iframe and JavaScript to handle clicks
-        final htmlContent = '''
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body, html {
-                  margin: 0;
-                  padding: 0;
-                  height: 100%;
-                  overflow: hidden;
-                }
-                iframe {
-                  width: 100%;
-                  height: 100%;
-                  border: 0;
-                  pointer-events: auto;
-                }
-              </style>
-            </head>
-            <body>
-              <iframe 
-                src="${controller.iframeUrl.value}" 
-                allowfullscreen
-                referrerpolicy="no-referrer-when-downgrade">
-              </iframe>
-            </body>
-          </html>
-        ''';
-        
-        // Create WebViewController
-        final webViewController = WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setBackgroundColor(Colors.white)
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onNavigationRequest: (NavigationRequest request) {
-                final url = request.url;
-                print('🗺️ Navigation: $url');
-                
-                // Allow data URLs and about:blank
-                if (url.startsWith('data:') || url.startsWith('about:')) {
-                  return NavigationDecision.navigate;
-                }
-                
-                // Allow embed URLs
-                if (url.contains('/maps/embed/') || url.contains('maps/api/js')) {
-                  return NavigationDecision.navigate;
-                }
-                
-                // Intercept any other Google Maps URLs
-                if (url.contains('google.com/maps') || url.contains('maps.google.com')) {
-                  print('🚀 Opening external: $url');
-                  launchUrl(
-                    Uri.parse(url),
-                    mode: LaunchMode.externalApplication,
-                  );
-                  return NavigationDecision.prevent;
-                }
-                
-                // Block all other navigation
-                return NavigationDecision.prevent;
-              },
-            ),
-          )
-          ..loadHtmlString(htmlContent);
-        
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: WebViewWidget(controller: webViewController),
+        return GoogleMapsWebView(
+          key: ValueKey(controller.iframeUrl.value),
+          iframeUrl: controller.iframeUrl.value,
         );
       }
       
@@ -970,6 +902,128 @@ class HomeContent extends StatelessWidget {
       );
     });
   }
+}
 
+class GoogleMapsWebView extends StatefulWidget {
+  final String iframeUrl;
 
+  const GoogleMapsWebView({super.key, required this.iframeUrl});
+
+  @override
+  State<GoogleMapsWebView> createState() => _GoogleMapsWebViewState();
+}
+
+class _GoogleMapsWebViewState extends State<GoogleMapsWebView> {
+  late final WebViewController _webViewController;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Create HTML with iframe and JavaScript to handle clicks
+    final htmlContent = '''
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body, html {
+              margin: 0;
+              padding: 0;
+              height: 100%;
+              overflow: hidden;
+            }
+            iframe {
+              width: 100%;
+              height: 100%;
+              border: 0;
+              pointer-events: auto;
+            }
+          </style>
+        </head>
+        <body>
+          <iframe 
+            src="${widget.iframeUrl}" 
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </body>
+      </html>
+    ''';
+
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.white)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            setState(() {
+              _isLoading = true;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            final url = request.url;
+            print('🗺️ Navigation: $url');
+            
+            // Allow data URLs and about:blank
+            if (url.startsWith('data:') || url.startsWith('about:')) {
+              return NavigationDecision.navigate;
+            }
+            
+            // Allow embed URLs
+            if (url.contains('/maps/embed/') || url.contains('maps/api/js')) {
+              return NavigationDecision.navigate;
+            }
+            
+            // Intercept any other Google Maps URLs
+            if (url.contains('google.com/maps') || url.contains('maps.google.com')) {
+              print('🚀 Opening external: $url');
+              launchUrl(
+                Uri.parse(url),
+                mode: LaunchMode.externalApplication,
+              );
+              return NavigationDecision.prevent;
+            }
+            
+            // Block all other navigation
+            return NavigationDecision.prevent;
+          },
+        ),
+      )
+      ..loadHtmlString(htmlContent);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: WebViewWidget(controller: _webViewController),
+        ),
+        if (_isLoading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.white,
+              child: const Center(
+                child: LoadingWidget(
+                  color: AppColors.primaryColor,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
