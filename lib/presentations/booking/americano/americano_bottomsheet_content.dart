@@ -7,11 +7,11 @@ import '../../../configs/app_colors.dart';
 import '../../../configs/components/primary_button.dart';
 import 'container_clipper.dart';
 
-class AmericanoBottomSheetContent extends StatelessWidget {
+class AmericanoBottomSheetContents extends StatelessWidget {
   final ScrollController scrollController;
   final DraggableScrollableController draggableController;
 
-  const AmericanoBottomSheetContent({super.key, required this.scrollController, required this.draggableController});
+  const AmericanoBottomSheetContents({super.key, required this.scrollController, required this.draggableController});
 
   @override
   Widget build(BuildContext context) {

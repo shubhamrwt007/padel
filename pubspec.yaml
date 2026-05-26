@@ -59,6 +59,7 @@ dependencies:
   pretty_dio_logger:
   package_info_plus: ^9.0.0
   marquee_widget: ^1.2.0
+  dropdown_button2:
 
 dev_dependencies:
   flutter_launcher_icons:

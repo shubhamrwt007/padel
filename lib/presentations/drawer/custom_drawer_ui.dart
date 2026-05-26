@@ -286,74 +286,20 @@ class CustomDrawerUi extends GetView<ProfileController> {
                   );
                 },
               ),
-              // Obx(
-              //       () => ProfileRow(
-              //     icon: Icon(Icons.emoji_events, size: 20, color: controller.selectedIndex.value == 8 ? AppColors.primaryColor : AppColors.labelBlackColor),
-              //     title: "Tournaments",
-              //     isSelected: controller.selectedIndex.value == 8,
-              //     onTap: () {
-              //       controller.selectedIndex.value = 8;
-              //       Get.toNamed(RoutesName.tournaments);
-              //     },
-              //
-              //   ),
-              // ),
-              // Obx(
-              //   () => ProfileRow(
-              //     icon: SvgPicture.asset(
-              //       Assets.imagesIcPackages,
-              //       height: 17,
-              //       width: 17,
-              //       colorFilter: ColorFilter.mode(
-              //         controller.selectedIndex.value == 8
-              //             ? AppColors.primaryColor
-              //             : AppColors.labelBlackColor,
-              //         BlendMode.srcIn,
-              //       ),
-              //     ),
-              //     title: "Packages",
-              //     isSelected: controller.selectedIndex.value == 8,
-              //     onTap: () {
-              //       controller.selectedIndex.value = 8;
-              //       Get.toNamed(RoutesName.packages);
-              //     },
-              //   ),
-              // ),
-              // Obx(
-              //       () => ProfileRow(
-              //     icon: Icon(Icons.group_outlined,
-              //         size: 20,
-              //         color: controller.selectedIndex.value == 9
-              //             ? AppColors.primaryColor
-              //             : AppColors.labelBlackColor),
-              //     title: "Community",
-              //     isSelected: controller.selectedIndex.value == 9,
-              //     onTap: () {
-              //       controller.selectedIndex.value = 9;
-              //       // Get.toNamed(RoutesName.community);
-              //     },
-              //   ),
-              // ),
+              Obx(
+                    () => ProfileRow(
+                  icon: Icon(Icons.sports_tennis, size: 20, color: controller.selectedIndex.value == 15 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  title: "Americano",
+                  isSelected: controller.selectedIndex.value == 15,
+                  onTap: () {
+                    controller.selectedIndex.value = 15;
+                    Get.toNamed(RoutesName.americano);
+                  },
 
-
-
-
-          //     Obx(
-          //       () => ProfileRow(
-          //         icon: Icon(Icons.wallet,color: controller.selectedIndex.value == 13
-          // ? AppColors.primaryColor
-          //     : AppColors.labelBlackColor,
-          // ).paddingOnly(left: 3),
-          //         title: "Wallet",
-          //         isSelected: controller.selectedIndex.value == 13,
-          //         onTap: (){
-          //           controller.selectedIndex.value = 13;
-          //           Get.toNamed(RoutesName.wallet);
-          //         },
-          //       ),
-          //     ),
-
+                ),
+              ),
               const SizedBox(height: 20),
+              
             ],
           ),
           Column(

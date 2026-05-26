@@ -45,7 +45,6 @@ class RoutesName {
   static const String notification = '/notification';
   static const String rounds = '/rounds';
   static const String score = '/score';
-  static const String americano = '/americano';
   static const String registration = '/registration';
   static const String packages = '/packages';
   static const String openMatch = '/openMatch';
@@ -91,5 +90,12 @@ class RoutesName {
   static const String iptTournament = '/iptTournament';
   static const String iptTournamentMatchLists = '/iptTournamentMatchLists';
   static const String liveAndCompleteIptTournamentMatch = '/liveAndCompleteIptTournamentMatch';
+
+  ///Americano------------------------------------------------------------------
+  static const String americano = '/americano';
+  static const String scoreView = '/scoreView';
+  static const String registrationAmericano = '/registrationAmericano';
+  static const String roundsScore = '/roundsScore';
+
 
 }
