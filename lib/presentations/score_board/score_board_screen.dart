@@ -158,6 +158,7 @@ class ScoreBoardScreen extends StatelessWidget {
         context: context,
       ),
       body: Stack(
+        fit: StackFit.expand,
         children: [
           SingleChildScrollView(
             child: StreamBuilder<Map<String, dynamic>>(
@@ -194,7 +195,7 @@ class ScoreBoardScreen extends StatelessWidget {
                     _buildAddSetButton(),
                     const SizedBox(height: 12),
                     Obx(() {
-                      if (!controller.isGameStarted.value) {
+                      if (!controller.isGameStarted.value && !controller.isCompleted.value) {
                         return const SizedBox.shrink();
                       }
                       return controller.isLoading.value
@@ -227,6 +228,75 @@ class ScoreBoardScreen extends StatelessWidget {
                     child: _buildRemoveZone(isTop: true),
                   )
                 : const SizedBox.shrink(),
+          ),
+
+          // Full screen overlay loader when endGame API call is in progress
+          Positioned.fill(
+            child: Obx(() {
+              return IgnorePointer(
+                ignoring: !controller.isEndGame.value,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: controller.isEndGame.value ? 1.0 : 0.0,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.55),
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(
+                                  height: 40,
+                                  width: 40,
+                                  child: LoadingWidget(
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Ending Game...",
+                                  style: Get.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Please wait a moment",
+                                  style: Get.textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -3291,7 +3361,9 @@ class ScoreBoardScreen extends StatelessWidget {
     return Obx(() {
       return Card(
         child: Container(
-          constraints: BoxConstraints(minHeight: Get.height * 0.4),
+          constraints: BoxConstraints(
+            minHeight: controller.isCompleted.value ? 0.0 : Get.height * 0.4,
+          ),
           width: Get.width,
           margin: const EdgeInsets.symmetric(horizontal: 0),
           padding: const EdgeInsets.symmetric(horizontal: 0),
