@@ -2383,6 +2383,7 @@ class BookACourtController extends GetxController {
   Future<bool> processSlotHistoryForPayment() async {
     if (realCourtSelections.isEmpty) return false;
     try {
+      hasCalledSlotHistoryAPI.value = true;
       final slotsList = <Map<String, dynamic>>[];
       for (var entry in realCourtSelections.entries) {
         final selection = entry.value;
@@ -2412,9 +2413,12 @@ class BookACourtController extends GetxController {
         });
       }
       final success = await createAndGetSlotHistory(slots: slotsList);
-      if (success) hasCalledSlotHistoryAPI.value = true;
+      if (!success) {
+        hasCalledSlotHistoryAPI.value = false;
+      }
       return success;
     } catch (e) {
+      hasCalledSlotHistoryAPI.value = false;
       log('Error processing slot history: $e');
       return false;
     }
