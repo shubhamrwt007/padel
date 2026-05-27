@@ -10,6 +10,7 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
+import '../../../../configs/components/safe_scaffold.dart';
 import '../../../../handler/text_formatter.dart';
 import '../../../../services/socket_service.dart';
 import 'create_open_matches_controller.dart';
@@ -66,7 +67,7 @@ class _CreateOpenMatchesScreenState extends State<CreateOpenMatchesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeScaffold(
       bottomNavigationBar: _bottomButton(context),
       backgroundColor: AppColors.whiteColor,
       appBar: primaryAppBar(

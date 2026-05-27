@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 
+import '../../../configs/components/safe_scaffold.dart';
+
 class EditProfileUi extends StatelessWidget {
   final String? buttonType;
   final EditProfileController controller = Get.put(EditProfileController());
@@ -11,7 +13,7 @@ class EditProfileUi extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
-      child: Scaffold(
+      child: SafeScaffold(
         backgroundColor: AppColors.whiteColor,
         bottomNavigationBar: _bottomBar(context),
         appBar: primaryAppBar(
