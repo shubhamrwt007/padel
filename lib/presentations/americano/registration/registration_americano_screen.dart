@@ -1,3 +1,4 @@
+import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 
@@ -10,7 +11,7 @@ class RegistrationAmericanoScreen extends GetView<RegistrationAmericanoControlle
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
-      child: Scaffold(
+      child: SafeScaffold(
         bottomNavigationBar: bottomBar(context),
         appBar: primaryAppBar(
           centerTitle: true,

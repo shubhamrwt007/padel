@@ -1,3 +1,4 @@
+import 'package:padel_mobile/configs/components/safe_bottom_container.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 
 import '../../../configs/components/custom_button.dart';
@@ -103,15 +104,18 @@ class AmericanoBottomSheetContent extends StatelessWidget {
               right: 10,
               bottom: 20,
               child:
-              CustomButton(
-                width: Get.width * 0.9,
-                onTap: () {
-                  Get.toNamed(RoutesName.registrationAmericano);
-                },
-                child:Text(
-                  "Register Now",
-                  style: Get.textTheme.headlineMedium!.copyWith(
-                    color: AppColors.whiteColor,
+              SafeBottomContainer(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                child: CustomButton(
+                  width: Get.width * 0.9,
+                  onTap: () {
+                    Get.toNamed(RoutesName.registrationAmericano);
+                  },
+                  child:Text(
+                    "Register Now",
+                    style: Get.textTheme.headlineMedium!.copyWith(
+                      color: AppColors.whiteColor,
+                    ),
                   ),
                 ),
               ),
