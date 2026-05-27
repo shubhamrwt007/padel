@@ -243,8 +243,9 @@ class MainHomeScreen extends StatelessWidget {
                       child: Obx(() {
                         final profile =
                             controller.profileController.profileModel.value;
-                        final recentMatches =
-                            profile?.response?.recentMatches ?? [];
+                        final recentMatches = controller.selectedSportTab.value == 0
+                            ? (profile?.response?.recentMatches ?? [])
+                            : (profile?.response?.pickleballRecentMatches ?? []);
 
                         if (recentMatches.isNotEmpty && recentMatches.length <= 5) {
                           return Column(
@@ -258,18 +259,13 @@ class MainHomeScreen extends StatelessWidget {
                         return const SizedBox.shrink();
                       }),
                     ),
-                    Obx(() {
-                      if (controller.selectedSportTab.value == 0) {
-                        return Column(
-                          children: [
-                            const SizedBox(height: 15),
-                            statsDashboard(),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      }
-                      return const SizedBox(height: 20);
-                    }),
+                    Column(
+                      children: [
+                        const SizedBox(height: 15),
+                        statsDashboard(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                     Obx(() {
                       final courts = controller.homeController.courtsList;
                       if (courts.isEmpty) {
@@ -2254,10 +2250,26 @@ class MainHomeScreen extends StatelessWidget {
   Widget _matchPlayedCard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
-      final totalMatches = profile?.response?.totalMatchesPlayed ?? 0;
-      final totalWins = profile?.response?.totalWins ?? 0;
-      final winRatio = totalMatches > 0 ? (totalWins / totalMatches) : 0.0;
-      final winPercentage = (winRatio * 100).round();
+      final totalMatches = controller.selectedSportTab.value == 0
+          ? (profile?.response?.totalMatchesPlayed ?? 0)
+          : (profile?.response?.pickleballMatchesPlayed ?? 0);
+      
+      final rawWinRatio = controller.selectedSportTab.value == 0
+          ? profile?.response?.winRatio
+          : profile?.response?.pickleballWinRatio;
+      
+      double winRatio = 0.0;
+      if (rawWinRatio != null) {
+        winRatio = double.tryParse(rawWinRatio.toString()) ?? 0.0;
+      }
+      
+      final int winPercentage;
+      if (winRatio > 1.0) {
+        winPercentage = winRatio.round();
+        winRatio = winRatio / 100.0;
+      } else {
+        winPercentage = (winRatio * 100).round();
+      }
 
       return GestureDetector(
         onTap: () => Get.to(EditProfileUi(buttonType: "drawer")),
@@ -2399,10 +2411,22 @@ class MainHomeScreen extends StatelessWidget {
   Widget _xpCard() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
-      final xpPoints = profile?.response?.xpPoints?.toInt() ?? 0;
+      final rawXp = controller.selectedSportTab.value == 0
+          ? profile?.response?.xpPoints
+          : profile?.response?.pickleballXpPoints;
+      final int xpPoints;
+      if (rawXp is num) {
+        xpPoints = rawXp.toInt();
+      } else if (rawXp is String) {
+        xpPoints = double.tryParse(rawXp)?.toInt() ?? 0;
+      } else {
+        xpPoints = 0;
+      }
 
       return GestureDetector(
-        onTap: () => Get.toNamed(RoutesName.xpPoints),
+        onTap: () => Get.toNamed(RoutesName.xpPoints,arguments: {
+          "categoryId":controller.selectedCategoryId.value
+        }),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
@@ -2457,7 +2481,9 @@ class MainHomeScreen extends StatelessWidget {
   Widget _recentMatches() {
     return Obx(() {
       final profile = controller.profileController.profileModel.value;
-      final recentMatches = profile?.response?.recentMatches ?? [];
+      final recentMatches = controller.selectedSportTab.value == 0
+          ? (profile?.response?.recentMatches ?? [])
+          : (profile?.response?.pickleballRecentMatches ?? []);
 
       List<String> results = recentMatches.isNotEmpty
           ? recentMatches.cast<String>()
