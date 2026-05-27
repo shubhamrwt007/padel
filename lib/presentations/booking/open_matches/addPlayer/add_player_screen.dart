@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import '../../../../configs/components/safe_bottom_container.dart';
 import '../../widgets/booking_exports.dart';
 
 class AddPlayerBottomSheet extends StatelessWidget {
@@ -27,185 +28,188 @@ class AddPlayerBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusManager.instance.primaryFocus?.unfocus();
-        controller.showNameDropdown.value = false;
-      },
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          height: Get.height * 0.55,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return SafeBottomContainer(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      child: GestureDetector(
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          controller.showNameDropdown.value = false;
+        },
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            height: Get.height * 0.55,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            // Title
-            Text(
-              "Add Guest",
-              style: Get.textTheme.headlineMedium!.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ).paddingOnly(bottom: 11),
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Obx(() => textFieldWithLabel(
-                            "Enter Phone Number",
-                            labelText: "Phone Number *",
-                            controller.phoneController,
-                            context,
-                            action: TextInputAction.next,
-                            keyboardType: TextInputType.phone,
-                            maxLength: 10,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            readOnly: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value,
-                            color: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
-                            onChanged: (value) {
-                              if (value.length < 10) {
-                                controller.resetNameField();
-                              }
-                              if (value.length == 10) {
-                                FocusManager.instance.primaryFocus?.unfocus();
-                                controller.getUserDataFromNumber(value);
-                              }
-                            },
-                          )),
-                          Obx(() => textFieldWithLabel(
-                            "Enter Name",
-                            labelText: "Name *",
-                            textCapitalization: TextCapitalization.words,
-                            controller.nameController,
-                            context,
-                            action: TextInputAction.next,
-                            keyboardType: TextInputType.text,
-                            readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
-                            color: controller.isLoginUserAdding.value || controller.isNameFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
-                            onChanged: (value) {
-                              if (value.length < 2) {
-                                controller.resetPhoneField();
-                              }
-                              controller.searchUserByName(value);
-                            },
-                          )),
-                          _genderSelection(context),
-                          Obx(() => textFieldWithLabel(
-                            "Enter Email",
-                            labelText: "Email (Optional)",
-                            controller.emailController,
-                            context,
-                            action: TextInputAction.next,
-                            keyboardType: TextInputType.emailAddress,
-                            readOnly: controller.isLoginUserAdding.value || controller.isEmailFromApi.value,
-                            color: controller.isLoginUserAdding.value || controller.isEmailFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
-                          )),
-                        ],
-                      ),
-                    ),
-                    // Dropdown overlay
-                    Obx(() {
-                      if (controller.showNameDropdown.value && controller.nameSearchResults.isNotEmpty) {
-                        return Positioned(
-                          top: 150, // Adjusted position below name field
-                          left: 0,
-                          right: 0,
-                          child: Material(
-                            elevation: 8,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              constraints: BoxConstraints(maxHeight: 200),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade300),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                physics: AlwaysScrollableScrollPhysics(),
-                                itemCount: controller.nameSearchResults.length,
-                                itemBuilder: (context, index) {
-                                  final user = controller.nameSearchResults[index];
-                                  return InkWell(
-                                    onTap: () => controller.selectUserFromDropdown(user),
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: index < controller.nameSearchResults.length - 1
-                                                ? Colors.grey.shade200
-                                                : Colors.transparent,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              user['name'] ?? '',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                          Text(
-                                            user['maskedPhoneNumber'] ?? '',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return SizedBox.shrink();
-                    }),
-                  ],
+            child: Column(
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-            // Bottom button
-            bottomBar(context),
-          ],
+              // Title
+              Text(
+                "Add Guest",
+                style: Get.textTheme.headlineMedium!.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ).paddingOnly(bottom: 11),
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Obx(() => textFieldWithLabel(
+                              "Enter Phone Number",
+                              labelText: "Phone Number *",
+                              controller.phoneController,
+                              context,
+                              action: TextInputAction.next,
+                              keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              readOnly: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value,
+                              color: controller.isLoginUserAdding.value || controller.isPhoneFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                              onChanged: (value) {
+                                if (value.length < 10) {
+                                  controller.resetNameField();
+                                }
+                                if (value.length == 10) {
+                                  FocusManager.instance.primaryFocus?.unfocus();
+                                  controller.getUserDataFromNumber(value);
+                                }
+                              },
+                            )),
+                            Obx(() => textFieldWithLabel(
+                              "Enter Name",
+                              labelText: "Name *",
+                              textCapitalization: TextCapitalization.words,
+                              controller.nameController,
+                              context,
+                              action: TextInputAction.next,
+                              keyboardType: TextInputType.text,
+                              readOnly: controller.isLoginUserAdding.value || controller.isNameFromApi.value,
+                              color: controller.isLoginUserAdding.value || controller.isNameFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                              onChanged: (value) {
+                                if (value.length < 2) {
+                                  controller.resetPhoneField();
+                                }
+                                controller.searchUserByName(value);
+                              },
+                            )),
+                            _genderSelection(context),
+                            Obx(() => textFieldWithLabel(
+                              "Enter Email",
+                              labelText: "Email (Optional)",
+                              controller.emailController,
+                              context,
+                              action: TextInputAction.next,
+                              keyboardType: TextInputType.emailAddress,
+                              readOnly: controller.isLoginUserAdding.value || controller.isEmailFromApi.value,
+                              color: controller.isLoginUserAdding.value || controller.isEmailFromApi.value ? Colors.grey.shade200 : AppColors.textFieldColor,
+                            )),
+                          ],
+                        ),
+                      ),
+                      // Dropdown overlay
+                      Obx(() {
+                        if (controller.showNameDropdown.value && controller.nameSearchResults.isNotEmpty) {
+                          return Positioned(
+                            top: 150, // Adjusted position below name field
+                            left: 0,
+                            right: 0,
+                            child: Material(
+                              elevation: 8,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                constraints: BoxConstraints(maxHeight: 200),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  physics: AlwaysScrollableScrollPhysics(),
+                                  itemCount: controller.nameSearchResults.length,
+                                  itemBuilder: (context, index) {
+                                    final user = controller.nameSearchResults[index];
+                                    return InkWell(
+                                      onTap: () => controller.selectUserFromDropdown(user),
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: index < controller.nameSearchResults.length - 1
+                                                  ? Colors.grey.shade200
+                                                  : Colors.transparent,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                user['name'] ?? '',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              user['maskedPhoneNumber'] ?? '',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return SizedBox.shrink();
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+              // Bottom button
+              bottomBar(context),
+            ],
+          ),
         ),
-      ),
-    ));
+      )),
+    );
   }
 
   Widget bottomBar(BuildContext context) {

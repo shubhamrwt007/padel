@@ -2,11 +2,13 @@ import 'dart:developer';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../configs/components/safe_bottom_container.dart';
 import '../booking/widgets/booking_exports.dart';
 import '../notification/notification_controller.dart';
 import 'open_match_for_all_court_controller.dart';
@@ -27,7 +29,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
   @override
   Widget build(BuildContext context) {
     walletController.fetchWallet();
-    return Scaffold(
+    return SafeScaffold(
       bottomNavigationBar: _bottomButton(context),
       appBar: primaryAppBar(
         title: Text("Find a Game"), context: context,centerTitle: true,
@@ -1940,87 +1942,90 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
     final topPadding = MediaQuery.of(context).padding.top;
     final maxHeight = screenHeight - topPadding - 60;
 
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-        ),
-        padding: EdgeInsets.only(
-          left: 18,
-          right: 18,
-          top: 10,
-          bottom: 10,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _header(),
-            SizedBox(
-              height: 45,
-              child: PrimaryTextField(
-                contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                onChanged: (value) => controller.fetchNearByPlayers(search: value, bookingId: widget.bookingId ?? ""),
-                hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                suffixIcon: Icon(Icons.search,color: AppColors.textColor),
-                hintText: 'Search by Name / Phone number'
+    return SafeBottomContainer(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+          ),
+          padding: EdgeInsets.only(
+            left: 18,
+            right: 18,
+            top: 10,
+            bottom: 10,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _header(),
+              SizedBox(
+                height: 45,
+                child: PrimaryTextField(
+                  contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                  onChanged: (value) => controller.fetchNearByPlayers(search: value, bookingId: widget.bookingId ?? ""),
+                  hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                  suffixIcon: Icon(Icons.search,color: AppColors.textColor),
+                  hintText: 'Search by Name / Phone number'
+                ),
               ),
-            ),
-            Obx(() => controller.invitationSent.value
-                ? const SizedBox.shrink()
-                : GestureDetector(
-                    onTap: controller.isSendingInvitation.value
-                        ? null
-                        : () => controller.sendBookingInvitation(widget.bookingId ?? ''),
-                    child: Container(
-                      padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffEEF1FF),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: controller.isSendingInvitation.value
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : Text(
-                                    'Send Request',
-                                    style: Get.textTheme.bodyLarge!.copyWith(
-                                      color: AppColors.primaryColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
+              Obx(() => controller.invitationSent.value
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: controller.isSendingInvitation.value
+                          ? null
+                          : () => controller.sendBookingInvitation(widget.bookingId ?? ''),
+                      child: Container(
+                        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffEEF1FF),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: controller.isSendingInvitation.value
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      'Send Request',
+                                      style: Get.textTheme.bodyLarge!.copyWith(
+                                        color: AppColors.primaryColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
-                                  ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ).paddingOnly(top: 5)),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: Get.height * 0.25,
-              child: _playersList(),
-            ),
-            const SizedBox(height: 12),
-            _actionButtons(context),
-            const SizedBox(height: 20),
-          ],
+                    ).paddingOnly(top: 5)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: Get.height * 0.25,
+                child: _playersList(),
+              ),
+              const SizedBox(height: 12),
+              _actionButtons(context),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

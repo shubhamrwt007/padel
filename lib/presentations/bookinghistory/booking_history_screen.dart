@@ -7,6 +7,7 @@ import 'package:padel_mobile/configs/components/app_toast.dart';
 import 'dart:math' as math;
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/multiple_gender.dart';
+import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/bookinghistory/widgets/court_selection_sheet.dart';
@@ -48,7 +49,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         Get.offAll(() => BottomNavUi());
         return true;
       },
-      child: Scaffold(
+      child: SafeScaffold(
         appBar: primaryAppBar(
             centerTitle: true,
             showLeading:widget.buttonType=="drawer"? true:false,

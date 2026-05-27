@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
+import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
 import 'package:padel_mobile/generated/assets.dart';
@@ -25,6 +26,8 @@ import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart';
+
+import '../../configs/components/safe_bottom_container.dart';
 
 class BookACourtScreen extends StatelessWidget {
   final BookACourtController controller = Get.put(BookACourtController());
@@ -66,7 +69,7 @@ class BookACourtScreen extends StatelessWidget {
       }
     });
 
-    return Scaffold(
+    return SafeScaffold(
       backgroundColor: AppColors.whiteColor,
       bottomNavigationBar: _buildPaymentPanel(),
       appBar: primaryAppBar(
@@ -3073,202 +3076,205 @@ class ChangeLocationBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.45,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    return SafeBottomContainer(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 5),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.45,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 5),
 
-            /// HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Change Location',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+              /// HEADER
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Change Location',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 48), // balance back icon
-                ],
+                    const SizedBox(width: 48), // balance back icon
+                  ],
+                ),
               ),
-            ),
-            fadeDivider(),
-            //
-            // /// SEARCH
-            // Padding(
-            //   padding: const EdgeInsets.all(16),
-            //   child: TextField(
-            //     style: Get.textTheme.headlineSmall!.copyWith(
-            //       color: AppColors.labelBlackColor,
-            //     ),
-            //     decoration: InputDecoration(
-            //       hintText: 'Search by city name',
-            //       suffixIcon: const Icon(Icons.search),
-            //       filled: true,
-            //       fillColor: AppColors.textFieldColor,
-            //       border: OutlineInputBorder(
-            //         borderRadius: BorderRadius.circular(12),
-            //         borderSide: BorderSide.none,
-            //       ),
-            //     ),
-            //   ),
-            // ),
+              fadeDivider(),
+              //
+              // /// SEARCH
+              // Padding(
+              //   padding: const EdgeInsets.all(16),
+              //   child: TextField(
+              //     style: Get.textTheme.headlineSmall!.copyWith(
+              //       color: AppColors.labelBlackColor,
+              //     ),
+              //     decoration: InputDecoration(
+              //       hintText: 'Search by city name',
+              //       suffixIcon: const Icon(Icons.search),
+              //       filled: true,
+              //       fillColor: AppColors.textFieldColor,
+              //       border: OutlineInputBorder(
+              //         borderRadius: BorderRadius.circular(12),
+              //         borderSide: BorderSide.none,
+              //       ),
+              //     ),
+              //   ),
+              // ),
 
-            /// CITY LIST
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoadingLocations.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryColor,
+              /// CITY LIST
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoadingLocations.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                      ),
+                    );
+                  }
+
+                  final locations = controller.locationsData.value?.data;
+                  if (locations == null || locations.isEmpty) {
+                    return const Center(child: Text('No locations available'));
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                  );
-                }
+                    itemCount: locations.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: Colors.grey.withValues(alpha: 0.3),
+                    ),
+                    itemBuilder: (context, index) {
+                      final location = locations[index];
 
-                final locations = controller.locationsData.value?.data;
-                if (locations == null || locations.isEmpty) {
-                  return const Center(child: Text('No locations available'));
-                }
+                      return Obx(() {
+                        final isSelected =
+                            controller.selectedCityId.value == location.id;
 
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  itemCount: locations.length,
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    color: Colors.grey.withValues(alpha: 0.3),
-                  ),
-                  itemBuilder: (context, index) {
-                    final location = locations[index];
-
-                    return Obx(() {
-                      final isSelected =
-                          controller.selectedCityId.value == location.id;
-
-                      return InkWell(
-                        onTap: () {
-                          controller.selectedCityId.value = location.id ?? '';
-                        },
-                        borderRadius: BorderRadius.circular(5),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xffE8ECFF) // blue selected tile
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  location.name ?? '',
-                                  style: Get.textTheme.bodyLarge!.copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                    color: isSelected
-                                        ? AppColors.primaryColor
-                                        : Colors.black87,
+                        return InkWell(
+                          onTap: () {
+                            controller.selectedCityId.value = location.id ?? '';
+                          },
+                          borderRadius: BorderRadius.circular(5),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xffE8ECFF) // blue selected tile
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    location.name ?? '',
+                                    style: Get.textTheme.bodyLarge!.copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? AppColors.primaryColor
+                                          : Colors.black87,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: AppColors.primaryColor,
-                                  size: 20,
-                                ),
-                            ],
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primaryColor,
+                                    size: 20,
+                                  ),
+                              ],
+                            ),
                           ),
+                        );
+                      });
+                    },
+                  );
+                }),
+              ),
+
+              /// UPDATE BUTTON
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Obx(() {
+                  final isEnabled = controller.selectedCityId.value.isNotEmpty;
+                  final isLoading = controller.isUpdatingLocation.value;
+
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isEnabled
+                            ? const Color(0xff2C3EBB)
+                            : Colors.grey.shade300,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                    });
-                  },
-                );
-              }),
-            ),
-
-            /// UPDATE BUTTON
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Obx(() {
-                final isEnabled = controller.selectedCityId.value.isNotEmpty;
-                final isLoading = controller.isUpdatingLocation.value;
-
-                return SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isEnabled
-                          ? const Color(0xff2C3EBB)
-                          : Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    onPressed: (isEnabled && !isLoading)
-                        ? () async {
-                            final selectedId = controller.selectedCityId.value;
-                            final success = await controller.updateUserLocation(
-                              selectedId,
-                            );
-                            if (success) {
-                              Navigator.pop(context);
+                      onPressed: (isEnabled && !isLoading)
+                          ? () async {
+                              final selectedId = controller.selectedCityId.value;
+                              final success = await controller.updateUserLocation(
+                                selectedId,
+                              );
+                              if (success) {
+                                Navigator.pop(context);
+                              }
                             }
-                          }
-                        : null,
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                          : null,
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Update',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isEnabled
+                                    ? Colors.white
+                                    : Colors.grey.shade600,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          )
-                        : Text(
-                            'Update',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isEnabled
-                                  ? Colors.white
-                                  : Colors.grey.shade600,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                );
-              }),
-            ),
+                    ),
+                  );
+                }),
+              ),
 
-            const SizedBox(height: 10),
-            SizedBox(height: 20),
-          ],
+              const SizedBox(height: 10),
+              SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'package:padel_mobile/presentations/booking/book_session/widgets/court_sl
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
 import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart';
 import 'package:padel_mobile/services/socket_service.dart';
+import '../../../configs/components/safe_bottom_container.dart';
 import '../../../handler/text_formatter.dart';
 import 'book_session_controller.dart';
 
@@ -188,7 +189,9 @@ class _BookSessionState extends State<BookSession>
             ],
           ),
         ),
-        Positioned(bottom: 0, left: 0, right: 0, child: _bottomButton(context)),
+        Positioned(bottom: 0, left: 0, right: 0, child: SafeBottomContainer(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            child: _bottomButton(context))),
       ],
     );
   }
