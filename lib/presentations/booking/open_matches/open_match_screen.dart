@@ -6,6 +6,7 @@ import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/addPlayer/add_player_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../configs/components/safe_bottom_container.dart';
 import '../widgets/booking_exports.dart';
 class OpenMatchesScreen extends StatefulWidget {
   OpenMatchesScreen({super.key});
@@ -68,7 +69,9 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
           bottom: 0,
           left: 0,
           right: 0,
-          child: _bottomButton(context),
+          child: SafeBottomContainer(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              child: _bottomButton(context)),
         )
       ],
     );
@@ -1902,97 +1905,100 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final maxHeight = screenHeight - topPadding - keyboardHeight - 60;
     
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-        ),
-        padding: EdgeInsets.only(
-          left: 18,
-          right: 18,
-          top: 10,
-          bottom: 10,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
-              SizedBox(
-                height: 45,
-                child: PrimaryTextField(
-                    contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
-                  onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: widget.bookingId),
-                  hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
-                    suffixIcon: Icon(Icons.search,color: AppColors.textColor),
-                    hintText: 'Search by Name / Phone number'),
-              ),
-              Obx(() => controller.invitationSent.value
-                  ? const SizedBox.shrink()
-                  : GestureDetector(
-                      onTap: controller.isSendingInvitation.value
-                          ? null
-                          : () {
-                              if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
-                                controller.sendBookingInvitation(widget.bookingId!);
-                              }
-                            },
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xffEEF1FF),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: controller.isSendingInvitation.value
-                                  ? const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : Text(
-                                      'Send Request',
-                                      style: Get.textTheme.bodyLarge!.copyWith(
-                                        color: AppColors.primaryColor,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
+    return SafeBottomContainer(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+          ),
+          padding: EdgeInsets.only(
+            left: 18,
+            right: 18,
+            top: 10,
+            bottom: 10,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _header(),
+                SizedBox(
+                  height: 45,
+                  child: PrimaryTextField(
+                      contentPadding: EdgeInsets.symmetric(vertical: 5,horizontal: 10),
+                    onChanged: (value) => controller.fetchNearByPlayers(search: value,bookingId: widget.bookingId),
+                    hintStyle: Get.textTheme.headlineSmall!.copyWith(color: AppColors.textColor),
+                      suffixIcon: Icon(Icons.search,color: AppColors.textColor),
+                      hintText: 'Search by Name / Phone number'),
+                ),
+                Obx(() => controller.invitationSent.value
+                    ? const SizedBox.shrink()
+                    : GestureDetector(
+                        onTap: controller.isSendingInvitation.value
+                            ? null
+                            : () {
+                                if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
+                                  controller.sendBookingInvitation(widget.bookingId!);
+                                }
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.only(top: 5, bottom: 5, left: 14, right: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xffEEF1FF),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Send Request Automatic", style: Get.textTheme.headlineSmall),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: controller.isSendingInvitation.value
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Text(
+                                        'Send Request',
+                                        style: Get.textTheme.bodyLarge!.copyWith(
+                                          color: AppColors.primaryColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
-                                    ),
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ).paddingOnly(top: 5)),
-              // const SizedBox(height: 8),
-              // Text(
-              //   'Nearby & match your level',
-              //   style: Get.textTheme.labelLarge,
-              // ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: Get.height * 0.25,
-                child: _playersList(),
-              ),
-              const SizedBox(height: 12),
-              _actionButtons(context),
-              const SizedBox(height: 20),
+                      ).paddingOnly(top: 5)),
+                // const SizedBox(height: 8),
+                // Text(
+                //   'Nearby & match your level',
+                //   style: Get.textTheme.labelLarge,
+                // ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: Get.height * 0.25,
+                  child: _playersList(),
+                ),
+                const SizedBox(height: 12),
+                _actionButtons(context),
+                const SizedBox(height: 20),
 
-            ],
+              ],
+            ),
           ),
         ),
       ),
