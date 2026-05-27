@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rolling_number_text/rolling_number_text.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
-import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/xp_points_model/get_xp_points_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
@@ -53,7 +52,7 @@ class XpPointsController extends GetxController {
             datePickerTheme: DatePickerThemeData(
               rangeSelectionBackgroundColor: AppColors.secondaryColor.withValues(alpha: 0.2),
               rangeSelectionOverlayColor:
-              MaterialStatePropertyAll(Colors.green.withOpacity(0.2)),
+              WidgetStatePropertyAll(Colors.green.withValues(alpha: 0.2)),
             ),
           ),
           child: child!,
@@ -72,6 +71,7 @@ class XpPointsController extends GetxController {
   var currentPage = 1;
   var hasMoreTransactions = true.obs;
   var isLoading = false.obs;
+  var categoryId = "".obs;
   var transactionList = <XpData>[].obs;
   final XpPointsRepository repository = Get.put(XpPointsRepository());
 
@@ -82,9 +82,10 @@ class XpPointsController extends GetxController {
         hasMoreTransactions.value = true;
       }
       isLoading.value = true;
-      final userId = storage.read('userId');
+      // final userId = storage.read('userId');
       final response = await repository.getXpPoints(
-        userId: userId,
+        // userId: userId,
+        categoryId: categoryId.value,
         page: currentPage,
         limit: 10,
         fromDate: selectedStartDate.value != null ? DateFormat('yyyy-MM-dd').format(selectedStartDate.value!) : '',
@@ -97,6 +98,12 @@ class XpPointsController extends GetxController {
           transactionList.addAll(response.data ?? []);
         }
         hasMoreTransactions.value = (response.data?.length ?? 0) >= 10;
+
+        // Update animation controller with XP points value from API response
+        if (response.currentXp?.xpPoints != null) {
+          final xp = response.currentXp!.xpPoints.toInt();
+          xpAnimationController.initialize(xp, shouldAnimate: true);
+        }
       }
     } catch (e) {
       CustomLogger.logMessage(msg: "ERROR->$e", level: LogLevel.error);
@@ -106,12 +113,13 @@ class XpPointsController extends GetxController {
   }
 
   @override
-  void onInit() async {
-    await fetchXpTransaction();
+  void onInit() {
+    categoryId.value = Get.arguments["categoryId"] ?? "";
 
-    // Initialize animation controller with XP points value (convert to int)
-    final xpValue = (profileController.profileModel.value?.response?.xpPoints ?? 0).toInt();
-    xpAnimationController.initialize(xpValue, shouldAnimate: true);
+    // Initialize animation controller with 0 synchronously to avoid Duration.zero assertion errors
+    xpAnimationController.initialize(0, shouldAnimate: true);
+
+    fetchXpTransaction();
 
     super.onInit();
   }
