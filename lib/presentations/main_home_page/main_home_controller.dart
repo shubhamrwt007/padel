@@ -372,6 +372,7 @@ class MainHomeController extends GetxController {
         locationId: locationId,
       ),
       fetchOpenMatches(),
+      fetCustomerLeaderBoardRank(),
     ]);
   }
 
@@ -442,8 +443,8 @@ class MainHomeController extends GetxController {
 
   Future<void> fetCustomerLeaderBoardRank() async {
     try {
-      final userId = storage.read('userId') ?? "";
-      final response = await _homeRepository.getCustomerLeaderBoardRank(id: userId);
+      final categoryId = selectedCategoryId.value;
+      final response = await _homeRepository.getCustomerLeaderBoardRank(categoryId: categoryId);
       if (response.success == true) {
         customerRank.value = response.rank ?? 0;
       }
