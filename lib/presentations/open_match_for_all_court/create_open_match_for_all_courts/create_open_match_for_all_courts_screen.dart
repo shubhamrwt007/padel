@@ -11,7 +11,6 @@ import 'package:padel_mobile/configs/components/app_bar.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/components/custom_button.dart';
 import 'package:padel_mobile/configs/components/fade_divider.dart';
-import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 import 'package:padel_mobile/data/request_models/home_models/get_available_court.dart';
@@ -20,10 +19,6 @@ import 'package:padel_mobile/generated/assets.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/court_slots_shimmer.dart';
-import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
-import 'package:padel_mobile/data/response_models/get_courts_by_duration_model.dart'
-    as GetCourtsByDurationModel;
-import 'package:padel_mobile/presentations/cart/cart_controller.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_controller.dart';
 import 'package:padel_mobile/services/socket_service.dart';
 import 'package:padel_mobile/core/network/dio_client.dart' show storage;
@@ -69,6 +64,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
       appBar: primaryAppBar(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text("Create a Game").paddingOnly(right: 5),
 
@@ -91,7 +87,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
               waitDuration: Duration(milliseconds: 200),
               showDuration: Duration(seconds: 3),
               triggerMode: TooltipTriggerMode.tap,
-              child: Icon(Icons.info_outline, size: 22),
+              child: Icon(Icons.info_outline, size: 15).paddingOnly(top: 3),
             ),
           ],
         ),
@@ -123,7 +119,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                     Obx(
                       () => Text(
                         formatWalletAmount(
-                          walletController.walletBalance.value ?? 0,
+                          walletController.walletBalance.value,
                         ),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
@@ -1284,25 +1280,6 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
         },
       );
     });
-  }
-
-  Widget _buildGradientToggleChild({
-    required String text,
-    required bool isSelected,
-  }) {
-    return Container(
-      width: 60,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        gradient: isSelected
-            ? const LinearGradient(
-                colors: [Color(0xff1F41BB), Color(0xff0E1E55)],
-              )
-            : null,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(text, style: TextStyle(fontSize: 18)),
-    );
   }
 
   Widget _buildSelectedSlotTile(dynamic slot) {
@@ -2503,7 +2480,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
           );
         }),
         const SizedBox(height: 8),
-        Divider(color: Colors.white.withOpacity(0.25)),
+        Divider(color: Colors.white.withValues(alpha: 0.25)),
         const SizedBox(height: 8),
       ],
     );
@@ -2958,7 +2935,7 @@ class PaymentOptionSheet extends StatelessWidget {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(color: Colors.black.withOpacity(0.35)),
+              child: Container(color: Colors.black.withValues(alpha: 0.35)),
             ),
           ),
 
