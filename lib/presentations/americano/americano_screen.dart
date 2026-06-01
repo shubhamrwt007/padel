@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
+import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
+
+import '../../handler/text_formatter.dart';
 
 class AmericanoScreen extends StatelessWidget {
   final String? buttonType;
@@ -10,19 +13,74 @@ class AmericanoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: primaryAppBar(title: Text("Americano"), centerTitle: true,context: context),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: Get.width*0.05),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _sectionTitle("Ongoing"),
-            _matchList(count: 2, add: false),
-            _sectionTitle("Upcoming"),
-            _matchList(count: 5, add: true),
-          ],
-        ),
-      ),
+      appBar: primaryAppBar(title: const Text("Americano"), centerTitle: true, context: context),
+      body: Obx(() {
+        // 1. Fullscreen Loading State (Initial load only)
+        if (controller.isLoading.value && controller.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // 2. Empty State
+        if (controller.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
+            color: AppColors.whiteColor,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: Get.height * 0.8,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CupertinoIcons.sportscourt, size: 64, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No Americano matches found",
+                          style: Get.textTheme.titleMedium?.copyWith(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Pull down to refresh",
+                          style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey.shade400),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // 3. Populated Matches List State (Seamless Refresh)
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
+          color: AppColors.whiteColor,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            controller: controller.scrollController,
+            padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+            children: [
+              if (controller.ongoingMatches.isNotEmpty) ...[
+                _sectionTitle("Ongoing"),
+                ...controller.ongoingMatches.map((match) => buildMatchesList(match: match, add: false)),
+              ],
+              if (controller.upcomingMatches.isNotEmpty) ...[
+                _sectionTitle("Upcoming"),
+                ...controller.upcomingMatches.map((match) => buildMatchesList(match: match, add: true)),
+              ],
+              if (controller.isLoadingMore.value) ...[
+                const SizedBox(height: 16),
+                const Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 16),
+              ],
+              SizedBox(height: Get.height * 0.05),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -32,18 +90,20 @@ class AmericanoScreen extends StatelessWidget {
         style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.blackColor),
       ).paddingOnly(bottom: Get.height * 0.01, top: Get.height * 0.02);
 
-  /// Matches list builder
-  Widget _matchList({required int count, required bool add}) => ListView.builder(
-        shrinkWrap: true,
-        itemCount: count,
-        padding: EdgeInsets.zero,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) => buildMatchesList(add: add),
-      );
+  Widget buildMatchesList({required AmericanoMatch match, required bool add}) {
+    String genderText = match.gender ?? "Female Only";
+    IconData genderIcon = Icons.female;
+    if (genderText.toLowerCase().contains("male") && !genderText.toLowerCase().contains("female")) {
+      genderIcon = Icons.male;
+    } else if (genderText.toLowerCase().contains("mixed")) {
+      genderIcon = Icons.wc;
+    }
 
-  Widget buildMatchesList({required bool add}) {
+    final bool isJoined = match.isJoined ?? false;
+    final bool canJoin = add && !isJoined;
+
     return GestureDetector(
-      onTap: () => add
+      onTap: () => canJoin
           ? showAmericanoBottomSheet(Get.context!)
           : Get.toNamed(RoutesName.scoreView),
       child: Container(
@@ -65,32 +125,50 @@ class AmericanoScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Text("23 June | 9:00am",
-                        style: Get.textTheme.bodySmall)
-                        .paddingOnly(right: 5),
-                    Container(
-                      height: 17,
-                      width: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppColors.secondaryColor,
-                      ),
-                      child: Text("A",
-                          style: Get.textTheme.bodySmall!
-                              .copyWith(color: AppColors.whiteColor,fontSize: 10)),
-                    ),
-                  ],
+                Expanded(
+                  child: Text(
+                    match.clubId?.clubName ?? "Club Name",
+                    style: Get.textTheme.labelLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                avatarGroup(add: add)
+                avatarGroup(
+                  players: match.players ?? [],
+                  add: canJoin,
+                  joinedMembers: match.joinedMembers ?? 0,
+                  isJoined: isJoined,
+                )
               ],
             ),
             Row(
               children: [
-                const Icon(Icons.female, size: 15),
-                Text("Female Only", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)),
+                Text(
+                  "${match.formattedMatchDate} | ${match.matchTime}",
+                  style: Get.textTheme.bodySmall,
+                ).paddingOnly(right: 5),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6,vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.secondaryColor,
+                  ),
+                  child: Text(
+                    match.skillLevel ?? "A",
+                    style: Get.textTheme.bodySmall!.copyWith(
+                      color: AppColors.whiteColor,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Icon(genderIcon, size: 15),
+                Text(
+                  genderText.capitalizeFirstChar(),
+                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
+                ),
               ],
             ).paddingOnly(bottom: 4),
             Row(
@@ -99,28 +177,38 @@ class AmericanoScreen extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(CupertinoIcons.person_crop_circle, size: 14),
-                    Text("12 Players", style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400)),
+                    Text(
+                      "${match.joinedMembers ?? 0} Players",
+                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
+                    ),
                   ],
                 ),
                 Container(
-                  padding: EdgeInsets.only(left: 8,right: 4,top: 3,bottom: 3),
+                  padding: const EdgeInsets.only(left: 8, right: 4, top: 3, bottom: 3),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(30)
-
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: Row(
                     children: [
-                      Text(add ? "Join Now!  " : "View Score  ",
-                          style: Get.textTheme.displaySmall!.copyWith(
-                              color: AppColors.primaryColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700)),
+                      Text(
+                        canJoin
+                            ? "Join Now!  "
+                            : (isJoined ? "Joined  " : "View Score  "),
+                        style: Get.textTheme.displaySmall!.copyWith(
+                          color: AppColors.primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       CircleAvatar(
                         radius: 11,
                         foregroundColor: AppColors.primaryColor,
-                        child: Icon(Icons.arrow_forward,
-                            size: 14, color: AppColors.whiteColor),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          size: 14,
+                          color: AppColors.whiteColor,
+                        ),
                       ),
                     ],
                   ),
@@ -133,54 +221,291 @@ class AmericanoScreen extends StatelessWidget {
     );
   }
 
-  Widget avatarGroup({required bool add}) {
-    final totalItems = controller.avatarUrls.length + 1;
-    return SizedBox(
-      height: 40,
-      width: totalItems * 22.0 + 20,
-      child: Stack(
-        children: [
-          ...List.generate(controller.avatarUrls.length, (index) {
-            return Positioned(
-              left: index * 22.0,
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.white,
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundImage: NetworkImage(controller.avatarUrls[index]),
+  String? _getPlayerProfilePic(AmericanoPlayer player) {
+    final pic = player.registerUserId?.profilePic;
+    if (pic != null && pic.isNotEmpty) {
+      return pic;
+    }
+    return null;
+  }
+
+  String _getPlayerInitials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '?';
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      final firstLetter = parts.first[0];
+      final lastLetter = parts.last[0];
+      return (firstLetter + lastLetter).toUpperCase();
+    }
+    return fullName.trim()[0].toUpperCase();
+  }
+
+  void showPlayersDialog(BuildContext context, List<AmericanoPlayer> players) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(20),
+                  blurRadius: 15,
+                  offset: const Offset(0, 10),
+                )
+              ]
+            ),
+            width: Get.width * 0.88,
+            height: Get.height * 0.5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Premium Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "Joined Players",
+                          style: Get.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.blackColor,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withAlpha(30),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "${players.length}",
+                            style: TextStyle(
+                              color: AppColors.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 18,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-          }),
-          Positioned(
-            left: controller.avatarUrls.length * 22.0,
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.white,
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor:
-                    add ? const Color(0xFF1E40AF) : Colors.grey.shade400,
-                child: Text(
-                  add ? '+' : '+5',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: add ? 20 : 14,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                const SizedBox(height: 12),
+                
+                // List of Players
+                Expanded(
+                  child: players.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.person_3, size: 48, color: Colors.grey.shade300),
+                              const SizedBox(height: 8),
+                              const Text("No players joined yet", style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: players.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final player = players[index];
+                            final profilePic = _getPlayerProfilePic(player);
+                            return Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.textFieldColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.withAlpha(20)),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: AppColors.primaryColor,
+                                    backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
+                                    child: profilePic == null
+                                        ? Text(
+                                            _getPlayerInitials(player.fullName),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          player.fullName ?? "Anonymous",
+                                          style: Get.textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.blackColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (player.playerLevel != null) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            player.playerLevel!,
+                                            style: Get.textTheme.bodySmall?.copyWith(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  // Player Badge or gender
+                                  if (player.gender != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: Text(
+                                        player.gender!.toUpperCase(),
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget avatarGroup({
+    required List<AmericanoPlayer> players,
+    required bool add,
+    required int joinedMembers,
+    required bool isJoined,
+  }) {
+    // Show up to 4 items
+    final int displayedCount = players.isNotEmpty ? (players.length > 4 ? 4 : players.length) : 0;
+    final bool useFallback = displayedCount == 0;
+    final int itemsToGenerate = useFallback ? controller.avatarUrls.length : displayedCount;
+
+    final int remaining = joinedMembers - itemsToGenerate;
+    final bool showExtraCircle = remaining > 0 || add;
+
+    final int totalItems = itemsToGenerate + (showExtraCircle ? 1 : 0);
+
+    return GestureDetector(
+      onTap: () {
+        if (isJoined && !useFallback && players.isNotEmpty) {
+          showPlayersDialog(Get.context!, players);
+        }
+      },
+      child: SizedBox(
+        height: 40,
+        width: totalItems * 22.0 + 20,
+        child: Stack(
+          children: [
+            ...List.generate(itemsToGenerate, (index) {
+              final String? profilePic = !useFallback ? _getPlayerProfilePic(players[index]) : null;
+              return Positioned(
+                left: index * 22.0,
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: useFallback 
+                        ? Colors.grey.shade200 
+                        : AppColors.primaryColor,
+                    backgroundImage: useFallback 
+                        ? NetworkImage(controller.avatarUrls[index])
+                        : (profilePic != null ? NetworkImage(profilePic) : null),
+                    child: (!useFallback && profilePic == null)
+                        ? Text(
+                            _getPlayerInitials(players[index].fullName),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              );
+            }),
+            if (showExtraCircle)
+              Positioned(
+                left: itemsToGenerate * 22.0,
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: add ? const Color(0xFF1E40AF) : Colors.grey.shade400,
+                    child: Text(
+                      add ? '+' : '+$remaining',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: add ? 20 : 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   void showAmericanoBottomSheet(BuildContext context) {
-    final DraggableScrollableController draggableController =
-        DraggableScrollableController();
+    final DraggableScrollableController draggableController = DraggableScrollableController();
 
     showModalBottomSheet(
       context: context,
