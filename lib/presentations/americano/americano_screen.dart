@@ -104,7 +104,7 @@ class AmericanoScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => canJoin
-          ? showAmericanoBottomSheet(Get.context!)
+          ? showAmericanoBottomSheet(Get.context!, match)
           : Get.toNamed(RoutesName.scoreView),
       child: Container(
         width: Get.width,
@@ -430,8 +430,7 @@ class AmericanoScreen extends StatelessWidget {
   }) {
     // Show up to 4 items
     final int displayedCount = players.isNotEmpty ? (players.length > 4 ? 4 : players.length) : 0;
-    final bool useFallback = displayedCount == 0;
-    final int itemsToGenerate = useFallback ? controller.avatarUrls.length : displayedCount;
+    final int itemsToGenerate = displayedCount;
 
     final int remaining = joinedMembers - itemsToGenerate;
     final bool showExtraCircle = remaining > 0 || add;
@@ -440,7 +439,7 @@ class AmericanoScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        if (isJoined && !useFallback && players.isNotEmpty) {
+        if (isJoined && players.isNotEmpty) {
           showPlayersDialog(Get.context!, players);
         }
       },
@@ -450,7 +449,7 @@ class AmericanoScreen extends StatelessWidget {
         child: Stack(
           children: [
             ...List.generate(itemsToGenerate, (index) {
-              final String? profilePic = !useFallback ? _getPlayerProfilePic(players[index]) : null;
+              final String? profilePic = _getPlayerProfilePic(players[index]);
               return Positioned(
                 left: index * 22.0,
                 child: CircleAvatar(
@@ -458,13 +457,9 @@ class AmericanoScreen extends StatelessWidget {
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
                     radius: 16,
-                    backgroundColor: useFallback 
-                        ? Colors.grey.shade200 
-                        : AppColors.primaryColor,
-                    backgroundImage: useFallback 
-                        ? NetworkImage(controller.avatarUrls[index])
-                        : (profilePic != null ? NetworkImage(profilePic) : null),
-                    child: (!useFallback && profilePic == null)
+                    backgroundColor: AppColors.primaryColor,
+                    backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
+                    child: profilePic == null
                         ? Text(
                             _getPlayerInitials(players[index].fullName),
                             style: const TextStyle(
@@ -504,7 +499,7 @@ class AmericanoScreen extends StatelessWidget {
     );
   }
 
-  void showAmericanoBottomSheet(BuildContext context) {
+  void showAmericanoBottomSheet(BuildContext context, AmericanoMatch match) {
     final DraggableScrollableController draggableController = DraggableScrollableController();
 
     showModalBottomSheet(
@@ -529,6 +524,7 @@ class AmericanoScreen extends StatelessWidget {
                     child: AmericanoBottomSheetContent(
                       scrollController: scrollController,
                       draggableController: draggableController,
+                      match: match,
                     ),
                   );
                 },

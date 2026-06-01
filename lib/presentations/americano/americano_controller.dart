@@ -4,12 +4,6 @@ import 'package:padel_mobile/data/response_models/americano_models/get_americano
 import 'package:padel_mobile/handler/logger.dart';
 
 class AmericanoController extends GetxController {
-  final avatarUrls = [
-    'https://i.pravatar.cc/100?img=1',
-    'https://i.pravatar.cc/100?img=2',
-    'https://i.pravatar.cc/100?img=3',
-    'https://i.pravatar.cc/100?img=4',
-  ];
 
   final AmericanoRepository _repository = AmericanoRepository();
   final ScrollController scrollController = ScrollController();
