@@ -100,18 +100,32 @@ class AmericanoScreen extends StatelessWidget {
     }
 
     final bool isJoined = match.isJoined ?? false;
-    final bool canJoin = add && !isJoined;
+    final int joinedCount = match.players?.isNotEmpty == true ? match.players!.length : (match.joinedMembers ?? 0);
+    final bool isFull = match.maxPlayers != null && joinedCount >= match.maxPlayers!;
+    final bool canJoin = add && !isJoined && !isFull;
 
     return GestureDetector(
-      onTap: () => canJoin
-          ? showAmericanoBottomSheet(Get.context!, match)
-          : Get.toNamed(RoutesName.scoreView),
+      onTap: () {
+        if (isFull) {
+          return;
+        }
+        if (canJoin) {
+          showAmericanoBottomSheet(Get.context!, match);
+        } else {
+          Get.toNamed(RoutesName.scoreView);
+        }
+      },
       child: Container(
         width: Get.width,
-        padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          color: AppColors.textFieldColor,
-          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          borderRadius: BorderRadius.circular(11),
+          gradient: LinearGradient(
+            colors: [
+              Color(0xffFFFFFF),
+              Color(0xffDEE5FF),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 4),
@@ -120,101 +134,121 @@ class AmericanoScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
+        child: Stack(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    match.clubId?.clubName ?? "Club Name",
-                    style: Get.textTheme.labelLarge,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                avatarGroup(
-                  players: match.players ?? [],
-                  add: canJoin,
-                  joinedMembers: match.joinedMembers ?? 0,
-                  isJoined: isJoined,
-                )
-              ],
+            Positioned(
+              left: -40,
+              top: -10,
+              child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
             ),
-            Row(
-              children: [
-                Text(
-                  "${match.formattedMatchDate} | ${match.matchTime}",
-                  style: Get.textTheme.bodySmall,
-                ).paddingOnly(right: 5),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6,vertical: 2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: AppColors.secondaryColor,
-                  ),
-                  child: Text(
-                    match.skillLevel ?? "A",
-                    style: Get.textTheme.bodySmall!.copyWith(
-                      color: AppColors.whiteColor,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              ],
+            Positioned(
+              right: -30,
+              bottom: -20,
+              child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
             ),
-            Row(
-              children: [
-                Icon(genderIcon, size: 15),
-                Text(
-                  genderText.capitalizeFirstChar(),
-                  style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
-                ),
-              ],
-            ).paddingOnly(bottom: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(CupertinoIcons.person_crop_circle, size: 14),
+                    Expanded(
+                      child: Text(
+                        match.clubId?.clubName ?? "Club Name",
+                        style: Get.textTheme.labelLarge,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    avatarGroup(
+                      players: match.players ?? [],
+                      add: canJoin,
+                      joinedMembers: joinedCount,
+                      isJoined: isJoined,
+                    )
+                  ],
+                ),
+                Row(
+                  children: [
                     Text(
-                      "${match.joinedMembers ?? 0} Players",
-                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
+                      "${match.formattedMatchDate} | ${match.matchTime}",
+                      style: Get.textTheme.bodySmall,
+                    ).paddingOnly(right: 5),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6,vertical: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.secondaryColor,
+                      ),
+                      child: Text(
+                        match.skillLevel ?? "A",
+                        style: Get.textTheme.bodySmall!.copyWith(
+                          color: AppColors.whiteColor,
+                          fontSize: 10,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.only(left: 8, right: 4, top: 3, bottom: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        canJoin
-                            ? "Join Now!  "
-                            : (isJoined ? "Joined  " : "View Score  "),
-                        style: Get.textTheme.displaySmall!.copyWith(
-                          color: AppColors.primaryColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                Row(
+                  children: [
+                    Icon(genderIcon, size: 15),
+                    Text(
+                      genderText.capitalizeFirstChar(),
+                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
+                    ),
+                  ],
+                ).paddingOnly(bottom: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(CupertinoIcons.person_crop_circle, size: 14),
+                        Text(
+                          "$joinedCount Players",
+                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
                         ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(left: 8, right: 4, top: 3, bottom: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      CircleAvatar(
-                        radius: 11,
-                        foregroundColor: AppColors.primaryColor,
-                        child: Icon(
-                          Icons.arrow_forward,
-                          size: 14,
-                          color: AppColors.whiteColor,
-                        ),
+                      child: Row(
+                        children: [
+                          Text(
+                            canJoin
+                                ? "Join Now!  "
+                                : (isFull
+                                    ? "Full  "
+                                    : (isJoined ? "Joined  " : "View Score  ")),
+                            style: Get.textTheme.displaySmall!.copyWith(
+                              color: isFull
+                                  ? Colors.red.shade600
+                                  : AppColors.primaryColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          CircleAvatar(
+                            radius: 11,
+                            backgroundColor: isFull
+                                ? Colors.grey.shade300
+                                : AppColors.primaryColor,
+                            child: Icon(
+                              isFull ? Icons.lock : Icons.arrow_forward,
+                              size: 14,
+                              color: AppColors.whiteColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
-            ),
+            ).paddingAll(10),
           ],
         ),
       ).paddingOnly(bottom: Get.height * 0.015),
@@ -456,7 +490,7 @@ class AmericanoScreen extends StatelessWidget {
                   radius: 20,
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
-                    radius: 16,
+                    radius: 18,
                     backgroundColor: AppColors.primaryColor,
                     backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
                     child: profilePic == null
@@ -480,7 +514,7 @@ class AmericanoScreen extends StatelessWidget {
                   radius: 20,
                   backgroundColor: Colors.white,
                   child: CircleAvatar(
-                    radius: 16,
+                    radius: 18,
                     backgroundColor: add ? const Color(0xFF1E40AF) : Colors.grey.shade400,
                     child: Text(
                       add ? '+' : '+$remaining',

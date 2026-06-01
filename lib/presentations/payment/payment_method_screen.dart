@@ -21,11 +21,15 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     return PopScope(
       onPopInvoked: (didPop) {
         print("object-------------------");
-        if (didPop && Get.isRegistered<BookingController>()) {
-          Get.find<BookingController>().onPageResumed();
-        }else if (didPop && Get.isRegistered<BookACourtController>()){
-          print("objectobject--------------");
-          Get.find<BookACourtController>().onResumed();
+        if (didPop) {
+          if (controller.isFromAmericano) {
+            Get.delete<PaymentMethodController>(force: true);
+          } else if (Get.isRegistered<BookingController>()) {
+            Get.find<BookingController>().onPageResumed();
+          } else if (Get.isRegistered<BookACourtController>()) {
+            print("objectobject--------------");
+            Get.find<BookACourtController>().onResumed();
+          }
         }
       },
       child: Scaffold(
@@ -297,7 +301,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
                           child: ElevatedButton(
                             onPressed: () async {
                               // if (controller.razorpayAmountUsed.value <= 0) {
-                              CustomLogger.logMessage(msg:"Amount cannot be zero", level: LogLevel.error);
+                              // CustomLogger.logMessage(msg:"Amount cannot be zero", level: LogLevel.error);
 
                               //   return;
                               // }

@@ -2,6 +2,7 @@ import 'package:padel_mobile/configs/components/safe_bottom_container.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
+import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
 
 import '../../../configs/components/custom_button.dart';
 
@@ -112,7 +113,7 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                       ),
                       child: () {
                         final maxP = match.maxPlayers ?? 12;
-                        final joined = match.joinedMembers ?? 0;
+                        final joined = match.players?.isNotEmpty == true ? match.players!.length : (match.joinedMembers ?? 0);
                         final left = maxP - joined;
                         final leftText = left > 0 ? "$left left" : "Full";
                         return infoTile("Total Members", "$joined/ $leftText", redHighlight: left <= 2);
@@ -155,7 +156,50 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: CustomButton(
                   width: Get.width * 0.9,
-                  onTap: () {},
+                  onTap: () async {
+                    // Show a loading dialog while initiating registration
+                    Get.dialog(
+                      PopScope(
+                        canPop: false,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 16),
+                                Text(
+                                  "Initiating registration...",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.none,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      barrierDismissible: false,
+                    );
+
+                    try {
+                      final paymentController = Get.put(PaymentMethodController(), permanent: true);
+                      await paymentController.createAmericanoRegistration(match.sId ?? '');
+                    } catch (e) {
+                      if (Get.isDialogOpen == true) {
+                        Get.back();
+                      }
+                      Get.delete<PaymentMethodController>(force: true);
+                    }
+                  },
                   child: Text(
                     "Register Now",
                     style: Get.textTheme.headlineMedium!.copyWith(

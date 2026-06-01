@@ -14,6 +14,8 @@ import '../book_a_court/book_a_court_controller.dart';
 import '../booking/book_session/book_session_controller.dart';
 import '../booking/booking_controller.dart';
 import '../profile/profile_controller.dart';
+import '../../repositories/americano_repository/americano_repository.dart';
+import 'package:padel_mobile/presentations/americano/americano_controller.dart';
 
 class PaymentMethodController extends GetxController {
   var option = ''.obs;
@@ -32,7 +34,11 @@ class PaymentMethodController extends GetxController {
     directBookingPayload = payload;
   }
 
+  String? americanoMatchId;
+  bool get isFromAmericano => americanoMatchId != null && americanoMatchId!.isNotEmpty;
+
   static final _cartRepository = CartRepository();
+  static final _americanoRepository = AmericanoRepository();
 
   // CartController? get _cartController =>
   //     Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
@@ -188,6 +194,26 @@ class PaymentMethodController extends GetxController {
     String? razorpaySignature,
   }) async {
     try {
+      if (isFromAmericano) {
+        CustomLogger.logMessage(msg: "From Americano Registration----------------------", level: LogLevel.debug);
+        final response = await _americanoRepository.registerPlayer(
+          americanoMatchId: americanoMatchId!,
+          razorpayPaymentId: razorpayPaymentId,
+          razorpayOrderId: razorpayOrderId,
+          razorpaySignature: razorpaySignature,
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          CustomLogger.logMessage(msg: "Americano registration confirmed: ${response.data}", level: LogLevel.debug);
+          americanoMatchId = null;
+          Get.to(() => const BookingSuccessfulScreen(buttonType: "tournament"));
+        } else {
+          Get.close(2);
+          showBookingErrorDialog();
+        }
+        return;
+      }
+
       List<Map<String, dynamic>>? bookingPayload;
 
       if (isFromBookSession && directBookingPayload != null) {
@@ -277,9 +303,9 @@ class PaymentMethodController extends GetxController {
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
-                    "Booking Failed",
-                    style: TextStyle(
+                  Text(
+                    isFromAmericano ? "Registration Failed" : "Booking Failed",
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
@@ -287,10 +313,12 @@ class PaymentMethodController extends GetxController {
 
                   const SizedBox(height: 12),
 
-                  const Text(
-                    "Your booking could not be completed right now.",
+                  Text(
+                    isFromAmericano
+                        ? "Your registration could not be completed right now."
+                        : "Your booking could not be completed right now.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
 
                   // const SizedBox(height: 8),
@@ -345,6 +373,9 @@ class PaymentMethodController extends GetxController {
                             c.cleanupOnBack();
                             c.hasCalledSlotHistoryAPI.value = false;
                           }
+                        }
+                        if (isFromAmericano) {
+                          Get.delete<PaymentMethodController>(force: true);
                         }
                         Get.offAllNamed(RoutesName.bottomNav);
                       },
@@ -579,18 +610,19 @@ class PaymentMethodController extends GetxController {
       return;
     }
 
-    print("Starting payment with Razorpay Order ID: $_razorpayOrderId");
+    print("Starting payment with Razorpay Order ID: $_razorpayOrderId, Amount: ${razorpayAmountUsed.value}");
 
     isProcessing.value = true;
 
     try {
       await _paymentService!.initiatePayment(
-        keyId: PaymentConfig.keyId,
+        // keyId: PaymentConfig.keyId,
+        keyId:isFromAmericano? "rzp_test_RtRFaVPUzoUtkG":PaymentConfig.keyId,
         orderId: _razorpayOrderId,
         amount: razorpayAmountUsed.value.toDouble(),
         currency: 'INR',
         name: 'Swoot',
-        description: 'Paying for court booking',
+        description:isFromAmericano?'Paying for Americano': 'Paying for court booking',
         image: 'https://rowthtech.s3.amazonaws.com/padel/Thu%20Jan%2022%202026%2013%3A38%3A20%20GMT%2B0530%20%28India%20Standard%20Time%29Padel_logo.svg',
         userEmail: profileController.profileModel.value?.response?.email??"",
         userContact: profileController.profileModel.value?.response?.phoneNumber.toString()??"",
@@ -599,6 +631,173 @@ class PaymentMethodController extends GetxController {
       isProcessing.value = false;
       CustomLogger.logMessage(msg: "Error: $e", level: LogLevel.error);
     }
+  }
+
+  Future<void> createAmericanoRegistration(String matchId) async {
+    try {
+      isProcessing.value = true;
+      directBookingPayload = null;
+      americanoMatchId = matchId;
+
+      CustomLogger.logMessage(
+        msg: "Creating Americano registration for match: $matchId",
+        level: LogLevel.debug,
+      );
+
+      final response = await _americanoRepository.registerPlayer(
+        americanoMatchId: matchId,
+      );
+
+      if ((response.statusCode == 200 || response.statusCode == 201) && response.data != null) {
+        final responseData = response.data;
+        CustomLogger.logMessage(
+          msg: "Americano registration API response: $responseData",
+          level: LogLevel.debug,
+        );
+
+        _razorpayOrderId = responseData['orderId'] ?? 
+                           responseData['razorpayOrderId'] ?? 
+                           responseData['order_id'];
+                           
+        initiatePayment = responseData.containsKey('requiresPayment')
+            ? (responseData['requiresPayment'] as bool)
+            : (responseData.containsKey('requires_payment') 
+                ? (responseData['requires_payment'] as bool) 
+                : true);
+                
+        walletAmountUsed.value =
+            (responseData['walletAmountUsed'] as num?)?.toDouble() ?? 
+            (responseData['walletAmount'] as num?)?.toDouble() ?? 
+            (responseData['wallet_amount'] as num?)?.toDouble() ?? 
+            0.0;
+            
+        razorpayAmountUsed.value =
+            (responseData['razorpayAmountUsed'] as num?)?.toDouble() ?? 
+            (responseData['razorpayAmount'] as num?)?.toDouble() ?? 
+            (responseData['amount'] as num?)?.toDouble() ?? 
+            (responseData['price'] as num?)?.toDouble() ?? 
+            (responseData['registrationFee'] as num?)?.toDouble() ?? 
+            0.0;
+
+        CustomLogger.logMessage(
+          msg: "Americano Registration created with Razorpay order ID: $_razorpayOrderId\n"
+              "Wallet: ${walletAmountUsed.value}, Razorpay: ${razorpayAmountUsed.value}, Requires Payment: $initiatePayment",
+          level: LogLevel.debug,
+        );
+
+        if (Get.isDialogOpen == true) {
+          Get.back();
+        }
+
+        if (initiatePayment == false) {
+          showAmericanoSuccessDialog();
+        } else {
+          await Get.toNamed(RoutesName.paymentMethod);
+        }
+      } else {
+        if (Get.isDialogOpen == true) {
+          Get.back();
+        }
+        AppToast.error("Failed to initialize registration. Please try again. --!!");
+      }
+    } catch (e, st) {
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+      CustomLogger.logMessage(
+        msg: "Error creating Americano registration: $e, $st",
+        level: LogLevel.error,
+      );
+      AppToast.error("Error: ${e.toString()}");
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+
+  void showAmericanoSuccessDialog() {
+    Get.dialog(
+      barrierDismissible: false,
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: Get.width * 0.85,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                "Registration Confirmed!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              const Text(
+                "You have registered for the Americano match successfully. No payment was required.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    americanoMatchId = null;
+                    Get.back();
+                    Get.back();
+                    Get.delete<PaymentMethodController>(force: true);
+                    if (Get.isRegistered<AmericanoController>()) {
+                      Get.find<AmericanoController>().fetchAmericanoMatches(isRefresh: true);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "Go to Home",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override

@@ -187,6 +187,7 @@ class AppEndpoints {
 
   ///Americano-----------------------------------------------------------------
   static const String getAmericanos = "${baseUrl}court/americano/getAmericanos";
+  static const String registerPlayer = "${baseUrl}court/americano/registerPlayer";
 }
 
 class PaymentConfig {

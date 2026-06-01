@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
@@ -48,6 +49,49 @@ class AmericanoRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Error fetching Americano matches: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  /// Register player for Americano Match---------------------------------------
+  Future<Response> registerPlayer({
+    required String americanoMatchId,
+    String? razorpayPaymentId,
+    String? razorpayOrderId,
+    String? razorpaySignature,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {
+        "americanoMatchId": americanoMatchId,
+      };
+
+      if (razorpayPaymentId != null) {
+        data['razorpay_payment_id'] = razorpayPaymentId;
+      }
+      if (razorpayOrderId != null) {
+        data['razorpay_order_id'] = razorpayOrderId;
+      }
+      if (razorpaySignature != null) {
+        data['razorpay_signature'] = razorpaySignature;
+      }
+
+      CustomLogger.logMessage(
+        msg: "Registering player for Americano Match: $data",
+        level: LogLevel.info,
+      );
+
+      final Response response = await dioClient.post(
+        AppEndpoints.registerPlayer,
+        data: data,
+      );
+
+      return response;
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Error registering player for Americano Match: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
