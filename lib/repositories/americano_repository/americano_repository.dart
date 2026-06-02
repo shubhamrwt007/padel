@@ -98,4 +98,65 @@ class AmericanoRepository {
       rethrow;
     }
   }
+
+  /// Get Americano Leaderboard------------------------------------------------
+  Future<AmericanoLeaderboardResponse> getAmericanoLeaderboard(String matchId) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Fetching Americano Leaderboard for matchId: $matchId",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.get(
+        AppEndpoints.getAmericanoLeaderboard(matchId),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Americano Leaderboard fetched successfully: ${response.data}",
+          level: LogLevel.info,
+        );
+
+        final data = response.data;
+        List<AmericanoPlayer> players = [];
+        MyRankInfo? myRankInfo;
+
+        if (data != null && data is Map<String, dynamic>) {
+          if (data['myRankInfo'] != null && data['myRankInfo'] is Map<String, dynamic>) {
+            myRankInfo = MyRankInfo.fromJson(data['myRankInfo']);
+          } else if (data['data'] != null && data['data'] is Map<String, dynamic> && data['data']['myRankInfo'] != null) {
+            myRankInfo = MyRankInfo.fromJson(data['data']['myRankInfo']);
+          }
+
+          final dynamic rawData = data['data'];
+          if (rawData is List) {
+            players = rawData
+                .map((e) => AmericanoPlayer.fromJson(e as Map<String, dynamic>))
+                .toList();
+          } else if (rawData is Map) {
+            if (rawData['leaderboard'] is List) {
+              players = (rawData['leaderboard'] as List)
+                  .map((e) => AmericanoPlayer.fromJson(e as Map<String, dynamic>))
+                  .toList();
+            }
+            if (rawData['myRankInfo'] != null && rawData['myRankInfo'] is Map<String, dynamic>) {
+              myRankInfo = MyRankInfo.fromJson(rawData['myRankInfo']);
+            }
+          }
+        }
+        return AmericanoLeaderboardResponse(players: players, myRankInfo: myRankInfo);
+      } else {
+        throw Exception(
+          "Failed to fetch Americano leaderboard. Status code: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Error fetching Americano leaderboard: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
 }

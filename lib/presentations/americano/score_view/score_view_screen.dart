@@ -1,6 +1,8 @@
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
-
+import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
+import 'package:padel_mobile/handler/text_formatter.dart';
 import '../../leaderBoard/leader_board_screen.dart';
+
 class ScoreViewScreen extends GetView<ScoreViewController> {
   const ScoreViewScreen({super.key});
 
@@ -45,10 +47,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
             ],
           ),
           // Leaderboard bottom sheet
-          // Obx(() => controller.selectedTab.value == 0
-          //     ?
-        _buildLeaderboardSheet(context)
-              // : const SizedBox()),
+          _buildLeaderboardSheet(context),
         ],
       ),
     );
@@ -93,109 +92,170 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
     });
   }
   Widget _buildRankingInfo() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Color(0XFFCBD6FF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.labelBlackColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              "#4",
-              style: Get.textTheme.bodyMedium!.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
+    return Obx(() {
+      final rankInfo = controller.myRankInfo.value;
+      if (rankInfo == null) {
+        return const SizedBox.shrink();
+      }
+
+      final rank = rankInfo.rank ?? 0;
+      final message = rankInfo.message ?? "";
+
+      if (message.isEmpty && rank == 0) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0XFFCBD6FF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.labelBlackColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "#$rank",
+                style: Get.textTheme.bodyMedium!.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              "You are doing better than 60% of other players!",
-              style: Get.textTheme.bodyMedium!.copyWith(
-                color: AppColors.primaryColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: Get.textTheme.bodyMedium!.copyWith(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                maxLines: 2,
               ),
-              maxLines: 2,
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
+  }
+  String _getPlayerInitials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '?';
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      final firstLetter = parts.first[0];
+      final lastLetter = parts.last[0];
+      return (firstLetter + lastLetter).toUpperCase();
+    }
+    return fullName.trim()[0].toUpperCase();
+  }
+
+  String _getPlayerName(AmericanoPlayer player) {
+    final name = player.fullName;
+    if (name != null && name.isNotEmpty) {
+      return name.capitalizeFirstChar();
+    }
+    final registerName = player.registerUserId?.name;
+    if (registerName != null && registerName.isNotEmpty) {
+      return registerName.capitalizeFirstChar();
+    }
+    return "Anonymous";
   }
 
   Widget _buildPodiumSection() {
-    final top3 = controller.players.take(3).toList();
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return SizedBox(
+          height: Get.height * 0.4,
+          child: const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
+      }
 
-    // Ensure we have at least 3 players, otherwise handle gracefully
-    if (top3.length < 3) {
-      return const SizedBox(height: 300, child: Center(child: Text('Not enough players for podium')));
-    }
+      final playersList = controller.leaderboardPlayers;
 
-    return SizedBox(
-      height: Get.height*0.47,
-      width: Get.width,
-      child: Stack(
-        children: [
-          Transform.scale(
-            scale: 1.1,
-            child: SvgPicture.asset(
-              Assets.imagesImgBackgroundScoreView,
-              fit: BoxFit.cover,
-            ),
-          ).paddingOnly(left: 10,top: 10),
-          Center(
-            child: SvgPicture.asset(
-              Assets.imagesImgScoreView,
-              height: 250,
-              fit: BoxFit.contain,
-            ),
-          ).paddingOnly(left: 30, right: 30),
-          // Position players on top of the podium with precise alignment
-          Positioned.fill(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 2nd place (left side) - positioned lower
-                Container(
-                  // margin: EdgeInsets.only(bottom: 60, right: 15),
-                  child: _podiumItem(top3[1], 2),
-                ),
-
-                // 1st place (center, highest) - positioned at the top
-                Container(
-                  margin: EdgeInsets.only(left: Get.width*0.12),
-                  child: _podiumItem(top3[0], 1),
-                ),
-
-                // 3rd place (right side) - positioned lowest
-                Container(
-                  margin: EdgeInsets.only(bottom: 30, left: Get.width*0.12),
-                  child: _podiumItem(top3[2], 3),
-                ),
-              ],
+      if (playersList.isEmpty) {
+        return SizedBox(
+          height: Get.height * 0.4,
+          child: const Center(
+            child: Text(
+              'No players available',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
-        ],
-      )
-    );
+        );
+      }
+
+      final top3 = playersList.take(3).toList();
+
+      return SizedBox(
+        height: Get.height * 0.47,
+        width: Get.width,
+        child: Stack(
+          children: [
+            Transform.scale(
+              scale: 1.1,
+              child: SvgPicture.asset(
+                Assets.imagesImgBackgroundScoreView,
+                fit: BoxFit.cover,
+              ),
+            ).paddingOnly(left: 10, top: 10),
+            Center(
+              child: SvgPicture.asset(
+                Assets.imagesImgScoreView,
+                height: 250,
+                fit: BoxFit.contain,
+              ),
+            ).paddingOnly(left: 30, right: 30),
+            Positioned.fill(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 2nd place (left side)
+                  if (top3.length > 1)
+                    _podiumItem(top3[1], 2)
+                  else
+                    const SizedBox(width: 80),
+
+                  // 1st place (center, highest)
+                  Container(
+                    margin: EdgeInsets.only(left: Get.width * 0.1, right: Get.width * 0.1),
+                    child: _podiumItem(top3[0], 1),
+                  ),
+
+                  // 3rd place (right side)
+                  if (top3.length > 2)
+                    _podiumItem(top3[2], 3)
+                  else
+                    const SizedBox(width: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _podiumItem(Player player, int position) {
-    final heightOffsets = {1: Get.height*0.018, 2:Get.height*0.068, 3: Get.height*0.098}; // 1st highest, 2nd middle, 3rd lowest
+  Widget _podiumItem(AmericanoPlayer player, int position) {
+    final heightOffsets = {1: Get.height * 0.018, 2: Get.height * 0.068, 3: Get.height * 0.098};
+
+    final pic = player.registerUserId?.profilePic;
+    final hasImage = pic != null && pic.isNotEmpty;
+    final name = _getPlayerName(player);
+    final initials = _getPlayerInitials(player.fullName ?? player.registerUserId?.name);
+    final points = player.totalPoints ?? 0;
 
     return Padding(
       padding: EdgeInsets.only(top: heightOffsets[position]!),
@@ -203,26 +263,55 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           CircleAvatar(
-            radius: position == 1 ? 35 : 30,
-            backgroundImage: NetworkImage(player.imageUrl),
+            backgroundColor: Colors.white,
+            radius: position == 1 ? 36 : 31,
+            child: CircleAvatar(
+              radius: position == 1 ? 35 : 30,
+              backgroundColor: AppColors.primaryColor,
+              backgroundImage: hasImage ? NetworkImage(pic) : null,
+              child: !hasImage
+                  ? Text(
+                      initials,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: position == 1 ? 16 : 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
           ),
-          Text("Dianne",style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white),),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: 70,
+            child: Text(
+              name,
+              style: Get.textTheme.headlineSmall!.copyWith(color: Colors.white, fontSize: 11),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 2),
           Container(
             height: 16,
             width: 30,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: AppColors.secondaryColor,
-              borderRadius: BorderRadius.circular(10)
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Text("80",style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white,fontSize: 11),),
-          ).paddingOnly(bottom: Get.height*0.03),
+            child: Text(
+              "$points",
+              style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white, fontSize: 11),
+            ),
+          ).paddingOnly(bottom: Get.height * 0.03),
           Text(
             '$position',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.whiteColor,
-              fontSize:48,
+              fontSize: 48,
             ),
           ),
         ],
@@ -230,193 +319,209 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
     );
   }
 
-
   Widget _buildLeaderboardSheet(BuildContext context) {
-    return Obx(
-      ()=> DraggableScrollableSheet(
+    return Obx(() {
+      return DraggableScrollableSheet(
         key: ValueKey(controller.selectedTab.value),
-        initialChildSize:controller.selectedTab.value == 0? 0.48:0.55,
-        minChildSize:controller.selectedTab.value == 0? 0.48:0.55,
+        initialChildSize: controller.selectedTab.value == 0 ? 0.48 : 0.55,
+        minChildSize: controller.selectedTab.value == 0 ? 0.48 : 0.55,
         maxChildSize: 0.9,
-        builder: (context, scroll) =>
-            Stack(
-              clipBehavior: Clip.none,
-          children: [
-            CustomPaint(
-              painter: UpwardCurvePainter(),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Color(0xffF9FAFF),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 30,
-                            child: Text(
-                              '#',
-                              style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'Player',
-                              style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 55,
-                            child: Text(
-                              'W-L-T',
-                              style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 45,
-                            child: Text(
-                              'Diff',
-                              style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 50,
-                            child: Text(
-                              'Points',
-                              style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).paddingOnly(bottom: 10),
-                    Expanded(
-                      child: ListView.builder(
-                        controller: scroll,
-                        itemCount: controller.players.length,
-                        // separatorBuilder: (_, __) => const Divider(),
-                        itemBuilder: (_, idx) {
-                          final p = controller.players[idx];
-                          return  Container(
-                            margin: EdgeInsets.only(bottom: 5),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.primaryColor.withAlpha(30))
-                            ),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 30,
-                                  child: Text(
-                                    '${idx + 1}',
-                                    style: Get.textTheme.bodySmall!.copyWith(color: Colors.black, fontWeight: FontWeight.w500),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        height: 30,
-                                        width: 30,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          image: DecorationImage(image: NetworkImage(p.imageUrl))
-                                        ),
-                                      ).paddingOnly(right: 10),
-                                      Expanded(
-                                        child: Text(
-                                          p.name,
-                                          style: Get.textTheme.bodySmall!.copyWith(color: Colors.black),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 55,
-                                  child: Text(
-                                    p.record,
-                                    style: Get.textTheme.displaySmall!.copyWith(fontSize: 11),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 45,
-                                  child: Text(
-                                    "+12",
-                                    style: Get.textTheme.displaySmall!.copyWith(fontSize: 11),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 50,
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Container(
-                                      height: 16,
-                                      width: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.secondaryColor,
-                                        borderRadius: BorderRadius.circular(5)
-                                      ),
-                                      child: Text(
-                                        "${p.points}",
-                                        style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white, fontSize: 10),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ).paddingSymmetric(horizontal: 12, vertical: 10),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ).paddingOnly(left: Get.width*0.05,right: Get.width*0.05),
-              ),
-            ),
-            Positioned(
-              top: -8, // Position it at the peak of the curve
-              left: Get.width * 0.5 - 12, // Center it horizontally
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.transparent,
-                    width: 2,
-                  ),
-                  boxShadow: [
+        builder: (context, scroll) => Obx(() {
+          final playersList = controller.leaderboardPlayers;
 
-                  ],
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CustomPaint(
+                painter: UpwardCurvePainter(),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffF9FAFF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 30,
+                              child: Text(
+                                '#',
+                                style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Player',
+                                style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 55,
+                              child: Text(
+                                'W-L-T',
+                                style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 45,
+                              child: Text(
+                                'Diff',
+                                style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 50,
+                              child: Text(
+                                'Points',
+                                style: Get.textTheme.labelLarge!.copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).paddingOnly(bottom: 10),
+                      Expanded(
+                        child: controller.isLoading.value
+                            ? const Center(child: CircularProgressIndicator())
+                            : playersList.isEmpty
+                                ? const Center(child: Text("No leaderboard data available"))
+                                : ListView.builder(
+                                    controller: scroll,
+                                    itemCount: playersList.length,
+                                    itemBuilder: (_, idx) {
+                                      final p = playersList[idx];
+                                      final pic = p.registerUserId?.profilePic;
+                                      final hasImage = pic != null && pic.isNotEmpty;
+                                      final name = _getPlayerName(p);
+                                      final initials = _getPlayerInitials(p.fullName ?? p.registerUserId?.name);
+                                      final wins = p.wins ?? 0;
+                                      final losses = p.losses ?? 0;
+                                      final draws = p.draws ?? 0;
+                                      final diff = p.pointDifference ?? 0;
+                                      final diffSign = diff >= 0 ? "+" : "";
+                                      final points = p.totalPoints ?? 0;
+
+                                      return Container(
+                                        margin: const EdgeInsets.only(bottom: 5),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: AppColors.primaryColor.withAlpha(30)),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 30,
+                                              child: Text(
+                                                '${idx + 1}',
+                                                style: Get.textTheme.bodySmall!.copyWith(color: Colors.black, fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Row(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: 15,
+                                                    backgroundColor: AppColors.primaryColor,
+                                                    backgroundImage: hasImage ? NetworkImage(pic) : null,
+                                                    child: !hasImage
+                                                        ? Text(
+                                                            initials,
+                                                            style: const TextStyle(
+                                                              color: Colors.white,
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          )
+                                                        : null,
+                                                  ).paddingOnly(right: 10),
+                                                  Expanded(
+                                                    child: Text(
+                                                      name,
+                                                      style: Get.textTheme.bodySmall!.copyWith(color: Colors.black),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 55,
+                                              child: Text(
+                                                "$wins - $losses - $draws",
+                                                style: Get.textTheme.displaySmall!.copyWith(fontSize: 11),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 45,
+                                              child: Text(
+                                                "$diffSign$diff",
+                                                style: Get.textTheme.displaySmall!.copyWith(fontSize: 11),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 50,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Container(
+                                                  height: 16,
+                                                  width: 30,
+                                                  alignment: Alignment.center,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.secondaryColor,
+                                                    borderRadius: BorderRadius.circular(5),
+                                                  ),
+                                                  child: Text(
+                                                    "$points",
+                                                    style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white, fontSize: 10),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ).paddingSymmetric(horizontal: 12, vertical: 10),
+                                      );
+                                    },
+                                  ),
+                      ),
+                    ],
+                  ).paddingOnly(left: Get.width * 0.05, right: Get.width * 0.05),
                 ),
-                child: Center(
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.starUnselectedColor,
-                      shape: BoxShape.circle,
+              ),
+              Positioned(
+                top: -8,
+                left: Get.width * 0.5 - 12,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppColors.starUnselectedColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
+            ],
+          );
+        }),
+      );
+    });
   }
 
 Widget _roundsTabContent(){

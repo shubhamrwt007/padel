@@ -88,7 +88,7 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                             "${match.matchDay != null && match.matchDay!.isNotEmpty ? "${match.matchDay} " : ""}${_formatIsoDate(match.matchDate)}"
                                 .trim(),
                           ),
-                          infoTile("Time / Min", match.matchTime ?? "N/A"),
+                          infoTile("Game Type", match.gender?.capitalizeFirstChar() ?? "N/A"),
                           infoTile("Match Format", match.americanoFormat?.capitalizeFirstChar() ?? "Individual"),
                           infoTile("Last Date", _formatIsoDate(match.registrationLastDate)),
                           Dash(

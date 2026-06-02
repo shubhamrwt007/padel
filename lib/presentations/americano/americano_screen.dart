@@ -107,12 +107,11 @@ class AmericanoScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isFull) {
-          return;
-        }
-        if (canJoin) {
+          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId});
+        } else if (canJoin) {
           showAmericanoBottomSheet(Get.context!, match);
         } else {
-          Get.toNamed(RoutesName.scoreView);
+          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId});
         }
       },
       child: Container(
@@ -169,7 +168,7 @@ class AmericanoScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      "${match.formattedMatchDate} | ${match.matchTime}",
+                      "${match.matchDay??""} | ${match.formattedMatchDate}",
                       style: Get.textTheme.bodySmall,
                     ).paddingOnly(right: 5),
                     Container(
@@ -403,7 +402,7 @@ class AmericanoScreen extends StatelessWidget {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          player.fullName ?? "Anonymous",
+                                          player.fullName?.capitalizeFirstChar() ?? "Anonymous",
                                           style: Get.textTheme.bodyMedium?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.blackColor,

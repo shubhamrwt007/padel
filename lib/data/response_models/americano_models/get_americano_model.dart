@@ -422,3 +422,39 @@ class RegisterUser {
     };
   }
 }
+
+class AmericanoLeaderboardResponse {
+  final List<AmericanoPlayer> players;
+  final MyRankInfo? myRankInfo;
+
+  AmericanoLeaderboardResponse({required this.players, this.myRankInfo});
+}
+
+class MyRankInfo {
+  final bool? isInMatch;
+  final int? rank;
+  final int? totalPlayers;
+  final int? playersBehind;
+  final num? betterThanPercent;
+  final String? message;
+
+  MyRankInfo({
+    this.isInMatch,
+    this.rank,
+    this.totalPlayers,
+    this.playersBehind,
+    this.betterThanPercent,
+    this.message,
+  });
+
+  factory MyRankInfo.fromJson(Map<String, dynamic> json) {
+    return MyRankInfo(
+      isInMatch: json['isInMatch'],
+      rank: json['rank'],
+      totalPlayers: json['totalPlayers'],
+      playersBehind: json['playersBehind'],
+      betterThanPercent: json['betterThanPercent'],
+      message: json['message']?.toString(),
+    );
+  }
+}
