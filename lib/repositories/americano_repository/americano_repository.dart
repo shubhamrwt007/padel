@@ -18,11 +18,14 @@ class AmericanoRepository {
   Future<GetAmericanoModel?> getAmericanos({
     int page = 1,
     int limit = 10,
+    String? matchDate,
   }) async {
     try {
       final queryParams = {
         'page': page,
         'limit': limit,
+        if (matchDate != null && matchDate.isNotEmpty) 'matchDate': matchDate,
+        if (matchDate != null && matchDate.isNotEmpty) 'date': matchDate,
       };
 
       CustomLogger.logMessage(

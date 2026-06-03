@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 
@@ -13,74 +14,163 @@ class AmericanoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: primaryAppBar(title: const Text("Americano"), centerTitle: true, context: context),
-      body: Obx(() {
-        // 1. Fullscreen Loading State (Initial load only)
-        if (controller.isLoading.value && controller.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // 2. Empty State
-        if (controller.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
-            color: AppColors.whiteColor,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(
-                  height: Get.height * 0.8,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(CupertinoIcons.sportscourt, size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          "No Americano matches found",
-                          style: Get.textTheme.titleMedium?.copyWith(color: Colors.grey),
+      appBar: primaryAppBar(
+        title: const Text("Americano"),
+        centerTitle: true,
+        context: context,
+        action: [
+          GestureDetector(
+            onTap: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: ColorScheme.light(
+                        primary: Colors.blue.shade800,
+                        onPrimary: Colors.white,
+                        onSurface: Colors.black,
+                      ),
+                      textTheme: const TextTheme(
+                        headlineMedium: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Pull down to refresh",
-                          style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey.shade400),
-                        ),
-                      ],
+                        titleSmall: TextStyle(fontSize: 14),
+                        bodyLarge: TextStyle(fontSize: 16),
+                        labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
                     ),
+                    child: Transform.scale(scale: 0.9, child: child!),
+                  );
+                },
+                initialDate: controller.selectedDate.value ?? DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              );
+              if (pickedDate != null) {
+                controller.selectedDate.value = pickedDate;
+                controller.fetchAmericanoMatches(isRefresh: true);
+              }
+            },
+            child: Obx(() => Container(
+              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.textFieldColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    controller.selectedDate.value == null
+                        ? 'Date'
+                        : DateFormat('dd MMM yyyy').format(controller.selectedDate.value!),
+                    style: Get.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-          );
-        }
+                  const SizedBox(width: 4),
+                  if (controller.selectedDate.value != null)
+                    GestureDetector(
+                      onTap: () {
+                        controller.selectedDate.value = null;
+                        controller.fetchAmericanoMatches(isRefresh: true);
+                      },
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.black54,
+                        size: 18,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.calendar_month,
+                      color: Colors.black,
+                      size: 18,
+                    ),
+                ],
+              ),
+            )),
+          ).paddingOnly(right: 15),
+        ]
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Obx(() {
+              // 1. Fullscreen Loading State (Initial load only)
+              if (controller.isLoading.value && controller.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        // 3. Populated Matches List State (Seamless Refresh)
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
-          color: AppColors.whiteColor,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            controller: controller.scrollController,
-            padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
-            children: [
-              if (controller.ongoingMatches.isNotEmpty) ...[
-                _sectionTitle("Ongoing"),
-                ...controller.ongoingMatches.map((match) => buildMatchesList(match: match, add: false)),
-              ],
-              if (controller.upcomingMatches.isNotEmpty) ...[
-                _sectionTitle("Upcoming"),
-                ...controller.upcomingMatches.map((match) => buildMatchesList(match: match, add: true)),
-              ],
-              if (controller.isLoadingMore.value) ...[
-                const SizedBox(height: 16),
-                const Center(child: CircularProgressIndicator()),
-                const SizedBox(height: 16),
-              ],
-              SizedBox(height: Get.height * 0.05),
-            ],
+              // 2. Empty State
+              if (controller.isEmpty) {
+                return RefreshIndicator(
+                  onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
+                  color: AppColors.whiteColor,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: Get.height * 0.8,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.sportscourt, size: 64, color: Colors.grey.shade400),
+                              const SizedBox(height: 16),
+                              Text(
+                                "No Americano matches found",
+                                style: Get.textTheme.titleMedium?.copyWith(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Pull down to refresh",
+                                style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey.shade400),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // 3. Populated Matches List State (Seamless Refresh)
+              return RefreshIndicator(
+                onRefresh: () => controller.fetchAmericanoMatches(isRefresh: true),
+                color: AppColors.whiteColor,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: controller.scrollController,
+                  padding: EdgeInsets.symmetric(horizontal: Get.width * 0.05),
+                  children: [
+                    if (controller.ongoingMatches.isNotEmpty) ...[
+                      _sectionTitle("Ongoing"),
+                      ...controller.ongoingMatches.map((match) => buildMatchesList(match: match, add: false)),
+                    ],
+                    if (controller.upcomingMatches.isNotEmpty) ...[
+                      _sectionTitle("Upcoming"),
+                      ...controller.upcomingMatches.map((match) => buildMatchesList(match: match, add: true)),
+                    ],
+                    if (controller.isLoadingMore.value) ...[
+                      const SizedBox(height: 16),
+                      const Center(child: CircularProgressIndicator()),
+                      const SizedBox(height: 16),
+                    ],
+                    SizedBox(height: Get.height * 0.05),
+                  ],
+                ),
+              );
+            }),
           ),
-        );
-      }),
+        ],
+      ),
     );
   }
 

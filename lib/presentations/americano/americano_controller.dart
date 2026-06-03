@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/repositories/americano_repository/americano_repository.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
@@ -11,6 +12,8 @@ class AmericanoController extends GetxController {
 
   RxList<AmericanoMatch> ongoingMatches = <AmericanoMatch>[].obs;
   RxList<AmericanoMatch> upcomingMatches = <AmericanoMatch>[].obs;
+
+  Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
 
   RxBool isLoading = false.obs;
   RxBool isLoadingMore = false.obs;
@@ -53,9 +56,15 @@ class AmericanoController extends GetxController {
     }
 
     try {
+      String? formattedDate;
+      if (selectedDate.value != null) {
+        formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate.value!);
+      }
+
       final response = await _repository.getAmericanos(
         page: currentPage.value,
         limit: limit,
+        matchDate: formattedDate,
       );
 
       if (response != null && response.data != null) {
