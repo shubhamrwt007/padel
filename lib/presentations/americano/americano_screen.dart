@@ -107,11 +107,11 @@ class AmericanoScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isFull) {
-          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId});
+          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId})?.then((_){controller.fetchAmericanoMatches(isRefresh: true);});
         } else if (canJoin) {
           showAmericanoBottomSheet(Get.context!, match);
         } else {
-          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId});
+          Get.toNamed(RoutesName.scoreView, arguments: {'americanoMatchId': match.sId})?.then((_){controller.fetchAmericanoMatches(isRefresh: true);});
         }
       },
       child: Container(

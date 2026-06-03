@@ -287,16 +287,34 @@ class CustomDrawerUi extends GetView<ProfileController> {
                 },
               ),
               Obx(
-                    () => ProfileRow(
-                  icon: Icon(Icons.sports_tennis, size: 20, color: controller.selectedIndex.value == 15 ? AppColors.primaryColor : AppColors.labelBlackColor),
-                  title: "Americano",
-                  isSelected: controller.selectedIndex.value == 15,
-                  onTap: () {
-                    controller.selectedIndex.value = 15;
-                    Get.toNamed(RoutesName.americano);
-                  },
-
-                ),
+                () {
+                  final mainHomeController = Get.isRegistered<MainHomeController>() 
+                      ? Get.find<MainHomeController>() 
+                      : null;
+                  final hasAmericanos = mainHomeController?.hasAmericanoMatches.value ?? false;
+                  
+                  if (!hasAmericanos) return const SizedBox.shrink();
+                  
+                  return ProfileRow(
+                    icon: SvgPicture.asset(
+                      Assets.imagesIcAmericano,
+                      height: 20,
+                      width: 20,
+                      colorFilter: ColorFilter.mode(
+                        controller.selectedIndex.value == 15
+                            ? AppColors.primaryColor
+                            : AppColors.labelBlackColor,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    title: "Americano",
+                    isSelected: controller.selectedIndex.value == 15,
+                    onTap: () {
+                      controller.selectedIndex.value = 15;
+                      Get.toNamed(RoutesName.americano);
+                    },
+                  );
+                },
               ),
               const SizedBox(height: 20),
               

@@ -8,6 +8,7 @@ import 'package:padel_mobile/data/request_models/home_models/get_category_model.
 import 'package:padel_mobile/data/response_models/ipt_tournament/get_ipt_tournament_list_model.dart';
 import 'package:padel_mobile/data/response_models/league/get_league_list_model.dart';
 import 'package:padel_mobile/data/response_models/openmatch_model/open_match_booking_model.dart';
+import 'package:padel_mobile/repositories/americano_repository/americano_repository.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 import 'package:padel_mobile/repositories/home_repository/home_repository.dart';
@@ -57,6 +58,9 @@ class MainHomeController extends GetxController {
   final RxBool isLoadingPoll = false.obs;
   final Rx<GetLeagueLeaderBoardModel?> leaderBoard = Rx<GetLeagueLeaderBoardModel?>(null);
   final RxBool isLoadingLeaderBoard = false.obs;
+
+  final RxBool hasAmericanoMatches = false.obs;
+  final RxBool isLoadingAmericano = false.obs;
 
   final RxString selectedLocationId = ''.obs;
   final RxString selectedLocation = ''.obs;
@@ -315,6 +319,7 @@ class MainHomeController extends GetxController {
       _fetchLeagueData(),
       fetchPollResults(),
       fetchLeaderBoard(),
+      fetchActiveAmericanos(),
     ]);
     isLoadingLeagueSection.value = false;
     
@@ -326,6 +331,26 @@ class MainHomeController extends GetxController {
       fetchScheduleMatches(),
       fetchUpcomingMatches(),
     ]);
+  }
+
+  Future<void> fetchActiveAmericanos() async {
+    try {
+      isLoadingAmericano.value = true;
+      final response = await AmericanoRepository().getAmericanos(page: 1, limit: 1);
+      if (response != null && response.data != null) {
+        final data = response.data!;
+        final upcoming = data.upcomingAmericanos ?? [];
+        final ongoing = data.ongoingAmericanos ?? [];
+        
+        hasAmericanoMatches.value = upcoming.isNotEmpty || ongoing.isNotEmpty;
+      } else {
+        hasAmericanoMatches.value = false;
+      }
+    } catch (e) {
+      hasAmericanoMatches.value = false;
+    } finally {
+      isLoadingAmericano.value = false;
+    }
   }
 
   @override

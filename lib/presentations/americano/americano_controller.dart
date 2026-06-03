@@ -2,6 +2,7 @@ import 'package:padel_mobile/presentations/americano/widgets/americano_exports.d
 import 'package:padel_mobile/repositories/americano_repository/americano_repository.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 import 'package:padel_mobile/handler/logger.dart';
+import 'package:padel_mobile/presentations/main_home_page/main_home_controller.dart';
 
 class AmericanoController extends GetxController {
 
@@ -86,6 +87,10 @@ class AmericanoController extends GetxController {
           ongoingMatches.clear();
           upcomingMatches.clear();
         }
+      }
+      
+      if (Get.isRegistered<MainHomeController>()) {
+        Get.find<MainHomeController>().hasAmericanoMatches.value = !isEmpty;
       }
     } catch (e) {
       CustomLogger.logMessage(

@@ -64,6 +64,7 @@ class BottomNavigationController extends GetxController {
       mainHomeController.fetchPollResults(),
       mainHomeController.fetchScheduleMatches(),
       mainHomeController.fetchActiveLeagues(),
+      mainHomeController.fetchActiveAmericanos(),
     ]);
   }
 
