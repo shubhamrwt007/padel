@@ -471,20 +471,24 @@ class AmericanoScreen extends StatelessWidget {
                               child: Row(
                                 children: [
                                   CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: AppColors.primaryColor,
-                                    backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
-                                    child: profilePic == null
-                                        ? Text(
-                                            _getPlayerInitials(player.fullName),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          )
-                                        : null,
+                                    backgroundColor: AppColors.secondaryColor,
+                                    radius: 21,
+                                    child: CircleAvatar(
+                                      radius: 19,
+                                      backgroundColor: AppColors.primaryColor,
+                                      backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
+                                      child: profilePic == null
+                                          ? Text(
+                                              _getPlayerInitials(player.fullName),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
