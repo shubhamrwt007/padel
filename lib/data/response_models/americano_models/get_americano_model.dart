@@ -424,11 +424,144 @@ class RegisterUser {
 }
 
 class AmericanoLeaderboardResponse {
+  final String? americanoFormat;
   final List<AmericanoPlayer> players;
+  final List<AmericanoTeam> teams;
   final MyRankInfo? myRankInfo;
 
-  AmericanoLeaderboardResponse({required this.players, this.myRankInfo});
+  AmericanoLeaderboardResponse({
+    this.americanoFormat,
+    required this.players,
+    required this.teams,
+    this.myRankInfo,
+  });
 }
+
+class AmericanoTeam {
+  String? sId;
+  String? americanoMatchId;
+  String? teamName;
+  List<AmericanoTeamPlayer>? players;
+  int? totalPoints;
+  int? pointsAgainst;
+  int? pointDifference;
+  int? wins;
+  int? draws;
+  int? losses;
+  int? matchesPlayed;
+  bool? isActive;
+  bool? isDeleted;
+  int? rank;
+
+  AmericanoTeam({
+    this.sId,
+    this.americanoMatchId,
+    this.teamName,
+    this.players,
+    this.totalPoints,
+    this.pointsAgainst,
+    this.pointDifference,
+    this.wins,
+    this.draws,
+    this.losses,
+    this.matchesPlayed,
+    this.isActive,
+    this.isDeleted,
+    this.rank,
+  });
+
+  AmericanoTeam.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    americanoMatchId = json['americanoMatchId']?.toString();
+    teamName = json['teamName']?.toString();
+    if (json['players'] != null && json['players'] is List) {
+      players = <AmericanoTeamPlayer>[];
+      for (var v in json['players']) {
+        if (v is Map<String, dynamic>) {
+          players!.add(AmericanoTeamPlayer.fromJson(v));
+        }
+      }
+    }
+    totalPoints = json['totalPoints'] is int ? json['totalPoints'] : int.tryParse(json['totalPoints']?.toString() ?? '');
+    pointsAgainst = json['pointsAgainst'] is int ? json['pointsAgainst'] : int.tryParse(json['pointsAgainst']?.toString() ?? '');
+    pointDifference = json['pointDifference'] is int ? json['pointDifference'] : int.tryParse(json['pointDifference']?.toString() ?? '');
+    wins = json['wins'] is int ? json['wins'] : int.tryParse(json['wins']?.toString() ?? '');
+    draws = json['draws'] is int ? json['draws'] : int.tryParse(json['draws']?.toString() ?? '');
+    losses = json['losses'] is int ? json['losses'] : int.tryParse(json['losses']?.toString() ?? '');
+    matchesPlayed = json['matchesPlayed'] is int ? json['matchesPlayed'] : int.tryParse(json['matchesPlayed']?.toString() ?? '');
+    isActive = json['isActive'];
+    isDeleted = json['isDeleted'];
+    rank = json['rank'] is int ? json['rank'] : int.tryParse(json['rank']?.toString() ?? '');
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': sId,
+      'americanoMatchId': americanoMatchId,
+      'teamName': teamName,
+      if (players != null) 'players': players!.map((e) => e.toJson()).toList(),
+      'totalPoints': totalPoints,
+      'pointsAgainst': pointsAgainst,
+      'pointDifference': pointDifference,
+      'wins': wins,
+      'draws': draws,
+      'losses': losses,
+      'matchesPlayed': matchesPlayed,
+      'isActive': isActive,
+      'isDeleted': isDeleted,
+      'rank': rank,
+    };
+  }
+}
+
+class AmericanoTeamPlayer {
+  String? americanoPlayerId;
+  dynamic registerUserId; // Can be String or RegisterUser
+  String? fullName;
+  String? phoneNumber;
+  String? email;
+  String? gender;
+  String? playerLevel;
+
+  AmericanoTeamPlayer({
+    this.americanoPlayerId,
+    this.registerUserId,
+    this.fullName,
+    this.phoneNumber,
+    this.email,
+    this.gender,
+    this.playerLevel,
+  });
+
+  AmericanoTeamPlayer.fromJson(Map<String, dynamic> json) {
+    americanoPlayerId = json['americanoPlayerId']?.toString();
+    if (json['registerUserId'] != null) {
+      if (json['registerUserId'] is Map<String, dynamic>) {
+        registerUserId = RegisterUser.fromJson(json['registerUserId']);
+      } else {
+        registerUserId = json['registerUserId']; // String representation
+      }
+    }
+    fullName = json['fullName']?.toString();
+    phoneNumber = json['phoneNumber']?.toString();
+    email = json['email']?.toString();
+    gender = json['gender']?.toString();
+    playerLevel = json['playerLevel']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'americanoPlayerId': americanoPlayerId,
+      'registerUserId': registerUserId is RegisterUser ? (registerUserId as RegisterUser).toJson() : registerUserId,
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'email': email,
+      'gender': gender,
+      'playerLevel': playerLevel,
+    };
+  }
+}
+
 
 class MyRankInfo {
   final bool? isInMatch;

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
+import 'package:padel_mobile/data/response_models/americano_models/americano_rounds_response.dart';
 import 'package:padel_mobile/handler/logger.dart';
 
 class AmericanoRepository {
@@ -25,7 +26,6 @@ class AmericanoRepository {
         'page': page,
         'limit': limit,
         if (matchDate != null && matchDate.isNotEmpty) 'matchDate': matchDate,
-        if (matchDate != null && matchDate.isNotEmpty) 'date': matchDate,
       };
 
       CustomLogger.logMessage(
@@ -122,9 +122,13 @@ class AmericanoRepository {
 
         final data = response.data;
         List<AmericanoPlayer> players = [];
+        List<AmericanoTeam> teams = [];
         MyRankInfo? myRankInfo;
+        String? americanoFormat;
 
         if (data != null && data is Map<String, dynamic>) {
+          americanoFormat = data['americanoFormat']?.toString();
+
           if (data['myRankInfo'] != null && data['myRankInfo'] is Map<String, dynamic>) {
             myRankInfo = MyRankInfo.fromJson(data['myRankInfo']);
           } else if (data['data'] != null && data['data'] is Map<String, dynamic> && data['data']['myRankInfo'] != null) {
@@ -132,22 +136,44 @@ class AmericanoRepository {
           }
 
           final dynamic rawData = data['data'];
-          if (rawData is List) {
-            players = rawData
-                .map((e) => AmericanoPlayer.fromJson(e as Map<String, dynamic>))
-                .toList();
-          } else if (rawData is Map) {
-            if (rawData['leaderboard'] is List) {
-              players = (rawData['leaderboard'] as List)
+          if (americanoFormat == "fixed_team") {
+            if (rawData is List) {
+              teams = rawData
+                  .map((e) => AmericanoTeam.fromJson(e as Map<String, dynamic>))
+                  .toList();
+            } else if (rawData is Map) {
+              if (rawData['leaderboard'] is List) {
+                teams = (rawData['leaderboard'] as List)
+                    .map((e) => AmericanoTeam.fromJson(e as Map<String, dynamic>))
+                    .toList();
+              }
+              if (rawData['myRankInfo'] != null && rawData['myRankInfo'] is Map<String, dynamic>) {
+                myRankInfo = MyRankInfo.fromJson(rawData['myRankInfo']);
+              }
+            }
+          } else {
+            if (rawData is List) {
+              players = rawData
                   .map((e) => AmericanoPlayer.fromJson(e as Map<String, dynamic>))
                   .toList();
-            }
-            if (rawData['myRankInfo'] != null && rawData['myRankInfo'] is Map<String, dynamic>) {
-              myRankInfo = MyRankInfo.fromJson(rawData['myRankInfo']);
+            } else if (rawData is Map) {
+              if (rawData['leaderboard'] is List) {
+                players = (rawData['leaderboard'] as List)
+                    .map((e) => AmericanoPlayer.fromJson(e as Map<String, dynamic>))
+                    .toList();
+              }
+              if (rawData['myRankInfo'] != null && rawData['myRankInfo'] is Map<String, dynamic>) {
+                myRankInfo = MyRankInfo.fromJson(rawData['myRankInfo']);
+              }
             }
           }
         }
-        return AmericanoLeaderboardResponse(players: players, myRankInfo: myRankInfo);
+        return AmericanoLeaderboardResponse(
+          americanoFormat: americanoFormat,
+          players: players,
+          teams: teams,
+          myRankInfo: myRankInfo,
+        );
       } else {
         throw Exception(
           "Failed to fetch Americano leaderboard. Status code: ${response.statusCode}",
@@ -156,6 +182,40 @@ class AmericanoRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Error fetching Americano leaderboard: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  /// Get Americano Match Rounds
+  Future<AmericanoRoundsResponse> getAmericanoRounds(String matchId, {String? filter}) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Fetching Americano Rounds for matchId: $matchId, filter: $filter",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.get(
+        "${AppEndpoints.baseUrl}court/americano/$matchId/user/rounds",
+        queryParameters: filter != null ? {'filter': filter} : null,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Americano Rounds fetched successfully",
+          level: LogLevel.info,
+        );
+        return AmericanoRoundsResponse.fromJson(response.data);
+      } else {
+        throw Exception(
+          "Failed to fetch Americano rounds. Status code: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Error fetching Americano rounds: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

@@ -1,6 +1,7 @@
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/repositories/americano_repository/americano_repository.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
+import 'package:padel_mobile/data/response_models/americano_models/americano_rounds_response.dart';
 import 'package:padel_mobile/handler/logger.dart';
 
 class Player {
@@ -16,9 +17,14 @@ class ScoreViewController extends GetxController {
   final AmericanoRepository _repository = AmericanoRepository();
 
   RxString americanoMatchId = "".obs;
+  RxString americanoFormat = "rotating".obs;
   RxList<AmericanoPlayer> leaderboardPlayers = <AmericanoPlayer>[].obs;
+  RxList<AmericanoTeam> leaderboardTeams = <AmericanoTeam>[].obs;
   Rxn<MyRankInfo> myRankInfo = Rxn<MyRankInfo>();
   RxBool isLoading = false.obs;
+  Rxn<AmericanoRoundMatch> userLastMatch = Rxn<AmericanoRoundMatch>();
+  RxBool isLoadingRounds = false.obs;
+  RxBool isMyBooking = false.obs;
 
   // Sample data (fallback in case API returns empty, or for fallback compatibility)
   final players = <Player>[
@@ -49,6 +55,31 @@ class ScoreViewController extends GetxController {
       americanoMatchId.value = args;
     }
     fetchLeaderboard();
+    fetchUserRounds();
+  }
+
+  Future<void> fetchUserRounds() async {
+    if (americanoMatchId.value.isEmpty) return;
+    isLoadingRounds.value = true;
+    try {
+      final filterVal = isMyBooking.value ? "my_match" : "all_matches";
+      final response = await _repository.getAmericanoRounds(
+        americanoMatchId.value,
+        filter: filterVal,
+      );
+      if (response.success == true && response.lastRound != null && response.lastRound!.isNotEmpty) {
+        userLastMatch.value = response.lastRound!.first;
+      } else {
+        userLastMatch.value = null;
+      }
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "Error fetching user rounds in score view controller: $e",
+        level: LogLevel.error,
+      );
+    } finally {
+      isLoadingRounds.value = false;
+    }
   }
 
   Future<void> fetchLeaderboard() async {
@@ -56,16 +87,28 @@ class ScoreViewController extends GetxController {
     isLoading.value = true;
     try {
       final response = await _repository.getAmericanoLeaderboard(americanoMatchId.value);
-      final playersList = response.players;
+      final format = response.americanoFormat ?? "rotating";
+      americanoFormat.value = format;
 
-      // Sort players by totalPoints descending, then pointDifference descending
-      playersList.sort((a, b) {
-        int cmp = (b.totalPoints ?? 0).compareTo(a.totalPoints ?? 0);
-        if (cmp != 0) return cmp;
-        return (b.pointDifference ?? 0).compareTo(a.pointDifference ?? 0);
-      });
-
-      leaderboardPlayers.assignAll(playersList);
+      if (format == "fixed_team") {
+        final teamsList = response.teams;
+        // Sort teams by totalPoints descending, then pointDifference descending
+        teamsList.sort((a, b) {
+          int cmp = (b.totalPoints ?? 0).compareTo(a.totalPoints ?? 0);
+          if (cmp != 0) return cmp;
+          return (b.pointDifference ?? 0).compareTo(a.pointDifference ?? 0);
+        });
+        leaderboardTeams.assignAll(teamsList);
+      } else {
+        final playersList = response.players;
+        // Sort players by totalPoints descending, then pointDifference descending
+        playersList.sort((a, b) {
+          int cmp = (b.totalPoints ?? 0).compareTo(a.totalPoints ?? 0);
+          if (cmp != 0) return cmp;
+          return (b.pointDifference ?? 0).compareTo(a.pointDifference ?? 0);
+        });
+        leaderboardPlayers.assignAll(playersList);
+      }
       myRankInfo.value = response.myRankInfo;
     } catch (e) {
       CustomLogger.logMessage(

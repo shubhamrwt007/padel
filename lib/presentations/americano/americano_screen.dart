@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../handler/text_formatter.dart';
 
@@ -476,7 +477,7 @@ class AmericanoScreen extends StatelessWidget {
                                     child: CircleAvatar(
                                       radius: 19,
                                       backgroundColor: AppColors.primaryColor,
-                                      backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
+                                      backgroundImage: profilePic != null ? CachedNetworkImageProvider(profilePic) : null,
                                       child: profilePic == null
                                           ? Text(
                                               _getPlayerInitials(player.fullName),
@@ -585,7 +586,7 @@ class AmericanoScreen extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 18,
                     backgroundColor: AppColors.primaryColor,
-                    backgroundImage: profilePic != null ? NetworkImage(profilePic) : null,
+                    backgroundImage: profilePic != null ? CachedNetworkImageProvider(profilePic) : null,
                     child: profilePic == null
                         ? Text(
                             _getPlayerInitials(players[index].fullName),

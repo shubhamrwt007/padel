@@ -2,14 +2,14 @@ class AppEndpoints {
   AppEndpoints._();
 
   /// -----------------------Staging URL--------------------------------------------
-  // static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
-  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
   /// -----------------------New Live URL------------------------------------------
   // static const String base = "https://apimobile.swootapp.com/api/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
   // ///-----------------------Local URL-----------------------------------------------
-  static const String base = "http://192.168.1.44:5070/api/";
-  static const String socketUrl = "http://192.168.1.44:5070";
+  // static const String base = "http://192.168.1.44:5070/api/";
+  // static const String socketUrl = "http://192.168.1.44:5070";
 
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
@@ -182,8 +182,6 @@ class AppEndpoints {
       "${baseUrl}court/tournament/getTournamentSponsors";
   static const String getIptTournamentList =
       "${baseUrl}court/tournament/getAllTournaments?";
-  // static const String getIptTournamentPollResult = "";
-  // static const String castIptTournamentPollVote = "";
 
   ///Americano-----------------------------------------------------------------
   static const String getAmericanos = "${baseUrl}court/americano/getAmericanos";

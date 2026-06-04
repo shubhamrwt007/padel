@@ -1,116 +1,13 @@
-import 'package:flutter/material.dart';
-
-import '../../../configs/app_colors.dart';
-import '../../../configs/components/app_bar.dart';
+import 'rounds_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../auth/forgot_password/widgets/forgot_password_exports.dart';
 class RoundsScreen extends StatelessWidget {
   const RoundsScreen({super.key});
 
-  static const List<RoundData> roundsData = [
-    RoundData(
-      title: "Round 1",
-      matches: [
-        MatchData(
-          courtName: "Court 1",
-          player1SideA: "Vikarm",
-          player2SideA: "Dhruv",
-          player1SideB: "Vikarm",
-          player2SideB: "Dhruv",
-          avatarUrlsSideA: [
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-          ],
-          avatarUrlsSideB: [
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-          ],
-          scoreA: "20",
-          scoreB: "12",
-        ),
-        MatchData(
-          courtName: "Court 1",
-          player1SideA: "Vikarm",
-          player2SideA: "Dhruv",
-          player1SideB: "Vikarm",
-          player2SideB: "Dhruv",
-          avatarUrlsSideA: [
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-          ],
-          avatarUrlsSideB: [
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-          ],
-          scoreA: "20",
-          scoreB: "12",
-        ),
-      ],
-    ),
-    RoundData(
-      title: "Round 2",
-      matches: [
-        MatchData(
-          courtName: "Court 1",
-          player1SideA: "Vikarm",
-          player2SideA: "Dhruv",
-          player1SideB: "Vikarm",
-          player2SideB: "Dhruv",
-          avatarUrlsSideA: [
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-          ],
-          avatarUrlsSideB: [
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-          ],
-          scoreA: "20",
-          scoreB: "12",
-        ),
-        MatchData(
-          courtName: "Court 1",
-          player1SideA: "Vikarm",
-          player2SideA: "Dhruv",
-          player1SideB: "Vikarm",
-          player2SideB: "Dhruv",
-          avatarUrlsSideA: [
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-          ],
-          avatarUrlsSideB: [
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-          ],
-          scoreA: "20",
-          scoreB: "12",
-        ),
-      ],
-    ),
-    RoundData(
-      title: "Round 2",
-      matches: [
-        MatchData(
-          courtName: "Court 1",
-          player1SideA: "Vikarm",
-          player2SideA: "Dhruv",
-          player1SideB: "Vikarm",
-          player2SideB: "Dhruv",
-          avatarUrlsSideA: [
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80",
-          ],
-          avatarUrlsSideB: [
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80",
-          ],
-          scoreA: "20",
-          scoreB: "12",
-        ),
-      ],
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<RoundsController>();
+
     return Scaffold(
       backgroundColor: AppColors.primaryColor,
       appBar: primaryAppBar(
@@ -122,29 +19,54 @@ class RoundsScreen extends StatelessWidget {
         title: const Text("Rounds"),
         context: context,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
-        itemCount: roundsData.length,
-        itemBuilder: (context, roundIndex) {
-          final round = roundsData[roundIndex];
-          return RoundSection(
-            roundTitle: round.title,
-            children: round.matches.map((match) {
-              return CourtCard(
-                courtName: match.courtName,
-                player1SideA: match.player1SideA,
-                player2SideA: match.player2SideA,
-                player1SideB: match.player1SideB,
-                player2SideB: match.player2SideB,
-                avatarUrlsSideA: match.avatarUrlsSideA,
-                avatarUrlsSideB: match.avatarUrlsSideB,
-                scoreA: match.scoreA,
-                scoreB: match.scoreB,
-              );
-            }).toList(),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
           );
-        },
-      ),
+        }
+
+        if (controller.roundsList.isEmpty) {
+          return const Center(
+            child: Text(
+              "No rounds available",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        }
+
+        return Scrollbar(
+          controller: controller.scrollController,
+          child: ListView.builder(
+            controller: controller.scrollController,
+            padding: const EdgeInsets.only(top: 8, bottom: 24),
+            itemCount: controller.roundsList.length,
+            itemBuilder: (context, roundIndex) {
+              final round = controller.roundsList[roundIndex];
+              return RoundSection(
+                roundTitle: round.title,
+                children: round.matches.map((match) {
+                  return CourtCard(
+                    courtName: match.courtName,
+                    player1SideA: match.player1SideA,
+                    player2SideA: match.player2SideA,
+                    player1SideB: match.player1SideB,
+                    player2SideB: match.player2SideB,
+                    avatarUrlsSideA: match.avatarUrlsSideA,
+                    avatarUrlsSideB: match.avatarUrlsSideB,
+                    scoreA: match.scoreA,
+                    scoreB: match.scoreB,
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        );
+      }),
     );
   }
 }
@@ -291,9 +213,51 @@ class PlayerSide extends StatelessWidget {
     required this.cardBgColor,
   });
 
+  String _getPlayerInitials(String fullName) {
+    if (fullName.isEmpty) return "?";
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      final firstLetter = parts.first[0];
+      final lastLetter = parts.last[0];
+      return (firstLetter + lastLetter).toUpperCase();
+    }
+    return fullName.trim()[0].toUpperCase();
+  }
+
+  Widget _buildAvatar(String name, String? url, double radius) {
+    final hasImage = url != null && url.isNotEmpty;
+    final initials = _getPlayerInitials(name);
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.greyColor,
+      backgroundImage: hasImage ? CachedNetworkImageProvider(url) : null,
+      child: !hasImage
+          ? Text(
+              initials,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: radius * 0.7,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const double avatarRadius = 18;
+    
+    final hasPlayer1 = player1.isNotEmpty;
+    final hasPlayer2 = player2.isNotEmpty;
+
+    if (!hasPlayer1 && !hasPlayer2) {
+      return const SizedBox.shrink();
+    }
+
+    final url1 = avatarUrls.isNotEmpty ? avatarUrls[0] : "";
+    final url2 = avatarUrls.length > 1 ? avatarUrls[1] : "";
+
     return Column(
       crossAxisAlignment: isRightAligned ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
@@ -302,34 +266,28 @@ class PlayerSide extends StatelessWidget {
           height: 39,
           child: Stack(
             children: [
-              Positioned(
-                left: 0,
-                child: CircleAvatar(
-                  radius: avatarRadius,
-                  backgroundColor: AppColors.greyColor,
-                  backgroundImage: NetworkImage(avatarUrls[0]),
+              if (hasPlayer1)
+                Positioned(
+                  left: 0,
+                  child: _buildAvatar(player1, url1, avatarRadius),
                 ),
-              ),
-              Positioned(
-                left: 20,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: cardBgColor, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: avatarRadius,
-                    backgroundColor: AppColors.greyColor,
-                    backgroundImage: NetworkImage(avatarUrls[1]),
+              if (hasPlayer2)
+                Positioned(
+                  left: 20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: cardBgColor, width: 2),
+                    ),
+                    child: _buildAvatar(player2, url2, avatarRadius),
                   ),
                 ),
-              ),
             ],
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          "$player1 + $player2",
+          hasPlayer2 ? "$player1 + $player2" : player1,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
@@ -393,36 +351,4 @@ class ScoreCenter extends StatelessWidget {
   }
 }
 
-class RoundData {
-  final String title;
-  final List<MatchData> matches;
 
-  const RoundData({
-    required this.title,
-    required this.matches,
-  });
-}
-
-class MatchData {
-  final String courtName;
-  final String player1SideA;
-  final String player2SideA;
-  final String player1SideB;
-  final String player2SideB;
-  final List<String> avatarUrlsSideA;
-  final List<String> avatarUrlsSideB;
-  final String scoreA;
-  final String scoreB;
-
-  const MatchData({
-    required this.courtName,
-    required this.player1SideA,
-    required this.player2SideA,
-    required this.player1SideB,
-    required this.player2SideB,
-    required this.avatarUrlsSideA,
-    required this.avatarUrlsSideB,
-    required this.scoreA,
-    required this.scoreB,
-  });
-}
