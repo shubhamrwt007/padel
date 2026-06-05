@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/presentations/americano/live_stream_americano/live_stream_americano_binding.dart';
+import 'package:padel_mobile/presentations/americano/live_stream_americano/live_stream_americano_screen.dart';
 import 'package:padel_mobile/presentations/americano/registration/registration_americano_binding.dart';
 import 'package:padel_mobile/presentations/americano/registration/registration_americano_screen.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_binding.dart';
@@ -492,6 +494,13 @@ class Routes {
       name: RoutesName.roundsScore,
       page: () => RoundsScreen(),
       binding: RoundsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveStreamAmericano,
+      page: () => LiveStreamAmericanoScreen(),
+      binding: LiveStreamAmericanoBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

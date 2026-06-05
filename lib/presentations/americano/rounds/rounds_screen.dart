@@ -1,3 +1,5 @@
+import 'package:padel_mobile/configs/routes/routes_name.dart';
+
 import 'rounds_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../auth/forgot_password/widgets/forgot_password_exports.dart';
@@ -50,16 +52,24 @@ class RoundsScreen extends StatelessWidget {
               return RoundSection(
                 roundTitle: round.title,
                 children: round.matches.map((match) {
-                  return CourtCard(
-                    courtName: match.courtName,
-                    player1SideA: match.player1SideA,
-                    player2SideA: match.player2SideA,
-                    player1SideB: match.player1SideB,
-                    player2SideB: match.player2SideB,
-                    avatarUrlsSideA: match.avatarUrlsSideA,
-                    avatarUrlsSideB: match.avatarUrlsSideB,
-                    scoreA: match.scoreA,
-                    scoreB: match.scoreB,
+                  return GestureDetector(
+                    onTap: (){
+                      Get.toNamed(RoutesName.liveStreamAmericano,arguments: {
+                        "matchType": "live",
+                        "matchId": "123"
+                      });
+                    },
+                    child: CourtCard(
+                      courtName: match.courtName,
+                      player1SideA: match.player1SideA,
+                      player2SideA: match.player2SideA,
+                      player1SideB: match.player1SideB,
+                      player2SideB: match.player2SideB,
+                      avatarUrlsSideA: match.avatarUrlsSideA,
+                      avatarUrlsSideB: match.avatarUrlsSideB,
+                      scoreA: match.scoreA,
+                      scoreB: match.scoreB,
+                    ),
                   );
                 }).toList(),
               );

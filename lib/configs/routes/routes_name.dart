@@ -96,6 +96,7 @@ class RoutesName {
   static const String scoreView = '/scoreView';
   static const String registrationAmericano = '/registrationAmericano';
   static const String roundsScore = '/roundsScore';
+  static const String liveStreamAmericano = '/liveStreamAmericano';
 
 
 }
