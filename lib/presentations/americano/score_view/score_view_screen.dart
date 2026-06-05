@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 import 'package:padel_mobile/data/response_models/americano_models/americano_rounds_response.dart';
@@ -240,7 +243,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
         return SizedBox(
           height: Get.height * 0.4,
           child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: LoadingWidget(color: Colors.white),
           ),
         );
       }
@@ -689,7 +692,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                       ).paddingOnly(bottom: 10),
                       Expanded(
                         child: controller.isLoading.value
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Center(child: LoadingWidget())
                             : !hasData
                             ? const Center(
                                 child: Text("No leaderboard data available"),
@@ -1058,7 +1061,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
         return SizedBox(
           height: Get.height * 0.35,
           child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: LoadingWidget(color: Colors.white),
           ),
         );
       }
@@ -1144,43 +1147,56 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                     ),
                   ),
                 ),
-                Container(
-                  height: Get.height * 0.24,
-                  width: Get.width,
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF111A79),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        controller.isMyBooking.value? "Your Match":"Latest Round",
-                        style: Get.textTheme.titleSmall!.copyWith(
-                          color: Colors.white,
+                GestureDetector(
+                  onTap: () {
+                    log("Match Status:-> ${match.status}");
+                    if (match.status?.toLowerCase() == "scheduled") {
+                      return;
+                    }
+                    Get.toNamed(RoutesName.liveStreamAmericano, arguments: {
+                      "matchType": match.status,
+                      "americanoMatchId": match.americanoMatchId,
+                      "roundId": match.sId,
+                    })?.then((_){controller.fetchUserRounds();});
+                  },
+                  child: Container(
+                    height: Get.height * 0.24,
+                    width: Get.width,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF111A79),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          controller.isMyBooking.value? "Your Match":"Latest Round",
+                          style: Get.textTheme.titleSmall!.copyWith(
+                            color: Colors.white,
+                          ),
+                        ).paddingOnly(bottom: Get.height * 0.01),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildPlayerColumn(
+                              imageUrls: urlsA,
+                              names: namesA,
+                              score: scoreA,
+                            ),
+                            SvgPicture.asset(
+                              Assets.imagesImgVsRounds,
+                              height: 100,
+                            ),
+                            _buildPlayerColumn(
+                              imageUrls: urlsB,
+                              names: namesB,
+                              score: scoreB,
+                            ),
+                          ],
                         ),
-                      ).paddingOnly(bottom: Get.height * 0.01),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildPlayerColumn(
-                            imageUrls: urlsA,
-                            names: namesA,
-                            score: scoreA,
-                          ),
-                          SvgPicture.asset(
-                            Assets.imagesImgVsRounds,
-                            height: 100,
-                          ),
-                          _buildPlayerColumn(
-                            imageUrls: urlsB,
-                            names: namesB,
-                            score: scoreB,
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

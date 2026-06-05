@@ -4,8 +4,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/handler/text_formatter.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/widgets/sign_up_exports.dart';
-import 'package:padel_mobile/presentations/ipt_tournament/ipt_tournament_controller.dart';
-import 'package:padel_mobile/presentations/ipt_tournament/widgets/ipt_build_sponsor_banner.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
@@ -122,9 +120,7 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
                 ? _buildVideoSection(videoPlayer)
                 : controller.matchType.value == "live" && controller.isStreamLoading.value
                     ? const SizedBox(height: 200, child: Center(child: LoadingWidget(color: AppColors.primaryColor,)))
-                    : controller.matchType.value == "live"
-                        ? const SizedBox.shrink()
-                        : _buildSponsorBannerSafe(),
+                    : const SizedBox.shrink(),
             _buildScoreSection(),
             _buildTabSelector(),
             if (isLoading) LinearProgressIndicator(color: AppColors.primaryColor,minHeight: 1,),
@@ -146,10 +142,6 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
                           : SingleChildScrollView(
                               child: Column(
                                 children: [
-                                  ...List.generate(
-                                    sets.length,
-                                    (index) => _buildSetTwoCard(index).paddingOnly(bottom: 10),
-                                  ),
                                   _pointHistorySection().paddingSymmetric(horizontal: 16),
                                 ],
                               ),
@@ -178,26 +170,6 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
     );
   }
 
-  Widget _buildSponsorBannerSafe() {
-    try {
-      if (Get.isRegistered<IptTournamentController>()) {
-        final iptTournamentController = Get.find<IptTournamentController>();
-        return Column(
-          children: [
-            BuildIptTournamentTitleSponsor(controller: iptTournamentController),
-            Obx(() {
-              final sponsors = iptTournamentController.sponsors.value?.data?.sponsors ?? [];
-              if (sponsors.isEmpty) return const SizedBox.shrink();
-              return BuildIptTournamentMoreSponsor(sponsors: sponsors);
-            }),
-          ],
-        );
-      }
-    } catch (e) {
-      print('IptTournamentController not found: $e');
-    }
-    return const SizedBox.shrink();
-  }
   Widget _buildScoreSection() {
     return Stack(
       children: [
@@ -250,13 +222,13 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
                           "${controller.teamAScore.value} : ${controller.teamBScore.value}",
                           style: Get.textTheme.titleLarge!.copyWith(color: Colors.black,fontSize: 40),
                         ),
-                        Text(
-                          controller.historyData.value?.categoryType ?? "",
-                          style: Get.textTheme.headlineSmall!.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        // Text(
+                        //   controller.historyData.value?.categoryType ?? "",
+                        //   style: Get.textTheme.headlineSmall!.copyWith(
+                        //     fontSize: 12,
+                        //     fontWeight: FontWeight.w500,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -394,374 +366,6 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
       )),
     );
   }
-  Widget _buildSetTwoCard(int index) {
-    return Obx(() => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              offset: Offset(0, 6),
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () {
-                for (int i = 0; i < controller.isSet2Expanded.length; i++) {
-                  controller.isSet2Expanded[i] = i == index ? !controller.isSet2Expanded[index] : false;
-                }
-              },
-              child: Container(
-                color: Colors.transparent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _setTitle(index),
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Text(_setScoreText(index),style: Get.textTheme.headlineMedium).paddingOnly(right: 5),
-                            Text(_setWinnerText(index),style: Get.textTheme.labelMedium!.copyWith(color: _getWinnerColor(index),fontWeight: FontWeight.w600)),
-                            _hasRoundsAndSetWinner(index)
-                                ? Container(
-                                    padding: EdgeInsets.symmetric(vertical: 4,horizontal: 9),
-                                    decoration: BoxDecoration(
-                                        color: AppColors.textFieldColor,
-                                        borderRadius: BorderRadius.circular(7)
-                                    ),
-                                    child: Text("Tie Break",style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.primaryColor,fontSize: 12),),
-                                  ).paddingOnly(left: 10)
-                                : SizedBox.shrink()
-                          ],
-                        ),
-                      ],
-                    ),
-                    CircleAvatar(
-                        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.2),
-                        child: Icon(
-                          controller.isSet2Expanded[index]
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.black,
-                        )),
-                  ],
-                ),
-              ),
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: controller.isSet2Expanded.length > index && controller.isSet2Expanded[index]
-                  ? (getRounds(index).isEmpty && getSetWinner(index) != null
-                      ? _buildWinnerColumn(index)
-                      : Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // ── Scrollable rounds section ──────────
-                                      SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: IntrinsicWidth(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              // ── ROUND HEADERS R1, R2... ───
-                                              Row(
-                                                children: [
-                                                  const SizedBox(width: 80),
-                                                  // ← team name space
-                                                  ...List.generate(
-                                                    getRounds(index).length,
-                                                    (i) {
-                                                      final rounds = getRounds(index);
-                                                      final winType = rounds[i].winType;
-                                                      String displayText = 'R${i + 1}';
-                                                      if (winType == 'TIEBREAK') {
-                                                        displayText = 'TB';
-                                                      } else if (winType == 'SUPER_TIEBREAK') {
-                                                        displayText = 'STB';
-                                                      }
-                                                      return SizedBox(
-                                                        width: 40,
-                                                        child: Text(
-                                                          displayText,
-                                                          textAlign: TextAlign.center,
-                                                          style: Get.textTheme.bodyMedium!.copyWith(
-                                                            fontSize: 10,
-                                                            fontWeight: FontWeight.w500,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 5),
-                                              // ── TEAM A ROW ──────────────────
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                children: [
-                                                  // ── Team A label + score ───
-                                                  SizedBox(
-                                                    width: 80,
-                                                    child: Row(
-                                                      children: [
-                                                        RotatedBox(
-                                                          quarterTurns: 3,
-                                                          child: Text(
-                                                            controller.historyData.value?.teamA?.teamName ?? 'Team A',
-                                                            style: Get.textTheme.displaySmall!.copyWith(
-                                                              fontSize: 9,
-                                                              color: AppColors.labelBlackColor,
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Container(
-                                                          width: 4,
-                                                          height: 30,
-                                                          decoration: BoxDecoration(
-                                                            color: const Color(0xff2D5BFF),
-                                                            borderRadius: BorderRadius.circular(4),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Text(
-                                                          '${getFinalScore(index)?.teamA ?? 0}',
-                                                          style: Get.textTheme.headlineMedium!.copyWith(
-                                                            color: AppColors.primaryColor,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  // ── Points per round ────────
-                                                  ...List.generate(getRounds(index).length, (i) {
-                                                    final rounds = getRounds(index);
-                                                    final pts = rounds[i].pointsAtEnd?.teamA ?? '-';
-                                                    final bool isWinner = rounds[i].gameWinner == 'teamA';
-                                                    final winType = rounds[i].winType;
-                                                    return SizedBox(
-                                                      width: 40,
-                                                      child: Column(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          if (isWinner)
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                Transform.rotate(
-                                                                  angle: -0.3,
-                                                                  child: SizedBox(
-                                                                    width: 14,
-                                                                    height: 14,
-                                                                    child: Image.asset(
-                                                                      Assets.imagesIcCrown,
-                                                                      width: 14,
-                                                                      height: 14,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                if (winType == 'ADVANTAGE')
-                                                                  Text(
-                                                                    'AD',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.primaryColor,
-                                                                    ),
-                                                                  ),
-                                                                if (winType == 'GOLDEN_POINT')
-                                                                  Text(
-                                                                    'GP',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.primaryColor,
-                                                                    ),
-                                                                  ),
-                                                                      if (winType == 'TIEBREAK')
-                                                                  Text(
-                                                                    'TB',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.primaryColor,
-                                                                    ),
-                                                                  ),
-                                                              ],
-                                                            )
-                                                          else
-                                                            const SizedBox(height: 14),
-                                                          Text(
-                                                            pts.toString(),
-                                                            textAlign: TextAlign.center,
-                                                            style: Get.textTheme.titleSmall!.copyWith(
-                                                              fontWeight: FontWeight.w600,
-                                                              fontSize: 12,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 0),
-                                              Divider(
-                                                thickness: 0.5,
-                                                color: Colors.grey.shade300,
-                                              ).paddingOnly(left: 15),
-                                              const SizedBox(height: 0),
-                                              // ── TEAM B ROW ──────────────────
-                                              Row(
-                                                children: [
-                                                  // ── Team B label + score ───
-                                                  SizedBox(
-                                                    width: 80,
-                                                    child: Row(
-                                                      children: [
-                                                        RotatedBox(
-                                                          quarterTurns: 3,
-                                                          child: Text(
-                                                            controller.historyData.value?.teamB?.teamName ?? 'Team B',
-                                                            style: Get.textTheme.displaySmall!.copyWith(
-                                                              fontSize: 9,
-                                                              color: AppColors.labelBlackColor,
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 5),
-                                                        Container(
-                                                          width: 4,
-                                                          height: 30,
-                                                          decoration: BoxDecoration(
-                                                            color: AppColors.secondaryColor,
-                                                            borderRadius: BorderRadius.circular(4),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Text(
-                                                          '${getFinalScore(index)?.teamB ?? 0}',
-                                                          style: Get.textTheme.headlineMedium!.copyWith(
-                                                            color: AppColors.secondaryColor,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  // ── Points per round ────────
-                                                  ...List.generate(getRounds(index).length, (i) {
-                                                    final rounds = getRounds(index);
-                                                    final pts = rounds[i].pointsAtEnd?.teamB ?? '-';
-                                                    final bool isWinner = rounds[i].gameWinner == 'teamB';
-                                                    final winType = rounds[i].winType;
-                                                    return SizedBox(
-                                                      width: 40,
-                                                      child: Column(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          if (isWinner)
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                Transform.rotate(
-                                                                  angle: -0.3,
-                                                                  child: SizedBox(
-                                                                    width: 14,
-                                                                    height: 14,
-                                                                    child: Image.asset(
-                                                                      Assets.imagesIcCrown,
-                                                                      width: 14,
-                                                                      height: 14,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                if (winType == 'ADVANTAGE')
-                                                                  Text(
-                                                                    'AD',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.secondaryColor,
-                                                                    ),
-                                                                  ),
-                                                                if (winType == 'GOLDEN_POINT')
-                                                                  Text(
-                                                                    'GP',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.secondaryColor,
-                                                                    ),
-                                                                  ),
-                                                                        if (winType == 'TIEBREAK')
-                                                                  Text(
-                                                                    'TB',
-                                                                    style: Get.textTheme.bodySmall!.copyWith(
-                                                                      fontSize: 8,
-                                                                      fontWeight: FontWeight.bold,
-                                                                      color: AppColors.secondaryColor,
-                                                                    ),
-                                                                  ),
-                                                              ],
-                                                            )
-                                                          else
-                                                            const SizedBox(height: 14),
-                                                          Text(
-                                                            pts.toString(),
-                                                            textAlign: TextAlign.center,
-                                                            style: Get.textTheme.titleSmall!.copyWith(
-                                                              fontWeight: FontWeight.w600,
-                                                              fontSize: 12,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ))
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    ));
-  }
 }
 class MatchStatsCard extends StatelessWidget {
   final LiveStreamAmericanoController controller;
@@ -812,14 +416,9 @@ class MatchStatsCard extends StatelessWidget {
 
             /// Stats
             _statRow("Total Points", teamA?.totalPoints ?? 0, teamB?.totalPoints ?? 0),
-            _statRow("Break Point Opportunities", teamA?.breakPointOpportunities ?? 0, teamB?.breakPointOpportunities ?? 0),
-            _statRow("Break Points won", teamA?.breakPointsWon ?? 0, teamB?.breakPointsWon ?? 0),
-            _statRow("Golden Point", teamA?.goldenPoints ?? 0, teamB?.goldenPoints ?? 0),
             _statRow("Winners", teamA?.winners ?? 0, teamB?.winners ?? 0),
-            _statRow("Errors", teamA?.winners ?? 0, teamB?.errors ?? 0),
-            // _statRow("Forced Errors", teamA?.forcedErrors ?? 0, teamB?.forcedErrors ?? 0),
-            // _statRow("Unforced Errors", teamA?.unforcedErrors ?? 0, teamB?.unforcedErrors ?? 0),
-            _statRow("First Serve%", teamA?.firstServePercentage ?? 0, teamB?.firstServePercentage ?? 0, isPercentage: true),
+            _statRow("Faults", teamA?.faults ?? 0, teamB?.faults ?? 0),
+            _statRow("Errors", teamA?.errors ?? 0, teamB?.errors ?? 0),
           ],
         ),
       ),

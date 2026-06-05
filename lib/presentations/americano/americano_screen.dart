@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/presentations/americano/widgets/americano_exports.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -105,7 +106,7 @@ class AmericanoScreen extends StatelessWidget {
             child: Obx(() {
               // 1. Fullscreen Loading State (Initial load only)
               if (controller.isLoading.value && controller.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: LoadingWidget());
               }
 
               // 2. Empty State
@@ -161,7 +162,7 @@ class AmericanoScreen extends StatelessWidget {
                     ],
                     if (controller.isLoadingMore.value) ...[
                       const SizedBox(height: 16),
-                      const Center(child: CircularProgressIndicator()),
+                      const Center(child: LoadingWidget()),
                       const SizedBox(height: 16),
                     ],
                     SizedBox(height: Get.height * 0.05),

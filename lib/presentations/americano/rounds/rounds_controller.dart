@@ -91,6 +91,9 @@ class RoundsController extends GetxController {
             }).toList();
 
             return MatchData(
+              roundId: m.sId ?? "",
+              americanoMatchId: m.americanoMatchId ?? "",
+              status: m.status ?? "",
               courtName: m.courtNo != null ? "Court ${m.courtNo}" : "Court",
               player1SideA: player1A,
               player2SideA: player2A,
@@ -133,6 +136,9 @@ class RoundData {
 }
 
 class MatchData {
+  final String roundId;
+  final String americanoMatchId;
+  final String status;
   final String courtName;
   final String player1SideA;
   final String player2SideA;
@@ -144,6 +150,9 @@ class MatchData {
   final String scoreB;
 
   const MatchData({
+    required this.roundId,
+    required this.americanoMatchId,
+    required this.status,
     required this.courtName,
     required this.player1SideA,
     required this.player2SideA,

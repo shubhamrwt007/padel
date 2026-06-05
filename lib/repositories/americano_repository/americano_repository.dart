@@ -3,6 +3,7 @@ import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/core/network/dio_client.dart';
 import 'package:padel_mobile/data/response_models/americano_models/get_americano_model.dart';
 import 'package:padel_mobile/data/response_models/americano_models/americano_rounds_response.dart';
+import 'package:padel_mobile/data/response_models/americano_models/americano_live_round_response.dart';
 import 'package:padel_mobile/handler/logger.dart';
 
 class AmericanoRepository {
@@ -216,6 +217,39 @@ class AmericanoRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg: "Error fetching Americano rounds: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  /// Get Americano Live Round Details
+  Future<AmericanoLiveRoundResponse> getAmericanoLiveRound(String americanoMatchId, String roundId) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Fetching Americano Live Round: matchId: $americanoMatchId, roundId: $roundId",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.get(
+        "${AppEndpoints.baseUrl}court/americano/$americanoMatchId/rounds/$roundId/live-round",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Americano Live Round fetched successfully",
+          level: LogLevel.info,
+        );
+        return AmericanoLiveRoundResponse.fromJson(response.data);
+      } else {
+        throw Exception(
+          "Failed to fetch Americano Live Round. Status code: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Error fetching Americano Live Round: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );

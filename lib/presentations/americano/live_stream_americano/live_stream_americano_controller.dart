@@ -2,15 +2,21 @@ import 'dart:developer';
 
 import 'package:get/get.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import '../../../core/endpoitns.dart';
 import '../../../data/response_models/ipt_tournament/get_ipt_tournament_match_details_model.dart';
+import '../../../data/response_models/americano_models/americano_live_round_response.dart';
+import '../../../repositories/americano_repository/americano_repository.dart';
 
 class LiveStreamAmericanoController extends GetxController {
+  final AmericanoRepository _repository = AmericanoRepository();
+
   RxInt teamAScore = 0.obs;
   RxInt teamBScore = 0.obs;
   final RxInt selectedTab = 0.obs;
   final RxList<PointHistoryItem> pointHistoryList = <PointHistoryItem>[].obs;
-  
+
   String get teamAName => historyData.value?.teamA?.teamName ?? "Team A";
   String get teamBName => historyData.value?.teamB?.teamName ?? "Team B";
   String get leftTeam => 'teamA';
@@ -23,6 +29,8 @@ class LiveStreamAmericanoController extends GetxController {
 
   var matchType = "".obs;
   var matchId = "".obs;
+  final RxString americanoMatchId = "".obs;
+  final RxString roundId = "".obs;
   RxList<bool> isSet2Expanded = <bool>[false, false, false, false].obs;
 
   final Rx<HistoryData?> historyData = Rx<HistoryData?>(null);
@@ -31,24 +39,31 @@ class LiveStreamAmericanoController extends GetxController {
   final RxBool isLoadingHistory = true.obs;
   final RxString matchDetailsError = "".obs;
 
+  IO.Socket? _americanoSocket;
   final RxBool isSocketConnected = false.obs;
   final RxString youtubeVideoId = "".obs;
   final RxBool showVideoPlayer = false.obs;
   final RxBool isStreamLoading = false.obs;
-  final Rx<YoutubePlayerController?> youtubeController = Rx<YoutubePlayerController?>(null);
+  final Rx<YoutubePlayerController?> youtubeController =
+      Rx<YoutubePlayerController?>(null);
   final RxBool showGoToLiveButton = false.obs;
 
   @override
   void onInit() {
     matchType.value = Get.arguments?["matchType"] ?? "live";
-    matchId.value = Get.arguments?["matchId"] ?? "mock_match_id";
-    log('🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}');
-
-    _loadMockData();
+    matchId.value = Get.arguments?["matchId"] ?? "";
+    americanoMatchId.value = Get.arguments?["americanoMatchId"] ?? "";
+    roundId.value = Get.arguments?["roundId"] ?? "";
+    log(
+      '🎬 Controller Init - matchType: ${matchType.value}, matchId: ${matchId.value}, americanoMatchId: ${americanoMatchId.value}, roundId: ${roundId.value}',
+    );
 
     if (matchType.value == "live") {
-      showVideoPlayer.value = true;
-      setYoutubeUrl("dQw4w9WgXcQ");
+      isLoadingHistory.value = true;
+      isLoadingMatchDetails.value = true;
+      _initAmericanoSocket();
+    } else {
+      fetchLiveRoundDetails();
     }
 
     super.onInit();
@@ -57,116 +72,377 @@ class LiveStreamAmericanoController extends GetxController {
   @override
   void onClose() {
     youtubeController.value?.dispose();
+    _americanoSocket?.disconnect();
+    _americanoSocket?.dispose();
     super.onClose();
   }
 
-  void _loadMockData() {
+  Future<void> fetchLiveRoundDetails() async {
+    if (americanoMatchId.value.isEmpty || roundId.value.isEmpty) {
+      log("LiveStreamAmericanoController: IDs are empty, cannot fetch details");
+      matchDetailsError.value = "Match details ID or Round ID is missing";
+      isLoadingHistory.value = false;
+      isLoadingMatchDetails.value = false;
+      return;
+    }
+
     isLoadingHistory.value = true;
     isLoadingMatchDetails.value = true;
+    matchDetailsError.value = "";
 
-    teamAScore.value = 1;
-    teamBScore.value = 1;
+    try {
+      final AmericanoLiveRoundResponse response = await _repository
+          .getAmericanoLiveRound(americanoMatchId.value, roundId.value);
 
-    historyData.value = HistoryData(
-      matchId: matchId.value,
-      status: "live",
-      winner: null,
-      categoryType: "Americano Men's Open",
-      teamA: Team(
-        teamId: "team_a",
-        teamName: "Super Smashers",
-        clubName: "Padel Club A",
-        players: [
-          Player(playerId: "p1", playerName: "John Doe"),
-          Player(playerId: "p2", playerName: "Jane Smith"),
-        ],
-      ),
-      teamB: Team(
-        teamId: "team_b",
-        teamName: "Padel Pros",
-        clubName: "Padel Club B",
-        players: [
-          Player(playerId: "p3", playerName: "Bob Johnson"),
-          Player(playerId: "p4", playerName: "Alice Williams"),
-        ],
-      ),
-      setsWon: SetsWon(teamA: 1, teamB: 1),
-      sets: [
-        SetData(
-          setNumber: 1,
-          finalScore: FinalScore(teamA: 21, teamB: 18),
-          setWinner: "teamA",
-          rounds: [
-            RoundData(round: 1, score: FinalScore(teamA: 4, teamB: 2), pointsAtEnd: CurrentPoints(teamA: "4", teamB: "2"), completedAt: "16:00", gameWinner: "teamA", winType: "NORMAL"),
-            RoundData(round: 2, score: FinalScore(teamA: 8, teamB: 4), pointsAtEnd: CurrentPoints(teamA: "8", teamB: "4"), completedAt: "16:05", gameWinner: "teamA", winType: "NORMAL"),
-            RoundData(round: 3, score: FinalScore(teamA: 12, teamB: 8), pointsAtEnd: CurrentPoints(teamA: "12", teamB: "8"), completedAt: "16:10", gameWinner: "teamB", winType: "NORMAL"),
-            RoundData(round: 4, score: FinalScore(teamA: 16, teamB: 12), pointsAtEnd: CurrentPoints(teamA: "16", teamB: "12"), completedAt: "16:15", gameWinner: "teamB", winType: "NORMAL"),
-            RoundData(round: 5, score: FinalScore(teamA: 21, teamB: 18), pointsAtEnd: CurrentPoints(teamA: "21", teamB: "18"), completedAt: "16:20", gameWinner: "teamA", winType: "NORMAL"),
+      if (response.success == true && response.data != null) {
+        final data = response.data!;
+
+        // 1. Update Scores
+        teamAScore.value = data.score?.teamA ?? 0;
+        teamBScore.value = data.score?.teamB ?? 0;
+
+        // 2. Map Americano detail & Round detail to HistoryData
+        final americanoDetail = data.americano;
+        final roundDetail = data.round;
+
+        final teamAData = data.teamA;
+        final teamBData = data.teamB;
+
+        historyData.value = HistoryData(
+          matchId: roundDetail?.americanoMatchId ?? americanoMatchId.value,
+          status: roundDetail?.status ?? "live",
+          winner: roundDetail?.winner,
+          categoryType: americanoDetail?.matchTitle ?? "Americano Match",
+          teamA: Team(
+            teamId: "teamA",
+            teamName: teamAData?.teamName ?? "Team A",
+            clubName: americanoDetail?.clubId?.clubName ?? "",
+            players:
+                teamAData?.players?.map((p) {
+                  return Player(
+                    playerId: p.americanoPlayerId,
+                    playerName: p.fullName,
+                  );
+                }).toList() ??
+                [],
+          ),
+          teamB: Team(
+            teamId: "teamB",
+            teamName: teamBData?.teamName ?? "Team B",
+            clubName: americanoDetail?.clubId?.clubName ?? "",
+            players:
+                teamBData?.players?.map((p) {
+                  return Player(
+                    playerId: p.americanoPlayerId,
+                    playerName: p.fullName,
+                  );
+                }).toList() ??
+                [],
+          ),
+          // Set a dummy set with points score
+          setsWon: SetsWon(teamA: teamAScore.value, teamB: teamBScore.value),
+          sets: [
+            SetData(
+              setNumber: 1,
+              finalScore: FinalScore(
+                teamA: teamAScore.value,
+                teamB: teamBScore.value,
+              ),
+              setWinner: roundDetail?.winner,
+              rounds: [],
+            ),
           ],
-        ),
-        SetData(
-          setNumber: 2,
-          finalScore: FinalScore(teamA: 15, teamB: 15),
-          setWinner: null,
-          rounds: [
-            RoundData(round: 1, score: FinalScore(teamA: 2, teamB: 2), pointsAtEnd: CurrentPoints(teamA: "2", teamB: "2"), completedAt: "16:25", gameWinner: "teamA", winType: "NORMAL"),
-            RoundData(round: 2, score: FinalScore(teamA: 4, teamB: 6), pointsAtEnd: CurrentPoints(teamA: "4", teamB: "6"), completedAt: "16:30", gameWinner: "teamB", winType: "NORMAL"),
-            RoundData(round: 3, score: FinalScore(teamA: 8, teamB: 8), pointsAtEnd: CurrentPoints(teamA: "8", teamB: "8"), completedAt: "16:35", gameWinner: "teamA", winType: "NORMAL"),
-            RoundData(round: 4, score: FinalScore(teamA: 12, teamB: 12), pointsAtEnd: CurrentPoints(teamA: "12", teamB: "12"), completedAt: "16:40", gameWinner: "teamB", winType: "NORMAL"),
-            RoundData(round: 5, score: FinalScore(teamA: 15, teamB: 15), pointsAtEnd: CurrentPoints(teamA: "15", teamB: "15"), completedAt: "16:45", gameWinner: "teamA", winType: "NORMAL"),
-          ],
-        ),
-      ],
-    );
+        );
 
-    statisticsData.value = StatisticsData(
-      matchId: matchId.value,
-      statistics: MatchStatistics(
-        teamA: StatisticsTeam(
-          winners: 12,
-          errors: 8,
-          forcedErrors: 4,
-          unforcedErrors: 4,
-          totalPoints: 36,
-          breakPointOpportunities: 5,
-          breakPointsWon: 3,
-          goldenPoints: 2,
-          firstServePercentage: 72,
-        ),
-        teamB: StatisticsTeam(
-          winners: 10,
-          errors: 11,
-          forcedErrors: 5,
-          unforcedErrors: 6,
-          totalPoints: 33,
-          breakPointOpportunities: 4,
-          breakPointsWon: 2,
-          goldenPoints: 1,
-          firstServePercentage: 65,
-        ),
-      ),
-    );
+        // 3. Map StatisticsData
+        final statsA = data.stats?.teamA;
+        final statsB = data.stats?.teamB;
 
-    pointHistoryList.value = [
-      PointHistoryItem(winner: 'teamA', teamAScore: 1, teamBScore: 0, recordedAt: DateTime.now().subtract(const Duration(minutes: 15)).toIso8601String(), pointNo: 1),
-      PointHistoryItem(winner: 'teamA', teamAScore: 2, teamBScore: 0, recordedAt: DateTime.now().subtract(const Duration(minutes: 13)).toIso8601String(), pointNo: 2),
-      PointHistoryItem(winner: 'teamB', teamAScore: 2, teamBScore: 1, recordedAt: DateTime.now().subtract(const Duration(minutes: 11)).toIso8601String(), pointNo: 3),
-      PointHistoryItem(winner: 'teamA', teamAScore: 3, teamBScore: 1, recordedAt: DateTime.now().subtract(const Duration(minutes: 9)).toIso8601String(), pointNo: 4),
-      PointHistoryItem(winner: 'teamB', teamAScore: 3, teamBScore: 2, recordedAt: DateTime.now().subtract(const Duration(minutes: 7)).toIso8601String(), pointNo: 5),
-      PointHistoryItem(winner: 'teamB', teamAScore: 3, teamBScore: 3, recordedAt: DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(), pointNo: 6),
-      PointHistoryItem(winner: 'teamA', teamAScore: 4, teamBScore: 3, recordedAt: DateTime.now().subtract(const Duration(minutes: 3)).toIso8601String(), pointNo: 7),
-    ];
+        statisticsData.value = StatisticsData(
+          matchId: roundDetail?.americanoMatchId ?? americanoMatchId.value,
+          statistics: MatchStatistics(
+            teamA: StatisticsTeam(
+              totalPoints: teamAScore.value,
+              winners: statsA?.forcedErrors ?? 0,
+              faults: statsA?.faults ?? 0,
+              errors: statsA?.errors ?? 0,
+            ),
+            teamB: StatisticsTeam(
+              totalPoints: teamBScore.value,
+              winners: statsB?.forcedErrors ?? 0,
+              faults: statsB?.faults ?? 0,
+              errors: statsB?.errors ?? 0,
+            ),
+          ),
+        );
 
-    isLoadingHistory.value = false;
-    isLoadingMatchDetails.value = false;
-    isSocketConnected.value = true;
-    _syncHeaderFromHistory();
-    _syncSetExpandStateFromHistory();
+        // 4. Map Point History List
+        if (data.pointHistory != null) {
+          pointHistoryList.value = data.pointHistory!.map((item) {
+            return PointHistoryItem(
+              winner: item.winner ?? 'teamA',
+              teamAScore: item.teamAScore ?? 0,
+              teamBScore: item.teamBScore ?? 0,
+              recordedAt: item.recordedAt,
+              pointNo: item.pointNo,
+            );
+          }).toList();
+        } else {
+          pointHistoryList.value = [];
+        }
+
+        // 5. Setup Video Stream
+        final videoId = data.youtubeVideoId ?? data.round?.youtubeVideoId;
+        if (matchType.value == "live" && videoId != null && videoId.isNotEmpty) {
+          showVideoPlayer.value = true;
+          setYoutubeUrl(videoId);
+        } else {
+          showVideoPlayer.value = false;
+        }
+
+        isSocketConnected.value = true;
+        _syncHeaderFromHistory();
+        _syncSetExpandStateFromHistory();
+      } else {
+        matchDetailsError.value = "Failed to load live round details";
+      }
+    } catch (e) {
+      matchDetailsError.value = "Error: $e";
+      log("Error fetching live round details in controller: $e");
+    } finally {
+      isLoadingHistory.value = false;
+      isLoadingMatchDetails.value = false;
+    }
   }
+
+  void _initAmericanoSocket() {
+    if (matchType.value != "live") return;
+    if (_americanoSocket != null) return;
+
+    try {
+      log('🔌 Initializing Americano Socket at ${AppEndpoints.socketUrl}/americano');
+      _americanoSocket = IO.io('${AppEndpoints.socketUrl}/americano', <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': true,
+      });
+
+      _americanoSocket?.onConnect((_) {
+        log('✅ Connected to Americano socket namespace /americano');
+        _americanoSocket?.emit("joinAmericanoRound", {
+          "americanoMatchId": americanoMatchId.value,
+          "roundId": roundId.value,
+        });
+      });
+
+      _americanoSocket?.on("connect_error", (data) {
+        log("❌ Socket connect_error: $data");
+        isLoadingHistory.value = false;
+        isLoadingMatchDetails.value = false;
+      });
+
+      _americanoSocket?.on("connect_timeout", (data) {
+        log("❌ Socket connect_timeout: $data");
+        isLoadingHistory.value = false;
+        isLoadingMatchDetails.value = false;
+      });
+
+      _americanoSocket?.on("americanoRoundJoined", (payload) {
+        log('📡 Socket event: americanoRoundJoined, payload: $payload');
+        if (payload != null && payload is Map && payload['round'] != null) {
+          _handleSocketRoundUpdate(Map<String, dynamic>.from(payload['round']));
+        }
+      });
+
+      _americanoSocket?.on("scoreUpdate", (payload) {
+        log('📡 Socket event: scoreUpdate, payload: $payload');
+        if (payload != null && payload is Map && payload['round'] != null) {
+          _handleSocketRoundUpdate(Map<String, dynamic>.from(payload['round']));
+        }
+      });
+
+      _americanoSocket?.on("error", (payload) {
+        log("❌ Socket error: $payload");
+        isLoadingHistory.value = false;
+        isLoadingMatchDetails.value = false;
+      });
+
+      _americanoSocket?.onDisconnect((_) {
+        log('❌ Disconnected from Americano socket namespace /americano');
+      });
+
+    } catch (e) {
+      log("❌ Error initializing Americano socket: $e");
+      isLoadingHistory.value = false;
+      isLoadingMatchDetails.value = false;
+    }
+  }
+
+  void _handleSocketRoundUpdate(Map<String, dynamic> roundMap) {
+    try {
+      log("📡 Processing socket round update: $roundMap");
+
+      // Set loading states to false as we have received data from socket
+      isLoadingHistory.value = false;
+      isLoadingMatchDetails.value = false;
+
+      final String? newStatus = roundMap['status']?.toString();
+
+      // If status is not live, we should stop showing the video player
+      if (newStatus != null && newStatus != "live") {
+        showVideoPlayer.value = false;
+        youtubeController.value?.dispose();
+        youtubeController.value = null;
+      }
+
+      final teamAMap = roundMap['teamA'] as Map<String, dynamic>?;
+      final teamBMap = roundMap['teamB'] as Map<String, dynamic>?;
+
+      final int pointsA = teamAMap?['points'] is int 
+          ? teamAMap!['points'] 
+          : int.tryParse(teamAMap?['points']?.toString() ?? '') ?? 0;
+      final int pointsB = teamBMap?['points'] is int 
+          ? teamBMap!['points'] 
+          : int.tryParse(teamBMap?['points']?.toString() ?? '') ?? 0;
+
+      // Update scores
+      teamAScore.value = pointsA;
+      teamBScore.value = pointsB;
+
+      // Reconstruct HistoryData if it is null
+      if (historyData.value == null) {
+        final String matchTitle = roundMap['matchTitle']?.toString() ?? "Americano Match";
+
+        // Parse players
+        final List<Player> playersA = [];
+        if (teamAMap?['players'] != null && teamAMap?['players'] is List) {
+          for (var p in teamAMap!['players']) {
+            if (p is Map) {
+              playersA.add(Player(
+                playerId: p['americanoPlayerId']?.toString(),
+                playerName: p['fullName']?.toString() ?? p['name']?.toString() ?? '',
+              ));
+            }
+          }
+        }
+
+        final List<Player> playersB = [];
+        if (teamBMap?['players'] != null && teamBMap?['players'] is List) {
+          for (var p in teamBMap!['players']) {
+            if (p is Map) {
+              playersB.add(Player(
+                playerId: p['americanoPlayerId']?.toString(),
+                playerName: p['fullName']?.toString() ?? p['name']?.toString() ?? '',
+              ));
+            }
+          }
+        }
+
+        historyData.value = HistoryData(
+          matchId: roundMap['americanoMatchId']?.toString() ?? americanoMatchId.value,
+          status: newStatus ?? "live",
+          winner: roundMap['winner']?.toString(),
+          categoryType: matchTitle,
+          teamA: Team(
+            teamId: "teamA",
+            teamName: teamAMap?['teamName']?.toString() ?? "Team A",
+            clubName: "",
+            players: playersA,
+          ),
+          teamB: Team(
+            teamId: "teamB",
+            teamName: teamBMap?['teamName']?.toString() ?? "Team B",
+            clubName: "",
+            players: playersB,
+          ),
+          setsWon: SetsWon(teamA: pointsA, teamB: pointsB),
+          sets: [
+            SetData(
+              setNumber: 1,
+              finalScore: FinalScore(teamA: pointsA, teamB: pointsB),
+              setWinner: roundMap['winner']?.toString(),
+              rounds: [],
+            ),
+          ],
+        );
+        _syncSetExpandStateFromHistory();
+      } else {
+        if (newStatus != null) {
+          historyData.value!.status = newStatus;
+        }
+        historyData.value!.setsWon = SetsWon(teamA: pointsA, teamB: pointsB);
+        if (historyData.value!.sets != null && historyData.value!.sets!.isNotEmpty) {
+          historyData.value!.sets![0].finalScore = FinalScore(teamA: pointsA, teamB: pointsB);
+        }
+        final String? winner = roundMap['winner']?.toString();
+        if (winner != null) {
+          historyData.value!.winner = winner;
+        }
+      }
+
+      // 3. Update Stats
+      final int faultsA = teamAMap?['faults'] is int ? teamAMap!['faults'] : int.tryParse(teamAMap?['faults']?.toString() ?? '') ?? 0;
+      final int errorsA = teamAMap?['errors'] is int ? teamAMap!['errors'] : int.tryParse(teamAMap?['errors']?.toString() ?? '') ?? 0;
+      final int forcedErrorsA = teamAMap?['forcedErrors'] is int ? teamAMap!['forcedErrors'] : int.tryParse(teamAMap?['forcedErrors']?.toString() ?? '') ?? 0;
+
+      final int faultsB = teamBMap?['faults'] is int ? teamBMap!['faults'] : int.tryParse(teamBMap?['faults']?.toString() ?? '') ?? 0;
+      final int errorsB = teamBMap?['errors'] is int ? teamBMap!['errors'] : int.tryParse(teamBMap?['errors']?.toString() ?? '') ?? 0;
+      final int forcedErrorsB = teamBMap?['forcedErrors'] is int ? teamBMap!['forcedErrors'] : int.tryParse(teamBMap?['forcedErrors']?.toString() ?? '') ?? 0;
+
+      statisticsData.value = StatisticsData(
+        matchId: americanoMatchId.value,
+        statistics: MatchStatistics(
+          teamA: StatisticsTeam(
+            totalPoints: pointsA,
+            winners: forcedErrorsA,
+            faults: faultsA,
+            errors: errorsA,
+          ),
+          teamB: StatisticsTeam(
+            totalPoints: pointsB,
+            winners: forcedErrorsB,
+            faults: faultsB,
+            errors: errorsB,
+          ),
+        ),
+      );
+
+      // 4. Update Point History
+      final dynamic rawHistory = roundMap['pointHistory'];
+      if (rawHistory != null && rawHistory is List) {
+        pointHistoryList.value = rawHistory.map((item) {
+          if (item is Map) {
+            return PointHistoryItem(
+              winner: item['winner']?.toString() ?? 'teamA',
+              teamAScore: item['teamAScore'] is int ? item['teamAScore'] : int.tryParse(item['teamAScore']?.toString() ?? '') ?? 0,
+              teamBScore: item['teamBScore'] is int ? item['teamBScore'] : int.tryParse(item['teamBScore']?.toString() ?? '') ?? 0,
+              recordedAt: item['recordedAt']?.toString(),
+              pointNo: item['pointNo'] is int ? item['pointNo'] : int.tryParse(item['pointNo']?.toString() ?? '') ?? 0,
+            );
+          }
+          return PointHistoryItem(winner: 'teamA', teamAScore: 0, teamBScore: 0);
+        }).toList();
+      }
+
+      // 5. Update Youtube Video if live status changes video ID
+      final String? videoId = roundMap['youtubeVideoId']?.toString();
+      if (newStatus == "live" && videoId != null && videoId.isNotEmpty && youtubeVideoId.value != videoId) {
+        showVideoPlayer.value = true;
+        setYoutubeUrl(videoId);
+      }
+
+      historyData.refresh();
+      _syncHeaderFromHistory();
+    } catch (e) {
+      log("❌ Error parsing socket round payload: $e");
+    }
+  }
+
 
   void _startLiveCheckTimer() {
     Future.delayed(const Duration(seconds: 1), () {
-      if (youtubeController.value != null && matchType.value == "live" && showVideoPlayer.value) {
+      if (youtubeController.value != null &&
+          matchType.value == "live" &&
+          showVideoPlayer.value) {
         _checkIfBehindLive();
         _startLiveCheckTimer();
       }
