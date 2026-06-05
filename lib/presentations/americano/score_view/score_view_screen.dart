@@ -44,11 +44,18 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                     !controller.isMyBooking.value,
                   ],
                   borderRadius: BorderRadius.circular(5),
-                  constraints: const BoxConstraints(minHeight: 25, maxHeight: 25, minWidth: 60),
+                  constraints: const BoxConstraints(
+                    minHeight: 25,
+                    maxHeight: 25,
+                    minWidth: 60,
+                  ),
                   fillColor: AppColors.secondaryColor,
                   selectedColor: Colors.white,
                   color: Colors.black,
-                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                   renderBorder: false,
                   onPressed: (index) {
                     controller.isMyBooking.value = index == 0;
@@ -159,7 +166,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
   Widget _buildRankingInfo() {
     return Obx(() {
       final rankInfo = controller.myRankInfo.value;
-      if (rankInfo == null) {
+      if (rankInfo == null || rankInfo.isInMatch == false) {
         return const SizedBox.shrink();
       }
 
@@ -242,9 +249,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
       if (controller.isLoading.value) {
         return SizedBox(
           height: Get.height * 0.4,
-          child: const Center(
-            child: LoadingWidget(color: Colors.white),
-          ),
+          child: const Center(child: LoadingWidget(color: Colors.white)),
         );
       }
 
@@ -350,14 +355,15 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: position == 1 ? 74 : 64,
+            width: position == 1 ? 80 : 70,
             height: position == 1 ? 74 : 62,
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 if (players.isNotEmpty)
                   Positioned(
                     left: 0,
-                    top: 0,
+                    top: position == 1 ? 13 : 11,
                     child: _buildTeamPlayerAvatar(
                       players[0],
                       radius: position == 1 ? 24 : 20,
@@ -366,10 +372,23 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                 if (players.length > 1)
                   Positioned(
                     right: 0,
-                    bottom: 0,
+                    top: position == 1 ? 13 : 11,
                     child: _buildTeamPlayerAvatar(
                       players[1],
                       radius: position == 1 ? 24 : 20,
+                    ),
+                  ),
+                if (position == 1)
+                  Positioned(
+                    top: -6,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Image.asset(
+                        Assets.imagesImgCrown,
+                        width: 28,
+                        height: 28,
+                      ),
                     ),
                   ),
               ],
@@ -531,24 +550,44 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.white,
-            radius: position == 1 ? 36 : 31,
-            child: CircleAvatar(
-              radius: position == 1 ? 35 : 30,
-              backgroundColor: AppColors.primaryColor,
-              backgroundImage: hasImage ? CachedNetworkImageProvider(pic) : null,
-              child: !hasImage
-                  ? Text(
-                      initials,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: position == 1 ? 16 : 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
-            ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white,
+                radius: position == 1 ? 36 : 31,
+                child: CircleAvatar(
+                  radius: position == 1 ? 35 : 30,
+                  backgroundColor: AppColors.primaryColor,
+                  backgroundImage: hasImage
+                      ? CachedNetworkImageProvider(pic)
+                      : null,
+                  child: !hasImage
+                      ? Text(
+                          initials,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: position == 1 ? 16 : 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+              if (position == 1)
+                Positioned(
+                  top: -16,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Image.asset(
+                      Assets.imagesImgCrown,
+                      width: 26,
+                      height: 26,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           SizedBox(
@@ -596,10 +635,17 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
 
   Widget _buildLeaderboardSheet(BuildContext context) {
     return Obx(() {
+      final hasRanking =
+          controller.myRankInfo.value != null &&
+          controller.myRankInfo.value!.isInMatch != false;
+      final size = (controller.selectedTab.value == 0 && hasRanking)
+          ? 0.48
+          : 0.55;
+
       return DraggableScrollableSheet(
-        key: ValueKey(controller.selectedTab.value),
-        initialChildSize: controller.selectedTab.value == 0 ? 0.48 : 0.55,
-        minChildSize: controller.selectedTab.value == 0 ? 0.48 : 0.55,
+        key: ValueKey('${controller.selectedTab.value}_$hasRanking'),
+        initialChildSize: size,
+        minChildSize: size,
         maxChildSize: 0.9,
         builder: (context, scroll) => Obx(() {
           final isFixedTeam = controller.americanoFormat.value == "fixed_team";
@@ -904,37 +950,36 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                                               .withAlpha(30),
                                         ),
                                       ),
-                                      child:
-                                          Row(
-                                            children: [
-                                              SizedBox(
-                                                width: 30,
-                                                child: Text(
-                                                  '${idx + 1}',
-                                                  style: Get
-                                                      .textTheme
-                                                      .bodySmall!
-                                                      .copyWith(
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: Row(
-                                                  children: [
-                                                    CircleAvatar(
-                                                      radius: 15,
-                                                      backgroundColor: AppColors
-                                                          .primaryColor,
-                                                      backgroundImage: hasImage
-                                                          ? CachedNetworkImageProvider(pic)
-                                                          : null,
-                                                      child: !hasImage
-                                                          ? Text(
-                                                              initials,
-                                                              style: const TextStyle(
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 30,
+                                            child: Text(
+                                              '${idx + 1}',
+                                              style: Get.textTheme.bodySmall!
+                                                  .copyWith(
+                                                    color: Colors.black,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 15,
+                                                  backgroundColor:
+                                                      AppColors.primaryColor,
+                                                  backgroundImage: hasImage
+                                                      ? CachedNetworkImageProvider(
+                                                          pic,
+                                                        )
+                                                      : null,
+                                                  child: !hasImage
+                                                      ? Text(
+                                                          initials,
+                                                          style:
+                                                              const TextStyle(
                                                                 color: Colors
                                                                     .white,
                                                                 fontSize: 10,
@@ -942,81 +987,70 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                                                                     FontWeight
                                                                         .bold,
                                                               ),
-                                                            )
-                                                          : null,
-                                                    ).paddingOnly(right: 10),
-                                                    Expanded(
-                                                      child: Text(
-                                                        name,
-                                                        style: Get
-                                                            .textTheme
-                                                            .bodySmall!
-                                                            .copyWith(
-                                                              color:
-                                                                  Colors.black,
-                                                            ),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 55,
-                                                child: Text(
-                                                  "$wins - $losses - $draws",
-                                                  style: Get
-                                                      .textTheme
-                                                      .displaySmall!
-                                                      .copyWith(fontSize: 11),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 45,
-                                                child: Text(
-                                                  "$diffSign$diff",
-                                                  style: Get
-                                                      .textTheme
-                                                      .displaySmall!
-                                                      .copyWith(fontSize: 11),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 50,
-                                                child: Align(
-                                                  alignment:
-                                                      Alignment.centerLeft,
-                                                  child: Container(
-                                                    height: 16,
-                                                    width: 30,
-                                                    alignment: Alignment.center,
-                                                    decoration: BoxDecoration(
-                                                      color: AppColors
-                                                          .secondaryColor,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            5,
-                                                          ),
-                                                    ),
-                                                    child: Text(
-                                                      "$points",
-                                                      style: Get
-                                                          .textTheme
-                                                          .bodyMedium!
-                                                          .copyWith(
-                                                            color: Colors.white,
-                                                            fontSize: 10,
-                                                          ),
-                                                    ),
+                                                        )
+                                                      : null,
+                                                ).paddingOnly(right: 10),
+                                                Expanded(
+                                                  child: Text(
+                                                    name,
+                                                    style: Get
+                                                        .textTheme
+                                                        .bodySmall!
+                                                        .copyWith(
+                                                          color: Colors.black,
+                                                        ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ).paddingSymmetric(
-                                            horizontal: 12,
-                                            vertical: 10,
+                                              ],
+                                            ),
                                           ),
+                                          SizedBox(
+                                            width: 55,
+                                            child: Text(
+                                              "$wins - $losses - $draws",
+                                              style: Get.textTheme.displaySmall!
+                                                  .copyWith(fontSize: 11),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 45,
+                                            child: Text(
+                                              "$diffSign$diff",
+                                              style: Get.textTheme.displaySmall!
+                                                  .copyWith(fontSize: 11),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 50,
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Container(
+                                                height: 16,
+                                                width: 30,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      AppColors.secondaryColor,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
+                                                ),
+                                                child: Text(
+                                                  "$points",
+                                                  style: Get
+                                                      .textTheme
+                                                      .bodyMedium!
+                                                      .copyWith(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ).paddingSymmetric(horizontal: 12, vertical: 10),
                                     );
                                   }
                                 },
@@ -1060,9 +1094,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
       if (controller.isLoadingRounds.value) {
         return SizedBox(
           height: Get.height * 0.35,
-          child: const Center(
-            child: LoadingWidget(color: Colors.white),
-          ),
+          child: const Center(child: LoadingWidget(color: Colors.white)),
         );
       }
 
@@ -1087,7 +1119,9 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                   RoutesName.roundsScore,
                   arguments: {
                     'americanoMatchId': controller.americanoMatchId.value,
-                    'filter': controller.isMyBooking.value ? "my_match" : "all_matches",
+                    'filter': controller.isMyBooking.value
+                        ? "my_match"
+                        : "all_matches",
                   },
                 ),
                 child: Text(
@@ -1136,7 +1170,9 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                       RoutesName.roundsScore,
                       arguments: {
                         'americanoMatchId': controller.americanoMatchId.value,
-                        'filter': controller.isMyBooking.value ? "my_match" : "all_matches",
+                        'filter': controller.isMyBooking.value
+                            ? "my_match"
+                            : "all_matches",
                       },
                     ),
                     child: Container(
@@ -1153,11 +1189,16 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                     if (match.status?.toLowerCase() == "scheduled") {
                       return;
                     }
-                    Get.toNamed(RoutesName.liveStreamAmericano, arguments: {
-                      "matchType": match.status,
-                      "americanoMatchId": match.americanoMatchId,
-                      "roundId": match.sId,
-                    })?.then((_){controller.fetchUserRounds();});
+                    Get.toNamed(
+                      RoutesName.liveStreamAmericano,
+                      arguments: {
+                        "matchType": match.status,
+                        "americanoMatchId": match.americanoMatchId,
+                        "roundId": match.sId,
+                      },
+                    )?.then((_) {
+                      controller.fetchUserRounds();
+                    });
                   },
                   child: Container(
                     height: Get.height * 0.24,
@@ -1171,7 +1212,9 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                     child: Column(
                       children: [
                         Text(
-                          controller.isMyBooking.value? "Your Match":"Latest Round",
+                          controller.isMyBooking.value
+                              ? "Your Match"
+                              : "Latest Round",
                           style: Get.textTheme.titleSmall!.copyWith(
                             color: Colors.white,
                           ),
@@ -1209,7 +1252,9 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                 RoutesName.roundsScore,
                 arguments: {
                   'americanoMatchId': controller.americanoMatchId.value,
-                  'filter': controller.isMyBooking.value ? "my_match" : "all_matches",
+                  'filter': controller.isMyBooking.value
+                      ? "my_match"
+                      : "all_matches",
                 },
               ),
               child: Text(
@@ -1315,7 +1360,8 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (hasPlayer1) Text(formatName(names[0]).capitalizeFirstChar(), style: style),
+            if (hasPlayer1)
+              Text(formatName(names[0]).capitalizeFirstChar(), style: style),
             if (hasPlayer2) ...[
               Text(' + ', style: style),
               Text(formatName(names[1]).capitalizeFirstChar(), style: style),
