@@ -300,9 +300,9 @@ class HomeRepository {
   }
 
   ///Get Customer LeaderBord Rank-----------------------------------------------
-  Future<GetCustomerLeaderBoardRankModel> getCustomerLeaderBoardRank({required id}) async {
+  Future<GetCustomerLeaderBoardRankModel> getCustomerLeaderBoardRank({required categoryId}) async {
     try {
-      final url = "${AppEndpoints.getMyRankGenderWise}?_id=$id";
+      final url = "${AppEndpoints.getMyRankGenderWise}?categoryId=$categoryId";
 
       final response = await dioClient.get(url);
 

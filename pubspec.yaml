@@ -4,6 +4,8 @@ publish_to: 'none'
 version: 1.0.22
 #version: 1.0.16
 #version: 1.0.14+26
+#version: 1.0.21+1
+#version: 1.0.18+30
 
 environment:
   sdk: ^3.8.1
@@ -25,6 +27,7 @@ dependencies:
   intl:
   flutter_map:
   latlong2:
+  webview_flutter:
   google_nav_bar:
   flutter_slidable:
   dropdown_search:

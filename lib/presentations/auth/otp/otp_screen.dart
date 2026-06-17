@@ -147,10 +147,12 @@ class OtpScreen extends GetView<OtpController> {
             );
           }),
           Obx(
-    ()=> PrimaryButton(
-              onTap: () {
-                controller.verifyOTP();
-              },
+            () => PrimaryButton(
+              onTap: controller.isLoading.value
+                  ? null
+                  : () {
+                      controller.verifyOTP();
+                    },
               text: AppStrings.verify,
               child: controller.isLoading.value
                   ? AppLoader(size: 35, strokeWidth: 4)

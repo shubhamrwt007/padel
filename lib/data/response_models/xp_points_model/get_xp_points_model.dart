@@ -4,6 +4,7 @@ class GetXpPointsModel {
   final List<XpData>? data;
   final Pagination? pagination;
   final Summary? summary;
+  final CurrentXp? currentXp; // 👈 add this
 
   GetXpPointsModel({
     this.success,
@@ -11,6 +12,7 @@ class GetXpPointsModel {
     this.data,
     this.pagination,
     this.summary,
+    this.currentXp,
   });
 
   factory GetXpPointsModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,11 @@ class GetXpPointsModel {
           : null,
       summary:
       json['summary'] != null ? Summary.fromJson(json['summary']) : null,
+
+      // 👇 parse currentXp
+      currentXp: json['currentXp'] != null
+          ? CurrentXp.fromJson(json['currentXp'])
+          : null,
     );
   }
 
@@ -34,6 +41,7 @@ class GetXpPointsModel {
     'data': data?.map((e) => e.toJson()).toList(),
     'pagination': pagination?.toJson(),
     'summary': summary?.toJson(),
+    'currentXp': currentXp?.toJson(),
   };
 }
 
@@ -203,5 +211,42 @@ class Summary {
     '_id': id,
     'totalXpGained': totalXpGained,
     'totalXpLost': totalXpLost,
+  };
+}
+class CurrentXp {
+  final String? categoryId;
+  final String? sport;
+  final dynamic xpPoints;
+  final String? level;
+  final dynamic pickleballTier;
+  final dynamic pickleballTierLabel;
+
+  CurrentXp({
+    this.categoryId,
+    this.sport,
+    this.xpPoints,
+    this.level,
+    this.pickleballTier,
+    this.pickleballTierLabel,
+  });
+
+  factory CurrentXp.fromJson(Map<String, dynamic> json) {
+    return CurrentXp(
+      categoryId: json['categoryId'],
+      sport: json['sport'],
+      xpPoints: json['xpPoints'],
+      level: json['level'],
+      pickleballTier: json['pickleballTier'],
+      pickleballTierLabel: json['pickleballTierLabel'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'categoryId': categoryId,
+    'sport': sport,
+    'xpPoints': xpPoints,
+    'level': level,
+    'pickleballTier': pickleballTier,
+    'pickleballTierLabel': pickleballTierLabel,
   };
 }

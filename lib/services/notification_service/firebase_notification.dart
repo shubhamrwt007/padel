@@ -174,16 +174,28 @@ class NotificationService {
   void _handleForegroundMessage(RemoteMessage message) {
     log('Received foreground message: ${message.messageId}');
 
+    // Create payload with notification data
+    final payload = _createPayloadFromMessage(message);
+
     // Show local notification for foreground messages with high priority
     showNotification(
       id: message.hashCode,
       title: message.notification?.title ?? 'New Message',
       body: message.notification?.body ?? '',
-      payload: message.data.toString(),
-      highPriority: true, // Use high priority for foreground messages
+      payload: payload,
+      highPriority: true,
     );
 
     onForegroundMessage?.call(message);
+  }
+
+  /// Create payload string from RemoteMessage
+  String _createPayloadFromMessage(RemoteMessage message) {
+    final data = message.data;
+    if (data.isEmpty) return '';
+    
+    // Create a simple string format: key1=value1|key2=value2
+    return data.entries.map((e) => '${e.key}=${e.value}').join('|');
   }
 
   /// Handle background Firebase messages
@@ -195,7 +207,9 @@ class NotificationService {
   /// Handle local notification taps
   void _onNotificationTapped(NotificationResponse response) {
     log('Notification tapped with payload: ${response.payload}');
-    onNotificationTapped?.call(response.payload ?? '');
+    if (response.payload != null && response.payload!.isNotEmpty) {
+      onNotificationTapped?.call(response.payload!);
+    }
   }
 
   /// Request necessary permissions (public method - can be called when Activity is available)

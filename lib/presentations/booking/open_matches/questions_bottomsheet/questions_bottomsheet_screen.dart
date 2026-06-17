@@ -10,6 +10,7 @@ import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/components/primary_button.dart';
 import 'package:padel_mobile/configs/components/snack_bars.dart';
 import 'package:padel_mobile/presentations/booking/book_session/widgets/upword_arrow_animation.dart';
+import '../../../../configs/components/safe_bottom_container.dart';
 import '../../../../data/request_models/home_models/get_available_court.dart';
 import '../../../../handler/text_formatter.dart';
 import 'questions_bottomsheet_controller.dart';
@@ -29,206 +30,209 @@ class QuestionsBottomsheetScreen extends StatelessWidget {
       }
     });
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ---------- FORM ----------
-            _buildDropdown('Select game level'),
-            Row(
-              children: [
-                Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
-                Text("Current game levels are self assessed",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
-              ],
-            ).paddingOnly(top: 5,bottom: 6),
-            _buildDropdown('Select game type'),
-            const SizedBox(height: 6),
-            _buildRadioButtons('Select match type'),
-            Row(
-              children: [
-                Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
-                Text("You will not be given XP points upon selections of friendly match",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
-              ],
-            ),
-            const SizedBox(height: 20),
-            // ---------- PAYMENT PANEL ----------
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Obx(() => AnimatedSize(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF003AFF),Color(0xFF07289A),],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          child: isExpanded.value
-                              ? Column(children: [_buildSlotDetails()])
-                              : const SizedBox.shrink(),
+    return SafeBottomContainer(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ---------- FORM ----------
+              _buildDropdown('Select game level'),
+              Row(
+                children: [
+                  Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
+                  Text("Current game levels are self assessed",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
+                ],
+              ).paddingOnly(top: 5,bottom: 6),
+              _buildDropdown('Select game type'),
+              const SizedBox(height: 6),
+              _buildRadioButtons('Select match type'),
+              Row(
+                children: [
+                  Icon(Icons.info_outline,size: 12,color: Colors.red,).paddingOnly(right: 4),
+                  Text("You will not be given XP points upon selections of friendly match",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),)
+                ],
+              ),
+              const SizedBox(height: 20),
+              // ---------- PAYMENT PANEL ----------
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Obx(() => AnimatedSize(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF003AFF),Color(0xFF07289A),],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: isExpanded.value
+                                ? Column(children: [_buildSlotDetails()])
+                                : const SizedBox.shrink(),
+                          ),
 
-                        // Total row
-                        GestureDetector(
-                          onTap: () {
-                            isExpanded.value = !isExpanded.value;
-                          },
-                          onVerticalDragEnd: (details) {
-                            if (details.primaryVelocity! < 0) {
-                              isExpanded.value = true;
-                            }
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      'Total to Pay',
-                                      style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white)
-                                  ),
-                                  Text(
-                                      'Wallet: ₹${controller.walletAmountUsed.value}',
-                                      style: Get.textTheme.bodySmall!.copyWith(color: Colors.white.withValues(alpha: 0.8))
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                '₹ ${controller.razorpayAmountUsed.value}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                          // Total row
+                          GestureDetector(
+                            onTap: () {
+                              isExpanded.value = !isExpanded.value;
+                            },
+                            onVerticalDragEnd: (details) {
+                              if (details.primaryVelocity! < 0) {
+                                isExpanded.value = true;
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        'Total to Pay',
+                                        style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white)
+                                    ),
+                                    Text(
+                                        'Wallet: ₹${controller.walletAmountUsed.value}',
+                                        style: Get.textTheme.bodySmall!.copyWith(color: Colors.white.withValues(alpha: 0.8))
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // Wallet
-                        // _paymentTile(
-                        //   title: 'Wallet',
-                        //   subtitle: 'Current Balance: ₹0',
-                        //   trailingColor: Colors.blue,
-                        //   onTap: () {
-                        //   },
-                        // ),
-                        //   CustomButton(
-                        //     width: Get.width*0.9,
-                        //     height: 55,
-                        //     circleColor: AppColors.primaryColor,
-                        //     gradientColors: [Colors.white,Colors.white,Colors.white],
-                        //       onTap: () {
-                        //       },
-                        //     child:Column(
-                        //       mainAxisAlignment: MainAxisAlignment.center,
-                        //       children: [
-                        //         Text("Wallet",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.primaryColor,fontSize: 16)),
-                        //         Text("Current Balance: ₹0",style:Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor,fontSize: 11)),
-                        //       ],
-                        //     ).paddingOnly(right: 40),
-                        //   ),
-                        const SizedBox(height: 12),
-
-                        // Direct Payment
-                        // Obx(() => _paymentTile(
-                        //   title: 'Direct Payment',
-                        //   titleColor: const Color(0xFF6FCF97),
-                        //   trailingColor: const Color(0xFF6FCF97),
-                        //   onTap: controller.isProcessing.value ? null : () {
-                        //     controller.initiatePaymentAndCreateMatch();
-                        //   },
-                        //   isLoading: controller.isProcessing.value,
-                        // )),
-                        // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
-                        CustomButton(
-                          width: Get.width * 0.81,
-                          height: 55,
-                          gradientColors: [Colors.white, Colors.white, Colors.white],
-                          onTap: controller.isProcessing.value ? null : () {
-                            controller.onDirectPaymentTap();
-                          },
-                          child: controller.isProcessing.value == true
-                              ? LoadingAnimationWidget.waveDots(
-                            color: AppColors.blackColor,
-                            size: 45,
-                          ).paddingOnly(right: 40)
-                              : Obx(() => Text(
-                            controller.requiresPayment.value
-                                ? "Pay Now"
-                                : "Pay with Wallet",
-                            style: Get.textTheme.headlineLarge!.copyWith(
-                              color: AppColors.secondaryColor,
-                              fontSize: 16,
+                                Text(
+                                  '₹ ${controller.razorpayAmountUsed.value}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          )).paddingOnly(right: 40),
-                        )
-                      ],
-                    ),
-                  ),
-                )),
-                Positioned(
-                  top: -14,
-                  left: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: () {
-                      isExpanded.value = !isExpanded.value;
-                    },
-                    onVerticalDragEnd: (details) {
-                      if (details.primaryVelocity! < 0) {
-                        isExpanded.value = true;
-                      }
-                    },
-                    // customBorder: const CircleBorder(),
-                    child: ClipRect(
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        heightFactor: 0.6,
-                        child: Container(
-                          height: 55,
-                          width: 55,
-                          decoration: BoxDecoration(
-                            color: Color(0xFF003AFF),
-                            shape: BoxShape.circle,
-                            // boxShadow: [
-                            //   BoxShadow(
-                            //     color: Colors.grey.withValues(alpha: 0.1),
-                            //     blurRadius: 1,
-                            //     spreadRadius: -2,
-                            //     offset: Offset(0, -5),
-                            //   ),
-                            // ],
                           ),
-                          child: Transform.translate(
-                            offset: Offset(0, -5),
-                            child: Obx(() => ArrowAnimation(isUpward: !isExpanded.value,color: Colors.white,)),
+
+                          const SizedBox(height: 10),
+
+                          // Wallet
+                          // _paymentTile(
+                          //   title: 'Wallet',
+                          //   subtitle: 'Current Balance: ₹0',
+                          //   trailingColor: Colors.blue,
+                          //   onTap: () {
+                          //   },
+                          // ),
+                          //   CustomButton(
+                          //     width: Get.width*0.9,
+                          //     height: 55,
+                          //     circleColor: AppColors.primaryColor,
+                          //     gradientColors: [Colors.white,Colors.white,Colors.white],
+                          //       onTap: () {
+                          //       },
+                          //     child:Column(
+                          //       mainAxisAlignment: MainAxisAlignment.center,
+                          //       children: [
+                          //         Text("Wallet",style:Get.textTheme.headlineLarge!.copyWith(color: AppColors.primaryColor,fontSize: 16)),
+                          //         Text("Current Balance: ₹0",style:Get.textTheme.bodySmall!.copyWith(color: AppColors.primaryColor,fontSize: 11)),
+                          //       ],
+                          //     ).paddingOnly(right: 40),
+                          //   ),
+                          const SizedBox(height: 12),
+
+                          // Direct Payment
+                          // Obx(() => _paymentTile(
+                          //   title: 'Direct Payment',
+                          //   titleColor: const Color(0xFF6FCF97),
+                          //   trailingColor: const Color(0xFF6FCF97),
+                          //   onTap: controller.isProcessing.value ? null : () {
+                          //     controller.initiatePaymentAndCreateMatch();
+                          //   },
+                          //   isLoading: controller.isProcessing.value,
+                          // )),
+                          // In QuestionsBottomsheetScreen widget, update the Direct Payment button:
+                          Obx(() => CustomButton(
+                            width: Get.width * 0.81,
+                            height: 55,
+                            gradientColors: [Colors.white, Colors.white, Colors.white],
+                            onTap: controller.isProcessing.value ? null : () {
+                              controller.onDirectPaymentTap();
+                            },
+                            child: controller.isProcessing.value == true
+                                ? LoadingAnimationWidget.waveDots(
+                              color: AppColors.blackColor,
+                              size: 45,
+                            ).paddingOnly(right: 40)
+                                : Text(
+                              controller.requiresPayment.value
+                                  ? "Pay Now"
+                                  : "Pay with Wallet",
+                              style: Get.textTheme.headlineLarge!.copyWith(
+                                color: AppColors.secondaryColor,
+                                fontSize: 16,
+                              ),
+                            ).paddingOnly(right: 40),
+                          ))
+                        ],
+                      ),
+                    ),
+                  )),
+                  Positioned(
+                    top: -14,
+                    left: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        isExpanded.value = !isExpanded.value;
+                      },
+                      onVerticalDragEnd: (details) {
+                        if (details.primaryVelocity! < 0) {
+                          isExpanded.value = true;
+                        }
+                      },
+                      // customBorder: const CircleBorder(),
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 0.6,
+                          child: Container(
+                            height: 55,
+                            width: 55,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF003AFF),
+                              shape: BoxShape.circle,
+                              // boxShadow: [
+                              //   BoxShadow(
+                              //     color: Colors.grey.withValues(alpha: 0.1),
+                              //     blurRadius: 1,
+                              //     spreadRadius: -2,
+                              //     offset: Offset(0, -5),
+                              //   ),
+                              // ],
+                            ),
+                            child: Transform.translate(
+                              offset: Offset(0, -5),
+                              child: Obx(() => ArrowAnimation(isUpward: !isExpanded.value,color: Colors.white,)),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

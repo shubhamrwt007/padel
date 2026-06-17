@@ -16,17 +16,21 @@ class XpPointsRepository {
 
   ///Get XP Points--------------------------------------------------------------
   Future<GetXpPointsModel> getXpPoints({
-    String? userId,
+    // String? userId,
     String? fromDate,
     String? toDate,
     int? page,
     int? limit,
+    String? categoryId
   }) async {
     try {
       final List<String> queryParts = [];
 
-      if (userId != null && userId.isNotEmpty) {
-        queryParts.add("userId=$userId");
+      // if (userId != null && userId.isNotEmpty) {
+      //   queryParts.add("userId=$userId");
+      // }
+      if (categoryId != null && categoryId.isNotEmpty) {
+        queryParts.add("categoryId=$categoryId");
       }
       if (fromDate != null && fromDate.isNotEmpty) {
         queryParts.add("fromDate=$fromDate");

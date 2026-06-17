@@ -58,7 +58,7 @@ class OtpController extends GetxController {
       };
       var result = await signUpRepository.verifyOTP(body: body);
       if (result.status == "200") {
-        getPurpose();
+        await getPurpose();
       } else if (result.status == "400") {
         AppToast.error(result.message!);
       }
@@ -67,7 +67,7 @@ class OtpController extends GetxController {
     }
   }
 
-  void getPurpose() async {
+  Future<void> getPurpose() async {
     if (OtpScreenType.createAccount == arguments['type']) {
       await signUpController.createAccount();
     } else if (OtpScreenType.login == arguments['type']) {

@@ -58,25 +58,27 @@ enum _MatchResult { win, loss, draw }
 _MatchResult _getMatchResult(ScoreBoardController controller) {
   print('🔍 ========== GET MATCH RESULT ==========');
   print('🔍 wasSwapDuringMatch: ${controller.wasSwapDuringMatch.value}');
+  print('💰 controller.xpEarned: ${controller.xpEarned.value}');
+  print('💰 controller.xpLost: ${controller.xpLost.value}');
   
-  // If this is a swap during match, use xpChanges array to determine result
+  // Direct check based on XP changes from socket/API if available
+  if (controller.xpEarned.value > 0) {
+    print('✅ User WON - xpEarned: ${controller.xpEarned.value}');
+    return _MatchResult.win;
+  }
+  
+  if (controller.xpLost.value > 0) {
+    print('❌ User LOST - xpLost: ${controller.xpLost.value}');
+    return _MatchResult.loss;
+  }
+  
+  // If this is a swap during match, use fallback swap logic
   if (controller.wasSwapDuringMatch.value) {
     print('🏆 SWAP DURING MATCH - Using XP changes to determine result');
     
     // Get current user ID
     final currentUserId = controller.currentUserId;
     print('👤 Current User ID: $currentUserId');
-    
-    // Check if we have XP values set (which means we found user in xpChanges)
-    if (controller.xpEarned.value > 0) {
-      print('✅ User WON - xpEarned: ${controller.xpEarned.value}');
-      return _MatchResult.win;
-    }
-    
-    if (controller.xpLost.value > 0) {
-      print('❌ User LOST - xpLost: ${controller.xpLost.value}');
-      return _MatchResult.loss;
-    }
     
     // Fallback to old logic if XP not found
     print('⚠️ XP values not found, using fallback logic');
@@ -199,8 +201,8 @@ Future<void> _showResultDialog({
   };
 
   final String badgeText = switch (result) {
-    _MatchResult.win => controller.xpEarned.value > 0 ? "+${controller.xpEarned.value} XP" : "+100 XP",
-    _MatchResult.loss => controller.xpLost.value > 0 ? "-${controller.xpLost.value} XP" : "-100 XP",
+    _MatchResult.win => controller.xpEarned.value > 0 ? "+${controller.xpEarned.value} XP" : "0 XP",
+    _MatchResult.loss => controller.xpLost.value > 0 ? "-${controller.xpLost.value} XP" : "0 XP",
     _MatchResult.draw => "0 XP",
   };
 
@@ -266,8 +268,8 @@ Future<void> _showResultDialog({
                     ),
                     const SizedBox(height: 6),
 
-                    /// XP VALUE - Show currentXP from socket if available (swap scenario)
-                    controller.wasSwapDuringMatch.value && controller.currentXP.value > 0
+                    /// XP VALUE - Show currentXP from socket if available
+                    controller.currentXP.value > 0
                         ? _xpText(controller.currentXP.value)
                         : (profileController != null
                             ? Obx(() {
@@ -336,6 +338,11 @@ Future<void> _showResultDialog({
                     print('🔄 Swap during match detected, resetting match...');
                     await _restartMatchAfterSwap(controller);
                     controller.wasSwapDuringMatch.value = false;
+                  } else {
+                    // Reset XP values for next match
+                    controller.xpEarned.value = 0;
+                    controller.xpLost.value = 0;
+                    controller.currentXP.value = 0;
                   }
                 },
                 child: Container(
@@ -363,6 +370,11 @@ Future<void> _showResultDialog({
       print('🔄 Swap during match detected (on dismiss), resetting match...');
       await _restartMatchAfterSwap(controller);
       controller.wasSwapDuringMatch.value = false;
+    } else {
+      // Reset XP values for next match
+      controller.xpEarned.value = 0;
+      controller.xpLost.value = 0;
+      controller.currentXP.value = 0;
     }
   });
 }

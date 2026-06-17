@@ -498,6 +498,8 @@ class OpenMatchId {
   String? createdBy;
   String? gender;
   String? openMatchStatus;
+  String? refundStatus;
+  String? cancellationReason;
   bool? status;
   bool? adminStatus;
   bool? isActive;
@@ -524,6 +526,8 @@ class OpenMatchId {
     this.isActive,
     this.isDeleted,
     this.openMatchStatus,
+    this.refundStatus,
+    this.cancellationReason,
     this.createdAt,
     this.updatedAt,
     this.iV,
@@ -565,6 +569,8 @@ class OpenMatchId {
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     openMatchStatus = json['openMatchStatus'];
+    refundStatus = json['refundStatus'];
+    cancellationReason = json['cancellationReason'];
     createdAt = json['createdAt']?.toString();
     updatedAt = json['updatedAt']?.toString();
     iV = json['__v'];
@@ -589,6 +595,8 @@ class OpenMatchId {
     data['isActive'] = isActive;
     data['isDeleted'] = isDeleted;
     data['openMatchStatus'] = openMatchStatus;
+    data['refundStatus'] = refundStatus;
+    data['cancellationReason'] = cancellationReason;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
@@ -890,14 +898,31 @@ class BookingTeamPlayer {
   dynamic amountPaid;
   String? joinedAt;
   String? sId;
+  String? name;
+  bool? isTemp;
+  String? tempPlayerId;
+  String? addedBy;
 
-  BookingTeamPlayer({this.userId, this.joinedAt, this.sId,this.amountPaid});
+  BookingTeamPlayer({
+    this.userId,
+    this.joinedAt,
+    this.sId,
+    this.amountPaid,
+    this.name,
+    this.isTemp,
+    this.tempPlayerId,
+    this.addedBy,
+  });
 
   BookingTeamPlayer.fromJson(Map<String, dynamic> json) {
     userId = json['userId'] != null ? PlayerId.fromJson(json['userId']) : null;
     joinedAt = json['joinedAt']?.toString();
     sId = json['_id']?.toString();
     amountPaid = json['amountPaid'];
+    name = json['name']?.toString();
+    isTemp = json['isTemp'];
+    tempPlayerId = json['tempPlayerId']?.toString();
+    addedBy = json['addedBy']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -908,6 +933,10 @@ class BookingTeamPlayer {
     data['joinedAt'] = joinedAt;
     data['_id'] = sId;
     data['amountPaid'] = amountPaid;
+    data['name'] = name;
+    data['isTemp'] = isTemp;
+    data['tempPlayerId'] = tempPlayerId;
+    data['addedBy'] = addedBy;
     return data;
   }
 }

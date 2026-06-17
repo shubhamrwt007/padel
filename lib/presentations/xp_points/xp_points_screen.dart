@@ -232,7 +232,7 @@ class _XpRow extends StatelessWidget {
             "bookingId": bookingId
           });
         } else {
-          print(transaction);
+          debugPrint(transaction.toString());
         }
       },
       child: Padding(

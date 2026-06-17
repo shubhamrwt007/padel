@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:padel_mobile/presentations/profile/widgets/profile_exports.dart';
 
+import '../../../configs/components/safe_scaffold.dart';
+
 class EditProfileUi extends StatelessWidget {
   final String? buttonType;
   final EditProfileController controller = Get.put(EditProfileController());
@@ -11,7 +13,7 @@ class EditProfileUi extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
-      child: Scaffold(
+      child: SafeScaffold(
         backgroundColor: AppColors.whiteColor,
         bottomNavigationBar: _bottomBar(context),
         appBar: primaryAppBar(
@@ -433,6 +435,25 @@ class EditProfileUi extends StatelessWidget {
   Widget _statisticsContainer(BuildContext context) {
     return Obx(() {
       final response = controller.profileController.profileModel.value?.response;
+      final selectedTab = controller.selectedStatTab.value;
+      
+      // Determine statistics values based on selected tab
+      final String xpPoints = selectedTab == 0
+          ? _formatXp(response?.xpPoints)
+          : _formatXp(response?.pickleballXpPoints);
+      final int winStreak = selectedTab == 0
+          ? (response?.currentWinStreak ?? 0)
+          : (response?.pickleballCurrentWinStreak ?? 0);
+      final int loseStreak = selectedTab == 0
+          ? (response?.currentLoseStreak ?? 0)
+          : (response?.pickleballCurrentLoseStreak ?? 0);
+      final int totalMatches = selectedTab == 0
+          ? (response?.totalMatchesPlayed ?? 0)
+          : (response?.pickleballMatchesPlayed ?? 0);
+      final int totalWins = selectedTab == 0
+          ? (response?.totalWins ?? 0)
+          : (response?.pickleballWins ?? 0);
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -443,57 +464,153 @@ class EditProfileUi extends StatelessWidget {
               color: AppColors.labelBlackColor,
             ),
           ).paddingOnly(top: Get.height * .02),
+          _buildStatTabSelector(context),
           Container(
             margin: EdgeInsets.only(top: 10),
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.textFieldColor,
               borderRadius: BorderRadius.circular(5),
-              border: Border.all(color: Colors.grey,width: 1),
+              border: Border.all(color: Colors.grey, width: 1),
             ),
             child: Column(
               children: [
                 Row(
                   children: [
-                    Expanded(child: _statItem("XP Points", "${response?.xpPoints.toStringAsFixed(2) ?? 0}")),
-                    // Expanded(child: _statItem("Rank", "${response?.rank ?? 0}")),
-                    Expanded(child: _statItem("Win Streak", "${response?.currentWinStreak ?? 0}")),
+                    Expanded(child: _statItem("XP Points", xpPoints)),
+                    Expanded(child: _statItem("Win Streak", "$winStreak")),
                   ],
                 ),
                 SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _statItem("Lose Streak", "${response?.currentLoseStreak ?? 0}")),
-                    Expanded(child: _statItem("Total Matches", "${response?.totalMatchesPlayed ?? 0}")),
-
+                    Expanded(child: _statItem("Lose Streak", "$loseStreak")),
+                    Expanded(child: _statItem("Total Matches", "$totalMatches")),
                   ],
                 ),
                 SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _statItem("Total Wins", "${response?.totalWins ?? 0}")),
+                    Expanded(child: _statItem("Total Wins", "$totalWins")),
                   ],
                 ),
-                SizedBox(height: 12),
-                // Row(
-                //   children: [
-                //     Expanded(child: _statItem("Open Matches", "${response?.openMatchCount ?? 0}")),
-                //     Expanded(child: _statItem("American Matches", "${response?.americanMatchCount ?? 0}")),
-                //   ],
-                // ),
-                SizedBox(height: 12),
-                // Row(
-                //   children: [
-                //     Expanded(child: _statItem("Simple Matches", "${response?.simpleMatchCount ?? 0}")),
-                //     SizedBox(width: Get.width * 0.45),
-                //   ],
-                // ),
               ],
             ),
           ),
         ],
       );
     });
+  }
+
+  Widget _buildStatTabSelector(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.textFieldColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Obx(() {
+        final selected = controller.selectedStatTab.value;
+        return Stack(
+          children: [
+            // Animated sliding pill background
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOutCubic,
+              alignment: selected == 0
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOutCubic,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryColor.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  height: 34,
+                ),
+              ),
+            ),
+
+            // Tab buttons row (on top of pill)
+            Row(
+              children: [
+                // Padel Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.selectedStatTab.value = 0,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOutCubic,
+                      height: 34,
+                      color: Colors.transparent,
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Padel',
+                        style: TextStyle(
+                          color: selected == 0
+                              ? Colors.white
+                              : AppColors.textHintColor,
+                          fontSize: 13,
+                          fontWeight: selected == 0
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Pickleball Tab
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => controller.selectedStatTab.value = 1,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOutCubic,
+                      height: 34,
+                      color: Colors.transparent,
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Pickleball',
+                        style: TextStyle(
+                          color: selected == 1
+                              ? Colors.white
+                              : AppColors.textHintColor,
+                          fontSize: 13,
+                          fontWeight: selected == 1
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  String _formatXp(dynamic value) {
+    if (value == null) return "0.00";
+    if (value is num) return value.toStringAsFixed(2);
+    final parsed = double.tryParse(value.toString());
+    if (parsed != null) return parsed.toStringAsFixed(2);
+    return value.toString();
   }
 
   Widget _statItem(String label, String value) {

@@ -16,6 +16,7 @@ import '../../data/response_models/openmatch_model/all_open_matches.dart';
 import '../../data/response_models/openmatch_model/open_match_booking_model.dart';
 import '../../data/response_models/openmatch_model/open_match_model.dart';
 import '../../handler/logger.dart';
+
 class OpenMatchRepository {
   static final OpenMatchRepository _instance = OpenMatchRepository._internal();
   final DioClient dioClient = DioClient();
@@ -27,9 +28,7 @@ class OpenMatchRepository {
   OpenMatchRepository._internal();
 
   /// Create a new match
-  Future<OpenMatchModel> createMatch({
-    required dynamic data,
-  }) async {
+  Future<OpenMatchModel> createMatch({required dynamic data}) async {
     try {
       CustomLogger.logMessage(
         msg: "Open Match Body: $data",
@@ -47,7 +46,9 @@ class OpenMatchRepository {
 
         return OpenMatchModel.fromJson(response.data);
       } else {
-        throw Exception("Match creation failed. Status code: ${response.statusCode}");
+        throw Exception(
+          "Match creation failed. Status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -58,6 +59,7 @@ class OpenMatchRepository {
       rethrow;
     }
   }
+
   ///Get Open Match Bookings by Type (Upcoming / Completed)---------------------------
   Future<OpenMatchBookingModel?> getOpenMatchBookings({
     required String type, // "upcoming" or "completed"
@@ -114,7 +116,6 @@ class OpenMatchRepository {
     }
   }
 
-
   Future<AllOpenMatches> getMatchesByDateTime({
     required String matchDate,
     String? matchTime,
@@ -134,25 +135,33 @@ class OpenMatchRepository {
       if (response.statusCode == 200) {
         return AllOpenMatches.fromJson(response.data);
       } else {
-        throw Exception("Failed to fetch matches. Status: ${response.statusCode}");
+        throw Exception(
+          "Failed to fetch matches. Status: ${response.statusCode}",
+        );
       }
     } catch (e) {
       rethrow;
     }
   }
+
   Future<FindNearByPlayerModel> findNearByPlayer({
     String? search,
     String? bookingId,
+    int page = 1,
+    int limit = 10,
   }) async {
     try {
       final queryParams = {
         if (search != null && search.isNotEmpty) "search": search,
         if (bookingId != null && bookingId.isNotEmpty) "bookingId": bookingId,
+        'page': page,
+        'limit': limit,
       };
 
       /// 🔹 Build full URL for logging
-      final uri = Uri.parse(AppEndpoints.findNearByPlayer)
-          .replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        AppEndpoints.findNearByPlayer,
+      ).replace(queryParameters: queryParams.map((key, value) => MapEntry(key, value.toString())));
 
       CustomLogger.logMessage(
         msg: "REQUEST → GET ${uri.toString()}",
@@ -170,14 +179,26 @@ class OpenMatchRepository {
           level: LogLevel.info,
         );
 
-        return FindNearByPlayerModel.fromJson(response.data);
+        try {
+          return FindNearByPlayerModel.fromJson(response.data);
+        } catch (parseError, st) {
+          CustomLogger.logMessage(
+            msg: "JSON Parse Error → $parseError\nResponse Data: ${response.data}",
+            level: LogLevel.error,
+            st: st,
+          );
+          rethrow;
+        }
       } else {
-        throw Exception("Failed to fetch Near By Players: ${response.statusCode}");
+        throw Exception(
+          "Failed to fetch Near By Players: ${response.statusCode}",
+        );
       }
-    } catch (e) {
+    } catch (e, st) {
       CustomLogger.logMessage(
         msg: "ERROR → $e",
         level: LogLevel.error,
+        st: st,
       );
       rethrow;
     }
@@ -207,13 +228,12 @@ class OpenMatchRepository {
 
         return SendBookingInvitationModel.fromJson(response.data);
       } else {
-        throw Exception("Failed to Send Booking Invitation: ${response.statusCode}");
+        throw Exception(
+          "Failed to Send Booking Invitation: ${response.statusCode}",
+        );
       }
     } catch (e) {
-      CustomLogger.logMessage(
-        msg: "ERROR → $e",
-        level: LogLevel.error,
-      );
+      CustomLogger.logMessage(msg: "ERROR → $e", level: LogLevel.error);
       rethrow;
     }
   }
@@ -262,7 +282,9 @@ class OpenMatchRepository {
         );
         return CreateUserForOpenMatchModel.fromJson(response.data);
       } else {
-        throw Exception("Create User For Open Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Create User For Open Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -296,7 +318,9 @@ class OpenMatchRepository {
         );
         return AddPlayerToOpenMatchModel.fromJson(response.data);
       } else {
-        throw Exception("Add Player For Open Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Add Player For Open Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -330,7 +354,9 @@ class OpenMatchRepository {
         );
         return RequestPlayerToOpenMatchModel.fromJson(response.data);
       } else {
-        throw Exception("Request Player For Open Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Request Player For Open Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -364,11 +390,14 @@ class OpenMatchRepository {
         );
         return RequestToJoinBookingModel.fromJson(response.data);
       } else {
-        throw Exception("Request Player For Normal Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Request Player For Normal Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Request Player For Normal Match failed with error: ${e.toString()}",
+        msg:
+            "Request Player For Normal Match failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
@@ -407,7 +436,7 @@ class OpenMatchRepository {
       if (response.statusCode == 200) {
         CustomLogger.logMessage(
           msg:
-          "Get Request Player For Open Match fetched successfully: ${response.data}",
+              "Get Request Player For Open Match fetched successfully: ${response.data}",
           level: LogLevel.info,
         );
         return GetRequestPlayersOpenMatchModel.fromJson(response.data);
@@ -419,7 +448,7 @@ class OpenMatchRepository {
     } catch (e, st) {
       CustomLogger.logMessage(
         msg:
-        "Error fetching Get Request Player For Open Match: ${e.toString()}",
+            "Error fetching Get Request Player For Open Match: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
@@ -433,7 +462,8 @@ class OpenMatchRepository {
   }) async {
     try {
       CustomLogger.logMessage(
-        msg: "Accept Or Reject Request Player For Open Match request body: $body",
+        msg:
+            "Accept Or Reject Request Player For Open Match request body: $body",
         level: LogLevel.info,
       );
 
@@ -444,16 +474,20 @@ class OpenMatchRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
-          msg: "Accept Or Reject Request Player For Open Match Success: ${response.data}",
+          msg:
+              "Accept Or Reject Request Player For Open Match Success: ${response.data}",
           level: LogLevel.info,
         );
         return AcceptOrRejectRequestPlayersModel.fromJson(response.data);
       } else {
-        throw Exception("Accept Or Reject Request Player For Open Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Accept Or Reject Request Player For Open Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Accept Or Reject Request Player For Open Match failed with error: ${e.toString()}",
+        msg:
+            "Accept Or Reject Request Player For Open Match failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
@@ -467,7 +501,8 @@ class OpenMatchRepository {
   }) async {
     try {
       CustomLogger.logMessage(
-        msg: "Accept Or Reject Request Player For Normal Match request body: $body",
+        msg:
+            "Accept Or Reject Request Player For Normal Match request body: $body",
         level: LogLevel.info,
       );
 
@@ -478,16 +513,56 @@ class OpenMatchRepository {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
-          msg: "Accept Or Reject Request Player For Normal Match Success: ${response.data}",
+          msg:
+              "Accept Or Reject Request Player For Normal Match Success: ${response.data}",
           level: LogLevel.info,
         );
         return RespondToBookingRequestModel.fromJson(response.data);
       } else {
-        throw Exception("Accept Or Reject Request For Normal Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Accept Or Reject Request For Normal Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Accept Or Reject Request For Normal Match failed with error: ${e.toString()}",
+        msg:
+            "Accept Or Reject Request For Normal Match failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///Mark Booking Request Viewed------------------------------------------------
+  Future<Map<String, dynamic>> markBookingRequestViewed({
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      CustomLogger.logMessage(
+        msg: "Mark Booking Request Viewed body: $body",
+        level: LogLevel.info,
+      );
+
+      final response = await dioClient.post(
+        AppEndpoints.markBookingRequestViewed,
+        data: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Mark Booking Request Viewed Success: ${response.data}",
+          level: LogLevel.info,
+        );
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        throw Exception(
+          "Mark Booking Request Viewed failed: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Mark Booking Request Viewed failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
@@ -496,9 +571,7 @@ class OpenMatchRepository {
   }
 
   ///Get Players Levels --------------------------------------------------------
-  Future<GetPlayersLevelModel?> getPlayerLevels({
-    required String type,
-  }) async {
+  Future<GetPlayersLevelModel?> getPlayerLevels({required String type}) async {
     try {
       // base URL
       String url = AppEndpoints.getPlayersLevel;
@@ -518,7 +591,8 @@ class OpenMatchRepository {
         return GetPlayersLevelModel.fromJson(response.data);
       } else {
         throw Exception(
-            "Failed to fetch Get Players Levels Status: ${response.statusCode}");
+          "Failed to fetch Get Players Levels Status: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -529,6 +603,7 @@ class OpenMatchRepository {
       rethrow;
     }
   }
+
   ///Get Customer Name By Phone Number------------------------------------------
   Future<GetCustomerDataByPhoneNumberModel> getCustomerNameByPhoneNumber({
     required String phoneNumber,
@@ -545,24 +620,57 @@ class OpenMatchRepository {
         );
         return GetCustomerDataByPhoneNumberModel.fromJson(response.data);
       } else {
-        throw Exception("Get-Customer Name By Phone Number failed: ${response.statusCode}");
+        throw Exception(
+          "Get-Customer Name By Phone Number failed: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
-        msg: "Get-Customer Name By Phone Number failed with error: ${e.toString()}",
+        msg:
+            "Get-Customer Name By Phone Number failed with error: ${e.toString()}",
         level: LogLevel.error,
         st: st,
       );
       rethrow;
     }
   }
-  ///WithDraw Request-----------------------------------------------------------
-  Future<WithdrawRequestModel> withdrawRequest({
-    required id,
+
+  ///Search User By Name--------------------------------------------------------
+  Future<GetCustomerDataByPhoneNumberModel> searchUserByName({
+    required String searchKey,
   }) async {
     try {
+      final response = await dioClient.get(
+        "${AppEndpoints.getCustomerNameByPhoneNumber}search=$searchKey",
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "Search User By Name Data: ${response.data}",
+          level: LogLevel.info,
+        );
+        return GetCustomerDataByPhoneNumberModel.fromJson(response.data);
+      } else {
+        throw Exception(
+          "Search User By Name failed: ${response.statusCode}",
+        );
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "Search User By Name failed with error: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
+
+  ///WithDraw Request-----------------------------------------------------------
+  Future<WithdrawRequestModel> withdrawRequest({required id}) async {
+    try {
       final response = await dioClient.delete(
-        "${AppEndpoints.withdrawRequest}$id", data: {},
+        "${AppEndpoints.withdrawRequest}$id",
+        data: {},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -595,14 +703,11 @@ class OpenMatchRepository {
         level: LogLevel.info,
       );
 
-      final endpoint = isPendingMatch 
-          ? AppEndpoints.joinPerShareMatchWithPayment 
+      final endpoint = isPendingMatch
+          ? AppEndpoints.joinPerShareMatchWithPayment
           : AppEndpoints.directJoinAdminMatch;
 
-      final response = await dioClient.post(
-        endpoint,
-        data: body,
-      );
+      final response = await dioClient.post(endpoint, data: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomLogger.logMessage(
@@ -611,7 +716,9 @@ class OpenMatchRepository {
         );
         return response.data;
       } else {
-        throw Exception("Direct Join Admin Match Failed with status code: ${response.statusCode}");
+        throw Exception(
+          "Direct Join Admin Match Failed with status code: ${response.statusCode}",
+        );
       }
     } catch (e, st) {
       CustomLogger.logMessage(
@@ -622,5 +729,4 @@ class OpenMatchRepository {
       rethrow;
     }
   }
-
 }

@@ -239,20 +239,26 @@ class Players {
   PlayerId? playerId;
   String? name;
   String? sId;
+  bool? isTemp;
+  String? tempPlayerId;
 
-  Players({this.playerId, this.name, this.sId});
+  Players({this.playerId, this.name, this.sId, this.isTemp, this.tempPlayerId});
 
   Players.fromJson(Map<String, dynamic> json) {
     playerId =
         json['playerId'] != null ? PlayerId.fromJson(json['playerId']) : null;
     name = json['name'];
     sId = json['_id'];
+    isTemp = json['isTemp'];
+    tempPlayerId = json['tempPlayerId'];
   }
 
   Map<String, dynamic> toJson() => {
         'playerId': playerId?.toJson(),
         'name': name,
         '_id': sId,
+        'isTemp': isTemp,
+        'tempPlayerId': tempPlayerId,
       };
 }
 

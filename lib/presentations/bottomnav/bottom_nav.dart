@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/configs/components/safe_scaffold.dart';
 
 import '../../configs/app_colors.dart';
 import '../../generated/assets.dart';
@@ -16,7 +17,7 @@ class BottomNavUi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ZoomDrawerWrapper(
-      child: Scaffold(
+      child: SafeScaffold(
         body: Obx(() => controller.getCurrentPage()),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

@@ -51,6 +51,14 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
       final mainHomeController = Get.find<MainHomeController>();
       categoryId.value = mainHomeController.selectedCategoryId.value;
       location.value = mainHomeController.profileController.profileModel.value?.response?.city?.sId ?? "68c94a94d72a6f9769712ff0";
+
+      // Listen to category changes
+      ever(mainHomeController.selectedCategoryId, (String newCategoryId) {
+        if (categoryId.value != newCategoryId) {
+          categoryId.value = newCategoryId;
+          onCategoryOrLocationChanged();
+        }
+      });
     } catch (e) {
       print("Error getting MainHomeController: $e");
     }
@@ -66,6 +74,9 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
       // Fetch data for the tab if not already loaded
       switch (type) {
+        case "upcoming":
+          if (upcomingBookings.value == null) fetchBookings("upcoming");
+          break;
         case "in-progress":
           if (inProgressBookings.value == null) fetchBookings("in-progress");
           break;
@@ -77,6 +88,30 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
 
     fetchBookings();
     super.onInit();
+  }
+
+  void onCategoryOrLocationChanged() {
+    upcomingBookings.value = null;
+    inProgressBookings.value = null;
+    completedBookings.value = null;
+    cancelledBookings.value = null;
+
+    upcomingPage.value = 1;
+    inProgressPage.value = 1;
+    completedPage.value = 1;
+    cancelledPage.value = 1;
+
+    upcomingHasMore.value = true;
+    inProgressHasMore.value = true;
+    completedHasMore.value = true;
+    cancelledHasMore.value = true;
+
+    final currentIndex = tabController.index;
+    String type = "upcoming";
+    if (currentIndex == 1) type = "in-progress";
+    if (currentIndex == 2) type = "completed";
+
+    fetchBookings(type);
   }
 
   void fetchBookings([String? specificType]) async {
@@ -381,7 +416,13 @@ class BookingHistoryController extends GetxController with GetSingleTickerProvid
   }
 
   void refreshBookings() {
-    fetchBookings();
+    // Get current tab index and fetch data for that specific tab
+    final currentIndex = tabController.index;
+    String type = "upcoming";
+    if (currentIndex == 1) type = "in-progress";
+    if (currentIndex == 2) type = "completed";
+    
+    fetchBookings(type);
   }
 
   Future<void> updateNewCourtBooking({

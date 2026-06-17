@@ -224,7 +224,7 @@ class OpenMatchBookingController extends GetxController
         page: page,
         limit: pageSize,
         categoryId: categoryId.value.isNotEmpty ? categoryId.value : null,
-        locationId: locationId.value.isNotEmpty ? locationId.value : null,
+        // locationId: locationId.value.isNotEmpty ? locationId.value : null,
       );
 
       if (response != null && response.data != null && response.data!.isNotEmpty) {
