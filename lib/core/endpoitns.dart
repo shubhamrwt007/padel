@@ -1,15 +1,15 @@
 class AppEndpoints {
   AppEndpoints._();
 
-  /// -----------------------Staging URL--------------------------------------------
-  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
-  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
-  /// -----------------------New Live URL------------------------------------------
-  // static const String base = "https://apimobile.swootapp.com/api/";
-  // static const String socketUrl = "https://apimobile.swootapp.com";
+  // -----------------------Staging URL--------------------------------------------
+  // static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
+  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+   /// -----------------------New Live URL------------------------------------------
+  static const String base = "https://apimobile.swootapp.com/api/";
+  static const String socketUrl = "https://apimobile.swootapp.com";
   // ///-----------------------Local URL-----------------------------------------------
-  // static const String base = "http://192.168.1.29:5070/api/";
-  // static const String socketUrl = "http://192.168.1.29:5070";
+  // static const String base = "http://192.168.0.126:5070/api/";
+  // static const String socketUrl = "http://192.168.0.126:5070";
 
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
@@ -152,11 +152,9 @@ class AppEndpoints {
 
   /// Get Category
   static const String getCategory = "${baseUrl}court/category/list";
-
   ///FCM Token------------------------------------------------------------------
   static const String updateFcmToken = "${baseUrl}updateFcmToken";
   static const String support = "${baseUrl}support/send";
-
   ///League---------------------------------------------------------------------
   static const String getAllScheduleLiveMatches =
       "${baseUrl}court/league-schedule/getAllSchedulesByStatus";
@@ -169,7 +167,6 @@ class AppEndpoints {
   static const String getLeagueList = "${baseUrl}court/league/getAllLeagues?";
   static const String getLeaguePollResult = "${base}poll/results";
   static const String castLeaguePollVote = "${base}poll/vote";
-
   ///IptTournament--------------------------------------------------------------
   static const String getAllScheduleLiveMatchesIptTournament =
       "${baseUrl}court/tournament-schedule/getAllSchedulesByStatus";
