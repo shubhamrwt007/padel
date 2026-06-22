@@ -37,9 +37,7 @@ class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
   final WalletController walletController = Get.put(WalletController());
   final storage = GetStorage();
-
   MainHomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     walletController.fetchWallet();

@@ -21,7 +21,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
-    controller.fetchTransaction();
+    controller.fetchTransaction(isRefresh: true);
     controller.fetchWallet();
     _scrollController.addListener(_onScroll);
   }
@@ -71,7 +71,10 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               Transform.translate(
                   offset: Offset(-10, 0),
-                  child: IconButton(onPressed: (){Get.back();},icon: const Icon(Icons.arrow_back, color: Colors.white))),
+                  child: IconButton(
+                      onPressed: (){Get.back();},
+                      icon: const Icon(Icons.arrow_back,
+                          color: Colors.white))),
               const Text(
                 'Wallet',
                 style: TextStyle(
@@ -92,9 +95,18 @@ class _WalletScreenState extends State<WalletScreen> {
             children: [
               Text(
                 'Current Balance',
-                style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 14),
+                style: Get.textTheme.
+                bodyLarge!
+                    .copyWith
+                  (color: Colors.white,
+                    fontSize: 14
+                ),
               ),
               // Text(
+
+
+
+
               //   _getCurrentDate(),
               //   style: Get.textTheme.bodyLarge!.copyWith(color: Colors.white,fontSize: 13),
               // )
@@ -116,7 +128,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                     ),
                     TextSpan(
-                      text: " Credits",
+                      text: "Credits",
                       style: Get.textTheme.titleLarge!.copyWith(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
@@ -292,7 +304,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     return RefreshIndicator(
                       color: AppColors.primaryColor,
                       onRefresh: () async {
-                        await controller.fetchTransaction();
+                        await controller.fetchTransaction(isRefresh: true);
                         await controller.fetchWallet();
                       },
                       child: SingleChildScrollView(
@@ -307,7 +319,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   return RefreshIndicator(
                     color: AppColors.primaryColor,
                     onRefresh: () async {
-                      await controller.fetchTransaction();
+                      await controller.fetchTransaction(isRefresh: true);
                       await controller.fetchWallet();
                     },
                     child: ListView.separated(
@@ -404,7 +416,20 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   String _getMonth(int month) {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'November'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'November'
+    ];
     return months[month - 1];
   }
 
@@ -412,8 +437,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final now = DateTime.now();
     return '${now.day} ${_getMonth(now.month)}';
   }
-
-  ///Date Range Picker----------------------------------------------------------------
+  ///Date Range Picker----------------------------------------------------------
   Future<void> openDateRangePicker(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,

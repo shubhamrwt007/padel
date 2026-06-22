@@ -805,25 +805,33 @@ class HomeContent extends StatelessWidget {
                 flex: 2,
                 child: Row(
                   children: [
-                    Expanded(flex: 2, child: _buildImage(imageUrls[0], true)),
-                    SizedBox(width: 10),
-                    Expanded(flex: 1, child: _buildImage(imageUrls[1], true)),
+                    Expanded(flex: 2, child: _buildImage(imageUrls[5], true)),
+                    if (imageUrls.length > 6) ...[
+                      SizedBox(width: 10),
+                      Expanded(flex: 1, child: _buildImage(imageUrls[6], true)),
+                    ],
                   ],
                 ),
               ),
-              SizedBox(height: 10),
-              Expanded(
-                flex: 1,
-                child: Row(
-                  children: [
-                    Expanded(child: _buildImage(imageUrls[2], true)),
-                    SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[3], true)),
-                    SizedBox(width: 10),
-                    Expanded(child: _buildImage(imageUrls[4], true)),
-                  ],
+              if (imageUrls.length > 7) ...[
+                SizedBox(height: 10),
+                Expanded(
+                  flex: 1,
+                  child: Row(
+                    children: [
+                      Expanded(child: _buildImage(imageUrls[7], true)),
+                      if (imageUrls.length > 8) ...[
+                        SizedBox(width: 10),
+                        Expanded(child: _buildImage(imageUrls[8], true)),
+                      ],
+                      if (imageUrls.length > 9) ...[
+                        SizedBox(width: 10),
+                        Expanded(child: _buildImage(imageUrls[9], true)),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ],
         ),
