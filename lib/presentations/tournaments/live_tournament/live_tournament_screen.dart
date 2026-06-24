@@ -145,7 +145,7 @@ class LiveTournamentScreen extends StatelessWidget {
           height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
             alignment: AlignmentGeometry.bottomCenter,
-            Assets.imagesFipPromesisBg,
+            Assets.images.fipPromesisBg.path,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
         ),

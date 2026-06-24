@@ -255,7 +255,7 @@ class CourtCard extends StatelessWidget {
             left: -50,
             top: -10,
             child: SvgPicture.asset(
-              Assets.imagesDotsFipPromises,
+              Assets.images.dotsFipPromises.path,
               height: 90,
               width: 90,
               colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
@@ -267,7 +267,7 @@ class CourtCard extends StatelessWidget {
             right: -8,
             bottom: 0,
             child: SvgPicture.asset(
-              Assets.imagesDotsFipPromises,
+              Assets.images.dotsFipPromises.path,
               height: 90,
               width: 90,
               colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
@@ -450,7 +450,7 @@ class PlayerSide extends StatelessWidget {
                   top: -12,
                   left: hasPlayer2 ? 16 : 8,
                   child: Image.asset(
-                    Assets.imagesIcCrown,
+                    Assets.images.icCrown.path,
                     width: 18,
                     height: 18,
                   ),

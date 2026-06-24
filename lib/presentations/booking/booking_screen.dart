@@ -242,7 +242,7 @@ class BookingScreen extends GetView<BookingController> {
                                           ],
                                         ),
                                         child: SvgPicture.asset(
-                                          Assets.imagesIcShareBooking,
+                                          Assets.images.icShareBooking.path,
                                           width: 20,
                                           height: 20,
                                           colorFilter: ColorFilter.mode(

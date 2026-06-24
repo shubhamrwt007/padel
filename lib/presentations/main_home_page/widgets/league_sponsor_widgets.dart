@@ -28,12 +28,12 @@ class SponsorImagesPage extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 32,
-                        child: Image.asset(Assets.imagesJubilee1, fit: BoxFit.fitWidth),
+                        child: Image.asset(Assets.images.jubilee1.path, fit: BoxFit.fitWidth),
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 32,
-                        child: Image.asset(Assets.imagesJubliee2, fit: BoxFit.fitWidth),
+                        child: Image.asset(Assets.images.jubliee2.path, fit: BoxFit.fitWidth),
                       ),
                     ],
                   ),
@@ -94,14 +94,14 @@ class BuildLeagueTitleSponsor extends StatelessWidget {
                     child: LoadingWidget(color: AppColors.primaryColor),
                   ),
                   errorWidget: (context, url, error) => Image.asset(
-                    Assets.imagesImgDummyLogo2,
+                    Assets.images.imgDummyLogo2.path,
                     height: 48,
                     width: 120,
                     fit: BoxFit.contain,
                   ),
                 )
                     : Image.asset(
-                  Assets.imagesImgDummyLogo2,
+                  Assets.images.imgDummyLogo2.path,
                   height: 48,
                   width: 120,
                   fit: BoxFit.contain,

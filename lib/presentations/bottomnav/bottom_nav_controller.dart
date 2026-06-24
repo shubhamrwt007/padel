@@ -22,10 +22,10 @@ class BottomNavigationController extends GetxController {
   HomeController homeController = Get.put(HomeController());
   LeaderboardController leaderboardController = Get.put(LeaderboardController());
   final List<Map<String, dynamic>> tabs = [
-    {'icon': Assets.imagesIcHomeBottomBar, 'label': 'Home','isSvg': true, 'size': 22.0},
-    {'icon': Assets.imagesIcBookings, 'label': 'Bookings','isSvg': true, 'size': 26.0},
+    {'icon': Assets.images.icHomeBottomBar.path, 'label': 'Home','isSvg': true, 'size': 22.0},
+    {'icon': Assets.images.icBookings.path, 'label': 'Bookings','isSvg': true, 'size': 26.0},
     {'icon':  Icons.bar_chart, 'label': 'LeaderBoard', 'isSvg': false, 'size': 28.0},
-    {'icon': Assets.imagesIcBookACourtNew, 'label': 'Courts', 'isSvg': true, 'size': 28.0},
+    {'icon': Assets.images.icBookACourtNew.path, 'label': 'Courts', 'isSvg': true, 'size': 28.0},
 
   ];
 

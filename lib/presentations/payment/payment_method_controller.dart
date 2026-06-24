@@ -31,7 +31,8 @@ class PaymentMethodController extends GetxController {
   /// When set, use this payload instead of cart/bookACourt (book session → payment direct flow).
   List<Map<String, dynamic>>? directBookingPayload;
 
-  void setDirectBookingPayload(List<Map<String, dynamic>> payload) {
+  void setDirectBookingPayload(List<Map<String, dynamic>> payload)
+  {
     directBookingPayload = payload;
   }
 

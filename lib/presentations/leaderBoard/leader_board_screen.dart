@@ -139,7 +139,7 @@ class LeaderboardScreen extends StatelessWidget {
           Transform.scale(
             scale: 1.25,
             child: SvgPicture.asset(
-              Assets.imagesImgLeaderBoardBg,
+              Assets.images.imgLeaderBoardBg.path,
               fit: BoxFit.cover,
             ),
           ).paddingOnly(left: 10, top: 10),
@@ -147,7 +147,7 @@ class LeaderboardScreen extends StatelessWidget {
             child: Transform.translate(
               offset: Offset(0, 4),
               child: SvgPicture.asset(
-                Assets.imagesImgScoreView,
+                Assets.images.imgScoreView.path,
                 height: 250,
                 fit: BoxFit.contain,
               ),
@@ -246,7 +246,7 @@ class LeaderboardScreen extends StatelessWidget {
                   Positioned(
                     top: -25,
                     child: Image.asset(
-                      Assets.imagesImgCrown,
+                      Assets.images.imgCrown.path,
                       height: 35,
                     ),
                   ),
@@ -614,13 +614,13 @@ class LeaderboardScreen extends StatelessWidget {
                               const SizedBox(width: 3),
                               if (myRank['change'] > 0)
                                 SvgPicture.asset(
-                                  Assets.imagesIcTreadingUp,
+                                  Assets.images.icTreadingUp.path,
                                   height: 14,
                                   width: 14,
                                 )
                               else
                                 SvgPicture.asset(
-                                  Assets.imagesIcTradingDown,
+                                  Assets.images.icTradingDown.path,
                                   height: 14,
                                   width: 14,
                                 ),
@@ -864,13 +864,13 @@ class LeaderboardCard extends GetView<LeaderboardController> {
                                     const SizedBox(width: 3),
                                     if (item['change'] > 0)
                                       SvgPicture.asset(
-                                        Assets.imagesIcTreadingUp,
+                                        Assets.images.icTreadingUp.path,
                                         height: 14,
                                         width: 14,
                                       )
                                     else
                                       SvgPicture.asset(
-                                        Assets.imagesIcTradingDown,
+                                        Assets.images.icTradingDown.path,
                                         height: 14,
                                         width: 14,
                                       ),

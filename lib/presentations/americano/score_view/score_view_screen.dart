@@ -289,13 +289,13 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
             Transform.scale(
               scale: 1.1,
               child: SvgPicture.asset(
-                Assets.imagesImgBackgroundScoreView,
+                Assets.images.imgBackgroundScoreView.path,
                 fit: BoxFit.cover,
               ),
             ).paddingOnly(left: 10, top: 10),
             Center(
               child: SvgPicture.asset(
-                Assets.imagesImgScoreView,
+                Assets.images.imgScoreView.path,
                 height: 250,
                 fit: BoxFit.contain,
               ),
@@ -385,7 +385,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                     right: 0,
                     child: Center(
                       child: Image.asset(
-                        Assets.imagesImgCrown,
+                        Assets.images.imgCrown.path,
                         width: 28,
                         height: 28,
                       ),
@@ -581,7 +581,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                   right: 0,
                   child: Center(
                     child: Image.asset(
-                      Assets.imagesImgCrown,
+                      Assets.images.imgCrown.path,
                       width: 26,
                       height: 26,
                     ),
@@ -1179,7 +1179,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                       height: Get.height * 0.25,
                       width: Get.width,
                       padding: const EdgeInsets.only(left: 10, right: 10),
-                      child: SvgPicture.asset(Assets.imagesImgRoundBackground),
+                      child: SvgPicture.asset(Assets.images.imgRoundBackground.path),
                     ),
                   ),
                 ),
@@ -1228,7 +1228,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                               score: scoreA,
                             ),
                             SvgPicture.asset(
-                              Assets.imagesImgVsRounds,
+                              Assets.images.imgVsRounds.path,
                               height: 100,
                             ),
                             _buildPlayerColumn(

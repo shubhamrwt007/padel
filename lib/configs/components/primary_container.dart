@@ -19,7 +19,7 @@ class PrimaryContainer extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               SvgPicture.asset(
-                Assets.imagesImgBackground,
+                Assets.images.imgBackground.path,
                 fit: BoxFit.cover,
               ),
               child, // your foreground content

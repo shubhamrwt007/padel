@@ -16,7 +16,7 @@ class BookingSuccessfulScreen extends StatelessWidget {
       body: Column(
         children: [
           Center(
-            child: Image.asset(Assets.imagesImgBookingSuccessful, scale: 4),
+            child: Image.asset(Assets.images.imgBookingSuccessful.path, scale: 4),
           ).paddingOnly(top: Get.height * 0.2,bottom: Get.height*0.02),
           Text(
             buttonType== "tournament"?"Registration Complete":AppStrings.bookingSuccessful,

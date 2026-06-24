@@ -178,7 +178,7 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
           // height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
             alignment: AlignmentGeometry.center,
-            Assets.imagesFipPromesisBg,
+            Assets.images.fipPromesisBg.path,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
         ),
@@ -199,7 +199,7 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamA'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamA?.teamName ?? "",
                             textAlign: TextAlign.center,
@@ -241,7 +241,7 @@ class _LiveStreamAmericanoScreenState extends State<LiveStreamAmericanoScreen> {
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamB'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamB?.teamName ?? "",
                             overflow: TextOverflow.ellipsis,
@@ -643,7 +643,7 @@ extension _MatchDetailsUiHelpers on _LiveStreamAmericanoScreenState {
           Transform.rotate(
             angle: -0.3,
             child: Image.asset(
-              Assets.imagesIcCrown,
+              Assets.images.icCrown.path,
               width: 30,
               height: 30,
             ),

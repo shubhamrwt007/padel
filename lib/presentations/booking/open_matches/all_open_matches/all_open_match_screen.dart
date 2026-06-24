@@ -49,7 +49,7 @@ class AllOpenMatchScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Image.asset(
-                      Assets.imagesIcFilter,
+                      Assets.images.icFilter.path,
                       scale: 3.5,
                     ),
                   ),

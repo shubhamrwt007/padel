@@ -10,6 +10,7 @@ import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/repositories/notification_repo/notification_repository.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../services/notification_service/firebase_notification.dart';
 import 'package:flutter/material.dart';
@@ -288,20 +289,28 @@ class NotificationController extends GetxController {
       final matchId = data['matchId'] ?? '';
       final type = data['type'] ?? '';
       final bookingId = data['bookingId'] ?? '';
+      final action = data['action'] ?? '';
+      final paymentLink = data['paymentLink'] ?? '';
 
-      // Priority 1: Use notificationUrl if present
+      // Priority 1: Check for payment link action
+      if (action == 'open_payment_popup' && paymentLink.isNotEmpty) {
+        _openPaymentLink(paymentLink);
+        return;
+      }
+
+      // Priority 2: Use notificationUrl if present
       if (notificationUrl.isNotEmpty) {
         handleNotificationRoute(notificationUrl, redirect: redirect, matchId: matchId);
         return;
       }
 
-      // Priority 2: Use redirect if present
+      // Priority 3: Use redirect if present
       if (redirect.isNotEmpty) {
         handleNotificationRoute('true', redirect: redirect, matchId: matchId);
         return;
       }
 
-      // Priority 3: Use type-based routing
+      // Priority 4: Use type-based routing
       if (type.isNotEmpty) {
         _handleNotificationByType(type, bookingId: bookingId, matchId: matchId);
         return;
@@ -315,6 +324,53 @@ class NotificationController extends GetxController {
         print('Stack trace: $stackTrace');
       }
       Get.toNamed(RoutesName.notification);
+    }
+  }
+
+  /// Open payment link in WebView
+  void _openPaymentLink(String url) {
+    try {
+      Get.dialog(
+        Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: Get.height * 0.8,
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Get.back(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: _PaymentWebView(url: url)),
+                ],
+              ),
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+      if (kDebugMode) {
+        print('✅ Opened payment link in WebView: $url');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error opening payment link: $e');
+      }
     }
   }
 
@@ -783,4 +839,52 @@ class NotificationController extends GetxController {
     }
   }
 
+}
+
+/// WebView widget for payment popup
+class _PaymentWebView extends StatefulWidget {
+  final String url;
+
+  const _PaymentWebView({required this.url});
+
+  @override
+  State<_PaymentWebView> createState() => _PaymentWebViewState();
+}
+
+class _PaymentWebViewState extends State<_PaymentWebView> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) => setState(() => _isLoading = true),
+          onPageFinished: (url) => setState(() => _isLoading = false),
+          onNavigationRequest: (request) {
+            if (request.url.contains('success') || request.url.contains('payment_success')) {
+              Get.back();
+              Get.snackbar('Success', 'Payment completed successfully');
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        WebViewWidget(controller: _controller),
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator()),
+      ],
+    );
+  }
 }

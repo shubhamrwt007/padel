@@ -70,15 +70,15 @@ class MainHomeController extends GetxController {
   final ProfileRepository _profileRepository = ProfileRepository();
 
   final List<String> padelBannerImages = [
-    Assets.imagesNewHomeBanner,
-    Assets.imagesNewHomeBanner2,
-    Assets.imagesNewHomeBanner7,
-    Assets.imagesNewHomeBanner6,
+    Assets.images.newHomeBanner.path,
+    Assets.images.newHomeBanner2.path,
+    Assets.images.newHomeBanner7.path,
+    Assets.images.newHomeBanner6.path,
   ];
 
   final List<String> pickleballBannerImages = [
-    Assets.imagesNewHomeBanner4,
-    Assets.imagesNewHomeBanner5,
+    Assets.images.newHomeBanner4.path,
+    Assets.images.newHomeBanner5.path,
   ];
 
   List<String> get bannerImages => selectedSportTab.value == 0 ? padelBannerImages : pickleballBannerImages;

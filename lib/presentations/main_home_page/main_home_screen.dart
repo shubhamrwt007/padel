@@ -37,9 +37,7 @@ class MainHomeScreen extends StatelessWidget {
   final MainHomeController controller = Get.put(MainHomeController());
   final WalletController walletController = Get.put(WalletController());
   final storage = GetStorage();
-
   MainHomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     walletController.fetchWallet();
@@ -167,7 +165,7 @@ class MainHomeScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     SvgPicture.asset(
-                      Assets.imagesIcWallet2,
+                      Assets.images.icWallet2.path,
                       height: 20,
                       width: 20,
                     ).paddingOnly(right: 4),
@@ -397,7 +395,7 @@ class MainHomeScreen extends StatelessWidget {
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOutCubic,
                             child: SvgPicture.asset(
-                              Assets.imagesIcPadel,
+                              Assets.images.icPadel.path,
                               height: 18,
                               colorFilter: ColorFilter.mode(
                                 selected == 0
@@ -446,7 +444,7 @@ class MainHomeScreen extends StatelessWidget {
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOutCubic,
                             child: SvgPicture.asset(
-                              Assets.imagesIcPickleball,
+                              Assets.images.icPickleball.path,
                               height: 18,
                               colorFilter: ColorFilter.mode(
                                 selected == 1
@@ -595,7 +593,7 @@ class MainHomeScreen extends StatelessWidget {
   //         borderRadius: BorderRadius.circular(20),
   //         child: leagueData.mobileBanner != null && leagueData.mobileBanner!.isNotEmpty
   //             ? CachedNetworkImage(imageUrl: leagueData.mobileBanner!, fit: BoxFit.cover)
-  //             : Image.asset(Assets.imagesImgLeagueComingSoon),
+  //             : Image.asset(Assets.images.imgLeagueComingSoon.path),
   //       ),
   //     ),
   //   );
@@ -799,7 +797,7 @@ class MainHomeScreen extends StatelessWidget {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: SvgPicture.asset(
-                        Assets.imagesFipPromesisBg,
+                        Assets.images.fipPromesisBg.path,
                         fit: BoxFit.cover,
                         width: Get.width,
                         alignment: AlignmentGeometry.topCenter,
@@ -995,7 +993,7 @@ class MainHomeScreen extends StatelessWidget {
           child: Stack(
             children: [
               Image.asset(
-                Assets.imagesImgLeagueUpcomingMatch,
+                Assets.images.imgLeagueUpcomingMatch.path,
                 fit: BoxFit.cover,
                 width: Get.width,
               ),
@@ -1052,7 +1050,7 @@ class MainHomeScreen extends StatelessWidget {
                               style: Get.textTheme.labelMedium,
                             ),
                             SizedBox(height: 8),
-                            SvgPicture.asset(Assets.imagesImgVsUpcoming),
+                            SvgPicture.asset(Assets.images.imgVsUpcoming.path),
                             roundType.toLowerCase() == "regular"?SizedBox.shrink():
                             Text(roundType.capitalizeFirstChar()??"",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),).paddingOnly(top: 5),
                           ],
@@ -1444,9 +1442,9 @@ class MainHomeScreen extends StatelessWidget {
                 placeholder: (_, __) =>
                     LoadingWidget(color: AppColors.primaryColor),
                 errorWidget: (_, __, ___) =>
-                    Image.asset(Assets.imagesImgHomeLogo),
+                    Image.asset(Assets.images.imgHomeLogo.path),
               )
-            : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.cover),
+            : Image.asset(Assets.images.imgHomeLogo.path, fit: BoxFit.cover),
       ),
     );
   }
@@ -1476,7 +1474,7 @@ class MainHomeScreen extends StatelessWidget {
         Row(
           children: [
             Image.asset(
-              Assets.imagesIcLocation,
+              Assets.images.icLocation.path,
               scale: 3,
               color: AppColors.blackColor,
             ),
@@ -1581,7 +1579,7 @@ class MainHomeScreen extends StatelessWidget {
   Widget _quickActions() {
     final items = [
       {
-        "icon": Assets.imagesIcBookACourtNew,
+        "icon": Assets.images.icBookACourtNew.path,
         "title": "Find a Court",
         "action": "book",
         "boxSize": 70.0,
@@ -1589,7 +1587,7 @@ class MainHomeScreen extends StatelessWidget {
         "offset": Offset(0, 3),
       },
       {
-        "icon": Assets.imagesIcOpenMatchNew,
+        "icon": Assets.images.icOpenMatchNew.path,
         "title": "Find a Game",
         "action": "match",
         "boxSize": 70.0,
@@ -1597,7 +1595,7 @@ class MainHomeScreen extends StatelessWidget {
         "offset": Offset(0, 4),
       },
       {
-        "icon": Assets.imagesIcFindAPlayer,
+        "icon": Assets.images.icFindAPlayer.path,
         "title": "Find a Player",
         "action": "player",
         "boxSize": 70.0,
@@ -1605,7 +1603,7 @@ class MainHomeScreen extends StatelessWidget {
         "offset": Offset(0, 4),
       },
       {
-        "icon": Assets.imagesIcSpl,
+        "icon": Assets.images.icSpl.path,
         "title": "League",
         "action": "league",
         "boxSize": 70.0,
@@ -1915,11 +1913,11 @@ class MainHomeScreen extends StatelessWidget {
                           ),
                         ),
                         errorWidget: (_, __, ___) => Image.asset(
-                          Assets.imagesImgHomeLogo,
+                          Assets.images.imgHomeLogo.path,
                           fit: BoxFit.cover,
                         ),
                       )
-                    : Image.asset(Assets.imagesImgHomeLogo, fit: BoxFit.cover),
+                    : Image.asset(Assets.images.imgHomeLogo.path, fit: BoxFit.cover),
               ),
 
               /// BLACK GRADIENT
@@ -2291,7 +2289,7 @@ class MainHomeScreen extends StatelessWidget {
             children: [
               Transform.translate(
                 offset: Offset(-15, -16),
-                child: SvgPicture.asset(Assets.imagesImgBackgroundPlayedMatch),
+                child: SvgPicture.asset(Assets.images.imgBackgroundPlayedMatch.path),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2498,7 +2496,7 @@ class MainHomeScreen extends StatelessWidget {
         width: Get.width,
         child: Row(
           children: [
-            SvgPicture.asset(Assets.imagesIcPadelBall).paddingOnly(right: 10),
+            SvgPicture.asset(Assets.images.icPadelBall.path).paddingOnly(right: 10),
             Flexible(
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -2550,7 +2548,7 @@ class MainHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SvgPicture.asset(Assets.imagesIcPadelBall).paddingOnly(left: 10),
+            SvgPicture.asset(Assets.images.icPadelBall.path).paddingOnly(left: 10),
           ],
         ),
       );
@@ -2664,8 +2662,8 @@ class MainHomeScreen extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: SvgPicture.asset(
                 index % 2 == 0
-                    ? Assets.imagesImgOpenMatchBg
-                    : Assets.imagesImgOpenMatchGreenBg,
+                    ? Assets.images.imgOpenMatchBg.path
+                    : Assets.images.imgOpenMatchGreenBg.path,
                 height: 150,
                 width: 150,
               ).paddingOnly(right: 20),
@@ -2774,7 +2772,7 @@ class MainHomeScreen extends StatelessWidget {
                               Transform.translate(
                                 offset: Offset(0, -1),
                                 child: Image.asset(
-                                  Assets.imagesIcLocation,
+                                  Assets.images.icLocation.path,
                                   scale: 2,
                                   color: AppColors.primaryColor,
                                 ),
@@ -3070,7 +3068,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
             widget.controller.fetchPollResults();
             showVoteDialog(context);
           },
-          child: Image.asset(Assets.imagesImgPoll),
+          child: Image.asset(Assets.images.imgPoll.path),
         ).paddingOnly(top: 5),
       ],
     ).paddingOnly(top: 10);
@@ -3082,12 +3080,12 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
       child: Row(
         children: [
           SvgPicture.asset(
-            Assets.imagesImgSwootPadelLeague,
+            Assets.images.imgSwootPadelLeague.path,
             height: 22,
             width: 25,
           ),
           // SvgPicture.asset(
-          //   Assets.imagesIcPadelBall,
+          //   Assets.images.icPadelBall.path,
           //   height: 18,width: 18,
           // ).paddingOnly(right: 10),
           // Text(leagueName ?? "", style: Get.textTheme.headlineMedium),
@@ -3116,7 +3114,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
         decoration: BoxDecoration(
           color: Colors.white,
           image: DecorationImage(
-            image: AssetImage(Assets.imagesImgIconSwoot),
+            image: AssetImage(Assets.images.imgIconSwoot.path),
             fit: BoxFit.contain,
             opacity: 0.9, // 👈 direct opacity
           ),
@@ -3448,7 +3446,7 @@ class _LeagueComingSoonWidgetState extends State<_LeagueComingSoonWidget> {
                   imageUrl: leagueData.mobileBanner!,
                   fit: BoxFit.cover,
                 )
-              : Image.asset(Assets.imagesImgLeagueComingSoon),
+              : Image.asset(Assets.images.imgLeagueComingSoon.path),
         ),
       ),
     );
@@ -3756,7 +3754,7 @@ class _ClubVoteItemState extends State<_ClubVoteItem>
                     onTap: _handleVote,
                     child: ScaleTransition(
                       scale: _scaleAnim,
-                      child: Image.asset(Assets.imagesImgPollVote, scale: 3.9),
+                      child: Image.asset(Assets.images.imgPollVote.path, scale: 3.9),
                     ),
                   ),
                 ),
@@ -3910,7 +3908,7 @@ class _LeagueCarouselWidgetState extends State<_LeagueCarouselWidget> {
                             imageUrl: leagueData.mobileBanner!,
                             fit: BoxFit.cover,
                           )
-                        : Image.asset(Assets.imagesImgLeagueComingSoon),
+                        : Image.asset(Assets.images.imgLeagueComingSoon.path),
                   ),
                 ),
               );

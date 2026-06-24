@@ -126,8 +126,8 @@ class SignUpScreen extends GetView<SignUpController> {
           //       onPressed: () => controller.passwordToggle(),
           //       icon: Image.asset(
           //         controller.isVisiblePassword.value
-          //             ? Assets.imagesIcEyeOff
-          //             : Assets.imagesIcEye,
+          //             ? Assets.images.icEyeOff.path
+          //             : Assets.images.icEye.path,
           //         color: AppColors.textColor,
           //         height: 20,
           //         width: 20,

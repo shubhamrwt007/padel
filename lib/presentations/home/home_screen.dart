@@ -105,7 +105,7 @@ class HomeScreen extends GetView<HomeController> {
         SearchField(
           width: Get.width * 0.9,
           suffixIcon: Image.asset(
-            Assets.imagesIcSearch,
+            Assets.images.icSearch.path,
             scale: 4,
             color: AppColors.textColor,
           ),
@@ -131,7 +131,7 @@ class HomeScreen extends GetView<HomeController> {
         //         turns: isOpen ? 0.5 : 0,     // 0.5 turn = 180° rotation
         //         duration: const Duration(milliseconds: 300),
         //         child: Image.asset(
-        //           Assets.imagesIcFilter,
+        //           Assets.images.icFilter.path,
         //           color: Colors.black,
         //           scale: 4.5,
         //         ),
@@ -420,7 +420,7 @@ class HomeScreen extends GetView<HomeController> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                      Image.asset(Assets.images.icLocation.path, scale: 3, color: AppColors.blackColor),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(

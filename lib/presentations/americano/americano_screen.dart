@@ -230,12 +230,12 @@ class AmericanoScreen extends StatelessWidget {
             Positioned(
               left: -40,
               top: -10,
-              child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+              child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
             ),
             Positioned(
               right: -30,
               bottom: -20,
-              child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+              child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
             ),
             Column(
               children: [

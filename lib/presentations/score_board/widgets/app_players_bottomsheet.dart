@@ -452,7 +452,7 @@ class _AppPlayersBottomSheetScoreState extends State<AppPlayersBottomSheetScore>
                       ),
                       Row(
                         children: [
-                          Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                          Image.asset(Assets.images.icLocation.path, scale: 3, color: AppColors.blackColor),
                           const SizedBox(width: 4),
                           Text(
                             player['cityName'] ?? '',

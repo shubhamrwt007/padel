@@ -36,7 +36,7 @@ class BottomNavUi extends StatelessWidget {
           height: 65,
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage(Assets.imagesImgBackgroundBottomBar),
+              image: AssetImage(Assets.images.imgBackgroundBottomBar.path),
               fit: BoxFit.contain,
             ),
             borderRadius: const BorderRadius.only(topLeft: Radius.circular(25), topRight: Radius.circular(25)),

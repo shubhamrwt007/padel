@@ -17,7 +17,7 @@ class HomeContentController extends GetxController{
   final List<Map<String, dynamic>> homeOptionsList = [
     {'icon': Icons.directions, 'label': 'Direction', 'isSvg': false},
     {'icon': Icons.call_outlined, 'label': 'Call', 'isSvg': false},
-    {'image': Assets.imagesIcReview, 'label': 'Reviews', 'isSvg': true},
+    {'image': Assets.images.icReview.path, 'label': 'Reviews', 'isSvg': true},
     {'icon': Icons.photo_library_outlined, 'label': 'Photos', 'isSvg': false},
   ];
 

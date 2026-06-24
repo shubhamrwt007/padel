@@ -280,9 +280,9 @@ class JoinTournamentScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _prizeCard("1st Place", "₹25,000",svgPath: Assets.imagesIcFirstPlace),
-        _prizeCard("2nd Place", "₹15,000",svgPath: Assets.imagesIcSecondPlace),
-        _prizeCard("3rd Place", "₹10,000",svgPath: Assets.imagesIcThirdPlace),
+        _prizeCard("1st Place", "₹25,000",svgPath: Assets.images.icFirstPlace.path),
+        _prizeCard("2nd Place", "₹15,000",svgPath: Assets.images.icSecondPlace.path),
+        _prizeCard("3rd Place", "₹10,000",svgPath: Assets.images.icThirdPlace.path),
       ],
     );
   }
@@ -299,7 +299,7 @@ class JoinTournamentScreen extends StatelessWidget {
             Positioned(
                 bottom: 0,
                 right: -5,
-                child: SvgPicture.asset(Assets.imagesIcBall)),
+                child: SvgPicture.asset(Assets.images.icBall.path)),
             Center(
               child: Padding(
                 padding: EdgeInsets.all(10),

@@ -135,7 +135,7 @@ class DetailsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ListTile(
-                      leading: SvgPicture.asset(Assets.imagesIcPadelIcon,height: 30,),
+                      leading: SvgPicture.asset(Assets.images.icPadelIcon.path,height: 30,),
                       title: Text(
                         data['clubName'] ?? "Unknown club",
                         style:
@@ -210,7 +210,7 @@ class DetailsScreen extends StatelessWidget {
                     fromOpenMatch?
                     Row(
                       children: [
-                        SvgPicture.asset(Assets.imagesIcCheckCircle,height: 15,).paddingOnly(right: 5),
+                        SvgPicture.asset(Assets.images.icCheckCircle.path,height: 15,).paddingOnly(right: 5),
                         Text("Court Booked",style: Get.textTheme.bodySmall!.copyWith(fontSize: 10,color: AppColors.secondaryColor),),
                       ],
                     ):SizedBox.shrink()
@@ -283,7 +283,7 @@ class DetailsScreen extends StatelessWidget {
                             ),
                           ),
                           errorWidget: (context, url, error) => Image.asset(
-                            Assets.imagesImgDummy2,
+                            Assets.images.imgDummy2.path,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -893,7 +893,7 @@ class DetailsScreen extends StatelessWidget {
         ),
         ListTile(
           leading: SvgPicture.asset(
-            Assets.imagesIcMyClub,
+            Assets.images.icMyClub.path,
             colorFilter: ColorFilter.mode(AppColors.textColor, BlendMode.srcIn),
           ),
           title: Text(
