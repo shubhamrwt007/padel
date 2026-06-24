@@ -177,8 +177,11 @@ class AppEndpoints {
       "${baseUrl}court/tournament/getTournamentSponsors";
   static const String getIptTournamentList =
       "${baseUrl}court/tournament/getAllTournaments?";
-  // static const String getIptTournamentPollResult = "";
-  // static const String castIptTournamentPollVote = "";
+
+  ///Americano-----------------------------------------------------------------
+  static const String getAmericanos = "${baseUrl}court/americano/getAmericanos";
+  static const String registerPlayer = "${baseUrl}court/americano/registerPlayer";
+  static String getAmericanoLeaderboard(String matchId) => "${baseUrl}court/americano/$matchId/leaderboard";
 }
 
 class PaymentConfig {

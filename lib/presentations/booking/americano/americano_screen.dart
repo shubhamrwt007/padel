@@ -4,8 +4,8 @@ import 'package:padel_mobile/configs/app_colors.dart';
 
 import 'americano_bottomsheet_content.dart';
 
-class AmericanoScreen extends StatelessWidget {
-  const AmericanoScreen({super.key});
+class AmericanoScreens extends StatelessWidget {
+  const AmericanoScreens({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +382,7 @@ class AmericanoScreen extends StatelessWidget {
                 builder: (context, scrollController) {
                   return GestureDetector(
                     onTap: () {}, // Prevents tap propagation inside the sheet
-                    child: AmericanoBottomSheetContent(
+                    child: AmericanoBottomSheetContents(
                       scrollController: scrollController,
                       draggableController: draggableController,
                     ),

@@ -2,6 +2,10 @@ import 'package:padel_mobile/presentations/booking/widgets/booking_exports.dart'
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_screen.dart';
 import 'package:padel_mobile/presentations/home/home_controller.dart';
 
+import '../../payment/payment_method_controller.dart';
+import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/presentations/americano/americano_controller.dart';
+
 class BookingSuccessfulScreen extends StatelessWidget {
   final String? buttonType;
   const BookingSuccessfulScreen({super.key,this.buttonType});
@@ -30,7 +34,15 @@ class BookingSuccessfulScreen extends StatelessWidget {
           ).paddingOnly(bottom: Get.height * 0.05),
           PrimaryButton(
             onTap: () {
-              Get.offAllNamed(RoutesName.bottomNav);
+              if (Get.isRegistered<PaymentMethodController>()) {
+                Get.delete<PaymentMethodController>(force: true);
+              }
+              if (buttonType == "tournament") {
+                Get.offAllNamed(RoutesName.bottomNav);
+                Get.toNamed(RoutesName.americano);
+              } else {
+                Get.offAllNamed(RoutesName.bottomNav);
+              }
             },
             text: AppStrings.continueText,
           ).paddingOnly(bottom: Get.height * 0.14),

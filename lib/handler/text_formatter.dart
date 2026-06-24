@@ -1,5 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:get/get_utils/src/get_utils/get_utils.dart';
 import 'package:intl/intl.dart';
+
+import '../configs/app_strings.dart';
 
 class PhoneNumberInputFormatter extends TextInputFormatter {
   @override
@@ -161,3 +164,47 @@ String formatWalletAmount(dynamic amount, {String? currency}) {
 
   return currency != null ? '$currency $formatted' : formatted;
 }
+
+
+///Validate Email---------------------------------------------------------------
+String? validateEmail(String value, {bool isRequired = true}) {
+  if (isRequired && value.isEmpty) {
+    return AppStrings.emailRequired;
+  }
+
+  if (value.isNotEmpty && !GetUtils.isEmail(value)) {
+    return AppStrings.invalidEmail;
+  }
+
+  return null;
+}
+
+///Validate Phone Number--------------------------------------------------------
+String? validatePhone(String value, {bool isRequired = true}) {
+  if (isRequired && value.isEmpty) {
+    return AppStrings.phoneRequired;
+  }
+
+  final phoneRegex = RegExp(r'^[6-9]\d{9}$'); // must start with 6–9, 10 digits
+  if (value.isNotEmpty && !phoneRegex.hasMatch(value)) {
+    return AppStrings.invalidPhone;
+  }
+
+  return null;
+}
+///Validate Name----------------------------------------------------------------
+String? validateName(String value, {bool isRequired = true}) {
+  if (isRequired && value.trim().isEmpty) {
+    return "First Name Required";
+  }
+  return null;
+}
+
+///Validate Last Name-----------------------------------------------------------
+String? validateLastName(String value, {bool isRequired = true}) {
+  if (isRequired && value.trim().isEmpty) {
+    return "Last Name Required";
+  }
+  return null;
+}
+

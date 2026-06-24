@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:padel_mobile/presentations/americano/live_stream_americano/live_stream_americano_binding.dart';
+import 'package:padel_mobile/presentations/americano/live_stream_americano/live_stream_americano_screen.dart';
+import 'package:padel_mobile/presentations/americano/registration/registration_americano_binding.dart';
+import 'package:padel_mobile/presentations/americano/registration/registration_americano_screen.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_binding.dart';
 import 'package:padel_mobile/presentations/auth/forgot_password/forgot_password_screen.dart';
 import 'package:padel_mobile/presentations/auth/otp/otp_binding.dart';
@@ -8,8 +12,6 @@ import 'package:padel_mobile/presentations/auth/sign_up/sign_up_binding.dart';
 import 'package:padel_mobile/presentations/auth/sign_up/sign_up_screen.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_binding.dart';
 import 'package:padel_mobile/presentations/book_a_court/book_a_court_screen.dart';
-import 'package:padel_mobile/presentations/booking/americano/americano_binding.dart';
-import 'package:padel_mobile/presentations/booking/americano/americano_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_binding.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/all_open_matches/all_open_match_screen.dart';
 import 'package:padel_mobile/presentations/booking/open_matches/create_open_matches/create_open_matches_binding.dart';
@@ -60,11 +62,8 @@ import 'package:padel_mobile/presentations/cart/cart_screen.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_binding.dart';
 import 'package:padel_mobile/presentations/payment/payment_method_screen.dart';
 import 'package:padel_mobile/presentations/registration/registration_binding.dart';
-import 'package:padel_mobile/presentations/rounds/rounds_binding.dart';
-import 'package:padel_mobile/presentations/rounds/rounds_screen.dart';
 import 'package:padel_mobile/presentations/score_board/score_board_binding.dart';
 import 'package:padel_mobile/presentations/score_board/score_board_screen.dart';
-import 'package:padel_mobile/presentations/scoreview/score_view_binding.dart';
 import 'package:padel_mobile/presentations/splash/splash_screen.dart';
 import 'package:padel_mobile/presentations/support/support_binding.dart';
 import 'package:padel_mobile/presentations/support/support_screen.dart';
@@ -84,6 +83,12 @@ import 'package:padel_mobile/presentations/wallet/wallet_binding.dart';
 import 'package:padel_mobile/presentations/wallet/wallet_screen.dart';
 import 'package:padel_mobile/presentations/xp_points/xp_points_binding.dart';
 import 'package:padel_mobile/presentations/xp_points/xp_points_screen.dart';
+import '../../presentations/americano/americano_binding.dart';
+import '../../presentations/americano/americano_screen.dart';
+import '../../presentations/americano/rounds/rounds_binding.dart';
+import '../../presentations/americano/rounds/rounds_screen.dart';
+import '../../presentations/americano/score_view/score_view_binding.dart';
+import '../../presentations/americano/score_view/score_view_screen.dart';
 import '../../presentations/auth/login/login_binding.dart';
 import '../../presentations/auth/login/login_screen.dart';
 import '../../presentations/booking/open_matches/open_match_screen.dart';
@@ -96,7 +101,6 @@ import '../../presentations/openmatchbooking/openmatch_booking_binding.dart';
 import '../../presentations/openmatchbooking/openmatch_booking_screen.dart';
 import '../../presentations/profile/profile_screen.dart';
 import '../../presentations/registration/registration_americano_screen.dart';
-import '../../presentations/scoreview/score_view_screen.dart';
 import '../../presentations/splash/splash_binding.dart';
 import 'routes_name.dart';
 class Routes {
@@ -255,13 +259,6 @@ class Routes {
       name: RoutesName.score,
       page: () => ScoreViewScreen(),
       binding: ScoreViewBinding(),
-      transition: Transition.rightToLeft,
-      transitionDuration: defaultDuration,
-    ),
-    GetPage(
-      name: RoutesName.americano,
-      page: () => AmericanoScreen(),
-      binding: AmericanoBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
@@ -467,6 +464,43 @@ class Routes {
       name: RoutesName.liveAndCompleteIptTournamentMatch,
       page: () => LiveAndCompleteIptTournamentMatchScreen(),
       binding: LiveAndCompleteIptTournamentMatchBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+
+    ///Americano----------------------------------------------------------------
+    GetPage(
+      name: RoutesName.americano,
+      page: () => AmericanoScreen(),
+      binding: AmericanoBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.scoreView,
+      page: () => ScoreViewScreen(),
+      binding: ScoreViewBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.registrationAmericano,
+      page: () => RegistrationAmericanoScreen(),
+      binding: RegistrationAmericanoBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.roundsScore,
+      page: () => RoundsScreen(),
+      binding: RoundsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.liveStreamAmericano,
+      page: () => LiveStreamAmericanoScreen(),
+      binding: LiveStreamAmericanoBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),
