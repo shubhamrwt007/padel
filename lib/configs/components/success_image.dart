@@ -27,8 +27,8 @@ class SuccessImage extends StatelessWidget {
           );
         },
         child: isCancelled
-            ? SvgPicture.asset(Assets.imagesIcBookingcancellation)
-            : SvgPicture.asset(Assets.imagesImgBookingConfirm),
+            ? SvgPicture.asset(Assets.images.icBookingcancellation.path)
+            : SvgPicture.asset(Assets.images.imgBookingConfirm.path),
       ),
     );
   }

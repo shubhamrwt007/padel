@@ -241,7 +241,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
           // height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
             alignment: AlignmentGeometry.center,
-            Assets.imagesFipPromesisBg,
+            Assets.images.fipPromesisBg.path,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
         ),
@@ -262,7 +262,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamA'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamA?.clubName ?? "",
                             textAlign: TextAlign.center,
@@ -304,7 +304,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamB'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamB?.clubName ?? "",
                             overflow: TextOverflow.ellipsis,
@@ -610,7 +610,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                     width: 14,
                                                                     height: 14,
                                                                     child: Image.asset(
-                                                                      Assets.imagesIcCrown,
+                                                                      Assets.images.icCrown.path,
                                                                       width: 14,
                                                                       height: 14,
                                                                     ),
@@ -727,7 +727,7 @@ class _LiveAndCompleteLeagueMatchScreenState extends State<LiveAndCompleteLeague
                                                                     width: 14,
                                                                     height: 14,
                                                                     child: Image.asset(
-                                                                      Assets.imagesIcCrown,
+                                                                      Assets.images.icCrown.path,
                                                                       width: 14,
                                                                       height: 14,
                                                                     ),
@@ -1235,7 +1235,7 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteLeagueMatchScreenState {
           Transform.rotate(
             angle: -0.3,
             child: Image.asset(
-              Assets.imagesIcCrown,
+              Assets.images.icCrown.path,
               width: 30,
               height: 30,
             ),

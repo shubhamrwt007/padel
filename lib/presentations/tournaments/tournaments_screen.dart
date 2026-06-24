@@ -216,7 +216,7 @@ class LiveMatchCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.whiteColor),
+                    Image.asset(Assets.images.icLocation.path, scale: 3, color: AppColors.whiteColor),
                     const SizedBox(width: 4),
                     Text(
                       "Chandigarh",
@@ -407,7 +407,7 @@ class TournamentCard extends StatelessWidget {
                                              const SizedBox(height: 4),
                                              Row(
                                                children: [
-                                                 Image.asset(Assets.imagesIcLocation, scale: 3,color: AppColors.primaryColor,),
+                                                 Image.asset(Assets.images.icLocation.path, scale: 3,color: AppColors.primaryColor,),
                                                  const SizedBox(width: 4),
                                                  Text(
                                                    "Chandigarh",

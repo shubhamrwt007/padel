@@ -122,7 +122,7 @@ class BookACourtScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     SvgPicture.asset(
-                      Assets.imagesIcWallet,
+                      Assets.images.icWallet.path,
                       height: 20,
                       width: 20,
                     ).paddingOnly(right: 4),
@@ -539,7 +539,7 @@ class BookACourtScreen extends StatelessWidget {
                               Row(
                                 children: [
                                   Image.asset(
-                                    Assets.imagesIcLocation,
+                                    Assets.images.icLocation.path,
                                     color: AppColors.textColor,
                                     scale: 2.2,
                                   ),

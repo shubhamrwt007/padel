@@ -107,7 +107,7 @@ class PaymentWalletScreen extends StatelessWidget {
                 Row(
                   children: [
                     Image.asset(
-                      Assets.imagesIcBalanceWallet,
+                      Assets.images.icBalanceWallet.path,
                       scale: 5,
                     ),
                     Text(
@@ -191,7 +191,7 @@ class PaymentWalletScreen extends StatelessWidget {
         //
         //     ),
         //     child: Image.asset(
-        //       Assets.imagesIcFilter,
+        //       Assets.images.icFilter.path,
         //       scale: 5,
         //     ),
         //   ),

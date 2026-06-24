@@ -25,7 +25,7 @@ class ConfirmCancellation extends StatelessWidget {
     return Column(
       children: [
         Center(
-          child: SvgPicture.asset(Assets.imagesImgBookingConfirm, height: 200),
+          child: SvgPicture.asset(Assets.images.imgBookingConfirm.path, height: 200),
         ).paddingOnly(top: Get.height * 0.15, bottom: Get.height * 0.03),
         Text(
           AppStrings.confirmCancellation,

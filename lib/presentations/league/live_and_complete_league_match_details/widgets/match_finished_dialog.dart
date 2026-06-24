@@ -24,7 +24,7 @@ class MatchFinishedDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(Assets.imagesImgCrown, width: 80, height: 80),
+            Image.asset(Assets.images.imgCrown.path, width: 80, height: 80),
             const SizedBox(height: 16),
             Text(
               'Match Finished!',

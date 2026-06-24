@@ -64,7 +64,7 @@ class _FindPlayerScreenState extends State<FindPlayerScreen> {
                   subtitle: "Book a court and set up your match.",
                   borderColor: const Color(0xFF3BB54A),
                   iconBg: const Color(0xFF3BB54A),
-                  svgPath: Assets.imagesIcBookACourtNew
+                  svgPath: Assets.images.icBookACourtNew.path
                 ),
 
                 const SizedBox(height: 40),

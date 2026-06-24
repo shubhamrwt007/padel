@@ -174,7 +174,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
 
               Obx(
                     () => ProfileRow(
-                  icon: Image.asset(Assets.imagesIcBalanceWallet, scale: 5, color: controller.selectedIndex.value == 3 ? AppColors.primaryColor : AppColors.labelBlackColor),
+                  icon: Image.asset(Assets.images.icBalanceWallet.path, scale: 5, color: controller.selectedIndex.value == 3 ? AppColors.primaryColor : AppColors.labelBlackColor),
                   title: "My Transactions",
                   isSelected: controller.selectedIndex.value == 3,
                   onTap: () {
@@ -237,7 +237,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               Obx(
                     () => ProfileRow(
                   icon: SvgPicture.asset(
-                      Assets.imagesIcBookings,
+                      Assets.images.icBookings.path,
                       height: 22,
                       width: 22,
                       colorFilter: ColorFilter.mode(
@@ -361,7 +361,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               ProfileRow(
                 fontSize: 12,
                 height: 30,
-                icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
+                icon: SvgPicture.asset(Assets.images.icLogOut.path, height: 15, width: 17).paddingOnly(left: 3),
                 title: AppStrings.logout,
                 textColor: Colors.red,
                 onTap: () => controller.showLogoutDialog(Get.context!),
@@ -401,7 +401,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
               Obx(
                     () => ProfileRow(
                   icon: Image.asset(
-                    Assets.imagesIcPrivacy,
+                    Assets.images.icPrivacy.path,
                     scale: 6,
                     color: controller.selectedIndex.value == 12
                         ? AppColors.primaryColor
@@ -473,7 +473,7 @@ class CustomDrawerUi extends GetView<ProfileController> {
                       ),
                     ),
                   ),
-                  SvgPicture.asset(Assets.imagesRowthTechLogo,height: 13,width: 13,)
+                  SvgPicture.asset(Assets.images.rowthTechLogo.path,height: 13,width: 13,)
                 ],
               )
             ],

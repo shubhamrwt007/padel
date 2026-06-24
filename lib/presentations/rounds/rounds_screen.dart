@@ -129,16 +129,16 @@ class PlayerSide extends StatelessWidget {
       children: [
         Stack(
           clipBehavior: Clip.none,
-          children: const [
+          children: [
             CircleAvatar(
               radius: 18,
-              backgroundImage: AssetImage(Assets.imagesGirls),
+              backgroundImage: AssetImage(Assets.images.girls.path),
             ),
             Positioned(
               left: 20,
               child: CircleAvatar(
                 radius: 18,
-                backgroundImage: AssetImage(Assets.imagesGirl),
+                backgroundImage: AssetImage(Assets.images.girl.path),
               ),
             ),
           ],

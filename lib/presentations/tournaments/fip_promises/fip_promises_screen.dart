@@ -129,7 +129,7 @@ class FipPromisesScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // SvgPicture.asset(
-                  //   Assets.imagesIcPadel,
+                  //   Assets.images.icPadel.path,
                   //   height: 18, // Add this line - adjust value as needed
                   //   color: controller.selectedSportTab.value == 0
                   //       ? const Color(0xFF3B5BDB)
@@ -220,7 +220,7 @@ class FipPromisesScreen extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              SvgPicture.asset(Assets.imagesFipPromesisBg,fit: BoxFit.cover,width: Get.width,),
+              SvgPicture.asset(Assets.images.fipPromesisBg.path,fit: BoxFit.cover,width: Get.width,),
               Column(
                 children: [
                   /// LIVE TAG
@@ -418,12 +418,12 @@ class UpcomingMatchCard extends StatelessWidget {
                 Positioned(
                   left: -40,
                   top: -10,
-                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                  child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
                 ),
                 Positioned(
                   right: -30,
                   bottom: -20,
-                  child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                  child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
                 ),
                 Column(
               children: [
@@ -807,7 +807,7 @@ class _TopPodiumSection extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            child: SvgPicture.asset(Assets.imagesImgTournamentLeaderboard, fit: BoxFit.contain),
+            child: SvgPicture.asset(Assets.images.imgTournamentLeaderboard.path, fit: BoxFit.contain),
           ),
           Padding(
             padding: EdgeInsets.only(top: 0,left: 20,right: 20),

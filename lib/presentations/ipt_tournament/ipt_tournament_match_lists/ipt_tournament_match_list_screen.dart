@@ -530,12 +530,12 @@ class UpcomingMatchCard extends StatelessWidget {
                   Positioned(
                     left: -40,
                     top: -10,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
                   ),
                   Positioned(
                     right: -30,
                     bottom: -20,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100,),
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100,),
                   ),
                   Column(
                     children: [
@@ -611,7 +611,7 @@ class UpcomingMatchCard extends StatelessWidget {
 
                           Column(
                             children: [
-                              SvgPicture.asset(Assets.imagesImgVs,).paddingOnly(bottom: 5,top: 5),
+                              SvgPicture.asset(Assets.images.imgVs.path,).paddingOnly(bottom: 5,top: 5),
                               Text(categoryType ?? "Mixed Doubles",style: Get.textTheme.labelMedium,),
                               Text("${match?.startTime?.split(' ').first??""}-${match?.endTime??""}",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w300),),
                               roundType == "regular"?SizedBox.shrink():
@@ -790,12 +790,12 @@ class LiveMatchCard extends StatelessWidget {
                   Positioned(
                     left: -40,
                     top: -10,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
                   ),
                   Positioned(
                     right: -30,
                     bottom: -20,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100, colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn)),
                   ),
                   Column(
                     children: [
@@ -1033,7 +1033,7 @@ class ResultMatchCard extends StatelessWidget {
                   Positioned(
                     left: -40,
                     top: -10,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100, colorFilter: const ColorFilter.mode(
                       Color(0xFF494949),
                       BlendMode.srcIn,
                     ),),
@@ -1041,7 +1041,7 @@ class ResultMatchCard extends StatelessWidget {
                   Positioned(
                     right: -30,
                     bottom: -20,
-                    child: SvgPicture.asset(Assets.imagesDotsFipPromises,height: 100,width: 100, colorFilter: const ColorFilter.mode(
+                    child: SvgPicture.asset(Assets.images.dotsFipPromises.path,height: 100,width: 100, colorFilter: const ColorFilter.mode(
                       Color(0xFF494949),
                       BlendMode.srcIn,
                     ),),
@@ -1055,7 +1055,7 @@ class ResultMatchCard extends StatelessWidget {
                             children: [
                               if (teamAWon)
                                 Image.asset(
-                                  Assets.imagesIcCrown,
+                                  Assets.images.icCrown.path,
                                   height: 12,
                                   width: 12,
                                 ).paddingOnly(right: 4),
@@ -1070,7 +1070,7 @@ class ResultMatchCard extends StatelessWidget {
                             children: [
                               if (teamBWon)
                                 Image.asset(
-                                  Assets.imagesIcCrown,
+                                  Assets.images.icCrown.path,
                                   height: 12,
                                   width: 12,
                                 ).paddingOnly(left: 4),

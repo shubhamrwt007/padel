@@ -53,7 +53,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
           children: [
             // Payment Summary Section
             _buildPaymentSummary(context, cartController),
-            Image.asset(Assets.imagesIcRackets,).paddingOnly(left: 20,right: 20),
+            Image.asset(Assets.images.icRackets.path,).paddingOnly(left: 20,right: 20),
 
             // UPI Section
             Text(
@@ -158,7 +158,7 @@ class PaymentMethodScreen extends GetView<PaymentMethodController> {
     final upiOptions = [
       {
         "name": "Razor Pay",
-        "icon": Assets.imagesRazorPay,
+        "icon": Assets.images.razorPay.path,
         "value": "razor_pay",
         "hasButton": true,
       },

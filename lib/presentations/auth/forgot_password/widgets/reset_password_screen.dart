@@ -1,3 +1,5 @@
+
+
 import 'package:padel_mobile/presentations/auth/forgot_password/widgets/forgot_password_exports.dart';
 
 import '../../../../configs/components/loader_widgets.dart';
@@ -52,8 +54,8 @@ class ResetPasswordScreen extends GetView<ForgotPasswordController> {
                   onPressed: () => controller.passwordToggle(),
                   icon: Image.asset(
                     controller.isVisiblePassword.value
-                        ? Assets.imagesIcEyeOff
-                        : Assets.imagesIcEye,
+                        ? Assets.images.icEyeOff.path
+                        : Assets.images.icEye.path,
                     color: AppColors.textColor,
                     height: 24,
                     width: 24,
@@ -74,8 +76,8 @@ class ResetPasswordScreen extends GetView<ForgotPasswordController> {
                       onPressed: () => controller.confirmPasswordToggle(),
                       icon: Image.asset(
                         controller.isVisibleConfirmPassword.value
-                            ? Assets.imagesIcEyeOff
-                            : Assets.imagesIcEye,
+                            ? Assets.images.icEyeOff.path
+                            : Assets.images.icEye.path,
                         color: AppColors.textColor,
                         height: 24,
                         width: 24,

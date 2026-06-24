@@ -100,7 +100,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                 ),
                 child: Row(
                   children: [
-                    SvgPicture.asset(Assets.imagesIcWallet,height: 20,width: 20,).paddingOnly(right: 4),
+                    SvgPicture.asset(Assets.images.icWallet.path,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
                       "${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
                       style: TextStyle(
@@ -620,7 +620,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
         children: [
           Align(
               alignment: AlignmentGeometry.centerRight,
-              child: SvgPicture.asset(index % 2 == 0?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height:_isLoginUserInMatch(data)?160: 150,width: 150,).paddingOnly(right: 20)),
+              child: SvgPicture.asset(index % 2 == 0?Assets.images.imgOpenMatchBg.path:Assets.images.imgOpenMatchGreenBg.path,height:_isLoginUserInMatch(data)?160: 150,width: 150,).paddingOnly(right: 20)),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1757,7 +1757,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                     children: [
                       Transform.translate(
                           offset: Offset(0, -1),
-                          child: Image.asset(Assets.imagesIcLocation, scale: 2, color: AppColors.primaryColor)),
+                          child: Image.asset(Assets.images.icLocation.path, scale: 2, color: AppColors.primaryColor)),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
@@ -1871,7 +1871,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                       children: [
                         Transform.translate(
                             offset: Offset(0, -1),
-                            child: Image.asset(Assets.imagesIcLocation, scale: 2, color: AppColors.primaryColor)),
+                            child: Image.asset(Assets.images.icLocation.path, scale: 2, color: AppColors.primaryColor)),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
@@ -2161,7 +2161,7 @@ class _AppPlayersBottomSheetState extends State<AppPlayersBottomSheet> {
                       ),
                       Row(
                         children: [
-                          Image.asset(Assets.imagesIcLocation, scale: 3, color: AppColors.blackColor),
+                          Image.asset(Assets.images.icLocation.path, scale: 3, color: AppColors.blackColor),
                           const SizedBox(width: 4),
                           Text(
                             player['cityName'] ?? '',

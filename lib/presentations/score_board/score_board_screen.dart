@@ -910,7 +910,7 @@ class ScoreBoardScreen extends StatelessWidget {
                     children: [
                       if (isWinner)
                         Image.asset(
-                          Assets.imagesIcCrown,
+                          Assets.images.icCrown.path,
                           height: 20,
                           width: 20,
                         )else SizedBox(height: 20),
@@ -1004,7 +1004,7 @@ class ScoreBoardScreen extends StatelessWidget {
                     children: [
                       if (isWinner)
                         Image.asset(
-                          Assets.imagesIcCrown,
+                          Assets.images.icCrown.path,
                           height: 20,
                           width: 20,
                         ),
@@ -2090,7 +2090,7 @@ class ScoreBoardScreen extends StatelessWidget {
                 child: Transform.scale(
                   scale: 0.5,
                   child: SvgPicture.asset(
-                    Assets.imagesIcPadelIcon,
+                    Assets.images.icPadelIcon.path,
                     height: 20,
                     width: 20,
                     color: Colors.white,

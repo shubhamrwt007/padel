@@ -185,11 +185,11 @@ class BuildIptTournamentTitleSponsor extends StatelessWidget {
                         fit: BoxFit.contain,
                         placeholder: (context, url) => Center(child: LoadingWidget(color: AppColors.primaryColor)),
                         errorWidget: (context, url, error) => Image.asset(
-                          Assets.imagesImgDummyLogo2,
+                          Assets.images.imgDummyLogo2.path,
                           fit: BoxFit.contain,
                         ),
                       )
-                    : Image.asset(Assets.imagesImgDummyLogo2, fit: BoxFit.contain),
+                    : Image.asset(Assets.images.imgDummyLogo2.path, fit: BoxFit.contain),
               ),
             ),
             const SizedBox(height: 6),

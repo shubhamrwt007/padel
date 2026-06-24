@@ -256,7 +256,7 @@ class OpenMatchBookingScreen extends StatelessWidget {
         //       color: AppColors.primaryColor.withOpacity(0.2),
         //       borderRadius: BorderRadius.circular(5),
         //     ),
-        //     child: Image.asset(Assets.imagesIcFilter, scale: 3.5),
+        //     child: Image.asset(Assets.images.icFilter.path, scale: 3.5),
         //   ),
         // ),
       ],
@@ -896,7 +896,7 @@ class OpenMatchBookingScreen extends StatelessWidget {
             ),
             Row(
               children: [
-                Image.asset(Assets.imagesIcLocation, scale: 3),
+                Image.asset(Assets.images.icLocation.path, scale: 3),
                 Text(
                   "${match?.clubId?.city ?? "N/A"} ${match?.clubId?.zipCode ?? ""}",
                   style: Get.textTheme.labelSmall,

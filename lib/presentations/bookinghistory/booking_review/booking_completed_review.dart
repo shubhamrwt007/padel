@@ -33,7 +33,7 @@ class BookingCompletedReview extends StatelessWidget {
   }
   Widget successImage() {
     return Center(
-      child: SvgPicture.asset(Assets.imagesImgBookingConfirm),
+      child: SvgPicture.asset(Assets.images.imgBookingConfirm.path),
     ).paddingOnly(top: Get.height * 0.04, bottom: Get.height * 0.03);
   }
   Widget slotDetails(BuildContext context) {
@@ -54,7 +54,7 @@ class BookingCompletedReview extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      SvgPicture.asset(Assets.imagesIcCelebration).paddingOnly(right: 10),
+                      SvgPicture.asset(Assets.images.icCelebration.path).paddingOnly(right: 10),
                       Text(
                         "You Played very well",
                         style: Get.textTheme.labelLarge!

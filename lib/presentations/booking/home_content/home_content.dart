@@ -556,10 +556,10 @@ class HomeContent extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const CircleAvatar(
+                            CircleAvatar(
                               radius: 15,
                               backgroundImage: AssetImage(
-                                Assets.imagesImgCustomerPicBooking,
+                                Assets.images.imgCustomerPicBooking.path,
                               ),
                             ).paddingOnly(right: 10),
                             Column(

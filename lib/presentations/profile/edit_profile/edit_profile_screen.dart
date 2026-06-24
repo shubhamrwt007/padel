@@ -197,7 +197,7 @@ class EditProfileUi extends StatelessWidget {
                     color: AppColors.secondaryColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Image.asset(Assets.imagesIcCamara, scale: 4.2),
+                  child: Image.asset(Assets.images.icCamara.path, scale: 4.2),
                 ),
               ),
             ),

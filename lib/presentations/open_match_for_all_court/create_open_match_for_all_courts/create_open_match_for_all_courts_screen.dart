@@ -112,7 +112,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     SvgPicture.asset(
-                      Assets.imagesIcWallet,
+                      Assets.images.icWallet.path,
                       height: 20,
                       width: 20,
                     ).paddingOnly(right: 4),
@@ -428,7 +428,7 @@ class CreateOpenMatchForAllCourtsScreen extends StatelessWidget {
                               Row(
                                 children: [
                                   Image.asset(
-                                    Assets.imagesIcLocation,
+                                    Assets.images.icLocation.path,
                                     color: AppColors.textColor,
                                     scale: 2.2,
                                   ),
@@ -2951,7 +2951,7 @@ class PaymentOptionSheet extends StatelessWidget {
                         controller: controller,
                         title: 'Pay for All Players',
                         subtitle: 'INSTANT CONFIRMATION',
-                        image: Assets.imagesIcCash,
+                        image: Assets.images.icCash.path,
                         optionIcon: Icons.check_circle,
                         activeColor: Colors.green,
                         points: const [
@@ -2965,7 +2965,7 @@ class PaymentOptionSheet extends StatelessWidget {
                         controller: controller,
                         title: 'Pay your share only',
                         subtitle: 'FLEXIBLE BOOKING',
-                        image: Assets.imagesIcPerson,
+                        image: Assets.images.icPerson.path,
                         optionIcon: Icons.timelapse,
                         activeColor: Colors.orange,
                         points: const [
@@ -3039,7 +3039,7 @@ class PaymentOptionSheet extends StatelessWidget {
       child: Row(
         children: [
           Image.asset(
-            Assets.imagesIcPrivacy,
+            Assets.images.icPrivacy.path,
             scale: 4.5,
             color: Colors.white70,
           ),

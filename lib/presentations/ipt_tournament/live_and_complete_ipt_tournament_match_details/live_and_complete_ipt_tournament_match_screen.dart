@@ -245,7 +245,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
           // height: 140, // 👈 decrease height here safely
           child: SvgPicture.asset(
             alignment: AlignmentGeometry.center,
-            Assets.imagesFipPromesisBg,
+            Assets.images.fipPromesisBg.path,
             fit: BoxFit.cover, // 👈 IMPORTANT
           ),
         ),
@@ -266,7 +266,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamA'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamA?.teamName ?? "",
                             textAlign: TextAlign.center,
@@ -308,7 +308,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                       children: [
                         if (controller.winnerTeam != null)
                           Obx(() => controller.winnerTeam == 'teamB'
-                              ? Image.asset(Assets.imagesImgCrown, width: 24, height: 24)
+                              ? Image.asset(Assets.images.imgCrown.path, width: 24, height: 24)
                               : const SizedBox(height: 24)),
                         Text(controller.historyData.value?.teamB?.teamName ?? "",
                             overflow: TextOverflow.ellipsis,
@@ -614,7 +614,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                                                                     width: 14,
                                                                     height: 14,
                                                                     child: Image.asset(
-                                                                      Assets.imagesIcCrown,
+                                                                      Assets.images.icCrown.path,
                                                                       width: 14,
                                                                       height: 14,
                                                                     ),
@@ -731,7 +731,7 @@ class _LiveAndCompleteIptTournamentMatchScreenState extends State<LiveAndComplet
                                                                     width: 14,
                                                                     height: 14,
                                                                     child: Image.asset(
-                                                                      Assets.imagesIcCrown,
+                                                                      Assets.images.icCrown.path,
                                                                       width: 14,
                                                                       height: 14,
                                                                     ),
@@ -1239,7 +1239,7 @@ extension _MatchDetailsUiHelpers on _LiveAndCompleteIptTournamentMatchScreenStat
           Transform.rotate(
             angle: -0.3,
             child: Image.asset(
-              Assets.imagesIcCrown,
+              Assets.images.icCrown.path,
               width: 30,
               height: 30,
             ),
