@@ -9,14 +9,14 @@ import 'package:padel_mobile/generated/assets.dart';
         return Icon(Icons.female, size: 14);
       case "mixed doubles":
         return SvgPicture.asset(
-          Assets.imagesIcMixedGender,
+          Assets.images.icMixedGender.path,
           height: 14,
           width: 14,
           fit: BoxFit.contain,
         );
       default:
         return SvgPicture.asset(
-          Assets.imagesIcMixedGender,
+          Assets.images.icMixedGender.path,
           height: 14,
           width: 14,
           fit: BoxFit.contain,

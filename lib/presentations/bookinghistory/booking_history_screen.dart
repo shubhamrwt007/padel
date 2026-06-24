@@ -733,7 +733,7 @@ class _BookingHistoryUiState extends State<BookingHistoryUi> {
         children: [
           Align(
               alignment: AlignmentGeometry.centerRight,
-              child: SvgPicture.asset(!isBlueTheme?Assets.imagesImgOpenMatchBg:Assets.imagesImgOpenMatchGreenBg,height: 160,width: 150,).paddingOnly(right: 20)),
+              child: SvgPicture.asset(!isBlueTheme?Assets.images.imgOpenMatchBg.path:Assets.images.imgOpenMatchGreenBg.path,height: 160,width: 150,).paddingOnly(right: 20)),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

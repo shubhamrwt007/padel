@@ -150,7 +150,7 @@
 //
 //           Obx(
 //             ()=> ProfileRow(
-//               icon: Image.asset(Assets.imagesIcBalanceWallet, scale: 5,color: controller.selectedIndex.value == 3 ? AppColors.primaryColor:AppColors.labelBlackColor,),
+//               icon: Image.asset(Assets.images.icBalanceWallet.path, scale: 5,color: controller.selectedIndex.value == 3 ? AppColors.primaryColor:AppColors.labelBlackColor,),
 //               title: AppStrings.payments,
 //               isSelected:  controller.selectedIndex.value == 3,
 //               onTap: (){
@@ -160,7 +160,7 @@
 //             ),
 //           ),Obx(
 //             ()=> ProfileRow(
-//               icon: Image.asset(Assets.imagesIcPadelIcon, scale: 5,color: controller.selectedIndex.value == 4 ? AppColors.primaryColor:AppColors.blackColor,),
+//               icon: Image.asset(Assets.images.icPadelIcon.path, scale: 5,color: controller.selectedIndex.value == 4 ? AppColors.primaryColor:AppColors.blackColor,),
 //               title: AppStrings.openMatch,
 //               isSelected:  controller.selectedIndex.value == 4,
 //               onTap: (){
@@ -210,7 +210,7 @@
 //
 //           Obx(
 //             ()=> ProfileRow(
-//               icon: Image.asset(Assets.imagesIcPrivacy, scale: 5,color: controller.selectedIndex.value == 8 ? AppColors.primaryColor:AppColors.labelBlackColor,),
+//               icon: Image.asset(Assets.images.icPrivacy.path, scale: 5,color: controller.selectedIndex.value == 8 ? AppColors.primaryColor:AppColors.labelBlackColor,),
 //               title: AppStrings.privacy,
 //               isSelected:  controller.selectedIndex.value == 8,
 //               onTap: () {
@@ -220,7 +220,7 @@
 //           ),
 //
 //           ProfileRow(
-//             icon: SvgPicture.asset(Assets.imagesIcLogOut, height: 15, width: 17).paddingOnly(left: 3),
+//             icon: SvgPicture.asset(Assets.images.icLogOut.path, height: 15, width: 17).paddingOnly(left: 3),
 //             title: AppStrings.logout,
 //             textColor: Colors.red,
 //             onTap: () => controller.showLogoutDialog(context),

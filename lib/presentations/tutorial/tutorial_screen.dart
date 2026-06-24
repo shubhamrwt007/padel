@@ -15,10 +15,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
   int currentIndex = 0;
 
   final List<String> images = [
-    Assets.imagesTutorialScreenPng1,
-    Assets.imagesTutorialScreenPng2,
-    Assets.imagesTutorialScreenPng3,
-    Assets.imagesTutorialScreenPng4,
+    Assets.images.tutorialScreenPng1.path,
+    Assets.images.tutorialScreenPng2.path,
+    Assets.images.tutorialScreenPng3.path,
+    Assets.images.tutorialScreenPng4.path,
   ];
 
   final List<String> buttonText = [

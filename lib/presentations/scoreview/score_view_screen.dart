@@ -204,13 +204,13 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
             Transform.scale(
               scale: 1.1,
               child: SvgPicture.asset(
-                Assets.imagesImgBackgroundScoreView,
+                Assets.images.imgBackgroundScoreView.path,
                 fit: BoxFit.cover,
               ),
             ).paddingOnly(left: 10,top: 10),
             Center(
               child: SvgPicture.asset(
-                Assets.imagesImgScoreView,
+                Assets.images.imgScoreView.path,
                 height: 250,
                 fit: BoxFit.contain,
               ),
@@ -408,7 +408,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                       width: Get.width,
                       // color: Colors.grey,
                       padding: EdgeInsets.only(left: 10,right: 10),
-                      child: SvgPicture.asset(Assets.imagesImgRoundBackground)),
+                      child: SvgPicture.asset(Assets.images.imgRoundBackground.path)),
                 ),
               ),
               Container(
@@ -437,7 +437,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
                           names: ['Claire', 'Wendy'],
                           score: controller.leftScore,
                         ),
-                        SvgPicture.asset(Assets.imagesImgVsRounds,height: 100,),
+                        SvgPicture.asset(Assets.images.imgVsRounds.path,height: 100,),
                         _buildPlayerColumn(
                           imageUrls: [
                             'https://i.pravatar.cc/150?img=13',

@@ -162,7 +162,7 @@ class PaymentForWallet extends StatelessWidget {
     final upiOptions = [
       {
         "name": "Razor Pay",
-        "icon": Assets.imagesRazorPay,
+        "icon": Assets.images.razorPay.path,
         "value": "razor_pay",
         "hasButton": true,
       },

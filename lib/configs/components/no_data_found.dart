@@ -18,7 +18,7 @@ class NoDataFound extends StatelessWidget {
             SizedBox(
               height: Get.height * .3,
               width: Get.width * .9,
-              child: Image.asset(Assets.lottieFilesNoData),
+              child: Image.asset(Assets.lottieFiles.noData.path),
             ),
             SizedBox(
               height: Get.height*.03,

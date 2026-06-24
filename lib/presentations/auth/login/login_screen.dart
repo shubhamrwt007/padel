@@ -94,8 +94,8 @@ class LoginScreen extends GetView<LoginController> {
           //         width: 20,
           //         child: Image.asset(
           //           controller.isVisible.value
-          //               ? Assets.imagesIcEyeOff
-          //               : Assets.imagesIcEye,
+          //               ? Assets.images.icEyeOff.path
+          //               : Assets.images.icEye.path,
           //           color: AppColors.textColor,
           //           fit: BoxFit.contain,
           //         ),

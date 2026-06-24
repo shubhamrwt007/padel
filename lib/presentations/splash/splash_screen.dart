@@ -11,7 +11,7 @@ class SplashScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         body: Center(
             child:
-            SvgPicture.asset(Assets.imagesPadelLogo11,height: 60,width: 60,)),
+            SvgPicture.asset(Assets.images.padelLogo11.path,height: 60,width: 60,)),
       ),
     );
   }
