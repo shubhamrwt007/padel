@@ -243,10 +243,26 @@ class AmericanoScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(
-                        match.clubId?.clubName ?? "Club Name",
-                        style: Get.textTheme.labelLarge,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            match.clubId?.clubName ?? "Club Name",
+                            style: Get.textTheme.labelLarge,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (match.matchTitle != null && match.matchTitle!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              match.matchTitle!,
+                              style: Get.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+
+                        ],
                       ),
                     ),
                     avatarGroup(
@@ -338,6 +354,22 @@ class AmericanoScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (match.clubId?.locations?.isNotEmpty == true &&
+                    match.clubId!.locations!.first.city != null) ...[
+                  const SizedBox(height: 1),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      match.clubId!.locations!.first.city!,
+                      textAlign: TextAlign.start,
+                      style: Get.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                ],
               ],
             ).paddingAll(10),
           ],
@@ -568,7 +600,7 @@ class AmericanoScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        if (isJoined && players.isNotEmpty) {
+        if (players.isNotEmpty) {
           showPlayersDialog(Get.context!, players);
         }
       },

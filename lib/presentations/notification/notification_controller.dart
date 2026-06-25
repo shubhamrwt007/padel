@@ -14,6 +14,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../services/notification_service/firebase_notification.dart';
 import 'package:flutter/material.dart';
+import '../../configs/components/app_toast.dart';
 class NotificationController extends GetxController {
   static NotificationController get instance => Get.find();
 
@@ -294,7 +295,7 @@ class NotificationController extends GetxController {
 
       // Priority 1: Check for payment link action
       if (action == 'open_payment_popup' && paymentLink.isNotEmpty) {
-        _openPaymentLink(paymentLink);
+        _openPaymentLinkWithData(paymentLink, data);
         return;
       }
 
@@ -327,16 +328,298 @@ class NotificationController extends GetxController {
     }
   }
 
-  /// Open payment link in WebView
-  void _openPaymentLink(String url) {
+  /// Open payment link popup with notification data
+  void _openPaymentLinkWithData(String paymentLink, Map<String, String> notificationData) {
     try {
+      final paymentId = _extractPaymentId(paymentLink);
+      _showPaymentDialog(paymentId, notificationData);
+      
+      if (kDebugMode) {
+        print('✅ Opened payment popup for ID: $paymentId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error opening payment popup: $e');
+      }
+    }
+  }
+
+  /// Open payment link popup (legacy support)
+  void _openPaymentLink(String paymentLink) {
+    _openPaymentLinkWithData(paymentLink, {});
+  }
+
+  /// Show payment dialog with data
+  void _showPaymentDialog(String paymentId, Map<String, String> notificationData) {
+    final totalAmount = notificationData['amount'] ?? '0.00';
+    final walletAmount = notificationData['walletContributionAmount'] ?? '0';
+    final razorpayAmount = notificationData['razorpayAmountDue'] ?? '0';
+    final clubName = notificationData['clubName'] ?? 'Club';
+    final courtName = notificationData['courtName'] ?? '';
+    final dateTime = notificationData['dateTime'] ?? '';
+    final paymentMode = notificationData['paymentMode'] ?? 'wallet';
+    final paymentLink = notificationData['paymentLink'] ?? '';
+    final isWalletPayment = paymentMode.toLowerCase() == 'wallet';
+    final isSplitPayment = paymentMode.toLowerCase() == 'split';
+    
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.account_balance_wallet,
+                size: 64,
+                color: Color(0xFF1E40AF),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Payment Request",
+                style: Get.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    if (clubName.isNotEmpty) ...[
+                      _buildInfoRow(Icons.location_on, 'Club', clubName),
+                      const SizedBox(height: 12),
+                    ],
+                    if (courtName.isNotEmpty) ...[
+                      _buildInfoRow(Icons.sports_tennis, 'Court', courtName),
+                      const SizedBox(height: 12),
+                    ],
+                    if (dateTime.isNotEmpty) ...[
+                      _buildInfoRow(Icons.calendar_today, 'Date & Time', dateTime),
+                      const SizedBox(height: 12),
+                    ],
+                    Divider(color: Colors.grey.shade300, height: 1),
+                    const SizedBox(height: 12),
+                    // Total Amount
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: Get.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '₹$totalAmount',
+                          style: Get.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Split Payment Details
+                    if (isSplitPayment && walletAmount != '0') ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.account_balance_wallet, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Text(
+                                'From Wallet',
+                                style: Get.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '₹$walletAmount',
+                            style: Get.textTheme.bodyMedium?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (isSplitPayment && razorpayAmount != '0') ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.payment, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Text(
+                                'To Pay Now',
+                                style: Get.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '₹$razorpayAmount',
+                            style: Get.textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF1E40AF),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Do you want to proceed with this payment?",
+                textAlign: TextAlign.center,
+                style: Get.textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        if (isWalletPayment) {
+                          _handlePaymentSubmit(paymentId);
+                        } else {
+                          _openPaymentUrl(paymentLink);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E40AF),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Confirm Payment",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  /// Build info row widget
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Extract payment ID from link
+  String _extractPaymentId(String paymentLink) {
+    final uri = Uri.parse(paymentLink);
+    final segments = uri.pathSegments;
+    final index = segments.indexOf('pay-share-payment');
+    if (index != -1 && index + 1 < segments.length) {
+      return segments[index + 1];
+    }
+    return '';
+  }
+
+  /// Handle payment submission
+  Future<void> _handlePaymentSubmit(String paymentId) async {
+    try {
+      AppToast.info("Processing payment...");
+      
+      final response = await notificationRepository.acceptWalletPayment(paymentId);
+      
+      AppToast.success("Payment completed successfully!");
+      
+      // Refresh notifications after payment
+      await fetchNotifications();
+      await fetchUnreadNotificationCount();
+    } catch (e) {
+      AppToast.error("Payment failed. Please try again.");
+      if (kDebugMode) {
+        print('❌ Payment error: $e');
+      }
+    }
+  }
+
+  /// Open payment URL in in-app WebView dialog
+  Future<void> _openPaymentUrl(String url) async {
+    try {
+      if (url.isEmpty) {
+        AppToast.error("Payment link not available");
+        return;
+      }
+
       Get.dialog(
         Dialog(
           insetPadding: const EdgeInsets.all(16),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: SizedBox(
-              height: Get.height * 0.8,
+              height: Get.height * 0.85,
               child: Column(
                 children: [
                   Container(
@@ -348,10 +631,18 @@ class NotificationController extends GetxController {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        const Text(
+                          'Complete Payment',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
                         IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () => Get.back(),
+                          onPressed: () {
+                            Get.back();
+                            // Refresh notifications when closing
+                            fetchNotifications();
+                            fetchUnreadNotificationCount();
+                          },
                         ),
                       ],
                     ),
@@ -364,12 +655,14 @@ class NotificationController extends GetxController {
         ),
         barrierDismissible: false,
       );
+      
       if (kDebugMode) {
-        print('✅ Opened payment link in WebView: $url');
+        print('✅ Opened payment URL in WebView: $url');
       }
     } catch (e) {
+      AppToast.error("Failed to open payment link");
       if (kDebugMode) {
-        print('❌ Error opening payment link: $e');
+        print('❌ Error opening payment URL: $e');
       }
     }
   }
@@ -841,6 +1134,9 @@ class NotificationController extends GetxController {
 
 }
 
+
+
+
 /// WebView widget for payment popup
 class _PaymentWebView extends StatefulWidget {
   final String url;
@@ -865,9 +1161,21 @@ class _PaymentWebViewState extends State<_PaymentWebView> {
           onPageStarted: (url) => setState(() => _isLoading = true),
           onPageFinished: (url) => setState(() => _isLoading = false),
           onNavigationRequest: (request) {
-            if (request.url.contains('success') || request.url.contains('payment_success')) {
+            if (request.url.contains('success') || 
+                request.url.contains('payment_success') ||
+                request.url.contains('payment-success')) {
               Get.back();
-              Get.snackbar('Success', 'Payment completed successfully');
+              AppToast.success('Payment completed successfully!');
+              final controller = Get.find<NotificationController>();
+              controller.fetchNotifications();
+              controller.fetchUnreadNotificationCount();
+              return NavigationDecision.prevent;
+            }
+            if (request.url.contains('failure') || 
+                request.url.contains('payment_failure') ||
+                request.url.contains('payment-failure')) {
+              Get.back();
+              AppToast.error('Payment failed. Please try again.');
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;
@@ -883,7 +1191,11 @@ class _PaymentWebViewState extends State<_PaymentWebView> {
       children: [
         WebViewWidget(controller: _controller),
         if (_isLoading)
-          const Center(child: CircularProgressIndicator()),
+          const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF1E40AF),
+            ),
+          ),
       ],
     );
   }

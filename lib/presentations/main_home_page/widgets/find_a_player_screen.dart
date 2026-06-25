@@ -103,7 +103,7 @@ class _FindPlayerScreenState extends State<FindPlayerScreen> {
                             Get.to(()=>BookingHistoryUi(buttonType: "drawer",));
                           } else if (selectedIndex == 1) {
                             Get.back();
-                            Get.toNamed(RoutesName.bookACourt);
+                            Get.toNamed(RoutesName.openMatchForAllCourts);
 
                           }
                         },
