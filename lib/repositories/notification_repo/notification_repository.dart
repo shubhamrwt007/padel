@@ -116,4 +116,33 @@ class NotificationRepository {
       rethrow;
     }
   }
+
+  ///Accept Wallet Payment-----------------------------------------------------
+  Future<Map<String, dynamic>> acceptWalletPayment(String paymentId) async {
+    try {
+      final String endpoint = "${AppEndpoints.baseUrl}court/openmatch/pay-share-payment/$paymentId/accept-wallet";
+      
+      final response = await dioClient.post(
+        endpoint,
+        data: {},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomLogger.logMessage(
+          msg: "✅ Payment accepted successfully",
+          level: LogLevel.info,
+        );
+        return response.data;
+      } else {
+        throw Exception("❌ Payment failed: ${response.statusCode}");
+      }
+    } catch (e, st) {
+      CustomLogger.logMessage(
+        msg: "❌ acceptWalletPayment failed: ${e.toString()}",
+        level: LogLevel.error,
+        st: st,
+      );
+      rethrow;
+    }
+  }
 }

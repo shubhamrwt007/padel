@@ -37,28 +37,19 @@ class AmericanoBottomSheetContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final isExpanded = draggableController.size >= 0.9;
-        draggableController.animateTo(
-          isExpanded ? 0.4 : 0.9,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: Get.width * 0.02),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 70),
-              child: ListView(
-                physics: const NeverScrollableScrollPhysics(),
-                controller: scrollController,
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: Get.width * 0.02),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 70),
+            child: ListView(
+              physics: const ClampingScrollPhysics(),
+              controller: scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
                   Center(
@@ -123,31 +114,34 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                   const SizedBox(height: 30),
                   Text("Rules", style: Get.textTheme.headlineMedium),
                   const SizedBox(height: 8),
-                  Text(
-                    "1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "2. incididunt ut labore et dolore magna aliqua. Ut enim ad minim",
-                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "3. veniam, quis",
-                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    "4. nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-                    style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
-                  ),
+                  if (match.americanoFormat?.toLowerCase() == 'fixed_team') ...[
+                    _ruleText("Rotate Partners Every Round", "Players are assigned a new partner for each match according to the tournament schedule."),
+                    _ruleText("Individual Scoring System", "Points earned in every match are added to each player's personal total score."),
+                    _ruleText("Play Fixed Points Per Match", "Each match is played to a predetermined number of points (e.g., 16, 21, or 24 points)."),
+                    _ruleText("Highest Total Score Wins", "At the end of all rounds, the player with the highest accumulated points is declared the winner."),
+                  ] else ...[
+                    _ruleText("🎾 Doubles Team Rules", ""),
+                    _ruleText("Fixed Team Partnership", "Players must play with the same partner throughout the tournament."),
+                    _ruleText("Match Scoring", "Matches are played according to the tournament format (e.g., best of 3 sets or first to 6 games)."),
+                    _ruleText("Respect and Sportsmanship", "All players must show respect to opponents, partners, officials, and organizers."),
+                    _ruleText("Punctual Attendance", "Teams must be present on time. Late arrival may result in a walkover or point penalty."),
+                  ],
                   const SizedBox(height: 16),
                   Text("FAQs", style: Get.textTheme.headlineMedium),
-                  faqTile("Lorem ipsum dolor sit amet, consectetur adipiscing?"),
-                  faqTile("Lorem ipsum dolor sit amet, consectetur adipiscing?"),
-                  faqTile("Lorem ipsum dolor sit amet, consectetur adipiscing?"),
+                  if (match.americanoFormat?.toLowerCase() == 'fixed_team') ...[
+                    faqTile("What is Padel Americano?", "Padel Americano is a tournament format where players change partners every round and compete as individuals rather than fixed teams."),
+                    faqTile("How is the winner determined?", "The winner is the player who accumulates the most points across all matches."),
+                    faqTile("Do I play with the same partner throughout the tournament?", "No. Partners rotate every round so that everyone plays with different teammates."),
+                    faqTile("Is Padel Americano suitable for beginners?", "Yes. It is a fun and social format designed for players of all skill levels."),
+                  ] else ...[
+                    faqTile("What is a Doubles Team Tournament?", "A competition where two players form a team and play together for the entire tournament."),
+                    faqTile("Can I change my partner during the tournament?", "No. Once the tournament starts, partner changes are generally not allowed unless approved by the organizer."),
+                    faqTile("How is the winning team decided?", "The team that wins the final match or accumulates the highest points (depending on the format) is declared the winner."),
+                    faqTile("What happens if a player cannot continue playing?", "The team may be withdrawn from the tournament unless the organizer allows a substitute according to the event rules."),
+                  ],
                 ],
               ),
             ),
-            // Fixed bottom button
             Positioned(
               left: 10,
               right: 10,
@@ -211,18 +205,33 @@ class AmericanoBottomSheetContent extends StatelessWidget {
             )
           ],
         ),
+
+    );
+  }
+
+  Widget _ruleText(String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: RichText(
+        text: TextSpan(
+          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500, color: Colors.black),
+          children: [
+            TextSpan(text: title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (description.isNotEmpty) TextSpan(text: "\n$description"),
+          ],
+        ),
       ),
     );
   }
 
-  Widget faqTile(String question) {
+  Widget faqTile(String question, String answer) {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
-      title: Text(question,style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
+      title: Text(question, style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text("Answer to the question goes here.",style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),),
+          child: Text(answer, style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500)),
         ),
       ],
     );
