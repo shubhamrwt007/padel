@@ -37,6 +37,10 @@ class AmericanoBottomSheetContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('Match Description: ${match.matchDescription}');
+    print('Match Description isEmpty: ${match.matchDescription?.isEmpty}');
+    print('Match Description isNotEmpty: ${match.matchDescription?.isNotEmpty}');
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: Get.width * 0.02),
       decoration: const BoxDecoration(
@@ -89,6 +93,30 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                             dashColor: AppColors.primaryColor,
                           ).paddingOnly(top: 10),
                           infoTile("Price", "₹${match.registrationFee ?? match.totalPrice ?? 0}", highlight: true),
+                          if (match.prize != null && (match.prize!['first'] != null || match.prize!['second'] != null || match.prize!['third'] != null)) ...[
+                            Dash(
+                              direction: Axis.horizontal,
+                              length: 300,
+                              dashLength: 12,
+                              dashColor: AppColors.primaryColor,
+                            ).paddingOnly(top: 10, bottom: 10),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+                              child: Text(
+                                "Winning Prizes",
+                                style: Get.textTheme.labelMedium!.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (match.prize!['first'] != null)
+                              infoTile("1st Prize", "₹${match.prize!['first']}"),
+                            if (match.prize!['second'] != null)
+                              infoTile("2nd Prize", "₹${match.prize!['second']}"),
+                            if (match.prize!['third'] != null)
+                              infoTile("3rd Prize", "₹${match.prize!['third']}"),
+                          ],
                         ],
                       ),
                     ).paddingOnly(bottom: Get.height * 0.01),
@@ -111,7 +139,17 @@ class AmericanoBottomSheetContent extends StatelessWidget {
                       }(),
                     ),
                   ),
+
                   const SizedBox(height: 30),
+                  if (match.matchDescription != null && match.matchDescription!.isNotEmpty) ...[
+                    Text("Description", style: Get.textTheme.headlineMedium),
+                    const SizedBox(height: 8),
+                    Text(
+                      match.matchDescription!,
+                      style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
                   Text("Rules", style: Get.textTheme.headlineMedium),
                   const SizedBox(height: 8),
                   if (match.americanoFormat?.toLowerCase() == 'fixed_team') ...[

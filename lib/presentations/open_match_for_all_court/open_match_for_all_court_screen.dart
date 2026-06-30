@@ -102,7 +102,7 @@ class _OpenMatchForAllCourtScreenState extends State<OpenMatchForAllCourtScreen>
                   children: [
                     SvgPicture.asset(Assets.images.icWallet.path,height: 20,width: 20,).paddingOnly(right: 4),
                     Obx(() => Text(
-                      "${formatWalletAmount(walletController.walletBalance.value ?? 0)}",
+                      formatWalletAmount(walletController.walletBalance.value ?? 0),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,

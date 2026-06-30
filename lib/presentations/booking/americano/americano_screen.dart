@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
-
-import 'americano_bottomsheet_content.dart';
-
+import '../../../data/response_models/americano_models/get_americano_model.dart';
+import '../../americano/widgets/americano_bottomsheet_content.dart';
+import 'americano_controller.dart';
 class AmericanoScreens extends StatelessWidget {
   const AmericanoScreens({super.key});
-
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(AmericanoController());
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -24,6 +25,18 @@ class AmericanoScreens extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+
+          // TODO: Replace hardcoded cards with real API data
+          // Obx(() {
+          //   if (controller.ongoingAmericanos.isEmpty) {
+          //     return Text('No ongoing matches');
+          //   }
+          //   return Column(
+          //     children: controller.ongoingAmericanos.map((match) {
+          //       return _buildMatchCardFromApi(match);
+          //     }).toList(),
+          //   );
+          // }),
 
           // First Ongoing Match
           _buildMatchCard(
@@ -43,6 +56,7 @@ class AmericanoScreens extends StatelessWidget {
               'https://i.pravatar.cc/40?img=4',
             ],
             moreCount: '+5',
+            prize: {'first': 100000, 'second': 70000, 'third': 50000},
           ),
 
           const SizedBox(height: 12),
@@ -65,6 +79,7 @@ class AmericanoScreens extends StatelessWidget {
               'https://i.pravatar.cc/40?img=8',
             ],
             moreCount: '+5',
+            prize: {'first': 10000, 'second': 7000, 'third': 5000},
           ),
 
           const SizedBox(height: 24),
@@ -98,6 +113,7 @@ class AmericanoScreens extends StatelessWidget {
               'https://i.pravatar.cc/40?img=12',
             ],
             moreCount: '+5',
+            prize: null,
           ),
 
           const SizedBox(height: 12),
@@ -120,6 +136,7 @@ class AmericanoScreens extends StatelessWidget {
               'https://i.pravatar.cc/40?img=16',
             ],
             moreCount: '+',
+            prize: {'first': 50000, 'second': 30000, 'third': 20000},
           ),
 
           const SizedBox(height: 12),
@@ -142,6 +159,7 @@ class AmericanoScreens extends StatelessWidget {
               'https://i.pravatar.cc/40?img=20',
             ],
             moreCount: '+',
+            prize: null,
           ),
         ],
       ),
@@ -161,9 +179,13 @@ class AmericanoScreens extends StatelessWidget {
     Color? actionColor,
     required List<String> playerAvatars,
     required String moreCount,
+    Map<String, dynamic>? prize,
   }) {
-    return GestureDetector(onTap: (){  showAmericanoBottomSheet(Get.context!);
-    },
+    return GestureDetector(
+      onTap: () {
+        print('Passing prize to bottom sheet: $prize'); // Debug
+        showAmericanoBottomSheet(Get.context!, prize: prize);
+      },
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -356,7 +378,7 @@ class AmericanoScreens extends StatelessWidget {
       ),
     );
   }
-  void showAmericanoBottomSheet(BuildContext context) {
+  void showAmericanoBottomSheet(BuildContext context, {Map<String, dynamic>? prize}) {
     final DraggableScrollableController draggableController = DraggableScrollableController();
 
     showModalBottomSheet(
@@ -382,9 +404,10 @@ class AmericanoScreens extends StatelessWidget {
                 builder: (context, scrollController) {
                   return GestureDetector(
                     onTap: () {}, // Prevents tap propagation inside the sheet
-                    child: AmericanoBottomSheetContents(
+                    child: AmericanoBottomSheetContent(
                       scrollController: scrollController,
                       draggableController: draggableController,
+                      match: AmericanoMatch(prize: prize),
                     ),
                   );
                 },
@@ -395,5 +418,30 @@ class AmericanoScreens extends StatelessWidget {
       },
     );
   }
-}
 
+  // Helper method to build card from API data
+  Widget _buildMatchCardFromApi(AmericanoMatch match) {
+    return _buildMatchCard(
+      date: match.formattedMatchDate,
+      time: match.matchTime ?? '9:00am',
+      type: match.skillLevel?.substring(0, 1).toUpperCase() ?? 'A',
+      typeColor: Colors.green,
+      genderIcon: match.gender == 'male only' ? Icons.male : 
+                  match.gender == 'female only' ? Icons.female : Icons.people,
+      genderText: match.gender ?? 'Mixed',
+      playerCount: '${match.joinedMembers ?? 0} Players',
+      actionText: match.matchStatus == 'ongoing' ? 'View Score' : 'Join Now',
+      actionColor: Colors.blue,
+      playerAvatars: match.joinedPlayersAvatars.isNotEmpty 
+          ? match.joinedPlayersAvatars 
+          : [
+              'https://i.pravatar.cc/40?img=1',
+              'https://i.pravatar.cc/40?img=2',
+              'https://i.pravatar.cc/40?img=3',
+              'https://i.pravatar.cc/40?img=4',
+            ],
+      moreCount: '+${(match.maxPlayers ?? 0) - (match.joinedMembers ?? 0)}',
+      prize: match.prize, // This is the real prize data from API!
+    );
+  }
+}

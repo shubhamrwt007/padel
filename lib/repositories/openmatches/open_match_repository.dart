@@ -702,7 +702,6 @@ class OpenMatchRepository {
         msg: "Direct Join Admin Match request body: $body",
         level: LogLevel.info,
       );
-
       final endpoint = isPendingMatch
           ? AppEndpoints.joinPerShareMatchWithPayment
           : AppEndpoints.directJoinAdminMatch;

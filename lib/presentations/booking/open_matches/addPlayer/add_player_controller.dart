@@ -11,6 +11,8 @@ import 'package:padel_mobile/presentations/wallet/widgets/payment_for_wallet.dar
 import 'package:padel_mobile/repositories/score_board_repo/score_board_repository.dart';
 import 'package:padel_mobile/presentations/profile/profile_controller.dart';
 import 'package:padel_mobile/presentations/bookinghistory/booking_history_controller.dart';
+import 'package:padel_mobile/presentations/payment/payment_method_controller.dart';
+import 'package:padel_mobile/configs/routes/routes_name.dart';
 import '../../widgets/booking_exports.dart';
 
 class AddPlayerController extends GetxController {
@@ -295,7 +297,8 @@ class AddPlayerController extends GetxController {
   Future<bool> requestPlayerForOpenMatch({
     String? type,
     String? bookingId,
-    dynamic price
+    dynamic price,
+    bool isPendingMatch = false,
   }) async {
     try {
       final body = {
@@ -311,23 +314,34 @@ class AddPlayerController extends GetxController {
         body["requesterId"] = playerId.value;
       }
 
-      final response =
-      await repository.requestPlayerForOpenMatch(body: body);
-
-      if (response != null) {
-        await openMatchBookingController
-            ?.fetchOpenMatchesBooking(type: "upcoming");
-
-        // Get.back(result: true);
-        CustomLogger.logMessage(
-          msg: "Player Request Sent $body",
-          level: LogLevel.info,
+      dynamic response;
+      if (isPendingMatch) {
+        response = await repository.directJoinAdminMatch(
+          body: body,
+          isPendingMatch: true,
         );
-        return true;
+        
+        // Navigate to payment screen with response data
+        if (response != null) {
+          await _handlePaymentNavigation(response, price);
+          return true;
+        }
       } else {
-        CustomLogger.logMessage(msg: "Failed to send player request", level: LogLevel.error);
-        return false;
+        response = await repository.requestPlayerForOpenMatch(body: body);
+        
+        if (response != null) {
+          await openMatchBookingController
+              ?.fetchOpenMatchesBooking(type: "upcoming");
+          CustomLogger.logMessage(
+            msg: "Player Request Sent $body",
+            level: LogLevel.info,
+          );
+          return true;
+        }
       }
+      
+      CustomLogger.logMessage(msg: "Failed to send player request", level: LogLevel.error);
+      return false;
     } on DioException catch (e) {
       /// ✅ Handle 404 error
       if (e.response?.statusCode == 404) {
@@ -356,6 +370,139 @@ class AddPlayerController extends GetxController {
       );
       return false;
     }
+  }
+  
+  Future<void> _handlePaymentNavigation(dynamic response, dynamic price) async {
+    try {
+      final paymentController = Get.put(PaymentMethodController());
+      
+      // Extract payment data from response
+      final razorpayOrderId = response['orderId'] ?? response['razorpayOrderId'] ?? response['order_id'];
+      final requiresPayment = response['requiresPayment'] ?? response['requires_payment'] ?? true;
+      
+      // Get amounts from response (might be in paisa)
+      var walletAmount = (response['walletAmountUsed'] as num?)?.toDouble() ?? 
+                          (response['walletAmount'] as num?)?.toDouble() ?? 0.0;
+      var razorpayAmount = (response['razorpayAmountUsed'] as num?)?.toDouble() ?? 
+                            (response['razorpayAmount'] as num?)?.toDouble() ?? 
+                            (response['amount'] as num?)?.toDouble() ?? 
+                            (price as num?)?.toDouble() ?? 0.0;
+      
+      // Convert from paisa to rupees if amounts are greater than 1000 (likely in paisa)
+      // Razorpay uses paisa (1 rupee = 100 paisa)
+      if (walletAmount > 1000) {
+        walletAmount = walletAmount / 100;
+        CustomLogger.logMessage(
+          msg: "Converted wallet amount from paisa to rupees: ₹$walletAmount",
+          level: LogLevel.info,
+        );
+      }
+      
+      if (razorpayAmount > 1000) {
+        razorpayAmount = razorpayAmount / 100;
+        CustomLogger.logMessage(
+          msg: "Converted razorpay amount from paisa to rupees: ₹$razorpayAmount",
+          level: LogLevel.info,
+        );
+      }
+      
+      // Set payment controller values (amounts are now in rupees for display)
+      paymentController.walletAmountUsed.value = walletAmount;
+      paymentController.razorpayAmountUsed.value = razorpayAmount;
+      paymentController.setRazorpayOrderId(razorpayOrderId);
+      paymentController.initiatePayment = requiresPayment;
+      
+      CustomLogger.logMessage(
+        msg: "Payment Navigation - OrderId: $razorpayOrderId, Wallet: ₹$walletAmount, Razorpay: ₹$razorpayAmount, RequiresPayment: $requiresPayment",
+        level: LogLevel.info,
+      );
+      
+      if (requiresPayment == false || razorpayAmount <= 0) {
+        // No payment required, show success
+        _showJoinSuccessDialog();
+      } else {
+        // Navigate to payment screen
+        await Get.toNamed(RoutesName.paymentMethod);
+      }
+    } catch (e) {
+      CustomLogger.logMessage(
+        msg: "Error handling payment navigation: $e",
+        level: LogLevel.error,
+      );
+    }
+  }
+  
+  void _showJoinSuccessDialog() {
+    Get.dialog(
+      barrierDismissible: false,
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: Get.width * 0.85,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Joined Successfully!",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "You have joined the match successfully.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    openMatchesController?.fetchMatchesForSelection();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "OK",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 

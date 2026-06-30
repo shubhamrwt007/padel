@@ -48,6 +48,7 @@ class MatchData {
   int? iV;
   int? pendingRequestsCount;
   BookingId? bookingId;
+  String? openMatchStatus;
 
   MatchData({
     this.sId,
@@ -73,6 +74,7 @@ class MatchData {
     this.iV,
     this.pendingRequestsCount,
     this.bookingId,
+    this.openMatchStatus,
   });
 
   static String? _asJoinedString(dynamic value) {
@@ -131,6 +133,7 @@ class MatchData {
     updatedAt = _asJoinedString(json['updatedAt']);
     iV = json['__v'];
     pendingRequestsCount = json['pendingRequestsCount'];
+    openMatchStatus = _asJoinedString(json['openMatchStatus']);
   }
 
   Map<String, dynamic> toJson() {
@@ -166,6 +169,7 @@ class MatchData {
     map['updatedAt'] = updatedAt;
     map['__v'] = iV;
     map['pendingRequestsCount'] = pendingRequestsCount;
+    map['openMatchStatus'] = openMatchStatus;
     return map;
   }
 }

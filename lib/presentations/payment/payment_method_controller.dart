@@ -27,6 +27,11 @@ class PaymentMethodController extends GetxController {
 
   RxDouble walletAmountUsed = 0.0.obs;
   RxDouble razorpayAmountUsed = 0.0.obs;
+  
+  // Setter for razorpayOrderId
+  void setRazorpayOrderId(String? orderId) {
+    _razorpayOrderId = orderId;
+  }
 
   /// When set, use this payload instead of cart/bookACourt (book session → payment direct flow).
   List<Map<String, dynamic>>? directBookingPayload;
@@ -657,9 +662,12 @@ class PaymentMethodController extends GetxController {
       return;
     }
 
+    // Convert rupees to paisa (multiply by 100) for Razorpay
+    final amountInPaisa = (razorpayAmountUsed.value * 100).toInt();
+
     CustomLogger.logMessage(
       msg:
-          "Starting payment with Razorpay Order ID: $_razorpayOrderId, Amount: ${razorpayAmountUsed.value}",
+          "Starting payment with Razorpay Order ID: $_razorpayOrderId, Amount: ₹${razorpayAmountUsed.value} ($amountInPaisa paisa)",
       level: LogLevel.debug,
     );
 
@@ -672,7 +680,7 @@ class PaymentMethodController extends GetxController {
             ? "rzp_test_RtRFaVPUzoUtkG"
             : PaymentConfig.keyId,
         orderId: _razorpayOrderId,
-        amount: razorpayAmountUsed.value.toDouble(),
+        amount: amountInPaisa.toDouble(),
         currency: 'INR',
         name: 'Swoot',
         description: isFromAmericano

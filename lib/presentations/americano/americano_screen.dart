@@ -182,6 +182,20 @@ class AmericanoScreen extends StatelessWidget {
         style: Get.textTheme.headlineSmall!.copyWith(color: AppColors.blackColor),
       ).paddingOnly(bottom: Get.height * 0.01, top: Get.height * 0.02);
 
+  bool _isMatchLive(String? matchDate) {
+    if (matchDate == null || matchDate.isEmpty) return false;
+    try {
+      final datePart = matchDate.contains('T') ? matchDate.split('T').first : matchDate;
+      final matchDateTime = DateTime.parse(datePart);
+      final today = DateTime.now();
+      return matchDateTime.year == today.year &&
+             matchDateTime.month == today.month &&
+             matchDateTime.day == today.day;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Widget buildMatchesList({required AmericanoMatch match, required bool add}) {
     String genderText = match.gender ?? "Female Only";
     IconData genderIcon = Icons.female;
@@ -261,6 +275,18 @@ class AmericanoScreen extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
+                          if (match.matchDescription != null && match.matchDescription!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              match.matchDescription!,
+                              style: Get.textTheme.bodySmall?.copyWith(
+                                color: Colors.grey.shade600,
+                                fontSize: 11,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
 
                         ],
                       ),
@@ -278,7 +304,8 @@ class AmericanoScreen extends StatelessWidget {
                     Text(
                       "${match.matchDay??""} | ${match.formattedMatchDate}",
                       style: Get.textTheme.bodySmall,
-                    ).paddingOnly(right: 5),
+                    ),
+                    const SizedBox(width: 5),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 6,vertical: 2),
                       decoration: BoxDecoration(
@@ -309,11 +336,43 @@ class AmericanoScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(CupertinoIcons.person_crop_circle, size: 14),
-                        Text(
-                          "$joinedCount Players",
-                          style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
-                        ),
+                        if (_isMatchLive(match.matchDate)) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  "LIVE",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          const Icon(CupertinoIcons.person_crop_circle, size: 14),
+                          Text(
+                            "$joinedCount/${match.maxPlayers ?? joinedCount} Players",
+                            style: Get.textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w400),
+                          ),
+                        ],
                       ],
                     ),
                     Container(
