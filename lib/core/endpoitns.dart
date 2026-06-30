@@ -1,15 +1,15 @@
 class AppEndpoints {
   AppEndpoints._();
 
-  // -----------------------Staging URL--------------------------------------------
-  // static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
-  // static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
-   /// -----------------------New Live URL------------------------------------------
-  // static const String base = "https://apimobile.swootapp.com/api/";f
+  /// -----------------------Staging URL----------------------------------------
+  static const String base = "https://padelstagingmobileapi.swootapp.com/api/";
+  static const String socketUrl = "https://padelstagingmobileapi.swootapp.com";
+   /// -----------------------New Live URL--------------------------------------
+  // static const String base = "https://apimobile.swootapp.com/api/";
   // static const String socketUrl = "https://apimobile.swootapp.com";
-  ///-----------------------Local URL-----------------------------------------------
-  static const String base = "http://192.168.1.49:5070/api/";
-  static const String socketUrl = "http://192.168.1.49:5070";
+  ///-----------------------Local URL-------------------------------------------
+  // static const String base = "http://192.168.1.49:5070/api/";
+  // static const String socketUrl = "http://192.168.1.49:5070";
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
@@ -81,7 +81,8 @@ class AppEndpoints {
       "${baseUrl}court/openmatch/withDrawMatchRequest/";
   static const String getPendingRequestCount =
       "${baseUrl}court/openmatch/getPendingInvitationCount";
-  // static const String getParticularMatch = "${BASE_URL}court/openmatch/findByOpenMatchId?_id=68d2300a723257df65e574ab";
+  // static const String getParticularMatch = "${BASE_URL}court/openmatch/findBy
+  // OpenMatchId?_id=68d2300a723257df65e574ab";
   static const String getOpenMatches =
       "${baseUrl}court/openmatch/getOpenMatches";
   static const String createUserForOpenMatch =
@@ -108,7 +109,8 @@ class AppEndpoints {
       "${baseUrl}court/openmatch/getAllOpenMatches";
   static const String getPlayersLevel = "${baseUrl}getPlayerLevelBySKillLevel";
 
-  /// Notification---------------------------------------------------------------
+  /// Notification--------------------------------------------------------------
+
   static const String getNotification =
       "${baseUrl}court/userNotification/readNotification";
   static const String getNotificationMarkAsRead =
@@ -118,7 +120,7 @@ class AppEndpoints {
   static const String getNotificationCount =
       "${baseUrl}court/userNotification/ureadCountData";
 
-  /// ScoreBoard-----------------------------------------------------------------
+  /// ScoreBoard----------------------------------------------------------------
   static const String createScoreBoard =
       "${baseUrl}court/scoreboard/createScoreboard";
   static const String getScoreBoard =
@@ -126,16 +128,16 @@ class AppEndpoints {
   static const String updateScoreBoard =
       "${baseUrl}court/scoreboard/updateScoreboard";
 
-  /// Google Maps Api------------------------------------------------------------
+  /// Google Maps Api-----------------------------------------------------------
   static const String getLocationMaps = "${baseUrl}GetgoogleMap?";
 
-  /// Wallet---------------------------------------------------------------------
+  /// Wallet--------------------------------------------------------------------
   static const String getTransaction = "${baseUrl}wallet/getWalletTransaction";
   static const String getWallet = "${baseUrl}wallet/getWallet";
   static const String testWalletCreate = "${baseUrl}wallet/order";
   static const String appVersions = "${baseUrl}app-version/check";
 
-  /// LeaderBoard----------------------------------------------------------------
+  /// LeaderBoard---------------------------------------------------------------
   static const String getLeaderBoard = "${baseUrl}court/leaderBoard/player";
   static const String removePlayer =
       "${baseUrl}court/openmatch/removePlayerFromMatch";
@@ -144,7 +146,7 @@ class AppEndpoints {
   static const String getMyRankGenderWise =
       "${baseUrl}court/leaderBoard/getMyRankGenderWise";
 
-  /// XP Points------------------------------------------------------------------
+  /// XP Points-----------------------------------------------------------------
   static const String getXpPoints =
       "${baseUrl}court/scoreboard/getUserXpHistory";
 

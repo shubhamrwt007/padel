@@ -130,6 +130,7 @@ class AmericanoMatch {
   bool? isRegistered;
   bool? isJoined;
   List<AmericanoPlayer>? players;
+  Map<String, dynamic>? prize;
 
   String get formattedMatchDate {
     if (matchDate == null || matchDate!.isEmpty) return 'Date';
@@ -179,6 +180,7 @@ class AmericanoMatch {
     this.isRegistered,
     this.isJoined,
     this.players,
+    this.prize,
   });
 
   List<String> get joinedPlayersAvatars {
@@ -226,6 +228,10 @@ class AmericanoMatch {
         }
       }
     }
+    
+    if (json['prize'] != null && json['prize'] is Map<String, dynamic>) {
+      prize = Map<String, dynamic>.from(json['prize']);
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -255,6 +261,7 @@ class AmericanoMatch {
       'isRegistered': isRegistered,
       'isJoined': isJoined,
       if (players != null) 'players': players!.map((e) => e.toJson()).toList(),
+      if (prize != null) 'prize': prize,
     };
   }
 }

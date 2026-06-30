@@ -610,7 +610,7 @@ class ScoreViewScreen extends GetView<ScoreViewController> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: AppColors.secondaryColor,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               "$points",

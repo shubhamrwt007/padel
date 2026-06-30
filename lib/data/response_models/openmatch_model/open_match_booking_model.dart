@@ -127,7 +127,7 @@ class OpenMatchBookingData {
     slot = (json['slot'] as List?)?.map((e) => Slot.fromJson(e)).toList();
     matchType = json['matchType'];
     skillLevel = json['skillLevel'];
-    skillDetails = (json['skillDetails'] as List?)?.cast<String>();
+    skillDetails = json['skillDetails'] is List ? (json['skillDetails'] as List).map((e) => e.toString()).toList() : null;
     customerScale = json['customerScale'];
     customerRacketSport = json['customerRacketSport'];
     receivingTP = json['receivingTP'];
@@ -136,7 +136,7 @@ class OpenMatchBookingData {
     playerLevel = json['playerLevel'];
     reboundSkills = json['reboundSkills'];
     matchDate = json['matchDate'];
-    matchTime = (json['matchTime'] as List?)?.cast<String>();
+    matchTime = json['matchTime'] is List ? (json['matchTime'] as List).map((e) => e.toString()).toList() : null;
     matchStatus = json['matchStatus'];
     teamA = (json['teamA'] as List?)?.map((e) => TeamA.fromJson(e)).toList();
     teamB = (json['teamB'] as List?)?.map((e) => TeamB.fromJson(e)).toList();
@@ -273,11 +273,11 @@ class ClubId {
 
     city = json['city'];
     courtCount = json['courtCount'];
-    courtImage = (json['courtImage'] as List?)?.cast<String>();
-    courtName = (json['courtName'] as List?)?.cast<String>();
-    courtType = (json['courtType'] as List?)?.cast<String>();
+    courtImage = json['courtImage'] is List ? (json['courtImage'] as List).map((e) => e.toString()).toList() : null;
+    courtName = json['courtName'] is List ? (json['courtName'] as List).map((e) => e.toString()).toList() : null;
+    courtType = json['courtType'] is List ? (json['courtType'] as List).map((e) => e.toString()).toList() : null;
     createdAt = json['createdAt'];
-    features = (json['features'] as List?)?.cast<String>();
+    features = json['features'] is List ? (json['features'] as List).map((e) => e.toString()).toList() : null;
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     isFeatured = json['isFeatured'];
@@ -532,7 +532,7 @@ class UserId {
     isActive = json['isActive'];
     isDeleted = json['isDeleted'];
     role = json['role'];
-    fcmTokens = (json['fcmTokens'] as List?)?.cast<String>();
+    fcmTokens = json['fcmTokens'] is List ? (json['fcmTokens'] as List).map((e) => e.toString()).toList() : null;
     playerLevel = json['playerLevel'];
     level = json['level'];
     profilePic = json['profilePic'];
@@ -581,8 +581,8 @@ class ClubLocation {
     address = json['address'];
     zipCode = json['zipCode'];
     state = json['state'];
-    courtType = (json['courtType'] as List?)?.cast<String>();
-    categories = (json['categories'] as List?)?.cast<String>();
+    courtType = json['courtType'] is List ? (json['courtType'] as List).map((e) => e.toString()).toList() : null;
+    categories = json['categories'] is List ? (json['categories'] as List).map((e) => e.toString()).toList() : null;
   }
 
   Map<String, dynamic> toJson() => {

@@ -103,6 +103,7 @@ class RoundsController extends GetxController {
               avatarUrlsSideB: avatarsB,
               scoreA: m.teamA?.points?.toString() ?? "0",
               scoreB: m.teamB?.points?.toString() ?? "0",
+              matchDate: m.playDate ?? "",
             );
           }).toList();
 
@@ -148,6 +149,7 @@ class MatchData {
   final List<String> avatarUrlsSideB;
   final String scoreA;
   final String scoreB;
+  final String matchDate;
 
   const MatchData({
     required this.roundId,
@@ -162,5 +164,6 @@ class MatchData {
     required this.avatarUrlsSideB,
     required this.scoreA,
     required this.scoreB,
+    required this.matchDate,
   });
 }

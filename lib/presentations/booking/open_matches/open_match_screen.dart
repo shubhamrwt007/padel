@@ -820,16 +820,15 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
     final isLoginUserInMatch = _isLoginUserInMatch(match);
     final isMatchCreator = _isMatchCreator(match);
     final hasActiveRequest = match?.isRequest == true;
+    final isPendingMatch = match?.openMatchStatus?.toLowerCase() == 'pending';
     
     return GestureDetector(
       onTap: hasActiveRequest ? null : () async {
         if (isMatchCreator) {
           Get.bottomSheet(AppPlayersBottomSheet(matchId: matchId, selectedTeam: team,bookingId:bookingId ,), isScrollControlled: true);
         } else {
-          // Direct API call for login user
-          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',(match?.bookingId?.totalAmount ?? 0)/4);
-        }
-      },
+          await _requestToJoinMatch(team, match?.sId ?? '', match?.bookingId?.sId ?? '',(match?.bookingId?.totalAmount ?? 0)/4, isPendingMatch);
+        }      },
       child: CircleAvatar(
         radius: 22,
         backgroundColor: Colors.white,
@@ -873,17 +872,15 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
   }
 
   // Direct request to join match for login user
-  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId,dynamic price) async {
+  Future<void> _requestToJoinMatch(String team, String matchId, String bookingId, dynamic price, bool isPendingMatch) async {
     final userId = storage.read('userId');
     if (userId == null) return;
 
-    // Find the match data to check isRequest
     final matchData = controller.matchesBySelection.value?.data?.firstWhere(
       (match) => match.sId == matchId,
       orElse: () => MatchData(),
     );
 
-    // Check if there's already an active request
     if (matchData?.isRequest == true) {
       Get.dialog(
         Dialog(
@@ -893,11 +890,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.info,
-                  color: Colors.orange,
-                  size: 60,
-                ),
+                Icon(Icons.info, color: Colors.orange, size: 60),
                 const SizedBox(height: 16),
                 Text(
                   'Request Already Sent',
@@ -917,14 +910,9 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: Text(
-                    'OK',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: Text('OK', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -937,15 +925,19 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
     try {
       final addPlayerController = Get.put(AddPlayerController());
       
-      // Set required values
       addPlayerController.matchId.value = matchId;
       addPlayerController.selectedTeam.value = team;
       addPlayerController.playerId.value = userId;
       addPlayerController.openMatchesController = controller;
       
-      // Call the request API directly
-      final success = await addPlayerController.requestPlayerForOpenMatch(bookingId: bookingId,price: price);
-      if (success) {
+      final success = await addPlayerController.requestPlayerForOpenMatch(
+        bookingId: bookingId,
+        price: price,
+        isPendingMatch: isPendingMatch,
+      );
+      
+      // Only show success dialog if NOT a pending match (payment flow handles its own UI)
+      if (success && !isPendingMatch) {
         Get.dialog(
           Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -954,11 +946,7 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 60,
-                  ),
+                  Icon(Icons.check_circle, color: Colors.green, size: 60),
                   const SizedBox(height: 16),
                   Text(
                     'Request Sent!',
@@ -978,21 +966,15 @@ class _OpenMatchesScreenState extends State<OpenMatchesScreen> {
                     onPressed: () => Get.back(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: Text(
-                      'OK',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: Text('OK', style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
             ),
           ),
         );
-        // Refresh matches without showing loader
         final currentLoading = controller.isLoading.value;
         controller.isLoading.value = false;
         await controller.fetchMatchesForSelection();

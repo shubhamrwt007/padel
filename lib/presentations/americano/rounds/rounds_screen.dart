@@ -2,6 +2,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:padel_mobile/configs/components/loader_widgets.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
 
+import '../../league/widgets/match_card_clipper.dart';
 import 'rounds_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../auth/forgot_password/widgets/forgot_password_exports.dart';
@@ -95,6 +96,7 @@ class RoundsScreen extends StatelessWidget {
                               avatarUrlsSideB: match.avatarUrlsSideB,
                               scoreA: match.scoreA,
                               scoreB: match.scoreB,
+                              matchDate: match.matchDate,
                             ),
                           );
                         }).toList(),
@@ -162,6 +164,7 @@ class CourtCard extends StatelessWidget {
   final List<String> avatarUrlsSideB;
   final String scoreA;
   final String scoreB;
+  final String matchDate;
 
   const CourtCard({
     super.key,
@@ -175,6 +178,7 @@ class CourtCard extends StatelessWidget {
     required this.avatarUrlsSideB,
     required this.scoreA,
     required this.scoreB,
+    required this.matchDate,
   });
 
   @override
@@ -187,6 +191,18 @@ class CourtCard extends StatelessWidget {
       resolvedStatus = MatchStatus.finished;
     } else {
       resolvedStatus = MatchStatus.scheduled;
+    }
+
+    String formatDate(String date) {
+      if (date.isEmpty) return "Date";
+      try {
+        final dateTime = DateTime.parse(date);
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        return "${days[dateTime.weekday - 1]} ${dateTime.day}/${dateTime.month}/${dateTime.year}";
+      } catch (e) {
+        return date;
+      }
     }
 
     final List<Color> gradientColors;
@@ -233,104 +249,130 @@ class CourtCard extends StatelessWidget {
         statusWidget = const SizedBox.shrink();
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      // padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.05),
-          width: 0.1,
-        ),
-      ),
-      child: Stack(
-        children: [
-          /// LEFT DOT
-          Positioned(
-            left: -50,
-            top: -10,
-            child: SvgPicture.asset(
-              Assets.images.dotsFipPromises.path,
-              height: 90,
-              width: 90,
-              colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
-            ),
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+        height: 25,
+        width: 140,
+        decoration: const BoxDecoration(
+          color: AppColors.primaryColor,
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(14),
+            bottomRight: Radius.circular(14),
           ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+            formatDate(matchDate),
+            style: Get.textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500,color: Colors.white,fontSize: 10)
+        ),
+      ).paddingOnly(top:5),
+        ClipPath(clipper: MatchCardClipper(),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            // padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.black.withValues(alpha: 0.05),
+                width: 0.1,
+              ),
+            ),
+            child: Stack(
+              children: [
+                /// LEFT DOT
+                Positioned(
+                  left: -50,
+                  top: -10,
+                  child: SvgPicture.asset(
+                    Assets.images.dotsFipPromises.path,
+                    height: 90,
+                    width: 90,
+                    colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
+                  ),
+                ),
 
-          /// RIGHT DOT
-          Positioned(
-            right: -8,
-            bottom: 0,
-            child: SvgPicture.asset(
-              Assets.images.dotsFipPromises.path,
-              height: 90,
-              width: 90,
-              colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
+                /// RIGHT DOT
+                Positioned(
+                  right: -8,
+                  bottom: 0,
+                  child: SvgPicture.asset(
+                    Assets.images.dotsFipPromises.path,
+                    height: 90,
+                    width: 90,
+                    colorFilter: ColorFilter.mode(imageColor, BlendMode.srcIn),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          courtName,
+                          style: TextStyle(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        statusWidget,
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        // Left side players
+                        Expanded(
+                          child: PlayerSide(
+                            player1: player1SideA,
+                            player2: player2SideA,
+                            avatarUrls: avatarUrlsSideA,
+                            isRightAligned: false,
+                            cardBgColor: Colors.white,
+                            showCrown: resolvedStatus == MatchStatus.finished && (int.tryParse(scoreA) ?? 0) > (int.tryParse(scoreB) ?? 0),
+                          ),
+                        ),
+                        // Center score or VS image
+                        resolvedStatus == MatchStatus.scheduled
+                            ? SvgPicture.asset(Assets.images.imgVs.path).paddingOnly(bottom: 5, top: 5)
+                            : Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: ScoreCenter(
+                                  scoreA: scoreA,
+                                  scoreB: scoreB,
+                                  scoreColor: scoreColor,
+                                  isFinished: resolvedStatus == MatchStatus.finished,
+                                ),
+                              ),
+
+                        // Right side players
+                        Expanded(
+                          child: PlayerSide(
+                            player1: player1SideB,
+                            player2: player2SideB,
+                            avatarUrls: avatarUrlsSideB,
+                            isRightAligned: true,
+                            cardBgColor: Colors.white,
+                            showCrown: resolvedStatus == MatchStatus.finished && (int.tryParse(scoreB) ?? 0) > (int.tryParse(scoreA) ?? 0),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ).paddingAll(16),
+              ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    courtName,
-                    style: TextStyle(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  statusWidget,
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  // Left side players
-                  Expanded(
-                    child: PlayerSide(
-                      player1: player1SideA,
-                      player2: player2SideA,
-                      avatarUrls: avatarUrlsSideA,
-                      isRightAligned: false,
-                      cardBgColor: Colors.white,
-                      showCrown: resolvedStatus == MatchStatus.finished && (int.tryParse(scoreA) ?? 0) > (int.tryParse(scoreB) ?? 0),
-                    ),
-                  ),
-                  // Center score
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: ScoreCenter(
-                      scoreA: scoreA,
-                      scoreB: scoreB,
-                      scoreColor: scoreColor,
-                      isFinished: resolvedStatus == MatchStatus.finished,
-                    ),
-                  ),
-                  // Right side players
-                  Expanded(
-                    child: PlayerSide(
-                      player1: player1SideB,
-                      player2: player2SideB,
-                      avatarUrls: avatarUrlsSideB,
-                      isRightAligned: true,
-                      cardBgColor: Colors.white,
-                      showCrown: resolvedStatus == MatchStatus.finished && (int.tryParse(scoreB) ?? 0) > (int.tryParse(scoreA) ?? 0),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ).paddingAll(16),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
