@@ -82,6 +82,9 @@ dependencies {
     // Add core library desugaring for flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
+    // Play Install Referrer for deferred deep links
+    implementation("com.android.installreferrer:installreferrer:2.2")
+
     // Add multidex support if needed
     implementation("androidx.multidex:multidex:2.0.1")
 

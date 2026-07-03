@@ -4,5 +4,10 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:swootapp.com</string>
+		<string>applinks:www.swootapp.com</string>
+	</array>
 </dict>
 </plist>

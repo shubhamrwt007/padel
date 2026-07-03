@@ -13,14 +13,23 @@ class AppEndpoints {
   static const String baseUrl = "${base}customer/";
   // static const String login = "${baseUrl}customerLogin";
   static const String login = "${baseUrl}customerLoginByPhoneNumber";
+
   static const String logout = "${baseUrl}logout";
+
   static const String deleteAccount = "${baseUrl}deleteCustomer";
+
   static const String signUp = "${baseUrl}customerSignup";
+
   static const String fetchUserProfile = "${baseUrl}getCustomer";
+
   static const String updateUserProfile = "${baseUrl}updateCustomer";
+
   static const String sendOTP = "${baseUrl}sentOtp";
+
   static const String verifyOTP = "${baseUrl}verifyOtp";
+
   static const String resetPassword = "${baseUrl}forgotPassword";
+
   ///Home Register Club---------------------------------------------------------
   static const String getRegisterClub =
       "${baseUrl}court/registerCourt/getClubById?";
@@ -184,6 +193,8 @@ class AppEndpoints {
   static const String getAmericanos = "${baseUrl}court/americano/getAmericanos";
   static const String registerPlayer = "${baseUrl}court/americano/registerPlayer";
   static String getAmericanoLeaderboard(String matchId) => "${baseUrl}court/americano/$matchId/leaderboard";
+  static String sharePaymentResolve(String matchId) =>
+      "${baseUrl}court/openmatch/pay-share-payment/$matchId/resolve";
 }
 
 class PaymentConfig {

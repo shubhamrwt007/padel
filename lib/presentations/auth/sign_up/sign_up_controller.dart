@@ -229,8 +229,15 @@ class SignUpController extends GetxController {
         Get.delete<HomeController>(force: true);
         Get.delete<MainHomeController>(force: true);
         Get.delete<ProfileController>(force: true);
-        
-        Get.offAllNamed(RoutesName.tutorial);
+
+        final pendingPaymentId = storage.read<String>('pendingPaymentId') ?? '';
+        CustomLogger.logMessage(msg: '🔗 pendingPaymentId at signup: "$pendingPaymentId"', level: LogLevel.debug);
+        if (pendingPaymentId.isNotEmpty) {
+          storage.remove('pendingPaymentId');
+          Get.offAllNamed(RoutesName.sharePayment, arguments: {'paymentId': pendingPaymentId});
+        } else {
+          Get.offAllNamed(RoutesName.tutorial);
+        }
       }
 
     } else {

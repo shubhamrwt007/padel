@@ -98,5 +98,6 @@ class RoutesName {
   static const String roundsScore = '/roundsScore';
   static const String liveStreamAmericano = '/liveStreamAmericano';
 
-
+  // Share Payment
+  static const String sharePayment = '/sharePayment';
 }

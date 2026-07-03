@@ -150,7 +150,15 @@ class LoginController extends GetxController {
         Get.delete<HomeController>(force: true);
         Get.delete<MainHomeController>(force: true);
         Get.delete<ProfileController>(force: true);
-        Get.offAllNamed(RoutesName.bottomNav);
+
+        final pendingPaymentId = storage.read<String>('pendingPaymentId') ?? '';
+        CustomLogger.logMessage(msg: '🔗 pendingPaymentId at login: "$pendingPaymentId"', level: LogLevel.debug);
+        if (pendingPaymentId.isNotEmpty) {
+          storage.remove('pendingPaymentId');
+          Get.offAllNamed(RoutesName.sharePayment, arguments: {'paymentId': pendingPaymentId});
+        } else {
+          Get.offAllNamed(RoutesName.bottomNav);
+        }
       }
     }on DioException catch (e) {
       final code = e.response?.statusCode;

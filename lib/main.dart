@@ -11,9 +11,11 @@ import 'package:padel_mobile/presentations/notification/notification_controller.
 import 'package:padel_mobile/services/notification_service/firebase_notification.dart';
 import 'package:padel_mobile/services/fcm_token_service.dart';
 import 'package:padel_mobile/services/socket_service.dart';
+import 'package:padel_mobile/services/deep_link_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'configs/routes/routes.dart';
 import 'configs/themes/app_themes.dart';
+import 'presentations/splash/splash_screen.dart';
 import 'core/network/dio_client.dart';
 
 /// Background message handler - must be a top-level function
@@ -33,7 +35,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     if (message.notification != null || message.data.isNotEmpty) {
       final payload = message.data.entries.map((e) => '${e.key}=${e.value}').join('|');
-      
       await NotificationService().showNotification(
         id: message.hashCode.abs(),
         title: message.notification?.title ?? 'New Notification',
@@ -74,27 +75,10 @@ Future<void> main() async {
 
     // Initialize core services
     Get.put(DioClient());
-
-    // Initialize socket service
     Get.put(SocketService());
-
-    // Initialize notification controller (will initialize NotificationService)
     Get.put(NotificationController());
-    
-    // Initialize FCM token service
-    // Initialize FCM token service
     Get.put(FCMTokenService());
-    if (kDebugMode) {
-      print('✅ Controllers initialized');
-    }
 
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    // Run the app
     runApp(const MyApp());
 
   } catch (e) {
@@ -105,9 +89,27 @@ Future<void> main() async {
     runApp(ErrorApp(error: e.toString()));
   }
 }
-
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // DeepLinkService is initialized after the splash navigates away,
+    // so it never races with the cold-start link handling in SplashController.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 6), () {
+        if (!Get.isRegistered<DeepLinkService>()) {
+          Get.putAsync(() => DeepLinkService().init());
+        }
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,11 +121,8 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       getPages: Routes.route,
       initialRoute: Routes.initialRoute,
-
-      // Global navigation key for notification navigation
+      unknownRoute: GetPage(name: '/not-found', page: () => const SplashScreen()),
       navigatorKey: Get.key,
-
-      // Handle app lifecycle for notifications
       builder: (context, child) {
         return NotificationWrapper(child: child!);
       },

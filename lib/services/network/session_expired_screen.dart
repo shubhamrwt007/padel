@@ -100,7 +100,11 @@ class SessionExpiredPage extends StatelessWidget {
 
   void _handleLoginRedirect() async {
     final storage = GetStorage();
+    final pendingPaymentId = storage.read<String>('pendingPaymentId');
     await storage.erase();
+    if (pendingPaymentId != null && pendingPaymentId.isNotEmpty) {
+      await storage.write('pendingPaymentId', pendingPaymentId);
+    }
     Get.offAllNamed(RoutesName.login);
   }
 
