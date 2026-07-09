@@ -76,7 +76,8 @@ class LoginRepository {
       );
       final response = await dioClient.put(AppEndpoints.logout, data: body);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200)
+      {
         CustomLogger.logMessage(
           msg: "LogOut successful: ${response.data}",
           level: LogLevel.info,

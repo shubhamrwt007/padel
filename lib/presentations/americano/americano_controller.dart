@@ -86,7 +86,6 @@ class AmericanoController extends GetxController {
             ongoingMatches.addAll(ongoing);
             upcomingMatches.addAll(upcoming);
           }
-          
           final totalP = response.pagination?.totalPages ?? 1;
           hasMore.value = currentPage.value < totalP;
         }

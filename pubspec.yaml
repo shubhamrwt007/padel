@@ -1,11 +1,8 @@
 name: padel_mobile
 description: "A new Flutter project."
 publish_to: 'none'
-
 version: 1.0.23
-
 #version: 1.0.19+31
-
 environment:
   sdk: ^3.8.1
 dependencies:
@@ -62,6 +59,7 @@ dependencies:
   package_info_plus: ^9.0.0
   marquee_widget: ^1.2.0
   dropdown_button2:
+  app_links: ^6.3.4
 
 dev_dependencies:
   flutter_launcher_icons:

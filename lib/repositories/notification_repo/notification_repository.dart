@@ -121,7 +121,6 @@ class NotificationRepository {
   Future<Map<String, dynamic>> acceptWalletPayment(String paymentId) async {
     try {
       final String endpoint = "${AppEndpoints.baseUrl}court/openmatch/pay-share-payment/$paymentId/accept-wallet";
-      
       final response = await dioClient.post(
         endpoint,
         data: {},

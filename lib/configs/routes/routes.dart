@@ -103,6 +103,7 @@ import '../../presentations/profile/profile_screen.dart';
 import '../../presentations/registration/registration_americano_screen.dart';
 import '../../presentations/splash/splash_binding.dart';
 import 'routes_name.dart';
+import 'package:padel_mobile/presentations/share_payment/share_payment_screen.dart';
 class Routes {
   static const String initialRoute = RoutesName.splash;
   static const Duration defaultDuration = Duration(milliseconds: 300);
@@ -501,6 +502,12 @@ class Routes {
       name: RoutesName.liveStreamAmericano,
       page: () => LiveStreamAmericanoScreen(),
       binding: LiveStreamAmericanoBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: defaultDuration,
+    ),
+    GetPage(
+      name: RoutesName.sharePayment,
+      page: () => const SharePaymentScreen(),
       transition: Transition.rightToLeft,
       transitionDuration: defaultDuration,
     ),

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Download Swoot - Your Padel Companion App">
+    <title>Swoot - Download Now</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            color: white;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-ios {
+            background: #000;
+            color: white;
+        }
+
+        .btn-android {
+            background: #3DDC84;
+            color: #000;
+        }
+
+        .btn-web {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .features {
+            text-align: left;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .features h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            color: #666;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .countdown {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">S</div>
+        <h1>Welcome to Swoot!</h1>
+        <p id="message">To continue, please download our app from your app store.</p>
+
+        <div class="download-buttons">
+            <a href="https://apps.apple.com/app/YOUR_APP_ID" class="btn btn-ios" id="ios-link">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/>
+                </svg>
+                Download on App Store
+            </a>
+
+            <a href="https://play.google.com/store/apps/details?id=com.matchacha.app" class="btn btn-android" id="android-link">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
+                </svg>
+                Get it on Google Play
+            </a>
+
+            <a href="https://swootapp.com" class="btn btn-web">
+                Continue in Browser
+            </a>
+        </div>
+
+        <div class="countdown">
+            <p id="auto-open">Attempting to open app...</p>
+        </div>
+
+        <div class="features">
+            <h3>Features</h3>
+            <ul>
+                <li>Book courts instantly</li>
+                <li>Find players and matches</li>
+                <li>Join tournaments and leagues</li>
+                <li>Track your stats</li>
+                <li>Manage your wallet</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const path = window.location.pathname;
+        const fullUrl = window.location.href;
+
+        // Detect device
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+        const isAndroid = /android/i.test(userAgent);
+
+        // App Store URLs (Update these with your actual app URLs)
+        const appStoreUrl = 'https://apps.apple.com/app/YOUR_APP_ID';
+        const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.matchacha.app';
+
+        // Custom URL schemes
+        const iosScheme = `padel://swootapp.com${path}${window.location.search}`;
+        // Android intent:// scheme with Play Store fallback
+        const androidScheme = `intent://swootapp.com${path}${window.location.search}#Intent;scheme=https;package=com.matchacha.app;S.browser_fallback_url=${encodeURIComponent(playStoreUrl)};end`;
+
+        // Update download links
+        document.getElementById('ios-link').href = appStoreUrl;
+        document.getElementById('android-link').href = playStoreUrl;
+
+        // Try to open the app
+        let attemptedOpen = false;
+
+        function attemptAppOpen() {
+            if (attemptedOpen) return;
+            attemptedOpen = true;
+
+            if (isAndroid) {
+                // intent:// scheme handles app-not-installed fallback natively on Android
+                window.location = androidScheme;
+                return;
+            }
+
+            // iOS: use hidden iframe trick
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = iosScheme;
+            document.body.appendChild(iframe);
+
+            // Fallback to App Store after delay
+            let startTime = Date.now();
+            setTimeout(function() {
+                if (Date.now() - startTime < 2000) {
+                    document.getElementById('auto-open').textContent = 'App not installed. Please download from your app store.';
+                    setTimeout(function() {
+                        window.location = appStoreUrl;
+                    }, 1000);
+                } else {
+                    document.getElementById('auto-open').textContent = 'Opening in app...';
+                }
+            }, 500);
+
+            setTimeout(function() {
+                window.location = iosScheme;
+            }, 100);
+        }
+
+        // Customize message based on deep link
+        if (path && path !== '/') {
+            const messages = {
+                '/booking': 'Open the app to complete your booking!',
+                '/match': 'Open the app to view match details!',
+                '/tournament': 'Open the app to join the tournament!',
+                '/league': 'Open the app to check out the league!',
+                '/open-match-payment': 'Open the app to complete your payment!',
+                '/sharePayment': 'Open the app to complete your payment!',
+                '/share-payment': 'Open the app to complete your payment!',
+            };
+
+            for (const [key, message] of Object.entries(messages)) {
+                if (path.startsWith(key)) {
+                    document.getElementById('message').textContent = message;
+                    break;
+                }
+            }
+        }
+
+        // Auto-attempt to open app after a short delay
+        setTimeout(attemptAppOpen, 500);
+
+        // Handle visibility change (if user switches back to browser, app probably didn't open)
+        let hidden, visibilityChange;
+        if (typeof document.hidden !== 'undefined') {
+            hidden = 'hidden';
+            visibilityChange = 'visibilitychange';
+        } else if (typeof document.msHidden !== 'undefined') {
+            hidden = 'msHidden';
+            visibilityChange = 'msvisibilitychange';
+        } else if (typeof document.webkitHidden !== 'undefined') {
+            hidden = 'webkitHidden';
+            visibilityChange = 'webkitvisibilitychange';
+        }
+
+        function handleVisibilityChange() {
+            if (!document[hidden]) {
+                // User came back to browser - app probably didn't open
+                document.getElementById('auto-open').textContent = 'App not installed. Please download from your app store.';
+            }
+        }
+
+        if (typeof document.addEventListener !== 'undefined' && hidden !== undefined) {
+            document.addEventListener(visibilityChange, handleVisibilityChange, false);
+        }
+    </script>
+</body>
+</html>

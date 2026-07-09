@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.matchacha.app",
+      "sha256_cert_fingerprints": [
+        "EB:4F:AC:46:58:9B:27:1C:56:F8:8F:22:09:30:2B:04:97:DC:98:A1:F9:8B:88:5F:55:E0:F4:CF:25:AE:C2:9F",
+        "14:39:52:39:81:5D:2D:0A:D9:48:90:E0:5F:1A:41:C1:B4:4C:FF:58:99:02:B7:B6:17:0A:A2:59:E9:3E:6E:5D"
+      ]
+    }
+  }
+]

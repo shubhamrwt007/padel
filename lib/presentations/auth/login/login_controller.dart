@@ -139,18 +139,34 @@ class LoginController extends GetxController {
         // Clear old data first
         await storage.remove('token');
         await storage.remove('userId');
-        
         // Write new user data
         await storage.write('token', result.response!.token);
         await storage.write('userId', result.response!.user!.id);
-        
         log("🔑 User logged in - userId: ${result.response!.user!.id} ${result.response!.token}");
         
         // Delete old controllers to prevent showing old user data
         Get.delete<HomeController>(force: true);
         Get.delete<MainHomeController>(force: true);
         Get.delete<ProfileController>(force: true);
-        Get.offAllNamed(RoutesName.bottomNav);
+
+        // Check if login response contains a pending payment
+        final openMatchPayment = result.response?.openMatchPayment;
+        if (openMatchPayment?.paymentStatus == 'pending' &&
+            openMatchPayment?.id != null &&
+            openMatchPayment!.id!.isNotEmpty) {
+          storage.remove('pendingPaymentId');
+          Get.offAllNamed(RoutesName.sharePayment, arguments: {'paymentId': openMatchPayment.id});
+          return;
+        }
+
+        final pendingPaymentId = storage.read<String>('pendingPaymentId') ?? '';
+        CustomLogger.logMessage(msg: '🔗 pendingPaymentId at login: "$pendingPaymentId"', level: LogLevel.debug);
+        if (pendingPaymentId.isNotEmpty) {
+          storage.remove('pendingPaymentId');
+          Get.offAllNamed(RoutesName.sharePayment, arguments: {'paymentId': pendingPaymentId});
+        } else {
+          Get.offAllNamed(RoutesName.bottomNav);
+        }
       }
     }on DioException catch (e) {
       final code = e.response?.statusCode;
@@ -169,7 +185,6 @@ class LoginController extends GetxController {
 
   Future<bool> getUserDataFromNumber(String phoneNumber) async {
     if (phoneNumber.length != 10) return false;
-
     try {
       numberLoader.value = true;
       final result = await openMatchRepository.getCustomerNameByPhoneNumber(

@@ -7,11 +7,24 @@ import UserNotifications
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private var notificationTapData: [AnyHashable: Any]? = nil
-  
+  private var initialUniversalLink: String? = nil
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Capture Universal Link from cold start
+    if let activityDict = launchOptions?[.userActivityDictionary] as? [AnyHashable: Any] {
+      for value in activityDict.values {
+        if let activity = value as? NSUserActivity,
+           activity.activityType == NSUserActivityTypeBrowsingWeb,
+           let url = activity.webpageURL {
+          initialUniversalLink = url.absoluteString
+          print("🔗 AppDelegate cold-start Universal Link: \(url.absoluteString)")
+        }
+      }
+    }
+
     // Initialize Firebase
     FirebaseApp.configure()
 
@@ -42,7 +55,38 @@ import UserNotifications
     }
 
     GeneratedPluginRegistrant.register(with: self)
+
+    // Expose initial Universal Link to Flutter via MethodChannel
+    if let controller = window?.rootViewController as? FlutterViewController {
+      let channel = FlutterMethodChannel(
+        name: "com.matchacha.app/deeplink",
+        binaryMessenger: controller.binaryMessenger
+      )
+      channel.setMethodCallHandler { [weak self] call, result in
+        if call.method == "getInitialLink" {
+          print("🔗 iOS getInitialLink called, returning: \(self?.initialUniversalLink ?? "nil")")
+          result(self?.initialUniversalLink)
+          self?.initialUniversalLink = nil
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Called when app is already running and a Universal Link is tapped
+  override func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+       let url = userActivity.webpageURL {
+      print("🔗 AppDelegate continue userActivity: \(url.absoluteString)")
+    }
+    return super.application(application, continue: userActivity, restorationHandler: restorationHandler)
   }
 
   // Handle APNs token registration

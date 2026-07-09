@@ -208,7 +208,12 @@ var profileModel = Rxn<ProfileModel>();
 
         // Clear storage completely
         log("🔍 LOGOUT: BEFORE ERASE: ${storage.getKeys().map((k) => "$k: ${storage.read(k)}").join(", ")}");
+        // Preserve pendingPaymentId across logout so deferred deep links still work
+        final pendingPaymentId = storage.read<String>('pendingPaymentId');
         await storage.erase(); // clear all stored data
+        if (pendingPaymentId != null && pendingPaymentId.isNotEmpty) {
+          await storage.write('pendingPaymentId', pendingPaymentId);
+        }
         log("🧹 LOGOUT: AFTER ERASE: Storage cleared");
 
         // Small delay to ensure cleanup is complete
