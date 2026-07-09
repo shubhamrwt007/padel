@@ -182,6 +182,12 @@ class _NotificationWrapperState extends State<NotificationWrapper> with WidgetsB
   void _handleMessageNavigation(RemoteMessage message) {
     final data = message.data;
 
+    // Payment notifications are handled by NotificationService / SplashController
+    final paymentLink = data['paymentLink'] as String? ?? '';
+    if (paymentLink.isNotEmpty && paymentLink.contains('pay-share-payment')) {
+      return;
+    }
+
     try {
       final notificationUrl = data['notificationUrl'] ?? data['route'] ?? '';
       final redirect = data['redirect'] ?? '';

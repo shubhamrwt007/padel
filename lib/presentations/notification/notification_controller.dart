@@ -292,10 +292,17 @@ class NotificationController extends GetxController {
       final bookingId = data['bookingId'] ?? '';
       final action = data['action'] ?? '';
       final paymentLink = data['paymentLink'] ?? '';
+      final paymentHistoryId = data['paymentHistoryId'] ?? '';
 
       // Priority 1: Check for payment link action
       if (action == 'open_payment_popup' && paymentLink.isNotEmpty) {
-        _openPaymentLinkWithData(paymentLink, data);
+        _navigateToSharePayment(paymentLink, paymentHistoryId: paymentHistoryId);
+        return;
+      }
+
+      // Also handle payment link without explicit action field
+      if (paymentLink.isNotEmpty && paymentLink.contains('pay-share-payment')) {
+        _navigateToSharePayment(paymentLink, paymentHistoryId: paymentHistoryId);
         return;
       }
 
@@ -325,6 +332,40 @@ class NotificationController extends GetxController {
         print('Stack trace: $stackTrace');
       }
       Get.toNamed(RoutesName.notification);
+    }
+  }
+
+  /// Navigate to the SharePayment screen for a notification payment link
+  void _navigateToSharePayment(String paymentLink, {String? paymentHistoryId}) {
+    try {
+      // Prefer the explicit paymentHistoryId from notification data,
+      // then fall back to extracting from the URL path
+      String paymentId = paymentHistoryId ?? '';
+      if (paymentId.isEmpty) {
+        paymentId = _extractPaymentId(paymentLink);
+      }
+      if (paymentId.isEmpty) {
+        // Last resort: grab the last path segment of the URL
+        final uri = Uri.tryParse(paymentLink);
+        paymentId = uri?.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => '') ?? '';
+      }
+      if (paymentId.isEmpty) {
+        CustomLogger.logMessage(msg: '❌ Could not extract paymentId from: $paymentLink', level: LogLevel.error);
+        return;
+      }
+      final token = GetStorage().read<String>('token') ?? '';
+      // Delay to ensure the navigator is fully ready after app resume
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (token.isNotEmpty) {
+          Get.toNamed(RoutesName.sharePayment, arguments: {'paymentId': paymentId});
+        } else {
+          GetStorage().write('pendingPaymentId', paymentId);
+          Get.offAllNamed(RoutesName.login);
+        }
+      });
+      CustomLogger.logMessage(msg: '✅ Navigating to sharePayment: $paymentId', level: LogLevel.debug);
+    } catch (e) {
+      CustomLogger.logMessage(msg: '❌ Error navigating to sharePayment: $e', level: LogLevel.error);
     }
   }
 

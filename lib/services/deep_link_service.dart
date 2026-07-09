@@ -28,7 +28,8 @@ class DeepLinkService extends GetxService with WidgetsBindingObserver {
             }
           }
         });
-      } else {
+      }
+      else {
         // iOS: SplashController owns getInitialLink — never call it here.
         // Skip any link that splash already consumed to avoid double-navigation.
         _linkSubscription = AppLinks().uriLinkStream.listen(
@@ -48,7 +49,8 @@ class DeepLinkService extends GetxService with WidgetsBindingObserver {
         );
       }
       CustomLogger.logMessage(msg: '✅ DeepLinkService initialized', level: LogLevel.debug);
-    } catch (e) {
+    } catch (e)
+    {
       CustomLogger.logMessage(msg: '❌ DeepLinkService init error: $e', level: LogLevel.error);
     }
     return this;
@@ -71,10 +73,10 @@ class DeepLinkService extends GetxService with WidgetsBindingObserver {
       final link = _pendingLink!;
       _pendingLink = null;
       // Small delay to ensure navigator is ready after resume
-      Future.delayed(const Duration(milliseconds: 300), () => handleDeepLink(link));
+      Future.delayed(const Duration(milliseconds: 300),
+              () => handleDeepLink(link));
     }
   }
-
   void handleDeepLink(String link) {
     try {
       final uri = Uri.parse(link);
@@ -82,7 +84,6 @@ class DeepLinkService extends GetxService with WidgetsBindingObserver {
       final params = uri.queryParameters;
       final token = GetStorage().read<String>('token') ?? '';
       CustomLogger.logMessage(msg: '🔗 Handling: $path', level: LogLevel.debug);
-
       if (path.contains('open-match-payment')) {
         final paymentId = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
         if (paymentId.isNotEmpty) {
@@ -96,7 +97,6 @@ class DeepLinkService extends GetxService with WidgetsBindingObserver {
       } else if (path.contains('sharePayment') || path.contains('share-payment')) {
         final matchId = params['matchId'] ?? params['id'] ?? '';
         if (matchId.isNotEmpty) {
-
           Get.toNamed(RoutesName.sharePayment, arguments: {'matchId': matchId});
         }
       }

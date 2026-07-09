@@ -52,9 +52,7 @@ ElevatedButton.icon(
 ```
 
 ### 2. Show Share Options Dialog
-
 Display multiple sharing options:
-
 ```dart
 IconButton(
   icon: Icon(Icons.more_vert),

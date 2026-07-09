@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -33,6 +34,8 @@ class NotificationService {
   Function(RemoteMessage)? onForegroundMessage;
   Function(RemoteMessage)? onBackgroundMessage;
   Function(String)? onTokenRefresh;
+
+  RemoteMessage? _pendingBackgroundMessage;
 
   bool _isInitialized = false;
 
@@ -156,11 +159,13 @@ class NotificationService {
     // Handle background messages (when app is in background but not terminated)
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
-    // Handle messages when app is opened from terminated state
-    final RemoteMessage? initialMessage = await _firebaseMessaging
-        .getInitialMessage();
+    // Handle messages when app is opened from terminated state.
+    // Do NOT navigate here — splash hasn't finished yet.
+    // Store the payment ID so SplashController can pick it up after navigation.
+    final RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
-      _handleBackgroundMessage(initialMessage);
+      _storeInitialMessagePayment(initialMessage);
+      onBackgroundMessage?.call(initialMessage);
     }
 
     // Listen for token refresh (important for Android)
@@ -168,6 +173,35 @@ class NotificationService {
       log('Firebase token refreshed: ${newToken.substring(0, 20)}...');
       onTokenRefresh?.call(newToken);
     });
+  }
+
+  /// If the cold-start notification contains a payment link, persist the
+  /// payment ID so SplashController can redirect after navigation is ready.
+  void _storeInitialMessagePayment(RemoteMessage message) {
+    try {
+      final data = message.data;
+      // Prefer the explicit paymentHistoryId field sent by the server
+      String paymentId = data['paymentHistoryId'] as String? ?? '';
+      if (paymentId.isEmpty) {
+        // Fall back to extracting from the URL
+        final paymentLink = data['paymentLink'] as String? ?? '';
+        final uri = Uri.tryParse(paymentLink);
+        final segments = uri?.pathSegments ?? [];
+        final idx = segments.indexOf('pay-share-payment');
+        if (idx != -1 && idx + 1 < segments.length) {
+          paymentId = segments[idx + 1];
+        }
+        if (paymentId.isEmpty) {
+          paymentId = segments.lastWhere((s) => s.isNotEmpty, orElse: () => '');
+        }
+      }
+      if (paymentId.isNotEmpty) {
+        GetStorage().write('pendingPaymentNotificationId', paymentId);
+        log('📦 Stored cold-start payment notification ID: $paymentId');
+      }
+    } catch (e) {
+      log('❌ Error storing initial message payment: $e');
+    }
   }
 
   /// Handle foreground Firebase messages
@@ -201,6 +235,22 @@ class NotificationService {
   /// Handle background Firebase messages
   void _handleBackgroundMessage(RemoteMessage message) {
     log('Handling background message: ${message.messageId}');
+    final data = message.data;
+    final paymentHistoryId = data['paymentHistoryId'] as String? ?? '';
+    final paymentLink = data['paymentLink'] as String? ?? '';
+    final isPaymentNotification = paymentHistoryId.isNotEmpty ||
+        paymentLink.contains('pay-share-payment') ||
+        paymentLink.contains('open-match-payment');
+    if (isPaymentNotification) {
+      final payload = _createPayloadFromMessage(message);
+      if (onNotificationTapped != null) {
+        onNotificationTapped!.call(payload);
+      } else {
+        _pendingBackgroundMessage = message;
+        log('📦 Stored pending background payment message (callbacks not ready yet)');
+      }
+      return;
+    }
     onBackgroundMessage?.call(message);
   }
 
@@ -564,6 +614,14 @@ class NotificationService {
     onForegroundMessage = onForeground;
     onBackgroundMessage = onBackground;
     this.onTokenRefresh = onTokenRefresh;
+
+    // Replay any background payment message that arrived before callbacks were ready
+    final pending = _pendingBackgroundMessage;
+    if (pending != null) {
+      _pendingBackgroundMessage = null;
+      log('🔄 Replaying pending background payment message');
+      Future.microtask(() => _handleBackgroundMessage(pending));
+    }
   }
 
   /// Test local notification (useful for debugging)

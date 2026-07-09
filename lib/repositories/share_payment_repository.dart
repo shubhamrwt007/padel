@@ -25,6 +25,7 @@ class SharePaymentRepository {
       if (data is Map<String, dynamic>) return data;
       return null;
     } catch (e) {
+
       CustomLogger.logMessage(msg: '❌ resolveSharePayment: $e', level: LogLevel.error);
       return null;
     }
@@ -33,5 +34,18 @@ class SharePaymentRepository {
   /// Generate shareable deep link for a match
   static String generateShareLink(String matchId) {
     return 'https://swootapp.com/sharePayment?matchId=$matchId';
+  }
+
+  /// POST to the wallet accept URL (full URL already resolved by controller)
+  Future<void> acceptWalletPayment(String fullUrl) async {
+    try {
+      final response = await _dioClient.post(fullUrl);
+      if (response.statusCode != 200) {
+        throw Exception('Wallet payment failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      CustomLogger.logMessage(msg: '❌ acceptWalletPayment: $e', level: LogLevel.error);
+      rethrow;
+    }
   }
 }

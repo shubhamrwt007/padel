@@ -21,13 +21,33 @@ class LoginModel {
 class LoginResponse {
   String? token;
   User? user;
+  OpenMatchPayment? openMatchPayment;
 
-  LoginResponse({this.token, this.user});
+  LoginResponse({this.token, this.user, this.openMatchPayment});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
       token: json['token'],
       user: json['user'] != null ? User.fromJson(json['user']) : null,
+      openMatchPayment: json['openMatchPayment'] != null
+          ? OpenMatchPayment.fromJson(json['openMatchPayment'])
+          : null,
+    );
+  }
+}
+
+// --------------------------------------------------
+
+class OpenMatchPayment {
+  String? id;
+  String? paymentStatus;
+
+  OpenMatchPayment({this.id, this.paymentStatus});
+
+  factory OpenMatchPayment.fromJson(Map<String, dynamic> json) {
+    return OpenMatchPayment(
+      id: json['_id'],
+      paymentStatus: json['paymentStatus'],
     );
   }
 }

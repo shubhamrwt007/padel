@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:padel_mobile/configs/app_colors.dart';
 import 'package:padel_mobile/configs/routes/routes_name.dart';
+import 'package:padel_mobile/core/endpoitns.dart';
 import 'package:padel_mobile/handler/logger.dart';
 import 'package:padel_mobile/repositories/share_payment_repository.dart';
+import 'package:padel_mobile/configs/components/app_toast.dart';
 
 class SharePaymentController extends GetxController {
   final _repo = SharePaymentRepository();
@@ -59,8 +61,35 @@ class SharePaymentController extends GetxController {
 
   Map<String, dynamic>? get _data => paymentData.value?['data'] as Map<String, dynamic>?;
 
-  String get razorpayLink =>
-      _data?['razorpayPaymentLink'] ?? _data?['paymentLink'] ?? '';
+  /// Prepend base URL if the link is a relative path
+  String _resolveUrl(String link) {
+    if (link.isEmpty) return '';
+    if (link.startsWith('http://') || link.startsWith('https://')) return link;
+    // Relative path — strip leading /api/ since AppEndpoints.base already ends with /api/
+    final base = AppEndpoints.socketUrl;
+    return '$base$link';
+  }
+
+  String get paymentMode => _data?['paymentMode'] as String? ?? '';
+  bool get isWalletPayment => paymentMode.toLowerCase() == 'wallet';
+
+  /// The resolved accept-wallet endpoint (used for wallet payments)
+  String get walletAcceptUrl {
+    final endpoint = _data?['acceptEndpoint'] as String? ??
+        _data?['walletAcceptUrl'] as String? ?? '';
+    if (endpoint.isEmpty) return '';
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;
+    // acceptEndpoint starts with /api/customer/... — prepend just the host
+    final host = AppEndpoints.socketUrl; // e.g. http://192.168.0.126:5070
+    return '$host$endpoint';
+  }
+
+  /// For Razorpay / split payments: the external payment link
+  String get razorpayLink {
+    final link = _data?['razorpayPaymentLink'] as String? ??
+        _data?['paymentLink'] as String? ?? '';
+    return _resolveUrl(link);
+  }
 
   Map<String, dynamic>? get matchInfo =>
       _data?['match'] as Map<String, dynamic>?;
@@ -69,6 +98,26 @@ class SharePaymentController extends GetxController {
   double get razorpayAmountDue => (_data?['razorpayAmountDue'] ?? 0).toDouble();
   double get walletContribution => (_data?['walletContributionAmount'] ?? 0).toDouble();
   String get paymentStatus => _data?['paymentStatus'] ?? '';
+
+  /// Called when user taps Pay for a wallet payment
+  Future<void> acceptWalletPayment() async {
+    final url = walletAcceptUrl;
+    if (url.isEmpty) {
+      AppToast.error('Wallet payment URL not available.');
+      return;
+    }
+    isLoading.value = true;
+    try {
+      await _repo.acceptWalletPayment(url);
+      AppToast.success('Payment successful!');
+      Get.offAllNamed(RoutesName.bottomNav);
+    } catch (e) {
+      CustomLogger.logMessage(msg: '❌ Wallet payment error: $e', level: LogLevel.error);
+      AppToast.error('Payment failed. Please try again.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
 
 // ─── WebView Payment Screen ──────────────────────────────────────────────────
@@ -265,10 +314,11 @@ class SharePaymentScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: controller.razorpayLink.isNotEmpty
-                      ? () => Get.to(() =>
-                          RazorpayWebViewScreen(url: controller.razorpayLink))
-                      : null,
+                  onPressed: controller.isWalletPayment
+                      ? controller.acceptWalletPayment
+                      : (controller.razorpayLink.isNotEmpty
+                          ? () => Get.to(() => RazorpayWebViewScreen(url: controller.razorpayLink))
+                          : null),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -276,7 +326,9 @@ class SharePaymentScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(
-                    'Pay ₹${controller.razorpayAmountDue.toStringAsFixed(2)}',
+                    controller.isWalletPayment
+                        ? 'Pay ₹${controller.paymentAmount.toStringAsFixed(2)} from Wallet'
+                        : 'Pay ₹${controller.razorpayAmountDue.toStringAsFixed(2)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,

@@ -182,6 +182,22 @@ class SplashController extends GetxController {
   void _navigateDefault() {
     final token = GetStorage().read<String>('token') ?? '';
     CustomLogger.logMessage(msg: 'TOKEN: $token', level: LogLevel.info);
+
+    // Check for a payment notification that arrived while the app was closed
+    final pendingNotifPaymentId =
+        GetStorage().read<String>('pendingPaymentNotificationId') ?? '';
+    if (pendingNotifPaymentId.isNotEmpty) {
+      GetStorage().remove('pendingPaymentNotificationId');
+      if (token.isNotEmpty) {
+        Get.offAllNamed(RoutesName.sharePayment,
+            arguments: {'paymentId': pendingNotifPaymentId});
+      } else {
+        GetStorage().write('pendingPaymentId', pendingNotifPaymentId);
+        Get.offAllNamed(RoutesName.login);
+      }
+      return;
+    }
+
     if (token.isNotEmpty) {
       Get.offAllNamed(RoutesName.bottomNav);
     } else {
